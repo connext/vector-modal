@@ -9,7 +9,15 @@ import {
   Typography,
   DialogContent,
   DialogActions,
+  Skeleton,
+  TextField,
+  InputAdornment,
+  IconButton,
+  Alert,
+  LinearProgress,
+  CircularProgress,
 } from '@material-ui/core';
+import { FileCopy } from '@material-ui/icons';
 import {
   ThemeProvider,
   unstable_createMuiStrictModeTheme,
@@ -151,165 +159,171 @@ export const ConnextModal: FC<ConnextModalProps> = ({
 
   useEffect(() => {
     const init = async () => {
-      try {
-        const chainInfo: any[] = await utils.fetchJson(CHAIN_INFO_URL);
-        const depositChainInfo = chainInfo.find(
-          info => info.chainId === depositChainId
-        );
-        if (depositChainInfo) {
-          setDepositChainName(depositChainInfo.name);
-        }
-
-        const withdrawChainInfo = chainInfo.find(
-          info => info.chainId === withdrawChainId
-        );
-        if (withdrawChainInfo) {
-          setWithdrawChainName(withdrawChainInfo.name);
-        }
-      } catch (e) {
-        console.warn(`Could not fetch chain info from ${CHAIN_INFO_URL}`);
-      }
-      const _ethProviders: { [chainId: number]: providers.BaseProvider } = {};
-      for (const chainId of [depositChainId, withdrawChainId]) {
-        if (ethProvidersOverrides[chainId]) {
-          _ethProviders[chainId] = new providers.JsonRpcProvider(
-            ethProvidersOverrides[chainId]
+      if (showModal) {
+        try {
+          const chainInfo: any[] = await utils.fetchJson(CHAIN_INFO_URL);
+          const depositChainInfo = chainInfo.find(
+            info => info.chainId === depositChainId
           );
-        } else {
-          const providerUrl = getProviderUrlForChain(chainId);
-          if (providerUrl) {
-            _ethProviders[chainId] = new providers.JsonRpcProvider(providerUrl);
+          if (depositChainInfo) {
+            setDepositChainName(depositChainInfo.name);
+          }
+
+          const withdrawChainInfo = chainInfo.find(
+            info => info.chainId === withdrawChainId
+          );
+          if (withdrawChainInfo) {
+            setWithdrawChainName(withdrawChainInfo.name);
+          }
+        } catch (e) {
+          console.warn(`Could not fetch chain info from ${CHAIN_INFO_URL}`);
+        }
+        const _ethProviders: { [chainId: number]: providers.BaseProvider } = {};
+        for (const chainId of [depositChainId, withdrawChainId]) {
+          if (ethProvidersOverrides[chainId]) {
+            _ethProviders[chainId] = new providers.JsonRpcProvider(
+              ethProvidersOverrides[chainId]
+            );
           } else {
-            _ethProviders[chainId] = getDefaultProvider(chainId as any);
+            const providerUrl = getProviderUrlForChain(chainId);
+            if (providerUrl) {
+              _ethProviders[chainId] = new providers.JsonRpcProvider(
+                providerUrl
+              );
+            } else {
+              _ethProviders[chainId] = getDefaultProvider(chainId as any);
+            }
           }
         }
-      }
-      const browserNode = new BrowserNode({
-        routerPublicIdentifier,
-        iframeSrc,
-        supportedChains: [depositChainId, withdrawChainId],
-      });
-      await browserNode.init();
-      console.log('INITIALIZED BROWSER NODE');
-      const depositChannelRes = await browserNode.getStateChannelByParticipants(
-        {
-          chainId: depositChainId,
-          counterparty: routerPublicIdentifier,
+        const browserNode = new BrowserNode({
+          routerPublicIdentifier,
+          iframeSrc,
+          supportedChains: [depositChainId, withdrawChainId],
+        });
+        await browserNode.init();
+        console.log('INITIALIZED BROWSER NODE');
+        const depositChannelRes = await browserNode.getStateChannelByParticipants(
+          {
+            chainId: depositChainId,
+            counterparty: routerPublicIdentifier,
+          }
+        );
+        if (depositChannelRes.isError) {
+          throw depositChannelRes.getError();
         }
-      );
-      if (depositChannelRes.isError) {
-        throw depositChannelRes.getError();
-      }
-      const depositChannel = depositChannelRes.getValue();
-      const _depositAddress = depositChannel.channelAddress;
-      setDepositAddress(_depositAddress);
+        const depositChannel = depositChannelRes.getValue();
+        const _depositAddress = depositChannel.channelAddress;
+        setDepositAddress(_depositAddress);
 
-      const withdrawChannelRes = await browserNode.getStateChannelByParticipants(
-        {
-          chainId: withdrawChainId,
-          counterparty: routerPublicIdentifier,
+        const withdrawChannelRes = await browserNode.getStateChannelByParticipants(
+          {
+            chainId: withdrawChainId,
+            counterparty: routerPublicIdentifier,
+          }
+        );
+        if (withdrawChannelRes.isError) {
+          throw withdrawChannelRes.getError();
         }
-      );
-      if (withdrawChannelRes.isError) {
-        throw withdrawChannelRes.getError();
-      }
-      const withdrawChannel = withdrawChannelRes.getValue();
+        const withdrawChannel = withdrawChannelRes.getValue();
 
-      const getAssetBalance = async (
-        chainId: number,
-        assetId: string,
-        balanceOfAddress: string
-      ): Promise<BigNumber> =>
-        assetId === constants.AddressZero
-          ? await _ethProviders[chainId].getBalance(balanceOfAddress)
-          : await new Contract(
-              assetId,
-              ERC20Abi,
-              _ethProviders[chainId]
-            ).balanceOf(balanceOfAddress);
+        const getAssetBalance = async (
+          chainId: number,
+          assetId: string,
+          balanceOfAddress: string
+        ): Promise<BigNumber> =>
+          assetId === constants.AddressZero
+            ? await _ethProviders[chainId].getBalance(balanceOfAddress)
+            : await new Contract(
+                assetId,
+                ERC20Abi,
+                _ethProviders[chainId]
+              ).balanceOf(balanceOfAddress);
 
-      const startingBalance = await getAssetBalance(
-        depositChainId,
-        depositAssetId,
-        _depositAddress
-      );
-      console.log(
-        `Starting balance on ${depositChainId} for ${_depositAddress} of asset ${depositAssetId}: ${startingBalance.toString()}`
-      );
-      _ethProviders[depositChainId].on('block', async blockNumber => {
-        console.log('New blockNumber: ', blockNumber);
-        const updatedBalance = await getAssetBalance(
+        const startingBalance = await getAssetBalance(
           depositChainId,
           depositAssetId,
           _depositAddress
         );
         console.log(
-          `Updated balance on ${depositChainId} for ${_depositAddress} of asset ${depositAssetId}: ${updatedBalance.toString()}`
+          `Starting balance on ${depositChainId} for ${_depositAddress} of asset ${depositAssetId}: ${startingBalance.toString()}`
         );
-        if (updatedBalance.gt(startingBalance)) {
-          const transferAmount = updatedBalance.sub(startingBalance);
-          setTransferState(TRANSFER_STATES.DEPOSITING);
-          _ethProviders[depositChainId].off('block');
-          browserNode
-            .crossChainTransfer({
-              amount: transferAmount.toString(),
-              fromAssetId: depositAssetId,
-              fromChainId: depositChainId,
-              toAssetId: withdrawAssetId,
-              toChainId: withdrawChainId,
-              reconcileDeposit: true,
-              withdrawalAddress,
-            })
-            .then(crossChainTransfer => {
-              console.log('crossChainTransfer: ', crossChainTransfer);
-              setWithdrawTx(crossChainTransfer.withdrawalTx);
-              setTransferState(TRANSFER_STATES.COMPLETE);
-            })
-            .catch(e => {
-              console.error('Error in crossChainTransfer: ', e);
-              setTransferState(TRANSFER_STATES.ERROR);
-            });
-
-          const depositEvent = await new Promise(res => {
-            browserNode.on(EngineEvents.DEPOSIT_RECONCILED, data => {
-              if (data.channelAddress === depositChannel.channelAddress) {
-                res(data);
-              }
-            });
-          });
-          console.log(
-            'Received EngineEvents.DEPOSIT_RECONCILED: ',
-            depositEvent
+        _ethProviders[depositChainId].on('block', async blockNumber => {
+          console.log('New blockNumber: ', blockNumber);
+          const updatedBalance = await getAssetBalance(
+            depositChainId,
+            depositAssetId,
+            _depositAddress
           );
-          setTransferState(TRANSFER_STATES.TRANSFERRING);
+          console.log(
+            `Updated balance on ${depositChainId} for ${_depositAddress} of asset ${depositAssetId}: ${updatedBalance.toString()}`
+          );
+          if (updatedBalance.gt(startingBalance)) {
+            const transferAmount = updatedBalance.sub(startingBalance);
+            setTransferState(TRANSFER_STATES.DEPOSITING);
+            _ethProviders[depositChainId].off('block');
+            browserNode
+              .crossChainTransfer({
+                amount: transferAmount.toString(),
+                fromAssetId: depositAssetId,
+                fromChainId: depositChainId,
+                toAssetId: withdrawAssetId,
+                toChainId: withdrawChainId,
+                reconcileDeposit: true,
+                withdrawalAddress,
+              })
+              .then(crossChainTransfer => {
+                console.log('crossChainTransfer: ', crossChainTransfer);
+                setWithdrawTx(crossChainTransfer.withdrawalTx);
+                setTransferState(TRANSFER_STATES.COMPLETE);
+              })
+              .catch(e => {
+                console.error('Error in crossChainTransfer: ', e);
+                setTransferState(TRANSFER_STATES.ERROR);
+              });
 
-          const transferEvent = await new Promise<
-            ConditionalTransferCreatedPayload
-          >(res => {
-            browserNode.on(EngineEvents.CONDITIONAL_TRANSFER_RESOLVED, data => {
-              console.log(
-                'EngineEvents.CONDITIONAL_TRANSFER_RESOLVED ====> data: ',
-                data
+            const depositEvent = await new Promise(res => {
+              browserNode.on(EngineEvents.DEPOSIT_RECONCILED, data => {
+                if (data.channelAddress === depositChannel.channelAddress) {
+                  res(data);
+                }
+              });
+            });
+            console.log(
+              'Received EngineEvents.DEPOSIT_RECONCILED: ',
+              depositEvent
+            );
+            setTransferState(TRANSFER_STATES.TRANSFERRING);
+
+            const transferEvent = await new Promise<
+              ConditionalTransferCreatedPayload
+            >(res => {
+              browserNode.on(
+                EngineEvents.CONDITIONAL_TRANSFER_RESOLVED,
+                data => {
+                  console.log(
+                    'EngineEvents.CONDITIONAL_TRANSFER_RESOLVED ====> data: ',
+                    data
+                  );
+                  if (data.channelAddress === withdrawChannel.channelAddress) {
+                    res(data);
+                  }
+                }
               );
-              if (data.channelAddress === withdrawChannel.channelAddress) {
-                res(data);
-              }
             });
-          });
-          console.log(
-            'Received EngineEvents.CONDITIONAL_TRANSFER_RESOLVED: ',
-            transferEvent
-          );
-          setSentAmount(
-            utils.formatEther(transferEvent.channelBalance.amount[1])
-          );
-          setTransferState(TRANSFER_STATES.WITHDRAWING);
-        }
-      });
+            console.log(
+              'Received EngineEvents.CONDITIONAL_TRANSFER_RESOLVED: ',
+              transferEvent
+            );
+            setSentAmount(
+              utils.formatEther(transferEvent.channelBalance.amount[1])
+            );
+            setTransferState(TRANSFER_STATES.WITHDRAWING);
+          }
+        });
+      }
     };
     init();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [showModal]);
   return (
     <ThemeProvider theme={theme}>
       <Dialog open={showModal} fullWidth={true} maxWidth="xs">
@@ -382,12 +396,12 @@ const InitialState: FC<{
   withdrawalAddress,
 }) => (
   <>
-    {depositAddress && (
+    {depositAddress ? (
       <>
         <Grid container spacing={2}>
           <Grid item xs={6}>
             <Typography gutterBottom variant="h6">
-              Send Funds To
+              Send To
             </Typography>
           </Grid>
           <Grid item xs={6}>
@@ -396,23 +410,40 @@ const InitialState: FC<{
         </Grid>
         <Grid container alignItems="flex-end" spacing={2}>
           <Grid item xs={12}>
-            <QRCode value={depositAddress} />
+            <TextField
+              label="Deposit Address"
+              defaultValue={depositAddress}
+              InputProps={{
+                readOnly: true,
+                endAdornment: (
+                  <InputAdornment position="end">
+                    <IconButton
+                      onClick={() => {
+                        console.log(`Copying: ${depositAddress}`);
+                        navigator.clipboard.writeText(depositAddress);
+                      }}
+                      edge="end"
+                    >
+                      <FileCopy />
+                    </IconButton>
+                  </InputAdornment>
+                ),
+              }}
+              fullWidth
+            />
           </Grid>
           <Grid item xs={12}>
-            <Tooltip title="Copy" placement="right">
-              <Chip
-                size="medium"
-                variant="outlined"
-                label={depositAddress}
-                onClick={event => {
-                  console.log((event.target as any).innerText);
-                  navigator.clipboard.writeText(
-                    (event.target as any).innerText
-                  );
-                }}
-              />
-            </Tooltip>
+            <QRCode value={depositAddress} />
           </Grid>
+          <Grid item xs={9}>
+            <Alert variant="outlined" severity="info">
+              Waiting for Deposit!
+            </Alert>
+          </Grid>
+          <Grid item xs={3}>
+            <CircularProgress />
+          </Grid>
+          <Grid item xs={12}></Grid>
         </Grid>
         <Grid container spacing={3}>
           <Grid item xs={12}>
@@ -422,7 +453,7 @@ const InitialState: FC<{
         <Grid container spacing={2}>
           <Grid item xs={6}>
             <Typography gutterBottom variant="h6">
-              Transferring To
+              Receiving On
             </Typography>
           </Grid>
           <Grid item xs={6}>
@@ -431,9 +462,20 @@ const InitialState: FC<{
         </Grid>
         <Grid container spacing={2}>
           <Grid item xs={12}>
-            <Chip size="medium" variant="outlined" label={withdrawalAddress} />
+            <TextField
+              label="Receiver Address"
+              defaultValue={withdrawalAddress}
+              InputProps={{
+                readOnly: true,
+              }}
+              fullWidth
+            />
           </Grid>
         </Grid>
+      </>
+    ) : (
+      <>
+        <Skeleton variant="rectangular" height={300} />
       </>
     )}
   </>
