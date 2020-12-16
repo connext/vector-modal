@@ -122,6 +122,7 @@ const getProviderUrlForChain = (chainId: number): string | undefined => {
       return `https://kovan2.arbitrum.io/rpc`;
     }
   }
+  return undefined;
 };
 
 export const ConnextModal: FC<ConnextModalProps> = ({
