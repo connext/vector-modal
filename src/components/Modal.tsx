@@ -3,7 +3,6 @@ import {
   Dialog,
   Grid,
   makeStyles,
-  Tooltip,
   Divider,
   Button,
   Typography,
@@ -14,7 +13,6 @@ import {
   InputAdornment,
   IconButton,
   Alert,
-  LinearProgress,
   CircularProgress,
 } from '@material-ui/core';
 import { FileCopy } from '@material-ui/icons';
@@ -153,7 +151,7 @@ export const ConnextModal: FC<ConnextModalProps> = ({
   const [sentAmount, setSentAmount] = useState<string>('0.0');
 
   const [transferState, setTransferState] = useState<TransferStates>(
-    TRANSFER_STATES.INITIAL
+    TRANSFER_STATES.COMPLETE
   );
   const [withdrawTx, setWithdrawTx] = useState<string>();
 
@@ -485,6 +483,16 @@ const DepositingState: FC<{
   depositChainName: string;
 }> = ({ depositChainName }) => (
   <>
+    <Grid container spacing={2}>
+      <Grid item xs={6}>
+        <Typography gutterBottom variant="h6">
+          Depositing Into
+        </Typography>
+      </Grid>
+      <Grid item xs={6}>
+        <Chip color="primary" label={depositChainName} />
+      </Grid>
+    </Grid>
     <Grid
       container
       spacing={3}
@@ -496,15 +504,10 @@ const DepositingState: FC<{
         <img src={LoadingGif} alt="loading"></img>
       </Grid>
     </Grid>
-    <Grid container spacing={2}>
-      <Grid item xs={6}>
-        <Typography gutterBottom variant="h6">
-          Detected Deposit Into
-        </Typography>
-      </Grid>
-      <Grid item xs={6}>
-        <Chip color="primary" label={depositChainName} />
-      </Grid>
+    <Grid item xs={12}>
+      <Alert variant="filled" severity="info">
+        Detected deposit on-chain, depositing into state channel!
+      </Alert>
     </Grid>
   </>
 );
@@ -514,17 +517,6 @@ const TransferringState: FC<{
   withdrawChainName: string;
 }> = ({ depositChainName, withdrawChainName }) => (
   <>
-    <Grid
-      container
-      spacing={3}
-      alignItems="center"
-      justifyContent="center"
-      direction="column"
-    >
-      <Grid item>
-        <img src={LoadingGif} alt="loading"></img>
-      </Grid>
-    </Grid>
     <Grid container spacing={2}>
       <Grid item xs={6}>
         <Typography gutterBottom variant="h6">
@@ -545,13 +537,6 @@ const TransferringState: FC<{
         <Chip color="primary" label={withdrawChainName} />
       </Grid>
     </Grid>
-  </>
-);
-
-const WithdrawingState: FC<{
-  withdrawChainName: string;
-}> = ({ withdrawChainName }) => (
-  <>
     <Grid
       container
       spacing={3}
@@ -563,6 +548,18 @@ const WithdrawingState: FC<{
         <img src={LoadingGif} alt="loading"></img>
       </Grid>
     </Grid>
+    <Grid item xs={12}>
+      <Alert variant="filled" severity="info">
+        Transferring between state channels!
+      </Alert>
+    </Grid>
+  </>
+);
+
+const WithdrawingState: FC<{
+  withdrawChainName: string;
+}> = ({ withdrawChainName }) => (
+  <>
     <Grid container spacing={2}>
       <Grid item xs={6}>
         <Typography gutterBottom variant="h6">
@@ -572,6 +569,22 @@ const WithdrawingState: FC<{
       <Grid item xs={6}>
         <Chip color="primary" label={withdrawChainName} />
       </Grid>
+    </Grid>
+    <Grid
+      container
+      spacing={3}
+      alignItems="center"
+      justifyContent="center"
+      direction="column"
+    >
+      <Grid item>
+        <img src={LoadingGif} alt="loading"></img>
+      </Grid>
+    </Grid>
+    <Grid item xs={12}>
+      <Alert variant="filled" severity="info">
+        Withdrawing funds back on-chain!
+      </Alert>
     </Grid>
   </>
 );
@@ -583,22 +596,10 @@ const CompleteState: FC<{
   sentAmount: string;
 }> = ({ withdrawTx, withdrawChainName, sentAmount, withdrawChainId }) => (
   <>
-    <Grid container spacing={3}>
-      <Grid item xs={12}>
-        <Typography gutterBottom variant="h5">
-          Transfer Complete
-        </Typography>
-      </Grid>
-    </Grid>
-    <Grid container spacing={3}>
-      <Grid item xs={12}>
-        <Divider variant="middle" />
-      </Grid>
-    </Grid>
     <Grid container spacing={2}>
       <Grid item xs={6}>
         <Typography gutterBottom variant="h6">
-          Sent Funds To
+          Finished Sending To
         </Typography>
       </Grid>
       <Grid item xs={6}>
@@ -606,13 +607,15 @@ const CompleteState: FC<{
       </Grid>
     </Grid>
     <Grid container spacing={2}>
-      <Grid item xs={6}>
-        <Typography gutterBottom variant="h6">
-          Amount Sent
-        </Typography>
-      </Grid>
-      <Grid item xs={6}>
-        <Chip label={sentAmount} variant="outlined" />
+      <Grid item xs={12}>
+        <TextField
+          label="Amount Sent"
+          defaultValue={sentAmount}
+          InputProps={{
+            readOnly: true,
+          }}
+          fullWidth
+        />
       </Grid>
     </Grid>
     <Grid container spacing={2}>
