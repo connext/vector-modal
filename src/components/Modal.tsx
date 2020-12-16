@@ -151,7 +151,7 @@ export const ConnextModal: FC<ConnextModalProps> = ({
   const [sentAmount, setSentAmount] = useState<string>('0.0');
 
   const [transferState, setTransferState] = useState<TransferStates>(
-    TRANSFER_STATES.COMPLETE
+    TRANSFER_STATES.INITIAL
   );
   const [withdrawTx, setWithdrawTx] = useState<string>();
 
