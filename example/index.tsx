@@ -16,12 +16,12 @@ function App() {
       <button onClick={() => setShowModal(true)}>Hello World</button>
       <ConnextModal
         showModal={showModal}
-        depositAssetId={'0x0000000000000000000000000000000000000000'}
-        depositChainId={1337}
-        withdrawAssetId={'0x0000000000000000000000000000000000000000'}
-        withdrawChainId={1338}
-        withdrawalAddress={'0x0000000000000000000000000000000000000000'}
-        handleClose={() => setShowModal(false)}
+        depositAssetId={'0x655F2166b0709cd575202630952D71E2bB0d61Af'}
+        depositChainId={5}
+        withdrawAssetId={'0xfe4F5145f6e09952a5ba9e956ED0C25e3Fa4c7F1'}
+        withdrawChainId={80001}
+        withdrawalAddress={'0x5A9e792143bf2708b4765C144451dCa54f559a19'}
+        onClose={() => setShowModal(false)}
       />
     </>
   );

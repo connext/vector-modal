@@ -83,7 +83,45 @@ type ConnextModalProps = {
   withdrawChainId: number;
   withdrawAssetId: string;
   withdrawalAddress: string;
-  handleClose: () => void;
+  onClose: () => void;
+};
+
+const getExplorerLinkForTx = (chainId: number, txHash: string): string => {
+  switch (chainId) {
+    case 1: {
+      return `https://etherscan.io/tx/${txHash}`;
+    }
+    case 4: {
+      return `https://rinkeby.etherscan.io/tx/${txHash}`;
+    }
+    case 5: {
+      return `https://goerli.etherscan.io/tx/${txHash}`;
+    }
+    case 42: {
+      return `https://kovan.etherscan.io/tx/${txHash}`;
+    }
+    case 80001: {
+      return `https://explorer-mumbai.maticvigil.com/tx/${txHash}`;
+    }
+    case 152709604825713: {
+      return `https://explorer.offchainlabs.com/#/tx/${txHash}`;
+    }
+  }
+  return '#';
+};
+
+const getProviderUrlForChain = (chainId: number): string | undefined => {
+  switch (chainId) {
+    case 5: {
+      return `https://goerli.prylabs.net`;
+    }
+    case 80001: {
+      return `https://rpc-mumbai.matic.today`;
+    }
+    case 152709604825713: {
+      return `https://kovan2.arbitrum.io/rpc`;
+    }
+  }
 };
 
 export const ConnextModal: FC<ConnextModalProps> = ({
@@ -93,7 +131,7 @@ export const ConnextModal: FC<ConnextModalProps> = ({
   withdrawChainId,
   withdrawAssetId,
   withdrawalAddress,
-  handleClose,
+  onClose,
 }) => {
   const classes = useStyles();
   const [depositAddress, setDepositAddress] = useState<string>();
@@ -130,22 +168,21 @@ export const ConnextModal: FC<ConnextModalProps> = ({
       } catch (e) {
         console.warn(`Could not fetch chain info from ${CHAIN_INFO_URL}`);
       }
-      const _ethProviders = [depositChainId, withdrawChainId].reduce(
-        (
-          _ethProviders: { [chainId: number]: providers.BaseProvider },
-          chainId
-        ) => {
-          if (ethProvidersOverrides[chainId]) {
-            _ethProviders[chainId] = new providers.JsonRpcProvider(
-              ethProvidersOverrides[chainId]
-            );
+      const _ethProviders: { [chainId: number]: providers.BaseProvider } = {};
+      for (const chainId of [depositChainId, withdrawChainId]) {
+        if (ethProvidersOverrides[chainId]) {
+          _ethProviders[chainId] = new providers.JsonRpcProvider(
+            ethProvidersOverrides[chainId]
+          );
+        } else {
+          const providerUrl = getProviderUrlForChain(chainId);
+          if (providerUrl) {
+            _ethProviders[chainId] = new providers.JsonRpcProvider(providerUrl);
           } else {
             _ethProviders[chainId] = getDefaultProvider(chainId as any);
           }
-          return _ethProviders;
-        },
-        {}
-      );
+        }
+      }
       const browserNode = new BrowserNode({
         routerPublicIdentifier,
         iframeSrc,
@@ -211,6 +248,7 @@ export const ConnextModal: FC<ConnextModalProps> = ({
         if (updatedBalance.gt(startingBalance)) {
           const transferAmount = updatedBalance.sub(startingBalance);
           setTransferState(TRANSFER_STATES.DEPOSITING);
+          _ethProviders[depositChainId].off('block');
           browserNode
             .crossChainTransfer({
               amount: transferAmount.toString(),
@@ -225,7 +263,6 @@ export const ConnextModal: FC<ConnextModalProps> = ({
               console.log('crossChainTransfer: ', crossChainTransfer);
               setWithdrawTx(crossChainTransfer.withdrawalTx);
               setTransferState(TRANSFER_STATES.COMPLETE);
-              _ethProviders[depositChainId].off('block');
             })
             .catch(e => {
               console.error('Error in crossChainTransfer: ', e);
@@ -312,6 +349,7 @@ export const ConnextModal: FC<ConnextModalProps> = ({
               withdrawChainName={withdrawChainName}
               withdrawTx={withdrawTx!}
               sentAmount={sentAmount}
+              withdrawChainId={withdrawChainId}
             />
           )}
           {transferState === TRANSFER_STATES.ERROR && <ErrorState />}
@@ -322,7 +360,7 @@ export const ConnextModal: FC<ConnextModalProps> = ({
             TRANSFER_STATES.COMPLETE,
             TRANSFER_STATES.ERROR,
           ].includes(transferState as any) && (
-            <Button onClick={handleClose}>Close</Button>
+            <Button onClick={onClose}>Close</Button>
           )}
           <Typography variant="body1">Powered By Connext</Typography>
         </DialogActions>
@@ -498,8 +536,9 @@ const WithdrawingState: FC<{
 const CompleteState: FC<{
   withdrawTx: string;
   withdrawChainName: string;
+  withdrawChainId: number;
   sentAmount: string;
-}> = ({ withdrawTx, withdrawChainName, sentAmount }) => (
+}> = ({ withdrawTx, withdrawChainName, sentAmount, withdrawChainId }) => (
   <>
     <Grid container spacing={3}>
       <Grid item xs={12}>
@@ -540,7 +579,11 @@ const CompleteState: FC<{
         </Typography>
       </Grid>
       <Grid item xs={6}>
-        <Button variant="contained" href={withdrawTx}>
+        <Button
+          variant="contained"
+          href={getExplorerLinkForTx(withdrawChainId, withdrawTx)}
+          target="_blank"
+        >
           Link
         </Button>
       </Grid>
