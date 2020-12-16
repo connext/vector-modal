@@ -7,6 +7,10 @@ import {
   Tooltip,
   Typography,
 } from '@material-ui/core';
+import {
+  ThemeProvider,
+  unstable_createMuiStrictModeTheme,
+} from '@material-ui/core';
 import React, { FC, useEffect, useState } from 'react';
 // @ts-ignore
 import QRCode from 'qrcode.react';
@@ -23,6 +27,8 @@ import { EngineEvents, ERC20Abi } from '@connext/vector-types';
 // @ts-ignore
 import LoadingGif from '../assets/loading.gif';
 
+const theme = unstable_createMuiStrictModeTheme({ palette: { mode: 'dark' } });
+
 const PROD_ROUTER_IDENTIFIER =
   'vector7tbbTxQp8ppEQUgPsbGiTrVdapLdU5dH7zTbVuXRf1M4CEBU9Q';
 
@@ -30,8 +36,15 @@ const PROD_IFRAME_WALLET = 'https://wallet.connext.network';
 
 const routerPublicIdentifier =
   process.env.REACT_APP_ROUTER_IDENTIFIER || PROD_ROUTER_IDENTIFIER;
+console.log('routerPublicIdentifier: ', routerPublicIdentifier);
 
 const iframeSrc = process.env.REACT_APP_IFRAME_SRC || PROD_IFRAME_WALLET;
+console.log('iframeSrc: ', iframeSrc);
+
+const ethProvidersOverrides = JSON.parse(
+  process.env.REACT_APP_ETH_PROVIDERS || '{}'
+);
+console.log('ethProvidersOverrides: ', ethProvidersOverrides);
 
 const TRANSFER_STATES = {
   INITIAL: 'INITIAL',
@@ -75,9 +88,6 @@ export const ConnextModal: FC<ConnextModalProps> = ({
 
   useEffect(() => {
     const init = async () => {
-      const ethProvidersOverrides = JSON.parse(
-        process.env.REACT_APP_ETH_PROVIDERS || '{}'
-      );
       const _ethProviders = [depositChainId, withdrawChainId].reduce(
         (
           _ethProviders: { [chainId: number]: providers.BaseProvider },
@@ -210,39 +220,41 @@ export const ConnextModal: FC<ConnextModalProps> = ({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
   return (
-    <Dialog open={showModal} fullWidth={true}>
-      <div
-        className={classes.root}
-        style={{
-          backgroundColor:
-            transferState === TRANSFER_STATES.INITIAL ? undefined : '#fbd116',
-        }}
-      >
-        {transferState === TRANSFER_STATES.INITIAL && (
-          <InitialState
-            depositAddress={depositAddress}
-            depositChainId={depositChainId}
-            withdrawChainId={withdrawChainId}
-            withdrawalAddress={withdrawalAddress}
-          />
-        )}
-        {transferState === TRANSFER_STATES.DEPOSITING && (
-          <DepositingState depositChainId={depositChainId} />
-        )}
-        {transferState === TRANSFER_STATES.TRANSFERRING && (
-          <TransferringState
-            depositChainId={depositChainId}
-            withdrawChainId={withdrawChainId}
-          />
-        )}
-        {transferState === TRANSFER_STATES.WITHDRAWING && (
-          <WithdrawingState withdrawChainId={withdrawChainId} />
-        )}
-        {transferState === TRANSFER_STATES.COMPLETE && (
-          <CompleteState withdrawTx={withdrawTx!} />
-        )}
-      </div>
-    </Dialog>
+    <ThemeProvider theme={theme}>
+      <Dialog open={showModal} fullWidth={true}>
+        <div
+          className={classes.root}
+          style={{
+            backgroundColor:
+              transferState === TRANSFER_STATES.INITIAL ? undefined : '#fbd116',
+          }}
+        >
+          {transferState === TRANSFER_STATES.INITIAL && (
+            <InitialState
+              depositAddress={depositAddress}
+              depositChainId={depositChainId}
+              withdrawChainId={withdrawChainId}
+              withdrawalAddress={withdrawalAddress}
+            />
+          )}
+          {transferState === TRANSFER_STATES.DEPOSITING && (
+            <DepositingState depositChainId={depositChainId} />
+          )}
+          {transferState === TRANSFER_STATES.TRANSFERRING && (
+            <TransferringState
+              depositChainId={depositChainId}
+              withdrawChainId={withdrawChainId}
+            />
+          )}
+          {transferState === TRANSFER_STATES.WITHDRAWING && (
+            <WithdrawingState withdrawChainId={withdrawChainId} />
+          )}
+          {transferState === TRANSFER_STATES.COMPLETE && (
+            <CompleteState withdrawTx={withdrawTx!} />
+          )}
+        </div>
+      </Dialog>
+    </ThemeProvider>
   );
 };
 
