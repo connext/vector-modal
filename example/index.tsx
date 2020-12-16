@@ -10,7 +10,6 @@ config();
 
 function App() {
   const [showModal, setShowModal] = React.useState(false);
-  const toggle = () => setShowModal(!showModal);
   return (
     <>
       <button onClick={() => setShowModal(true)}>Hello World</button>
