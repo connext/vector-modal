@@ -14,6 +14,7 @@ import {
   IconButton,
   Alert,
   CircularProgress,
+  Box,
 } from '@material-ui/core';
 import { FileCopy } from '@material-ui/icons';
 import {
@@ -151,11 +152,14 @@ export const ConnextModal: FC<ConnextModalProps> = ({
   const [crossChainTransfers, setCrossChainTransfers] = useState<{
     [crossChainTransferId: string]: TransferStates;
   }>({});
+  const [initing, setIniting] = useState<boolean>(true);
 
   const [
     activeCrossChainTransferId,
     setActiveCrossChainTransferId,
   ] = useState<string>('');
+
+  const [error, setError] = useState<Error>();
 
   const registerEngineEventListeners = (node: BrowserNode): void => {
     node.on(EngineEvents.DEPOSIT_RECONCILED, (data) => {
@@ -209,6 +213,7 @@ export const ConnextModal: FC<ConnextModalProps> = ({
       let tracked = { ...crossChainTransfers };
       tracked[crossChainTransferId] = TRANSFER_STATES.ERROR;
       setCrossChainTransfers(tracked);
+      setError(new Error(`No updates within 30s for ${crossChainTransferId}`));
     }, 30_000);
   };
 
@@ -340,6 +345,7 @@ export const ConnextModal: FC<ConnextModalProps> = ({
                 setCrossChainTransfers(updated);
               })
               .catch((e) => {
+                setError(e);
                 console.error('Error in crossChainTransfer: ', e);
                 const updated = { ...crossChainTransfers };
                 updated[crossChainTransferId] = TRANSFER_STATES.ERROR;
@@ -347,6 +353,7 @@ export const ConnextModal: FC<ConnextModalProps> = ({
               });
           }
         });
+        setIniting(false);
       }
     };
     init();
@@ -369,7 +376,8 @@ export const ConnextModal: FC<ConnextModalProps> = ({
               : '#fbd116',
           }}
         >
-          {transferState === TRANSFER_STATES.INITIAL && (
+          {initing && <LoadingState />}
+          {!initing && transferState === TRANSFER_STATES.INITIAL && (
             <InitialState
               depositAddress={depositAddress}
               depositChainName={depositChainName}
@@ -377,19 +385,19 @@ export const ConnextModal: FC<ConnextModalProps> = ({
               withdrawalAddress={withdrawalAddress}
             />
           )}
-          {transferState === TRANSFER_STATES.DEPOSITING && (
+          {!initing && transferState === TRANSFER_STATES.DEPOSITING && (
             <DepositingState depositChainName={depositChainName} />
           )}
-          {transferState === TRANSFER_STATES.TRANSFERRING && (
+          {!initing && transferState === TRANSFER_STATES.TRANSFERRING && (
             <TransferringState
               depositChainName={depositChainName}
               withdrawChainName={withdrawChainName}
             />
           )}
-          {transferState === TRANSFER_STATES.WITHDRAWING && (
+          {!initing && transferState === TRANSFER_STATES.WITHDRAWING && (
             <WithdrawingState withdrawChainName={withdrawChainName} />
           )}
-          {transferState === TRANSFER_STATES.COMPLETE && (
+          {!initing && transferState === TRANSFER_STATES.COMPLETE && (
             <CompleteState
               withdrawChainName={withdrawChainName}
               withdrawTx={withdrawTx!}
@@ -397,7 +405,12 @@ export const ConnextModal: FC<ConnextModalProps> = ({
               withdrawChainId={withdrawChainId}
             />
           )}
-          {transferState === TRANSFER_STATES.ERROR && <ErrorState />}
+          {!initing && transferState === TRANSFER_STATES.ERROR && (
+            <ErrorState
+              error={error ?? new Error('unknown')}
+              crossChainTransferId={activeCrossChainTransferId}
+            />
+          )}
         </DialogContent>
         <DialogActions>
           {[
@@ -413,6 +426,16 @@ export const ConnextModal: FC<ConnextModalProps> = ({
     </ThemeProvider>
   );
 };
+
+const LoadingState: FC = () => (
+  <>
+    <Grid container spacing={2}>
+      <Grid item xs={12}>
+        <CircularProgress />
+      </Grid>
+    </Grid>
+  </>
+);
 
 const InitialState: FC<{
   depositAddress?: string;
@@ -669,12 +692,17 @@ const CompleteState: FC<{
   </>
 );
 
-const ErrorState: FC = () => (
+const ErrorState: FC<{ error: Error; crossChainTransferId: string }> = ({
+  error,
+  crossChainTransferId,
+}) => (
   <>
     <Grid container spacing={3}>
       <Grid item xs={12}>
         <Typography gutterBottom variant="h5">
-          Error Transferring :(
+          {`Error transferring ${crossChainTransferId.substring(0, 5)}... - ${
+            error.message
+          }`}
         </Typography>
       </Grid>
     </Grid>
