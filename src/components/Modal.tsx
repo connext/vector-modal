@@ -218,44 +218,53 @@ export const ConnextModal: FC<ConnextModalProps> = ({
     }, 30_000);
   };
 
+  const getChainInfo = async () => {
+    try {
+      const chainInfo: any[] = await utils.fetchJson(CHAIN_INFO_URL);
+      const depositChainInfo = chainInfo.find(
+        info => info.chainId === depositChainId
+      );
+      if (depositChainInfo) {
+        setDepositChainName(depositChainInfo.name);
+      }
+
+      const withdrawChainInfo = chainInfo.find(
+        info => info.chainId === withdrawChainId
+      );
+      if (withdrawChainInfo) {
+        setWithdrawChainName(withdrawChainInfo.name);
+      }
+    } catch (e) {
+      console.warn(`Could not fetch chain info from ${CHAIN_INFO_URL}`);
+    }
+  };
+
+  const hydrateProviders = (): {
+    [chainId: number]: providers.BaseProvider;
+  } => {
+    const _ethProviders: { [chainId: number]: providers.BaseProvider } = {};
+    for (const chainId of [depositChainId, withdrawChainId]) {
+      if (ethProvidersOverrides[chainId]) {
+        _ethProviders[chainId] = new providers.JsonRpcProvider(
+          ethProvidersOverrides[chainId]
+        );
+      } else {
+        const providerUrl = getProviderUrlForChain(chainId);
+        if (providerUrl) {
+          _ethProviders[chainId] = new providers.JsonRpcProvider(providerUrl);
+        } else {
+          _ethProviders[chainId] = getDefaultProvider(chainId as any);
+        }
+      }
+    }
+    return _ethProviders;
+  };
+
   useEffect(() => {
     const init = async () => {
       if (showModal) {
-        try {
-          const chainInfo: any[] = await utils.fetchJson(CHAIN_INFO_URL);
-          const depositChainInfo = chainInfo.find(
-            info => info.chainId === depositChainId
-          );
-          if (depositChainInfo) {
-            setDepositChainName(depositChainInfo.name);
-          }
-
-          const withdrawChainInfo = chainInfo.find(
-            info => info.chainId === withdrawChainId
-          );
-          if (withdrawChainInfo) {
-            setWithdrawChainName(withdrawChainInfo.name);
-          }
-        } catch (e) {
-          console.warn(`Could not fetch chain info from ${CHAIN_INFO_URL}`);
-        }
-        const _ethProviders: { [chainId: number]: providers.BaseProvider } = {};
-        for (const chainId of [depositChainId, withdrawChainId]) {
-          if (ethProvidersOverrides[chainId]) {
-            _ethProviders[chainId] = new providers.JsonRpcProvider(
-              ethProvidersOverrides[chainId]
-            );
-          } else {
-            const providerUrl = getProviderUrlForChain(chainId);
-            if (providerUrl) {
-              _ethProviders[chainId] = new providers.JsonRpcProvider(
-                providerUrl
-              );
-            } else {
-              _ethProviders[chainId] = getDefaultProvider(chainId as any);
-            }
-          }
-        }
+        await getChainInfo();
+        const _ethProviders = hydrateProviders();
         const browserNode = new BrowserNode({
           routerPublicIdentifier,
           iframeSrc,
