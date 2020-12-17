@@ -14,9 +14,8 @@ import {
   IconButton,
   Alert,
   CircularProgress,
-  Box,
 } from '@material-ui/core';
-import { FileCopy } from '@material-ui/icons';
+import { FileCopy, Check } from '@material-ui/icons';
 import {
   ThemeProvider,
   unstable_createMuiStrictModeTheme,
@@ -153,6 +152,9 @@ export const ConnextModal: FC<ConnextModalProps> = ({
     [crossChainTransferId: string]: TransferStates;
   }>({});
   const [initing, setIniting] = useState<boolean>(true);
+  const [copiedDepositAddress, setCopiedDepositAddress] = useState<boolean>(
+    false
+  );
 
   const [
     activeCrossChainTransferId,
@@ -260,7 +262,13 @@ export const ConnextModal: FC<ConnextModalProps> = ({
           iframeSrc,
           supportedChains: [depositChainId, withdrawChainId],
         });
-        await browserNode.init();
+        try {
+          await browserNode.init();
+        } catch (e) {
+          setIniting(false);
+          setError(e);
+          return;
+        }
         registerEngineEventListeners(browserNode);
         console.log('INITIALIZED BROWSER NODE');
         const depositChannelRes = await browserNode.getStateChannelByParticipants(
@@ -270,7 +278,9 @@ export const ConnextModal: FC<ConnextModalProps> = ({
           }
         );
         if (depositChannelRes.isError) {
-          throw depositChannelRes.getError();
+          setIniting(false);
+          setError(depositChannelRes.getError());
+          return;
         }
         const depositChannel = depositChannelRes.getValue();
         const _depositAddress = depositChannel.channelAddress;
@@ -283,7 +293,9 @@ export const ConnextModal: FC<ConnextModalProps> = ({
           }
         );
         if (withdrawChannelRes.isError) {
-          throw withdrawChannelRes.getError();
+          setIniting(false);
+          setError(withdrawChannelRes.getError());
+          return;
         }
         const withdrawChannel = withdrawChannelRes.getValue();
 
@@ -300,21 +312,34 @@ export const ConnextModal: FC<ConnextModalProps> = ({
                 _ethProviders[chainId]
               ).balanceOf(balanceOfAddress);
 
-        const startingBalance = await getAssetBalance(
-          depositChainId,
-          depositAssetId,
-          _depositAddress
-        );
+        let startingBalance: BigNumber;
+        try {
+          startingBalance = await getAssetBalance(
+            depositChainId,
+            depositAssetId,
+            _depositAddress
+          );
+        } catch (e) {
+          setIniting(false);
+          setError(e);
+          return;
+        }
         console.log(
           `Starting balance on ${depositChainId} for ${_depositAddress} of asset ${depositAssetId}: ${startingBalance.toString()}`
         );
         _ethProviders[depositChainId].on('block', async (blockNumber) => {
           console.log('New blockNumber: ', blockNumber);
-          const updatedBalance = await getAssetBalance(
-            depositChainId,
-            depositAssetId,
-            _depositAddress
-          );
+          let updatedBalance: BigNumber;
+          try {
+            updatedBalance = await getAssetBalance(
+              depositChainId,
+              depositAssetId,
+              _depositAddress
+            );
+          } catch (e) {
+            console.warn(`Error fetching balance: ${e.message}`);
+            return;
+          }
           console.log(
             `Updated balance on ${depositChainId} for ${_depositAddress} of asset ${depositAssetId}: ${updatedBalance.toString()}`
           );
@@ -325,6 +350,8 @@ export const ConnextModal: FC<ConnextModalProps> = ({
             const updated = { ...crossChainTransfers };
             updated[crossChainTransferId] = TRANSFER_STATES.DEPOSITING;
             setCrossChainTransfers(updated);
+            // TODO: no need to do this if tracking via transferID, but if
+            // modal is only designed for one transfer, meh
             _ethProviders[depositChainId].off('block');
             browserNode
               .crossChainTransfer({
@@ -383,6 +410,8 @@ export const ConnextModal: FC<ConnextModalProps> = ({
               depositChainName={depositChainName}
               withdrawChainName={withdrawChainName}
               withdrawalAddress={withdrawalAddress}
+              copiedDepositAddress={copiedDepositAddress}
+              setCopiedDepositAddress={setCopiedDepositAddress}
             />
           )}
           {!initing && transferState === TRANSFER_STATES.DEPOSITING && (
@@ -442,11 +471,15 @@ const InitialState: FC<{
   depositChainName: string;
   withdrawChainName: string;
   withdrawalAddress: string;
+  copiedDepositAddress: boolean;
+  setCopiedDepositAddress: (val: boolean) => void;
 }> = ({
   depositAddress,
   depositChainName,
   withdrawChainName,
   withdrawalAddress,
+  copiedDepositAddress,
+  setCopiedDepositAddress,
 }) => (
   <>
     {depositAddress ? (
@@ -474,10 +507,12 @@ const InitialState: FC<{
                       onClick={() => {
                         console.log(`Copying: ${depositAddress}`);
                         navigator.clipboard.writeText(depositAddress);
+                        setCopiedDepositAddress(true);
+                        setTimeout(() => setCopiedDepositAddress(false), 5000);
                       }}
                       edge="end"
                     >
-                      <FileCopy />
+                      {!copiedDepositAddress ? <FileCopy /> : <Check />}
                     </IconButton>
                   </InputAdornment>
                 ),
@@ -490,7 +525,7 @@ const InitialState: FC<{
           </Grid>
           <Grid item xs={9}>
             <Alert variant="outlined" severity="info">
-              Waiting for Deposit!
+              Waiting for deposit!
             </Alert>
           </Grid>
           <Grid item xs={3}>
