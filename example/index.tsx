@@ -4,7 +4,7 @@ import * as React from 'react';
 import * as ReactDOM from 'react-dom';
 import { config } from 'dotenv';
 
-import { ConnextModal } from '../src/index';
+import { ConnextModal } from '..';
 
 config();
 
