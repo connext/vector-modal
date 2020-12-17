@@ -156,15 +156,14 @@ export const ConnextModal: FC<ConnextModalProps> = ({
     false
   );
 
-  const [
-    activeCrossChainTransferId,
-    setActiveCrossChainTransferId,
-  ] = useState<string>('');
+  const [activeCrossChainTransferId, setActiveCrossChainTransferId] = useState<
+    string
+  >('');
 
   const [error, setError] = useState<Error>();
 
   const registerEngineEventListeners = (node: BrowserNode): void => {
-    node.on(EngineEvents.DEPOSIT_RECONCILED, (data) => {
+    node.on(EngineEvents.DEPOSIT_RECONCILED, data => {
       if (data.meta.crossChainTransferId) {
         setCrossChainTransferWithErrorTimeout(
           data.meta.crossChainTransferId,
@@ -172,7 +171,7 @@ export const ConnextModal: FC<ConnextModalProps> = ({
         );
       }
     });
-    node.on(EngineEvents.CONDITIONAL_TRANSFER_RESOLVED, (data) => {
+    node.on(EngineEvents.CONDITIONAL_TRANSFER_RESOLVED, data => {
       if (
         data.transfer.meta.crossChainTransferId &&
         data.transfer.initiator === node.signerAddress
@@ -185,7 +184,7 @@ export const ConnextModal: FC<ConnextModalProps> = ({
         setSentAmount(utils.formatEther(data.channelBalance.amount[1]));
       }
     });
-    node.on(EngineEvents.WITHDRAWAL_RESOLVED, (data) => {
+    node.on(EngineEvents.WITHDRAWAL_RESOLVED, data => {
       if (
         data.transfer.meta.crossChainTransferId &&
         data.transfer.initiator === node.signerAddress
@@ -225,14 +224,14 @@ export const ConnextModal: FC<ConnextModalProps> = ({
         try {
           const chainInfo: any[] = await utils.fetchJson(CHAIN_INFO_URL);
           const depositChainInfo = chainInfo.find(
-            (info) => info.chainId === depositChainId
+            info => info.chainId === depositChainId
           );
           if (depositChainInfo) {
             setDepositChainName(depositChainInfo.name);
           }
 
           const withdrawChainInfo = chainInfo.find(
-            (info) => info.chainId === withdrawChainId
+            info => info.chainId === withdrawChainId
           );
           if (withdrawChainInfo) {
             setWithdrawChainName(withdrawChainInfo.name);
@@ -297,7 +296,6 @@ export const ConnextModal: FC<ConnextModalProps> = ({
           setError(withdrawChannelRes.getError());
           return;
         }
-        const withdrawChannel = withdrawChannelRes.getValue();
 
         const getAssetBalance = async (
           chainId: number,
@@ -327,7 +325,7 @@ export const ConnextModal: FC<ConnextModalProps> = ({
         console.log(
           `Starting balance on ${depositChainId} for ${_depositAddress} of asset ${depositAssetId}: ${startingBalance.toString()}`
         );
-        _ethProviders[depositChainId].on('block', async (blockNumber) => {
+        _ethProviders[depositChainId].on('block', async blockNumber => {
           console.log('New blockNumber: ', blockNumber);
           let updatedBalance: BigNumber;
           try {
@@ -364,14 +362,14 @@ export const ConnextModal: FC<ConnextModalProps> = ({
                 withdrawalAddress,
                 meta: { crossChainTransferId },
               })
-              .then((crossChainTransfer) => {
+              .then(crossChainTransfer => {
                 console.log('crossChainTransfer: ', crossChainTransfer);
                 setWithdrawTx(crossChainTransfer.withdrawalTx);
                 const updated = { ...crossChainTransfers };
                 updated[crossChainTransferId] = TRANSFER_STATES.COMPLETE;
                 setCrossChainTransfers(updated);
               })
-              .catch((e) => {
+              .catch(e => {
                 setError(e);
                 console.error('Error in crossChainTransfer: ', e);
                 const updated = { ...crossChainTransfers };
