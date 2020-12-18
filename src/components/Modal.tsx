@@ -14,12 +14,11 @@ import {
   IconButton,
   Alert,
   CircularProgress,
+  Card,
+  CardHeader,
 } from '@material-ui/core';
 import { FileCopy, Check } from '@material-ui/icons';
-import {
-  ThemeProvider,
-  unstable_createMuiStrictModeTheme,
-} from '@material-ui/core';
+import { ThemeProvider } from '@material-ui/core';
 import React, { FC, useEffect, useState } from 'react';
 // @ts-ignore
 import QRCode from 'qrcode.react';
@@ -34,99 +33,33 @@ import {
 } from 'ethers';
 import { EngineEvents, ERC20Abi } from '@connext/vector-types';
 import { getRandomBytes32 } from '@connext/vector-utils';
-
+import {
+  theme,
+  CHAIN_INFO_URL,
+  routerPublicIdentifier,
+  iframeSrc,
+  ethProvidersOverrides,
+  TransferStates,
+  ConnextModalProps,
+  TRANSFER_STATES,
+} from '../constants';
+import { getProviderUrlForChain, getExplorerLinkForTx } from '../utils';
 // @ts-ignore
 import LoadingGif from '../assets/loading.gif';
 
-const theme = unstable_createMuiStrictModeTheme({ palette: { mode: 'dark' } });
-
-const CHAIN_INFO_URL = 'https://chainid.network/chains.json';
-
-const PROD_ROUTER_IDENTIFIER =
-  'vector7tbbTxQp8ppEQUgPsbGiTrVdapLdU5dH7zTbVuXRf1M4CEBU9Q';
-
-const PROD_IFRAME_WALLET = 'https://wallet.connext.network';
-
-const routerPublicIdentifier =
-  process.env.REACT_APP_ROUTER_IDENTIFIER || PROD_ROUTER_IDENTIFIER;
 console.log('routerPublicIdentifier: ', routerPublicIdentifier);
-
-const iframeSrc = process.env.REACT_APP_IFRAME_SRC || PROD_IFRAME_WALLET;
 console.log('iframeSrc: ', iframeSrc);
-
-const ethProvidersOverrides = JSON.parse(
-  process.env.REACT_APP_ETH_PROVIDERS || '{}'
-);
 console.log('ethProvidersOverrides: ', ethProvidersOverrides);
-
-const TRANSFER_STATES = {
-  INITIAL: 'INITIAL',
-  DEPOSITING: 'DEPOSITING',
-  TRANSFERRING: 'TRANSFERRING',
-  WITHDRAWING: 'WITHDRAWING',
-  COMPLETE: 'COMPLETE',
-  ERROR: 'ERROR',
-} as const;
-export type TransferStates = keyof typeof TRANSFER_STATES;
 
 const useStyles = makeStyles(() => ({
   root: {
-    width: '100%',
+    maxWidth: '420',
   },
   spacing: {
     margin: theme.spacing(3, 2),
   },
   dialog: { height: '450px' },
 }));
-
-type ConnextModalProps = {
-  showModal: boolean;
-  depositChainId: number;
-  depositAssetId: string;
-  withdrawChainId: number;
-  withdrawAssetId: string;
-  withdrawalAddress: string;
-  onClose: () => void;
-};
-
-const getExplorerLinkForTx = (chainId: number, txHash: string): string => {
-  switch (chainId) {
-    case 1: {
-      return `https://etherscan.io/tx/${txHash}`;
-    }
-    case 4: {
-      return `https://rinkeby.etherscan.io/tx/${txHash}`;
-    }
-    case 5: {
-      return `https://goerli.etherscan.io/tx/${txHash}`;
-    }
-    case 42: {
-      return `https://kovan.etherscan.io/tx/${txHash}`;
-    }
-    case 80001: {
-      return `https://explorer-mumbai.maticvigil.com/tx/${txHash}`;
-    }
-    case 152709604825713: {
-      return `https://explorer.offchainlabs.com/#/tx/${txHash}`;
-    }
-  }
-  return '#';
-};
-
-const getProviderUrlForChain = (chainId: number): string | undefined => {
-  switch (chainId) {
-    case 5: {
-      return `https://goerli.prylabs.net`;
-    }
-    case 80001: {
-      return `https://rpc-mumbai.matic.today`;
-    }
-    case 152709604825713: {
-      return `https://kovan2.arbitrum.io/rpc`;
-    }
-  }
-  return undefined;
-};
 
 export const ConnextModal: FC<ConnextModalProps> = ({
   showModal,
@@ -156,14 +89,15 @@ export const ConnextModal: FC<ConnextModalProps> = ({
     false
   );
 
-  const [activeCrossChainTransferId, setActiveCrossChainTransferId] = useState<
-    string
-  >('');
+  const [
+    activeCrossChainTransferId,
+    setActiveCrossChainTransferId,
+  ] = useState<string>('');
 
   const [error, setError] = useState<Error>();
 
   const registerEngineEventListeners = (node: BrowserNode): void => {
-    node.on(EngineEvents.DEPOSIT_RECONCILED, data => {
+    node.on(EngineEvents.DEPOSIT_RECONCILED, (data) => {
       if (data.meta.crossChainTransferId) {
         setCrossChainTransferWithErrorTimeout(
           data.meta.crossChainTransferId,
@@ -171,7 +105,7 @@ export const ConnextModal: FC<ConnextModalProps> = ({
         );
       }
     });
-    node.on(EngineEvents.CONDITIONAL_TRANSFER_RESOLVED, data => {
+    node.on(EngineEvents.CONDITIONAL_TRANSFER_RESOLVED, (data) => {
       if (
         data.transfer.meta.crossChainTransferId &&
         data.transfer.initiator === node.signerAddress
@@ -184,7 +118,7 @@ export const ConnextModal: FC<ConnextModalProps> = ({
         setSentAmount(utils.formatEther(data.channelBalance.amount[1]));
       }
     });
-    node.on(EngineEvents.WITHDRAWAL_RESOLVED, data => {
+    node.on(EngineEvents.WITHDRAWAL_RESOLVED, (data) => {
       if (
         data.transfer.meta.crossChainTransferId &&
         data.transfer.initiator === node.signerAddress
@@ -222,14 +156,14 @@ export const ConnextModal: FC<ConnextModalProps> = ({
     try {
       const chainInfo: any[] = await utils.fetchJson(CHAIN_INFO_URL);
       const depositChainInfo = chainInfo.find(
-        info => info.chainId === depositChainId
+        (info) => info.chainId === depositChainId
       );
       if (depositChainInfo) {
         setDepositChainName(depositChainInfo.name);
       }
 
       const withdrawChainInfo = chainInfo.find(
-        info => info.chainId === withdrawChainId
+        (info) => info.chainId === withdrawChainId
       );
       if (withdrawChainInfo) {
         setWithdrawChainName(withdrawChainInfo.name);
@@ -334,7 +268,7 @@ export const ConnextModal: FC<ConnextModalProps> = ({
         console.log(
           `Starting balance on ${depositChainId} for ${_depositAddress} of asset ${depositAssetId}: ${startingBalance.toString()}`
         );
-        _ethProviders[depositChainId].on('block', async blockNumber => {
+        _ethProviders[depositChainId].on('block', async (blockNumber) => {
           console.log('New blockNumber: ', blockNumber);
           let updatedBalance: BigNumber;
           try {
@@ -371,14 +305,14 @@ export const ConnextModal: FC<ConnextModalProps> = ({
                 withdrawalAddress,
                 meta: { crossChainTransferId },
               })
-              .then(crossChainTransfer => {
+              .then((crossChainTransfer) => {
                 console.log('crossChainTransfer: ', crossChainTransfer);
                 setWithdrawTx(crossChainTransfer.withdrawalTx);
                 const updated = { ...crossChainTransfers };
                 updated[crossChainTransferId] = TRANSFER_STATES.COMPLETE;
                 setCrossChainTransfers(updated);
               })
-              .catch(e => {
+              .catch((e) => {
                 setError(e);
                 console.error('Error in crossChainTransfer: ', e);
                 const updated = { ...crossChainTransfers };
@@ -398,6 +332,23 @@ export const ConnextModal: FC<ConnextModalProps> = ({
   return (
     <ThemeProvider theme={theme}>
       <Dialog open={showModal} fullWidth={true} maxWidth="xs">
+        {/* <Card className={classes.root}>
+          <CardHeader
+            avatar={
+              <Avatar aria-label="recipe" className={classes.avatar}>
+                R
+              </Avatar>
+            }
+            action={
+              <IconButton aria-label="settings">
+                <MoreVertIcon />
+              </IconButton>
+            }
+            title="Shrimp and Chorizo Paella"
+            subheader="September 14, 2016"
+          />
+        </Card> */}
+
         <DialogContent
           className={classes.dialog}
           style={{
