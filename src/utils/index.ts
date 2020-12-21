@@ -1,3 +1,14 @@
+import {
+  providers,
+  getDefaultProvider,
+  constants,
+  Contract,
+  BigNumber,
+} from 'ethers';
+import { ERC20Abi } from '@connext/vector-types';
+
+import { TransferStates, ethProvidersOverrides } from '../constants';
+
 export const getExplorerLinkForTx = (
   chainId: number,
   txHash: string
@@ -38,4 +49,66 @@ export const getProviderUrlForChain = (chainId: number): string | undefined => {
     }
   }
   return undefined;
+};
+
+export const activePhase = (phase: TransferStates): number => {
+  switch (phase) {
+    case 'INITIAL': {
+      return -1;
+    }
+    case 'DEPOSITING': {
+      return 0;
+    }
+    case 'TRANSFERRING': {
+      return 1;
+    }
+    case 'WITHDRAWING': {
+      return 2;
+    }
+    case 'COMPLETE': {
+      return 3;
+    }
+    case 'ERROR': {
+      return 4;
+    }
+  }
+};
+
+export const hydrateProviders = (
+  depositChainId: number,
+  withdrawChainId: number
+): {
+  [chainId: number]: providers.BaseProvider;
+} => {
+  const _ethProviders: { [chainId: number]: providers.BaseProvider } = {};
+  for (const chainId of [depositChainId, withdrawChainId]) {
+    if (ethProvidersOverrides[chainId]) {
+      _ethProviders[chainId] = new providers.JsonRpcProvider(
+        ethProvidersOverrides[chainId]
+      );
+    } else {
+      const providerUrl = getProviderUrlForChain(chainId);
+      if (providerUrl) {
+        _ethProviders[chainId] = new providers.JsonRpcProvider(providerUrl);
+      } else {
+        _ethProviders[chainId] = getDefaultProvider(chainId as any);
+      }
+    }
+  }
+  return _ethProviders;
+};
+
+export const getAssetBalance = async (
+  ethProviders: { [chainId: number]: providers.BaseProvider },
+  chainId: number,
+  assetId: string,
+  balanceOfAddress: string
+): Promise<BigNumber> => {
+  const balance =
+    assetId === constants.AddressZero
+      ? await ethProviders[chainId].getBalance(balanceOfAddress)
+      : await new Contract(assetId, ERC20Abi, ethProviders[chainId]).balanceOf(
+          balanceOfAddress
+        );
+  return balance;
 };
