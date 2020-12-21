@@ -57,8 +57,6 @@ import {
   hydrateProviders,
 } from '../utils';
 import '../styles/modal';
-// @ts-ignore
-import LoadingGif from '../assets/loading.gif';
 
 const useStyles = makeStyles(() => ({
   root: {
@@ -409,28 +407,6 @@ export const ConnextModal: FC<ConnextModalProps> = ({
                 <Skeleton variant="rectangular" height={300} />
               </>
             )}
-            {/* {!initing && transferState === TRANSFER_STATES.INITIAL && (
-              <InitialState
-                depositAddress={depositAddress}
-                depositChainName={depositChainName}
-                withdrawChainName={withdrawChainName}
-                withdrawalAddress={withdrawalAddress}
-                copiedDepositAddress={copiedDepositAddress}
-                setCopiedDepositAddress={setCopiedDepositAddress}
-              />
-            )} */}
-            {/* {!initing && transferState === TRANSFER_STATES.DEPOSITING && (
-              <DepositingState depositChainName={depositChainName} />
-            )}
-            {!initing && transferState === TRANSFER_STATES.TRANSFERRING && (
-              <TransferringState
-                depositChainName={depositChainName}
-                withdrawChainName={withdrawChainName}
-              />
-            )} 
-            {!initing && transferState === TRANSFER_STATES.WITHDRAWING && (
-              <WithdrawingState withdrawChainName={withdrawChainName} />
-            )}*/}
             {!initing && transferState === TRANSFER_STATES.COMPLETE && (
               <CompleteState
                 withdrawChainName={withdrawChainName}
