@@ -1,64 +1,76 @@
 import { BrowserNode } from '@connext/vector-browser-node';
+import React, { FC, useEffect, useState } from 'react';
 import {
   Dialog,
+  DialogTitle,
   Grid,
   makeStyles,
   Divider,
   Button,
   Typography,
-  DialogContent,
-  DialogActions,
   Skeleton,
   TextField,
+  Stepper,
+  Step,
+  StepLabel,
+  StepContent,
   InputAdornment,
   IconButton,
   Alert,
-  CircularProgress,
   Card,
-  CardHeader,
+  Chip,
+  ThemeProvider,
+  MenuItem,
+  Popper,
+  MenuList,
+  ClickAwayListener,
+  Paper,
+  Grow,
 } from '@material-ui/core';
-import { FileCopy, Check } from '@material-ui/icons';
-import { ThemeProvider } from '@material-ui/core';
-import React, { FC, useEffect, useState } from 'react';
+import {
+  MoreVert,
+  FileCopy,
+  Check,
+  Close,
+  DoubleArrow,
+  CropFree,
+} from '@material-ui/icons';
+import Loading from './Loading';
 // @ts-ignore
 import QRCode from 'qrcode.react';
-import Chip from '@material-ui/core/Chip';
-import {
-  providers,
-  getDefaultProvider,
-  constants,
-  Contract,
-  BigNumber,
-  utils,
-} from 'ethers';
-import { EngineEvents, ERC20Abi } from '@connext/vector-types';
+import { BigNumber, utils } from 'ethers';
+import { EngineEvents } from '@connext/vector-types';
 import { getRandomBytes32 } from '@connext/vector-utils';
 import {
   theme,
   CHAIN_INFO_URL,
   routerPublicIdentifier,
   iframeSrc,
-  ethProvidersOverrides,
   TransferStates,
   ConnextModalProps,
   TRANSFER_STATES,
 } from '../constants';
-import { getProviderUrlForChain, getExplorerLinkForTx } from '../utils';
+import {
+  getExplorerLinkForTx,
+  activePhase,
+  getAssetBalance,
+  hydrateProviders,
+} from '../utils';
+import '../styles/modal';
 // @ts-ignore
 import LoadingGif from '../assets/loading.gif';
 
-console.log('routerPublicIdentifier: ', routerPublicIdentifier);
-console.log('iframeSrc: ', iframeSrc);
-console.log('ethProvidersOverrides: ', ethProvidersOverrides);
-
 const useStyles = makeStyles(() => ({
   root: {
-    maxWidth: '420',
+    width: '100%',
   },
   spacing: {
     margin: theme.spacing(3, 2),
   },
-  dialog: { height: '450px' },
+  card: {
+    height: 'auto',
+    minWidth: '390px',
+  },
 }));
 
 export const ConnextModal: FC<ConnextModalProps> = ({
@@ -71,6 +83,7 @@ export const ConnextModal: FC<ConnextModalProps> = ({
   onClose,
 }) => {
   const classes = useStyles();
+  const [initializing, setInitializing] = useState(true);
   const [depositAddress, setDepositAddress] = useState<string>();
   const [depositChainName, setDepositChainName] = useState<string>(
     depositChainId.toString()
@@ -85,9 +98,8 @@ export const ConnextModal: FC<ConnextModalProps> = ({
     [crossChainTransferId: string]: TransferStates;
   }>({});
   const [initing, setIniting] = useState<boolean>(true);
-  const [copiedDepositAddress, setCopiedDepositAddress] = useState<boolean>(
-    false
-  );
+
+  const [activeStep, setActiveStep] = React.useState(-1);
 
   const [
     activeCrossChainTransferId,
@@ -98,12 +110,13 @@ export const ConnextModal: FC<ConnextModalProps> = ({
 
   const registerEngineEventListeners = (node: BrowserNode): void => {
     node.on(EngineEvents.DEPOSIT_RECONCILED, (data) => {
-      if (data.meta.crossChainTransferId) {
-        setCrossChainTransferWithErrorTimeout(
-          data.meta.crossChainTransferId,
-          TRANSFER_STATES.TRANSFERRING
-        );
-      }
+      console.log(data);
+      // if (data.meta.crossChainTransferId) {
+      setCrossChainTransferWithErrorTimeout(
+        activeCrossChainTransferId,
+        TRANSFER_STATES.TRANSFERRING
+      );
+      // }
     });
     node.on(EngineEvents.CONDITIONAL_TRANSFER_RESOLVED, (data) => {
       if (
@@ -140,6 +153,7 @@ export const ConnextModal: FC<ConnextModalProps> = ({
     let tracked = { ...crossChainTransfers };
     tracked[crossChainTransferId] = phase;
     setCrossChainTransfers(tracked);
+    setActiveStep(activePhase(phase));
     setTimeout(() => {
       if (crossChainTransfers[crossChainTransferId] !== phase) {
         return;
@@ -148,6 +162,7 @@ export const ConnextModal: FC<ConnextModalProps> = ({
       let tracked = { ...crossChainTransfers };
       tracked[crossChainTransferId] = TRANSFER_STATES.ERROR;
       setCrossChainTransfers(tracked);
+      setActiveStep(activePhase(phase));
       setError(new Error(`No updates within 30s for ${crossChainTransferId}`));
     }, 30_000);
   };
@@ -173,32 +188,12 @@ export const ConnextModal: FC<ConnextModalProps> = ({
     }
   };
 
-  const hydrateProviders = (): {
-    [chainId: number]: providers.BaseProvider;
-  } => {
-    const _ethProviders: { [chainId: number]: providers.BaseProvider } = {};
-    for (const chainId of [depositChainId, withdrawChainId]) {
-      if (ethProvidersOverrides[chainId]) {
-        _ethProviders[chainId] = new providers.JsonRpcProvider(
-          ethProvidersOverrides[chainId]
-        );
-      } else {
-        const providerUrl = getProviderUrlForChain(chainId);
-        if (providerUrl) {
-          _ethProviders[chainId] = new providers.JsonRpcProvider(providerUrl);
-        } else {
-          _ethProviders[chainId] = getDefaultProvider(chainId as any);
-        }
-      }
-    }
-    return _ethProviders;
-  };
-
   useEffect(() => {
+    setInitializing(false);
     const init = async () => {
       if (showModal) {
         await getChainInfo();
-        const _ethProviders = hydrateProviders();
+        const _ethProviders = hydrateProviders(depositChainId, withdrawChainId);
         const browserNode = new BrowserNode({
           routerPublicIdentifier,
           iframeSrc,
@@ -240,22 +235,10 @@ export const ConnextModal: FC<ConnextModalProps> = ({
           return;
         }
 
-        const getAssetBalance = async (
-          chainId: number,
-          assetId: string,
-          balanceOfAddress: string
-        ): Promise<BigNumber> =>
-          assetId === constants.AddressZero
-            ? await _ethProviders[chainId].getBalance(balanceOfAddress)
-            : await new Contract(
-                assetId,
-                ERC20Abi,
-                _ethProviders[chainId]
-              ).balanceOf(balanceOfAddress);
-
         let startingBalance: BigNumber;
         try {
           startingBalance = await getAssetBalance(
+            _ethProviders,
             depositChainId,
             depositAssetId,
             _depositAddress
@@ -273,6 +256,7 @@ export const ConnextModal: FC<ConnextModalProps> = ({
           let updatedBalance: BigNumber;
           try {
             updatedBalance = await getAssetBalance(
+              _ethProviders,
               depositChainId,
               depositAssetId,
               _depositAddress
@@ -291,6 +275,7 @@ export const ConnextModal: FC<ConnextModalProps> = ({
             const updated = { ...crossChainTransfers };
             updated[crossChainTransferId] = TRANSFER_STATES.DEPOSITING;
             setCrossChainTransfers(updated);
+            setActiveStep(activePhase(TRANSFER_STATES.DEPOSITING));
             // TODO: no need to do this if tracking via transferID, but if
             // modal is only designed for one transfer, meh
             _ethProviders[depositChainId].off('block');
@@ -303,13 +288,14 @@ export const ConnextModal: FC<ConnextModalProps> = ({
                 toChainId: withdrawChainId,
                 reconcileDeposit: true,
                 withdrawalAddress,
-                meta: { crossChainTransferId },
+                // meta: { crossChainTransferId },
               })
               .then((crossChainTransfer) => {
                 console.log('crossChainTransfer: ', crossChainTransfer);
                 setWithdrawTx(crossChainTransfer.withdrawalTx);
                 const updated = { ...crossChainTransfers };
                 updated[crossChainTransferId] = TRANSFER_STATES.COMPLETE;
+                setActiveStep(activePhase(TRANSFER_STATES.COMPLETE));
                 setCrossChainTransfers(updated);
               })
               .catch((e) => {
@@ -317,6 +303,7 @@ export const ConnextModal: FC<ConnextModalProps> = ({
                 console.error('Error in crossChainTransfer: ', e);
                 const updated = { ...crossChainTransfers };
                 updated[crossChainTransferId] = TRANSFER_STATES.ERROR;
+                setActiveStep(activePhase(TRANSFER_STATES.ERROR));
                 setCrossChainTransfers(updated);
               });
           }
@@ -329,203 +316,379 @@ export const ConnextModal: FC<ConnextModalProps> = ({
   const transferState: TransferStates =
     crossChainTransfers[activeCrossChainTransferId] ?? TRANSFER_STATES.INITIAL;
 
+  const steps = ['Deposit', 'Transfer', 'Withdraw'];
+
+  function getStepContent(step: number) {
+    switch (step) {
+      case 0:
+        return `Detected deposit on-chain(${depositChainName}), depositing into state channel!`;
+      case 1:
+        return `Transferring from ${depositChainName} to ${withdrawChainName}`;
+      case 2:
+        return 'Withdrawing funds back on-chain(${withdrawChainName}!';
+      default:
+        return 'Unknown step';
+    }
+  }
+
   return (
     <ThemeProvider theme={theme}>
       <Dialog open={showModal} fullWidth={true} maxWidth="xs">
-        {/* <Card className={classes.root}>
-          <CardHeader
-            avatar={
-              <Avatar aria-label="recipe" className={classes.avatar}>
-                R
-              </Avatar>
-            }
-            action={
-              <IconButton aria-label="settings">
-                <MoreVertIcon />
+        <Card className={classes.card}>
+          <Grid
+            id="Header"
+            container
+            direction="row"
+            justifyContent="space-between"
+            alignItems="center"
+          >
+            <Grid item>
+              <IconButton
+                aria-label="close"
+                disabled={[
+                  TRANSFER_STATES.DEPOSITING,
+                  TRANSFER_STATES.TRANSFERRING,
+                  TRANSFER_STATES.WITHDRAWING,
+                ].includes(transferState as any)}
+                onClick={onClose}
+              >
+                <Close />
               </IconButton>
-            }
-            title="Shrimp and Chorizo Paella"
-            subheader="September 14, 2016"
-          />
-        </Card> */}
+            </Grid>
+            <Grid item>
+              <Typography gutterBottom variant="h6">
+                Send USDC
+              </Typography>
+            </Grid>
+            <Grid item>
+              <Options />
+            </Grid>
+          </Grid>
 
-        <DialogContent
-          className={classes.dialog}
-          style={{
-            backgroundColor: [
-              TRANSFER_STATES.INITIAL,
-              TRANSFER_STATES.COMPLETE,
-              TRANSFER_STATES.ERROR,
-            ].includes(transferState as any)
-              ? undefined
-              : '#fbd116',
-          }}
-        >
-          {initing && <LoadingState />}
-          {!initing && transferState === TRANSFER_STATES.INITIAL && (
-            <InitialState
-              depositAddress={depositAddress}
-              depositChainName={depositChainName}
-              withdrawChainName={withdrawChainName}
-              withdrawalAddress={withdrawalAddress}
-              copiedDepositAddress={copiedDepositAddress}
-              setCopiedDepositAddress={setCopiedDepositAddress}
-            />
-          )}
-          {!initing && transferState === TRANSFER_STATES.DEPOSITING && (
-            <DepositingState depositChainName={depositChainName} />
-          )}
-          {!initing && transferState === TRANSFER_STATES.TRANSFERRING && (
-            <TransferringState
-              depositChainName={depositChainName}
-              withdrawChainName={withdrawChainName}
-            />
-          )}
-          {!initing && transferState === TRANSFER_STATES.WITHDRAWING && (
-            <WithdrawingState withdrawChainName={withdrawChainName} />
-          )}
-          {!initing && transferState === TRANSFER_STATES.COMPLETE && (
-            <CompleteState
-              withdrawChainName={withdrawChainName}
-              withdrawTx={withdrawTx!}
-              sentAmount={sentAmount}
-              withdrawChainId={withdrawChainId}
-            />
-          )}
-          {!initing && transferState === TRANSFER_STATES.ERROR && (
-            <ErrorState
-              error={error ?? new Error('unknown')}
-              crossChainTransferId={activeCrossChainTransferId}
-            />
-          )}
-        </DialogContent>
-        <DialogActions>
-          {[
-            TRANSFER_STATES.INITIAL,
-            TRANSFER_STATES.COMPLETE,
-            TRANSFER_STATES.ERROR,
-          ].includes(transferState as any) && (
-            <Button onClick={onClose}>Close</Button>
-          )}
-          <Typography variant="body1">Powered By Connext</Typography>
-        </DialogActions>
+          <div style={{ padding: '1rem' }}>
+            {initing && (
+              <Loading initializing={initializing} message={'Loading...'} />
+            )}
+            {depositAddress ? (
+              <>
+                <NetworkBar
+                  depositChainName={depositChainName}
+                  withdrawChainName={withdrawChainName}
+                />
+                <EthereumAddress depositAddress={depositAddress} />
+
+                <Grid container spacing={2} className="pb-4">
+                  <Grid item xs={12}>
+                    <Stepper activeStep={activeStep} orientation="vertical">
+                      {steps.map((label, index) => (
+                        <Step key={label}>
+                          <StepLabel>{label}</StepLabel>
+                          <StepContent>
+                            <Typography>{getStepContent(index)}</Typography>
+                          </StepContent>
+                        </Step>
+                      ))}
+                    </Stepper>
+                  </Grid>
+                </Grid>
+                <Grid container spacing={2} className="pb-4">
+                  <Grid item xs={12}>
+                    <TextField
+                      label="Receiver Address"
+                      defaultValue={withdrawalAddress}
+                      InputProps={{
+                        readOnly: true,
+                      }}
+                      fullWidth
+                    />
+                  </Grid>
+                </Grid>
+              </>
+            ) : (
+              <>
+                <Skeleton variant="rectangular" height={300} />
+              </>
+            )}
+            {/* {!initing && transferState === TRANSFER_STATES.INITIAL && (
+              <InitialState
+                depositAddress={depositAddress}
+                depositChainName={depositChainName}
+                withdrawChainName={withdrawChainName}
+                withdrawalAddress={withdrawalAddress}
+                copiedDepositAddress={copiedDepositAddress}
+                setCopiedDepositAddress={setCopiedDepositAddress}
+              />
+            )} */}
+            {/* {!initing && transferState === TRANSFER_STATES.DEPOSITING && (
+              <DepositingState depositChainName={depositChainName} />
+            )}
+            {!initing && transferState === TRANSFER_STATES.TRANSFERRING && (
+              <TransferringState
+                depositChainName={depositChainName}
+                withdrawChainName={withdrawChainName}
+              />
+            )} 
+            {!initing && transferState === TRANSFER_STATES.WITHDRAWING && (
+              <WithdrawingState withdrawChainName={withdrawChainName} />
+            )}*/}
+            {!initing && transferState === TRANSFER_STATES.COMPLETE && (
+              <CompleteState
+                withdrawChainName={withdrawChainName}
+                withdrawTx={withdrawTx!}
+                sentAmount={sentAmount}
+                withdrawChainId={withdrawChainId}
+              />
+            )}
+            {!initing && transferState === TRANSFER_STATES.ERROR && (
+              <ErrorState
+                error={error ?? new Error('unknown')}
+                crossChainTransferId={activeCrossChainTransferId}
+              />
+            )}
+          </div>
+
+          <Grid id="Footer" container direction="row" justifyContent="center">
+            <Typography variant="body1">Powered By Connext</Typography>
+          </Grid>
+        </Card>
       </Dialog>
     </ThemeProvider>
   );
 };
 
-const LoadingState: FC = () => (
-  <>
-    <Grid container spacing={2}>
-      <Grid item xs={12}>
-        <CircularProgress />
-      </Grid>
-    </Grid>
-  </>
-);
+const Options: FC = () => {
+  const [open, setOpen] = React.useState(false);
+  const anchorRef = React.useRef<HTMLButtonElement>(null);
 
-const InitialState: FC<{
-  depositAddress?: string;
+  const handleToggle = () => {
+    setOpen((prevOpen) => !prevOpen);
+  };
+
+  const handleClose = (event: React.MouseEvent<EventTarget>) => {
+    if (
+      anchorRef.current &&
+      anchorRef.current.contains(event.target as HTMLElement)
+    ) {
+      return;
+    }
+
+    setOpen(false);
+  };
+
+  function handleListKeyDown(event: React.KeyboardEvent) {
+    if (event.key === 'Tab') {
+      event.preventDefault();
+      setOpen(false);
+    }
+  }
+
+  // return focus to the button when we transitioned from !open -> open
+  const prevOpen = React.useRef(open);
+  React.useEffect(() => {
+    if (prevOpen.current === true && open === false) {
+      anchorRef.current!.focus();
+    }
+
+    prevOpen.current = open;
+  }, [open]);
+  return (
+    <>
+      <IconButton
+        aria-label="options"
+        ref={anchorRef}
+        aria-controls={open ? 'menu-list-grow' : undefined}
+        aria-haspopup="true"
+        onClick={handleToggle}
+      >
+        <MoreVert />
+      </IconButton>
+      <Popper
+        open={open}
+        anchorEl={anchorRef.current}
+        role={undefined}
+        transition
+        disablePortal
+      >
+        {({ TransitionProps, placement }) => (
+          <Grow
+            {...TransitionProps}
+            style={{
+              transformOrigin:
+                placement === 'bottom' ? 'center top' : 'center bottom',
+            }}
+          >
+            <Paper>
+              <ClickAwayListener onClickAway={handleClose}>
+                <MenuList
+                  autoFocusItem={open}
+                  id="menu-list-grow"
+                  onKeyDown={handleListKeyDown}
+                >
+                  <MenuItem
+                    id="link"
+                    onClick={() =>
+                      window.open(
+                        'https://discord.com/channels/454734546869551114',
+                        '_blank'
+                      )
+                    }
+                  >
+                    {/* <Chat /> */}
+                    Discord
+                  </MenuItem>
+                </MenuList>
+              </ClickAwayListener>
+            </Paper>
+          </Grow>
+        )}
+      </Popper>
+    </>
+  );
+};
+
+// const LoadingState: FC = () => (
+//   <>
+//     <Grid container spacing={2}>
+//       <Grid item xs={12}>
+//         <Loading initializing={initializing} message={'Loading...'} />
+//       </Grid>
+//     </Grid>
+//   </>
+// );
+export interface EthereumAddressProps {
+  depositAddress: string;
+}
+
+const EthereumAddress: FC<EthereumAddressProps> = (props) => {
+  const { depositAddress } = props;
+  const [copiedDepositAddress, setCopiedDepositAddress] = useState<boolean>(
+    false
+  );
+
+  const [open, setOpen] = React.useState(false);
+
+  const handleOpen = () => {
+    setOpen(true);
+  };
+
+  const handleClose = () => {
+    setOpen(false);
+  };
+  return (
+    <>
+      <Grid container alignItems="flex-end" spacing={3} className="pb-4">
+        <Grid item xs={12}>
+          <TextField
+            label="Deposit Address"
+            defaultValue={depositAddress}
+            InputProps={{
+              readOnly: true,
+              endAdornment: (
+                <InputAdornment position="end">
+                  <IconButton
+                    onClick={() => {
+                      console.log(`Copying: ${depositAddress}`);
+                      navigator.clipboard.writeText(depositAddress);
+                      setCopiedDepositAddress(true);
+                      setTimeout(() => setCopiedDepositAddress(false), 5000);
+                    }}
+                    edge="end"
+                  >
+                    {!copiedDepositAddress ? <FileCopy /> : <Check />}
+                  </IconButton>
+                  <IconButton onClick={handleOpen} edge="end">
+                    <CropFree />
+                  </IconButton>
+                </InputAdornment>
+              ),
+            }}
+            fullWidth
+          />
+        </Grid>
+        <QRCodeModal open={open} address={depositAddress} close={handleClose} />
+      </Grid>
+    </>
+  );
+};
+export interface NetworkBarProps {
   depositChainName: string;
   withdrawChainName: string;
-  withdrawalAddress: string;
-  copiedDepositAddress: boolean;
-  setCopiedDepositAddress: (val: boolean) => void;
-}> = ({
-  depositAddress,
-  depositChainName,
-  withdrawChainName,
-  withdrawalAddress,
-  copiedDepositAddress,
-  setCopiedDepositAddress,
-}) => (
-  <>
-    {depositAddress ? (
-      <>
-        <Grid container spacing={2}>
-          <Grid item xs={6}>
-            <Typography gutterBottom variant="h6">
-              Send To
-            </Typography>
-          </Grid>
-          <Grid item xs={6}>
-            <Chip color="secondary" label={depositChainName} />
-          </Grid>
+}
+
+const NetworkBar: FC<NetworkBarProps> = (props) => {
+  const { depositChainName, withdrawChainName } = props;
+
+  return (
+    <>
+      <Grid
+        id="network"
+        container
+        direction="row"
+        justifyContent="space-between"
+        alignItems="center"
+        className="pb-4"
+      >
+        <Grid item>
+          <Chip color="secondary" label={depositChainName} />
         </Grid>
-        <Grid container alignItems="flex-end" spacing={2}>
-          <Grid item xs={12}>
-            <TextField
-              label="Deposit Address"
-              defaultValue={depositAddress}
-              InputProps={{
-                readOnly: true,
-                endAdornment: (
-                  <InputAdornment position="end">
-                    <IconButton
-                      onClick={() => {
-                        console.log(`Copying: ${depositAddress}`);
-                        navigator.clipboard.writeText(depositAddress);
-                        setCopiedDepositAddress(true);
-                        setTimeout(() => setCopiedDepositAddress(false), 5000);
-                      }}
-                      edge="end"
-                    >
-                      {!copiedDepositAddress ? <FileCopy /> : <Check />}
-                    </IconButton>
-                  </InputAdornment>
-                ),
-              }}
-              fullWidth
-            />
-          </Grid>
-          <Grid item xs={12}>
-            <QRCode value={depositAddress} />
-          </Grid>
-          <Grid item xs={9}>
-            <Alert variant="outlined" severity="info">
-              Waiting for deposit!
-            </Alert>
-          </Grid>
-          <Grid item xs={3}>
-            <CircularProgress />
-          </Grid>
-          <Grid item xs={12}></Grid>
+        <Grid item>
+          <IconButton aria-label="arrow">
+            <DoubleArrow />
+          </IconButton>
         </Grid>
-        <Grid container spacing={3}>
-          <Grid item xs={12}>
-            <Divider variant="middle" />
-          </Grid>
+        <Grid item>
+          <Chip color="primary" label={withdrawChainName} />
         </Grid>
-        <Grid container spacing={2}>
-          <Grid item xs={6}>
-            <Typography gutterBottom variant="h6">
-              Receiving On
-            </Typography>
-          </Grid>
-          <Grid item xs={6}>
-            <Chip color="primary" label={withdrawChainName} />
-          </Grid>
-        </Grid>
-        <Grid container spacing={2}>
-          <Grid item xs={12}>
-            <TextField
-              label="Receiver Address"
-              defaultValue={withdrawalAddress}
-              InputProps={{
-                readOnly: true,
-              }}
-              fullWidth
-            />
-          </Grid>
-        </Grid>
-      </>
-    ) : (
-      <>
-        <Skeleton variant="rectangular" height={300} />
-      </>
-    )}
-  </>
-);
+      </Grid>
+    </>
+  );
+};
+
+export interface QRCodeProps {
+  open: boolean;
+  address: string;
+  close: () => void;
+}
+
+const QRCodeModal: FC<QRCodeProps> = (props) => {
+  // const classes = useStyles();
+  const { open, close, address } = props;
+
+  return (
+    <Dialog onClose={close} aria-labelledby="simple-dialog-title" open={open}>
+      <DialogTitle id="simple-dialog-title">
+        Scan this code using your mobile wallet app
+      </DialogTitle>
+      <Grid
+        id="qrcode"
+        container
+        direction="row"
+        justifyContent="center"
+        alignItems="flex-start"
+        className="pb-4"
+      >
+        <QRCode value={address} />
+      </Grid>
+    </Dialog>
+  );
+};
+
+// const InitialState: FC<{
+//   depositAddress?: string;
+//   depositChainName: string;
+//   withdrawChainName: string;
+//   withdrawalAddress: string;
+//   copiedDepositAddress: boolean;
+//   setCopiedDepositAddress: (val: boolean) => void;
+// }> = ({
+//   depositAddress,
+//   depositChainName,
+//   withdrawChainName,
+//   withdrawalAddress,
+//   copiedDepositAddress,
+//   setCopiedDepositAddress,
+// }) => (
+// );
 
 const DepositingState: FC<{
   depositChainName: string;
