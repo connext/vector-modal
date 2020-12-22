@@ -29,7 +29,7 @@
     "trailingComma": "es5"
   },
   "name": "@connext/vector-modal",
-  "author": "Rahul Sethuram",
+  "author": "connext",
   "module": "dist/vector-modal.esm.js",
   "size-limit": [
     {
