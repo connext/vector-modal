@@ -41,6 +41,9 @@
       "limit": "10 KB"
     }
   ],
+  "publishConfig": {
+    "access": "public"
+  },
   "devDependencies": {
     "@rollup/plugin-image": "^2.0.6",
     "rollup-plugin-postcss": "^4.0.0",
