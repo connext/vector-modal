@@ -4,7 +4,6 @@ import {
   Dialog,
   DialogTitle,
   Grid,
-  makeStyles,
   Divider,
   Button,
   Typography,
@@ -16,7 +15,6 @@ import {
   StepContent,
   InputAdornment,
   IconButton,
-  Alert,
   Card,
   Chip,
   ThemeProvider,
@@ -26,6 +24,11 @@ import {
   ClickAwayListener,
   Paper,
   Grow,
+  CircularProgress,
+  Tooltip,
+  withStyles,
+  StepIconProps,
+  Icon,
 } from '@material-ui/core';
 import {
   MoreVert,
@@ -34,44 +37,85 @@ import {
   Close,
   DoubleArrow,
   CropFree,
+  Brightness4,
+  WbSunny,
+  CheckCircleRounded,
+  FiberManualRecordOutlined,
+  ErrorRounded,
 } from '@material-ui/icons';
-import Loading from './Loading';
+import {
+  makeStyles,
+  createStyles,
+  Theme,
+  createMuiTheme,
+} from '@material-ui/core/styles';
+import { purple, green } from '@material-ui/core/colors';
 // @ts-ignore
 import QRCode from 'qrcode.react';
 import { BigNumber, utils } from 'ethers';
 import { EngineEvents } from '@connext/vector-types';
 import { getRandomBytes32 } from '@connext/vector-utils';
 import {
-  theme,
   CHAIN_INFO_URL,
   routerPublicIdentifier,
   iframeSrc,
   TransferStates,
   ConnextModalProps,
   TRANSFER_STATES,
-} from '../constants';
+} from '../../constants';
 import {
   getExplorerLinkForTx,
   activePhase,
   getAssetBalance,
   hydrateProviders,
-} from '../utils';
-import '../styles/modal';
+} from '../../utils';
+import Loading from '../Loading';
+import './style.module.scss';
 
-const useStyles = makeStyles(() => ({
-  root: {
-    width: '100%',
+const theme = createMuiTheme({
+  palette: {
+    mode: 'light',
+    primary: {
+      main: purple[500],
+    },
+    secondary: {
+      main: green[700],
+    },
   },
-  spacing: {
-    margin: theme.spacing(3, 2),
+  typography: {
+    fontFamily: [
+      '-apple-system',
+      'BlinkMacSystemFont',
+      '"Segoe UI"',
+      'Roboto',
+      '"Helvetica Neue"',
+      'Arial',
+      'sans-serif',
+      '"Apple Color Emoji"',
+      '"Segoe UI Emoji"',
+      '"Segoe UI Symbol"',
+    ].join(','),
   },
-  card: {
-    height: 'auto',
-    minWidth: '390px',
-  },
-}));
+  spacing: 2,
+});
 
-export const ConnextModal: FC<ConnextModalProps> = ({
+const useStyles = makeStyles((theme: Theme) =>
+  createStyles({
+    root: {
+      width: '100%',
+    },
+    spacing: {
+      margin: theme.spacing(3, 2),
+    },
+    card: {
+      height: 'auto',
+      minWidth: '390px',
+    },
+    header: {},
+  })
+);
+
+const ConnextModal: FC<ConnextModalProps> = ({
   showModal,
   depositChainId,
   depositAssetId,
@@ -89,7 +133,7 @@ export const ConnextModal: FC<ConnextModalProps> = ({
   const [withdrawChainName, setWithdrawChainName] = useState<string>(
     withdrawChainId.toString()
   );
-  const [sentAmount, setSentAmount] = useState<string>('0.0');
+  const [sentAmount, setSentAmount] = useState<string>();
 
   const [withdrawTx, setWithdrawTx] = useState<string>();
   const [crossChainTransfers, setCrossChainTransfers] = useState<{
@@ -99,15 +143,17 @@ export const ConnextModal: FC<ConnextModalProps> = ({
 
   const [activeStep, setActiveStep] = React.useState(-1);
 
-  const [
-    activeCrossChainTransferId,
-    setActiveCrossChainTransferId,
-  ] = useState<string>('');
+  const [activeCrossChainTransferId, setActiveCrossChainTransferId] = useState<
+    string
+  >('');
 
   const [error, setError] = useState<Error>();
 
+  const transferState: TransferStates =
+    crossChainTransfers[activeCrossChainTransferId] ?? TRANSFER_STATES.INITIAL;
+
   const registerEngineEventListeners = (node: BrowserNode): void => {
-    node.on(EngineEvents.DEPOSIT_RECONCILED, (data) => {
+    node.on(EngineEvents.DEPOSIT_RECONCILED, data => {
       console.log(data);
       // if (data.meta.crossChainTransferId) {
       setCrossChainTransferWithErrorTimeout(
@@ -116,7 +162,7 @@ export const ConnextModal: FC<ConnextModalProps> = ({
       );
       // }
     });
-    node.on(EngineEvents.CONDITIONAL_TRANSFER_RESOLVED, (data) => {
+    node.on(EngineEvents.CONDITIONAL_TRANSFER_RESOLVED, data => {
       if (
         data.transfer.meta.crossChainTransferId &&
         data.transfer.initiator === node.signerAddress
@@ -125,21 +171,17 @@ export const ConnextModal: FC<ConnextModalProps> = ({
           data.transfer.meta.crossChainTransferId,
           TRANSFER_STATES.WITHDRAWING
         );
-
-        setSentAmount(utils.formatEther(data.channelBalance.amount[1]));
       }
     });
-    node.on(EngineEvents.WITHDRAWAL_RESOLVED, (data) => {
+    node.on(EngineEvents.WITHDRAWAL_RESOLVED, data => {
       if (
         data.transfer.meta.crossChainTransferId &&
         data.transfer.initiator === node.signerAddress
       ) {
-        if (data.transfer.meta.crossChainTransferId) {
-          setCrossChainTransferWithErrorTimeout(
-            data.transfer.meta.crossChainTransferId,
-            TRANSFER_STATES.COMPLETE
-          );
-        }
+        setCrossChainTransferWithErrorTimeout(
+          data.transfer.meta.crossChainTransferId,
+          TRANSFER_STATES.COMPLETE
+        );
       }
     });
   };
@@ -169,14 +211,14 @@ export const ConnextModal: FC<ConnextModalProps> = ({
     try {
       const chainInfo: any[] = await utils.fetchJson(CHAIN_INFO_URL);
       const depositChainInfo = chainInfo.find(
-        (info) => info.chainId === depositChainId
+        info => info.chainId === depositChainId
       );
       if (depositChainInfo) {
         setDepositChainName(depositChainInfo.name);
       }
 
       const withdrawChainInfo = chainInfo.find(
-        (info) => info.chainId === withdrawChainId
+        info => info.chainId === withdrawChainId
       );
       if (withdrawChainInfo) {
         setWithdrawChainName(withdrawChainInfo.name);
@@ -186,12 +228,49 @@ export const ConnextModal: FC<ConnextModalProps> = ({
     }
   };
 
+  const crossChainTransfer = async (
+    node: BrowserNode,
+    transferAmount: BigNumber,
+    crossChainTransferId: string
+  ) => {
+    let res: { withdrawalTx?: string; withdrawalAmount?: string } = {};
+    try {
+      res = await node.crossChainTransfer({
+        amount: transferAmount.toString(),
+        fromAssetId: depositAssetId,
+        fromChainId: depositChainId,
+        toAssetId: withdrawAssetId,
+        toChainId: withdrawChainId,
+        reconcileDeposit: true,
+        withdrawalAddress,
+        meta: { crossChainTransferId },
+      });
+    } catch (e) {
+      setError(e);
+      console.error('Error in crossChainTransfer: ', e);
+      const updated = { ...crossChainTransfers };
+      updated[crossChainTransferId] = TRANSFER_STATES.ERROR;
+      setActiveStep(activePhase(TRANSFER_STATES.ERROR));
+      setCrossChainTransfers(updated);
+    }
+
+    console.log('crossChainTransfer: ', res);
+    setWithdrawTx(res.withdrawalTx);
+    setSentAmount(res.withdrawalAmount);
+    const updated = { ...crossChainTransfers };
+    updated[crossChainTransferId] = TRANSFER_STATES.COMPLETE;
+    setActiveStep(activePhase(TRANSFER_STATES.COMPLETE));
+    setCrossChainTransfers(updated);
+  };
+
   useEffect(() => {
     setInitializing(false);
     const init = async () => {
       if (showModal) {
         await getChainInfo();
         const _ethProviders = hydrateProviders(depositChainId, withdrawChainId);
+
+        // browser node object
         const browserNode = new BrowserNode({
           routerPublicIdentifier,
           iframeSrc,
@@ -204,8 +283,10 @@ export const ConnextModal: FC<ConnextModalProps> = ({
           setError(e);
           return;
         }
+
         registerEngineEventListeners(browserNode);
         console.log('INITIALIZED BROWSER NODE');
+
         const depositChannelRes = await browserNode.getStateChannelByParticipants(
           {
             chainId: depositChainId,
@@ -249,7 +330,7 @@ export const ConnextModal: FC<ConnextModalProps> = ({
         console.log(
           `Starting balance on ${depositChainId} for ${_depositAddress} of asset ${depositAssetId}: ${startingBalance.toString()}`
         );
-        _ethProviders[depositChainId].on('block', async (blockNumber) => {
+        _ethProviders[depositChainId].on('block', async blockNumber => {
           console.log('New blockNumber: ', blockNumber);
           let updatedBalance: BigNumber;
           try {
@@ -277,33 +358,11 @@ export const ConnextModal: FC<ConnextModalProps> = ({
             // TODO: no need to do this if tracking via transferID, but if
             // modal is only designed for one transfer, meh
             _ethProviders[depositChainId].off('block');
-            browserNode
-              .crossChainTransfer({
-                amount: transferAmount.toString(),
-                fromAssetId: depositAssetId,
-                fromChainId: depositChainId,
-                toAssetId: withdrawAssetId,
-                toChainId: withdrawChainId,
-                reconcileDeposit: true,
-                withdrawalAddress,
-                // meta: { crossChainTransferId },
-              })
-              .then((crossChainTransfer) => {
-                console.log('crossChainTransfer: ', crossChainTransfer);
-                setWithdrawTx(crossChainTransfer.withdrawalTx);
-                const updated = { ...crossChainTransfers };
-                updated[crossChainTransferId] = TRANSFER_STATES.COMPLETE;
-                setActiveStep(activePhase(TRANSFER_STATES.COMPLETE));
-                setCrossChainTransfers(updated);
-              })
-              .catch((e) => {
-                setError(e);
-                console.error('Error in crossChainTransfer: ', e);
-                const updated = { ...crossChainTransfers };
-                updated[crossChainTransferId] = TRANSFER_STATES.ERROR;
-                setActiveStep(activePhase(TRANSFER_STATES.ERROR));
-                setCrossChainTransfers(updated);
-              });
+            await crossChainTransfer(
+              browserNode,
+              transferAmount,
+              crossChainTransferId
+            );
           }
         });
         setIniting(false);
@@ -311,23 +370,6 @@ export const ConnextModal: FC<ConnextModalProps> = ({
     };
     init();
   }, [showModal]);
-  const transferState: TransferStates =
-    crossChainTransfers[activeCrossChainTransferId] ?? TRANSFER_STATES.INITIAL;
-
-  const steps = ['Deposit', 'Transfer', 'Withdraw'];
-
-  function getStepContent(step: number) {
-    switch (step) {
-      case 0:
-        return `Detected deposit on-chain(${depositChainName}), depositing into state channel!`;
-      case 1:
-        return `Transferring from ${depositChainName} to ${withdrawChainName}`;
-      case 2:
-        return 'Withdrawing funds back on-chain(${withdrawChainName}!';
-      default:
-        return 'Unknown step';
-    }
-  }
 
   return (
     <ThemeProvider theme={theme}>
@@ -339,6 +381,7 @@ export const ConnextModal: FC<ConnextModalProps> = ({
             direction="row"
             justifyContent="space-between"
             alignItems="center"
+            className={classes.header}
           >
             <Grid item>
               <IconButton
@@ -358,6 +401,9 @@ export const ConnextModal: FC<ConnextModalProps> = ({
                 Send USDC
               </Typography>
             </Grid>
+            {/* <Grid item>
+              <ThemeButton />
+            </Grid> */}
             <Grid item>
               <Options />
             </Grid>
@@ -374,22 +420,12 @@ export const ConnextModal: FC<ConnextModalProps> = ({
                   withdrawChainName={withdrawChainName}
                 />
                 <EthereumAddress depositAddress={depositAddress} />
-
-                <Grid container spacing={2} className="pb-4">
-                  <Grid item xs={12}>
-                    <Stepper activeStep={activeStep} orientation="vertical">
-                      {steps.map((label, index) => (
-                        <Step key={label}>
-                          <StepLabel>{label}</StepLabel>
-                          <StepContent>
-                            <Typography>{getStepContent(index)}</Typography>
-                          </StepContent>
-                        </Step>
-                      ))}
-                    </Stepper>
-                  </Grid>
-                </Grid>
-                <Grid container spacing={2} className="pb-4">
+                <Status
+                  depositChainName={depositChainName}
+                  withdrawChainName={withdrawChainName}
+                  activeStep={activeStep}
+                />
+                <Grid container className="pb-4">
                   <Grid item xs={12}>
                     <TextField
                       label="Receiver Address"
@@ -411,7 +447,7 @@ export const ConnextModal: FC<ConnextModalProps> = ({
               <CompleteState
                 withdrawChainName={withdrawChainName}
                 withdrawTx={withdrawTx!}
-                sentAmount={sentAmount}
+                sentAmount={sentAmount!}
                 withdrawChainId={withdrawChainId}
               />
             )}
@@ -424,11 +460,78 @@ export const ConnextModal: FC<ConnextModalProps> = ({
           </div>
 
           <Grid id="Footer" container direction="row" justifyContent="center">
-            <Typography variant="body1">Powered By Connext</Typography>
+            <Typography variant="overline">Powered By Connext</Typography>
           </Grid>
         </Card>
       </Dialog>
     </ThemeProvider>
+  );
+};
+
+export interface StatusProps {
+  depositChainName: string;
+  withdrawChainName: string;
+  activeStep: number;
+}
+
+const Status: FC<StatusProps> = props => {
+  const { depositChainName, withdrawChainName, activeStep } = props;
+  const steps = ['Deposit', 'Transfer', 'Withdraw'];
+
+  function getStepContent(step: number) {
+    switch (step) {
+      case 0:
+        return `Detected deposit on-chain(${depositChainName}), depositing into state channel!`;
+      case 1:
+        return `Transferring from ${depositChainName} to ${withdrawChainName}`;
+      case 2:
+        return `Withdrawing funds back on-chain(${withdrawChainName}!`;
+      default:
+        return 'Unknown step';
+    }
+  }
+
+  function StepIcon(props: StepIconProps) {
+    const { active, completed } = props;
+
+    const icon: React.ReactElement = active ? (
+      <CircularProgress size="1rem" color="primary" />
+    ) : completed ? (
+      <Icon fontSize="small" color="primary">
+        <CheckCircleRounded />
+      </Icon>
+    ) : (
+      <Icon fontSize="small" color="primary">
+        <FiberManualRecordOutlined />
+      </Icon>
+    );
+
+    const icons: { [index: string]: React.ReactElement } = {
+      1: icon,
+      2: icon,
+      3: icon,
+    };
+
+    return <>{icons[String(props.icon)]}</>;
+  }
+
+  return (
+    <Grid container className="pb-4">
+      <Grid item xs={12}>
+        <Stepper activeStep={activeStep} orientation="vertical">
+          {steps.map((label, index) => (
+            <Step key={label}>
+              <StepLabel StepIconComponent={StepIcon}>{label}</StepLabel>
+              <StepContent>
+                <Typography variant="subtitle2">
+                  {getStepContent(index)}
+                </Typography>
+              </StepContent>
+            </Step>
+          ))}
+        </Stepper>
+      </Grid>
+    </Grid>
   );
 };
 
@@ -437,7 +540,7 @@ const Options: FC = () => {
   const anchorRef = React.useRef<HTMLButtonElement>(null);
 
   const handleToggle = () => {
-    setOpen((prevOpen) => !prevOpen);
+    setOpen(prevOpen => !prevOpen);
   };
 
   const handleClose = (event: React.MouseEvent<EventTarget>) => {
@@ -522,20 +625,36 @@ const Options: FC = () => {
   );
 };
 
-// const LoadingState: FC = () => (
-//   <>
-//     <Grid container spacing={2}>
-//       <Grid item xs={12}>
-//         <Loading initializing={initializing} message={'Loading...'} />
-//       </Grid>
-//     </Grid>
-//   </>
-// );
+// @ts-ignore
+const ThemeButton: FC = () => {
+  const [isDark, setIsDark] = useState(false);
+
+  theme.palette.mode = isDark ? 'dark' : 'light';
+
+  const StyledTooltip = withStyles({
+    tooltip: {
+      marginTop: '0.2rem',
+      backgroundColor: 'rgba(0,0,0,0.72)',
+      color: '#fff',
+    },
+  })(Tooltip);
+
+  return (
+    <StyledTooltip
+      title={isDark ? 'Switch to Light mode' : 'Switch to Dark mode'}
+    >
+      <IconButton onClick={() => setIsDark(!isDark)}>
+        {isDark ? <WbSunny /> : <Brightness4 />}
+      </IconButton>
+    </StyledTooltip>
+  );
+};
+
 export interface EthereumAddressProps {
   depositAddress: string;
 }
 
-const EthereumAddress: FC<EthereumAddressProps> = (props) => {
+const EthereumAddress: FC<EthereumAddressProps> = props => {
   const { depositAddress } = props;
   const [copiedDepositAddress, setCopiedDepositAddress] = useState<boolean>(
     false
@@ -552,7 +671,7 @@ const EthereumAddress: FC<EthereumAddressProps> = (props) => {
   };
   return (
     <>
-      <Grid container alignItems="flex-end" spacing={3} className="pb-4">
+      <Grid container alignItems="flex-end" className="pb-4">
         <Grid item xs={12}>
           <TextField
             label="Deposit Address"
@@ -591,7 +710,7 @@ export interface NetworkBarProps {
   withdrawChainName: string;
 }
 
-const NetworkBar: FC<NetworkBarProps> = (props) => {
+const NetworkBar: FC<NetworkBarProps> = props => {
   const { depositChainName, withdrawChainName } = props;
 
   return (
@@ -626,7 +745,7 @@ export interface QRCodeProps {
   close: () => void;
 }
 
-const QRCodeModal: FC<QRCodeProps> = (props) => {
+const QRCodeModal: FC<QRCodeProps> = props => {
   // const classes = useStyles();
   const { open, close, address } = props;
 
@@ -656,32 +775,29 @@ const CompleteState: FC<{
   sentAmount: string;
 }> = ({ withdrawTx, withdrawChainName, sentAmount, withdrawChainId }) => (
   <>
-    <Grid container spacing={2}>
-      <Grid item xs={6}>
-        <Typography gutterBottom variant="h6">
-          Finished Sending To
+    <Divider variant="middle" className="pb-4" />
+    <Grid container justifyContent="center">
+      <Grid item xs={12}>
+        <Icon color="primary" fontSize="large">
+          <CheckCircleRounded />
+          <Typography gutterBottom variant="body1">
+            Success
+          </Typography>
+        </Icon>
+      </Grid>
+    </Grid>
+    <Grid container justifyContent="center">
+      <Grid item xs={12}>
+        <Typography gutterBottom variant="body1">
+          {utils.parseEther(sentAmount).toString()} has been successfully
+          transfered to {withdrawChainName}
         </Typography>
       </Grid>
-      <Grid item xs={6}>
-        <Chip color="primary" label={withdrawChainName} />
-      </Grid>
     </Grid>
-    <Grid container spacing={2}>
-      <Grid item xs={12}>
-        <TextField
-          label="Amount Sent"
-          defaultValue={sentAmount}
-          InputProps={{
-            readOnly: true,
-          }}
-          fullWidth
-        />
-      </Grid>
-    </Grid>
-    <Grid container spacing={2}>
+    <Grid container>
       <Grid item xs={6}>
         <Typography gutterBottom variant="h6">
-          Withdrawal Tx
+          Transaction
         </Typography>
       </Grid>
       <Grid item xs={6}>
@@ -702,19 +818,27 @@ const ErrorState: FC<{ error: Error; crossChainTransferId: string }> = ({
   crossChainTransferId,
 }) => (
   <>
-    <Grid container spacing={3}>
+    <Divider variant="middle" className="pb-4" />
+    <Grid container justifyContent="center">
       <Grid item xs={12}>
-        <Typography gutterBottom variant="h5">
+        <Icon color="primary" fontSize="large">
+          <ErrorRounded />
+          <Typography gutterBottom variant="body1">
+            Error
+          </Typography>
+        </Icon>
+      </Grid>
+    </Grid>
+    <Grid container>
+      <Grid item xs={12}>
+        <Typography gutterBottom variant="body1">
           {`Error transferring ${crossChainTransferId.substring(0, 5)}... - ${
             error.message
           }`}
         </Typography>
       </Grid>
     </Grid>
-    <Grid container spacing={3}>
-      <Grid item xs={12}>
-        <Divider variant="middle" />
-      </Grid>
-    </Grid>
   </>
 );
+
+export default ConnextModal;
