@@ -425,7 +425,7 @@ const ConnextModal: FC<ConnextModalProps> = ({
                   withdrawChainName={withdrawChainName}
                   activeStep={activeStep}
                 />
-                <Grid container className="pb-4">
+                <Grid container>
                   <Grid item xs={12}>
                     <TextField
                       label="Receiver Address"
@@ -776,39 +776,28 @@ const CompleteState: FC<{
 }> = ({ withdrawTx, withdrawChainName, sentAmount, withdrawChainId }) => (
   <>
     <Divider variant="middle" className="pb-4" />
-    <Grid container justifyContent="center">
-      <Grid item xs={12}>
-        <Icon color="primary" fontSize="large">
-          <CheckCircleRounded />
-          <Typography gutterBottom variant="body1">
-            Success
-          </Typography>
-        </Icon>
-      </Grid>
+    <Grid container alignItems="center" direction="column">
+      <Icon color="secondary" fontSize="large">
+        <CheckCircleRounded />
+      </Icon>
+      <Typography gutterBottom variant="h6">
+        Success
+      </Typography>
     </Grid>
-    <Grid container justifyContent="center">
-      <Grid item xs={12}>
-        <Typography gutterBottom variant="body1">
-          {utils.parseEther(sentAmount).toString()} has been successfully
-          transfered to {withdrawChainName}
-        </Typography>
-      </Grid>
-    </Grid>
-    <Grid container>
-      <Grid item xs={6}>
-        <Typography gutterBottom variant="h6">
-          Transaction
-        </Typography>
-      </Grid>
-      <Grid item xs={6}>
-        <Button
-          variant="contained"
-          href={getExplorerLinkForTx(withdrawChainId, withdrawTx)}
-          target="_blank"
-        >
-          Link
-        </Button>
-      </Grid>
+
+    <Typography gutterBottom variant="body1" align="center">
+      {utils.parseEther(sentAmount).toString()} has been successfully transfered
+      to {withdrawChainName}
+    </Typography>
+
+    <Grid container direction="row" justifyContent="center">
+      <Button
+        variant="contained"
+        href={getExplorerLinkForTx(withdrawChainId, withdrawTx)}
+        target="_blank"
+      >
+        Withdrawal Transaction
+      </Button>
     </Grid>
   </>
 );
@@ -819,25 +808,18 @@ const ErrorState: FC<{ error: Error; crossChainTransferId: string }> = ({
 }) => (
   <>
     <Divider variant="middle" className="pb-4" />
-    <Grid container justifyContent="center">
-      <Grid item xs={12}>
-        <Icon color="primary" fontSize="large">
-          <ErrorRounded />
-          <Typography gutterBottom variant="body1">
-            Error
-          </Typography>
-        </Icon>
-      </Grid>
+    <Grid container alignItems="center" direction="column">
+      <Icon color="error" fontSize="large">
+        <ErrorRounded />
+      </Icon>
+      <Typography gutterBottom variant="h6">
+        Error
+      </Typography>
     </Grid>
-    <Grid container>
-      <Grid item xs={12}>
-        <Typography gutterBottom variant="body1">
-          {`Error transferring ${crossChainTransferId.substring(0, 5)}... - ${
-            error.message
-          }`}
-        </Typography>
-      </Grid>
-    </Grid>
+
+    <Typography gutterBottom variant="body1" align="center">
+      {`${crossChainTransferId.substring(0, 5)}... - ${error.message}`}
+    </Typography>
   </>
 );
 
