@@ -1,1 +1,3 @@
-export { ConnextModal } from './components/Modal';
+import ConnextModal from './components/Modal';
+
+export { ConnextModal };
