@@ -16,12 +16,14 @@ declare global {
 }
 
 class Connext {
-  connextClient: BrowserNode;
-  config: {
-    publicIdentifier: string;
-    signerAddress: string;
-    index: number;
-  };
+  connextClient: BrowserNode | undefined;
+  config:
+    | {
+        publicIdentifier: string;
+        signerAddress: string;
+        index: number;
+      }
+    | undefined;
 
   // Create methods
   async connectNode(
@@ -68,7 +70,7 @@ class Connext {
   }
 
   async updateChannel(channelAddress: string): Promise<FullChannelState> {
-    const res = await this.connextClient.getStateChannel({ channelAddress });
+    const res = await this.connextClient!.getStateChannel({ channelAddress });
     if (res.isError) {
       throw new Error(`Error getting state channel ${res.getError()}`);
     }
@@ -132,7 +134,7 @@ class Connext {
   }
 
   async reconcileDeposit(channelAddress: string, assetId: string) {
-    const depositRes = await this.connextClient.reconcileDeposit({
+    const depositRes = await this.connextClient!.reconcileDeposit({
       channelAddress: channelAddress,
       assetId,
     });
@@ -157,17 +159,17 @@ class Connext {
       value: value,
     });
 
-    const recipient = this.config.publicIdentifier;
+    const recipient = this.config!.publicIdentifier;
     const preImage = getRandomBytes32();
     const amount = ethers.utils.parseEther(value);
 
     const senderChannelState = await this.getChannelByParticipants(
-      this.config.publicIdentifier,
+      this.config!.publicIdentifier,
       routerPublicIdentifier,
       senderChainId
     );
     const receiverChannelState = await this.getChannelByParticipants(
-      this.config.publicIdentifier,
+      this.config!.publicIdentifier,
       routerPublicIdentifier,
       recipientChainId
     );
@@ -177,7 +179,7 @@ class Connext {
 
     const event: Promise<ConditionalTransferCreatedPayload> = new Promise(
       res => {
-        this.connextClient.on('CONDITIONAL_TRANSFER_CREATED', payload => {
+        this.connextClient!.on('CONDITIONAL_TRANSFER_CREATED', payload => {
           if (payload.channelAddress !== receiverChannelState.channelAddress) {
             return;
           }
@@ -186,7 +188,7 @@ class Connext {
         });
       }
     );
-    const transferRes = await this.connextClient.conditionalTransfer({
+    const transferRes = await this.connextClient!.conditionalTransfer({
       type: TransferNames.HashlockTransfer,
       channelAddress: senderChannelState.channelAddress,
       assetId: senderAssetId,
@@ -215,7 +217,7 @@ class Connext {
         receivedTransfer.transfer
       )}, resolving...`
     );
-    const resolveRes = await this.connextClient.resolveTransfer({
+    const resolveRes = await this.connextClient!.resolveTransfer({
       channelAddress: receiverChannelState.channelAddress,
       transferResolver: {
         preImage: preImage,
@@ -249,12 +251,12 @@ class Connext {
     const amount = ethers.utils.parseEther(value).toString();
 
     const channelState = await this.getChannelByParticipants(
-      this.config.publicIdentifier,
+      this.config!.publicIdentifier,
       routerPublicIdentifier,
       recipientChainId
     );
 
-    const requestRes = await this.connextClient.withdraw({
+    const requestRes = await this.connextClient!.withdraw({
       channelAddress: channelState.channelAddress,
       assetId: receiverAssetId,
       amount,
@@ -301,7 +303,7 @@ class Connext {
 
     let result;
     try {
-      result = await this.connextClient.crossChainTransfer(params);
+      result = await this.connextClient!.crossChainTransfer(params);
     } catch (e) {
       throw new Error(`${e}`);
     }

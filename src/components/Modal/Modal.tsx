@@ -173,17 +173,17 @@ const ConnextModal: FC<ConnextModalProps> = ({
       );
       // }
     });
-    // node.on(EngineEvents.CONDITIONAL_TRANSFER_RESOLVED, (data) => {
-    //   if (
-    //     data.transfer.meta.crossChainTransferId &&
-    //     data.transfer.initiator === node.signerAddress
-    //   ) {
-    //     setCrossChainTransferWithErrorTimeout(
-    //       data.transfer.meta.crossChainTransferId,
-    //       TRANSFER_STATES.WITHDRAWING
-    //     );
-    //   }
-    // });
+    node.on(EngineEvents.CONDITIONAL_TRANSFER_RESOLVED, (data) => {
+      if (
+        data.transfer.meta.crossChainTransferId &&
+        data.transfer.initiator === node.signerAddress
+      ) {
+        setCrossChainTransferWithErrorTimeout(
+          data.transfer.meta.crossChainTransferId,
+          TRANSFER_STATES.WITHDRAWING
+        );
+      }
+    });
     node.on(EngineEvents.WITHDRAWAL_RESOLVED, (data) => {
       if (
         data.transfer.meta.crossChainTransferId &&
@@ -261,7 +261,7 @@ const ConnextModal: FC<ConnextModalProps> = ({
           return;
         }
 
-        registerEngineEventListeners(connext.connextClient);
+        registerEngineEventListeners(connext.connextClient!);
         console.log('INITIALIZED BROWSER NODE');
 
         const _depositAddress: string = channelPublicIdentifier;
