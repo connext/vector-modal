@@ -149,9 +149,9 @@ const ConnextModal: FC<ConnextModalProps> = ({
   const [withdrawChainName, setWithdrawChainName] = useState<string>(
     withdrawChainId.toString()
   );
-  const [sentAmount, setSentAmount] = useState<string>('');
+  const [sentAmount, setSentAmount] = useState<string>();
 
-  const [withdrawTx, setWithdrawTx] = useState<string>('');
+  const [withdrawTx, setWithdrawTx] = useState<string>();
   const [crossChainTransfers, setCrossChainTransfers] = useState<{
     [crossChainTransferId: string]: TransferStates;
   }>({});
@@ -318,21 +318,22 @@ const ConnextModal: FC<ConnextModalProps> = ({
             _ethProviders[depositChainId].off('block');
 
             await connext
-              .crossTransfer(
-                transferAmount.toString(),
-                depositChainId,
-                depositAssetId,
-                withdrawChainId,
-                withdrawAssetId,
+              .connextClient!.crossChainTransfer({
+                amount: transferAmount.toString(),
+                fromAssetId: depositAssetId,
+                fromChainId: depositChainId,
+                toAssetId: withdrawAssetId,
+                toChainId: withdrawChainId,
+                reconcileDeposit: true,
                 withdrawalAddress,
-                crossChainTransferId
-              )
+                meta: { crossChainTransferId },
+              })
               .then((result) => {
                 console.log('crossChainTransfer: ', result);
-                setWithdrawTx(result.transaction);
-                setSentAmount(result.transferAmount);
-                updated[crossChainTransferId] = TRANSFER_STATES.COMPLETE;
+                setWithdrawTx(result.withdrawalTx);
+                setSentAmount(result.withdrawalAmount);
                 setActiveStep(activePhase(TRANSFER_STATES.COMPLETE));
+                updated[crossChainTransferId] = TRANSFER_STATES.COMPLETE;
                 setCrossChainTransfers(updated);
               })
               .catch((e) => {
@@ -431,8 +432,8 @@ const ConnextModal: FC<ConnextModalProps> = ({
             {!initing && transferState === TRANSFER_STATES.COMPLETE && (
               <CompleteState
                 withdrawChainName={withdrawChainName}
-                withdrawTx={withdrawTx}
-                sentAmount={sentAmount}
+                withdrawTx={withdrawTx!}
+                sentAmount={sentAmount!}
                 withdrawChainId={withdrawChainId}
                 styles={classes.completeState}
               />
