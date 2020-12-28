@@ -60,7 +60,6 @@ import {
   routerPublicIdentifier,
   iframeSrc,
   TransferStates,
-  ConnextModalProps,
   TRANSFER_STATES,
 } from '../../constants';
 import {
@@ -111,9 +110,20 @@ const useStyles = makeStyles((theme: Theme) =>
       height: 'auto',
       minWidth: '390px',
     },
-    header: {},
+    header: { paddingBottom: '1rem' },
   })
 );
+
+export type ConnextModalProps = {
+  showModal: boolean;
+  depositChainId: number;
+  depositAssetId: string;
+  withdrawChainId: number;
+  withdrawAssetId: string;
+  withdrawalAddress: string;
+  onClose: () => void;
+  connextNode?: BrowserNode;
+};
 
 const ConnextModal: FC<ConnextModalProps> = ({
   showModal,
@@ -123,6 +133,7 @@ const ConnextModal: FC<ConnextModalProps> = ({
   withdrawAssetId,
   withdrawalAddress,
   onClose,
+  connextNode,
 }) => {
   const classes = useStyles();
   const [initializing, setInitializing] = useState(true);
@@ -143,9 +154,10 @@ const ConnextModal: FC<ConnextModalProps> = ({
 
   const [activeStep, setActiveStep] = React.useState(-1);
 
-  const [activeCrossChainTransferId, setActiveCrossChainTransferId] = useState<
-    string
-  >('');
+  const [
+    activeCrossChainTransferId,
+    setActiveCrossChainTransferId,
+  ] = useState<string>('');
 
   const [error, setError] = useState<Error>();
 
@@ -153,7 +165,7 @@ const ConnextModal: FC<ConnextModalProps> = ({
     crossChainTransfers[activeCrossChainTransferId] ?? TRANSFER_STATES.INITIAL;
 
   const registerEngineEventListeners = (node: BrowserNode): void => {
-    node.on(EngineEvents.DEPOSIT_RECONCILED, data => {
+    node.on(EngineEvents.DEPOSIT_RECONCILED, (data) => {
       console.log(data);
       // if (data.meta.crossChainTransferId) {
       setCrossChainTransferWithErrorTimeout(
@@ -162,7 +174,7 @@ const ConnextModal: FC<ConnextModalProps> = ({
       );
       // }
     });
-    node.on(EngineEvents.CONDITIONAL_TRANSFER_RESOLVED, data => {
+    node.on(EngineEvents.CONDITIONAL_TRANSFER_RESOLVED, (data) => {
       if (
         data.transfer.meta.crossChainTransferId &&
         data.transfer.initiator === node.signerAddress
@@ -173,7 +185,7 @@ const ConnextModal: FC<ConnextModalProps> = ({
         );
       }
     });
-    node.on(EngineEvents.WITHDRAWAL_RESOLVED, data => {
+    node.on(EngineEvents.WITHDRAWAL_RESOLVED, (data) => {
       if (
         data.transfer.meta.crossChainTransferId &&
         data.transfer.initiator === node.signerAddress
@@ -211,14 +223,14 @@ const ConnextModal: FC<ConnextModalProps> = ({
     try {
       const chainInfo: any[] = await utils.fetchJson(CHAIN_INFO_URL);
       const depositChainInfo = chainInfo.find(
-        info => info.chainId === depositChainId
+        (info) => info.chainId === depositChainId
       );
       if (depositChainInfo) {
         setDepositChainName(depositChainInfo.name);
       }
 
       const withdrawChainInfo = chainInfo.find(
-        info => info.chainId === withdrawChainId
+        (info) => info.chainId === withdrawChainId
       );
       if (withdrawChainInfo) {
         setWithdrawChainName(withdrawChainInfo.name);
@@ -271,11 +283,16 @@ const ConnextModal: FC<ConnextModalProps> = ({
         const _ethProviders = hydrateProviders(depositChainId, withdrawChainId);
 
         // browser node object
-        const browserNode = new BrowserNode({
-          routerPublicIdentifier,
-          iframeSrc,
-          supportedChains: [depositChainId, withdrawChainId],
-        });
+        let browserNode: BrowserNode;
+        if (connextNode) {
+          browserNode = connextNode;
+        } else {
+          browserNode = new BrowserNode({
+            routerPublicIdentifier,
+            iframeSrc,
+            supportedChains: [depositChainId, withdrawChainId],
+          });
+        }
         try {
           await browserNode.init();
         } catch (e) {
@@ -330,7 +347,7 @@ const ConnextModal: FC<ConnextModalProps> = ({
         console.log(
           `Starting balance on ${depositChainId} for ${_depositAddress} of asset ${depositAssetId}: ${startingBalance.toString()}`
         );
-        _ethProviders[depositChainId].on('block', async blockNumber => {
+        _ethProviders[depositChainId].on('block', async (blockNumber) => {
           console.log('New blockNumber: ', blockNumber);
           let updatedBalance: BigNumber;
           try {
@@ -474,7 +491,7 @@ export interface StatusProps {
   activeStep: number;
 }
 
-const Status: FC<StatusProps> = props => {
+const Status: FC<StatusProps> = (props) => {
   const { depositChainName, withdrawChainName, activeStep } = props;
   const steps = ['Deposit', 'Transfer', 'Withdraw'];
 
@@ -540,7 +557,7 @@ const Options: FC = () => {
   const anchorRef = React.useRef<HTMLButtonElement>(null);
 
   const handleToggle = () => {
-    setOpen(prevOpen => !prevOpen);
+    setOpen((prevOpen) => !prevOpen);
   };
 
   const handleClose = (event: React.MouseEvent<EventTarget>) => {
@@ -654,7 +671,7 @@ export interface EthereumAddressProps {
   depositAddress: string;
 }
 
-const EthereumAddress: FC<EthereumAddressProps> = props => {
+const EthereumAddress: FC<EthereumAddressProps> = (props) => {
   const { depositAddress } = props;
   const [copiedDepositAddress, setCopiedDepositAddress] = useState<boolean>(
     false
@@ -710,7 +727,7 @@ export interface NetworkBarProps {
   withdrawChainName: string;
 }
 
-const NetworkBar: FC<NetworkBarProps> = props => {
+const NetworkBar: FC<NetworkBarProps> = (props) => {
   const { depositChainName, withdrawChainName } = props;
 
   return (
@@ -745,7 +762,7 @@ export interface QRCodeProps {
   close: () => void;
 }
 
-const QRCodeModal: FC<QRCodeProps> = props => {
+const QRCodeModal: FC<QRCodeProps> = (props) => {
   // const classes = useStyles();
   const { open, close, address } = props;
 
