@@ -68,7 +68,6 @@ import {
   hydrateProviders,
 } from '../../utils';
 import Loading from '../Loading';
-import './style.module.scss';
 
 const theme = createMuiTheme({
   palette: {
@@ -109,12 +108,18 @@ const useStyles = makeStyles((theme: Theme) =>
       height: 'auto',
       minWidth: '390px',
     },
-    header: { paddingBottom: '1rem' },
+    header: {},
+    networkBar: { paddingBottom: '1rem' },
+    status: { paddingBottom: '1rem' },
+    ethereumAddress: { paddingBottom: '1rem' },
+    completeState: { paddingBottom: '1rem' },
+    errorState: { paddingBottom: '1rem' },
   })
 );
 
 export type ConnextModalProps = {
   showModal: boolean;
+  routerPublicIdentifier: string;
   depositChainId: number;
   depositAssetId: string;
   withdrawChainId: number;
@@ -126,6 +131,7 @@ export type ConnextModalProps = {
 
 const ConnextModal: FC<ConnextModalProps> = ({
   showModal,
+  routerPublicIdentifier,
   depositChainId,
   depositAssetId,
   withdrawChainId,
@@ -143,9 +149,9 @@ const ConnextModal: FC<ConnextModalProps> = ({
   const [withdrawChainName, setWithdrawChainName] = useState<string>(
     withdrawChainId.toString()
   );
-  const [sentAmount, setSentAmount] = useState<string>();
+  const [sentAmount, setSentAmount] = useState<string>('');
 
-  const [withdrawTx, setWithdrawTx] = useState<string>();
+  const [withdrawTx, setWithdrawTx] = useState<string>('');
   const [crossChainTransfers, setCrossChainTransfers] = useState<{
     [crossChainTransferId: string]: TransferStates;
   }>({});
@@ -251,6 +257,7 @@ const ConnextModal: FC<ConnextModalProps> = ({
         try {
           channelPublicIdentifier = await connext.connectNode(
             connextNode,
+            routerPublicIdentifier,
             depositChainId,
             withdrawChainId
           );
@@ -310,8 +317,8 @@ const ConnextModal: FC<ConnextModalProps> = ({
             // modal is only designed for one transfer, meh
             _ethProviders[depositChainId].off('block');
 
-            try {
-              const res = await connext.crossTransfer(
+            await connext
+              .crossTransfer(
                 transferAmount.toString(),
                 depositChainId,
                 depositAssetId,
@@ -319,21 +326,23 @@ const ConnextModal: FC<ConnextModalProps> = ({
                 withdrawAssetId,
                 withdrawalAddress,
                 crossChainTransferId
-              );
-              console.log('crossChainTransfer: ', res);
-              setWithdrawTx(res.transaction);
-              setSentAmount(res.transferAmount);
-              updated[crossChainTransferId] = TRANSFER_STATES.COMPLETE;
-              setActiveStep(activePhase(TRANSFER_STATES.COMPLETE));
-              setCrossChainTransfers(updated);
-            } catch (e) {
-              setError(e);
-              console.error('Error in crossChainTransfer: ', e);
-              const updated = { ...crossChainTransfers };
-              updated[crossChainTransferId] = TRANSFER_STATES.ERROR;
-              setActiveStep(activePhase(TRANSFER_STATES.ERROR));
-              setCrossChainTransfers(updated);
-            }
+              )
+              .then((result) => {
+                console.log('crossChainTransfer: ', result);
+                setWithdrawTx(result.transaction);
+                setSentAmount(result.transferAmount);
+                updated[crossChainTransferId] = TRANSFER_STATES.COMPLETE;
+                setActiveStep(activePhase(TRANSFER_STATES.COMPLETE));
+                setCrossChainTransfers(updated);
+              })
+              .catch((e) => {
+                setError(e);
+                console.error('Error in crossChainTransfer: ', e);
+                const updated = { ...crossChainTransfers };
+                updated[crossChainTransferId] = TRANSFER_STATES.ERROR;
+                setActiveStep(activePhase(TRANSFER_STATES.ERROR));
+                setCrossChainTransfers(updated);
+              });
           }
         });
         setIniting(false);
@@ -389,12 +398,17 @@ const ConnextModal: FC<ConnextModalProps> = ({
                 <NetworkBar
                   depositChainName={depositChainName}
                   withdrawChainName={withdrawChainName}
+                  styles={classes.networkBar}
                 />
-                <EthereumAddress depositAddress={depositAddress} />
+                <EthereumAddress
+                  depositAddress={depositAddress}
+                  styles={classes.ethereumAddress}
+                />
                 <Status
                   depositChainName={depositChainName}
                   withdrawChainName={withdrawChainName}
                   activeStep={activeStep}
+                  styles={classes.status}
                 />
                 <Grid container>
                   <Grid item xs={12}>
@@ -417,15 +431,17 @@ const ConnextModal: FC<ConnextModalProps> = ({
             {!initing && transferState === TRANSFER_STATES.COMPLETE && (
               <CompleteState
                 withdrawChainName={withdrawChainName}
-                withdrawTx={withdrawTx!}
-                sentAmount={sentAmount!}
+                withdrawTx={withdrawTx}
+                sentAmount={sentAmount}
                 withdrawChainId={withdrawChainId}
+                styles={classes.completeState}
               />
             )}
             {!initing && transferState === TRANSFER_STATES.ERROR && (
               <ErrorState
                 error={error ?? new Error('unknown')}
                 crossChainTransferId={activeCrossChainTransferId}
+                styles={classes.errorState}
               />
             )}
           </div>
@@ -443,10 +459,11 @@ export interface StatusProps {
   depositChainName: string;
   withdrawChainName: string;
   activeStep: number;
+  styles: string;
 }
 
 const Status: FC<StatusProps> = (props) => {
-  const { depositChainName, withdrawChainName, activeStep } = props;
+  const { depositChainName, withdrawChainName, activeStep, styles } = props;
   const steps = ['Deposit', 'Transfer', 'Withdraw'];
 
   function getStepContent(step: number) {
@@ -487,7 +504,7 @@ const Status: FC<StatusProps> = (props) => {
   }
 
   return (
-    <Grid container className="pb-4">
+    <Grid container className={styles}>
       <Grid item xs={12}>
         <Stepper activeStep={activeStep} orientation="vertical">
           {steps.map((label, index) => (
@@ -623,10 +640,11 @@ const ThemeButton: FC = () => {
 
 export interface EthereumAddressProps {
   depositAddress: string;
+  styles: string;
 }
 
 const EthereumAddress: FC<EthereumAddressProps> = (props) => {
-  const { depositAddress } = props;
+  const { depositAddress, styles } = props;
   const [copiedDepositAddress, setCopiedDepositAddress] = useState<boolean>(
     false
   );
@@ -642,7 +660,7 @@ const EthereumAddress: FC<EthereumAddressProps> = (props) => {
   };
   return (
     <>
-      <Grid container alignItems="flex-end" className="pb-4">
+      <Grid container alignItems="flex-end" className={styles}>
         <Grid item xs={12}>
           <TextField
             label="Deposit Address"
@@ -671,7 +689,25 @@ const EthereumAddress: FC<EthereumAddressProps> = (props) => {
             fullWidth
           />
         </Grid>
-        <QRCodeModal open={open} address={depositAddress} close={handleClose} />
+        <Dialog
+          onClose={handleClose}
+          aria-labelledby="simple-dialog-title"
+          open={open}
+        >
+          <DialogTitle id="simple-dialog-title">
+            Scan this code using your mobile wallet app
+          </DialogTitle>
+          <Grid
+            id="qrcode"
+            container
+            direction="row"
+            justifyContent="center"
+            alignItems="flex-start"
+            className={styles}
+          >
+            <QRCode value={depositAddress} />
+          </Grid>
+        </Dialog>
       </Grid>
     </>
   );
@@ -679,10 +715,11 @@ const EthereumAddress: FC<EthereumAddressProps> = (props) => {
 export interface NetworkBarProps {
   depositChainName: string;
   withdrawChainName: string;
+  styles: string;
 }
 
 const NetworkBar: FC<NetworkBarProps> = (props) => {
-  const { depositChainName, withdrawChainName } = props;
+  const { depositChainName, withdrawChainName, styles } = props;
 
   return (
     <>
@@ -692,7 +729,7 @@ const NetworkBar: FC<NetworkBarProps> = (props) => {
         direction="row"
         justifyContent="space-between"
         alignItems="center"
-        className="pb-4"
+        className={styles}
       >
         <Grid item>
           <Chip color="secondary" label={depositChainName} />
@@ -710,43 +747,23 @@ const NetworkBar: FC<NetworkBarProps> = (props) => {
   );
 };
 
-export interface QRCodeProps {
-  open: boolean;
-  address: string;
-  close: () => void;
-}
-
-const QRCodeModal: FC<QRCodeProps> = (props) => {
-  // const classes = useStyles();
-  const { open, close, address } = props;
-
-  return (
-    <Dialog onClose={close} aria-labelledby="simple-dialog-title" open={open}>
-      <DialogTitle id="simple-dialog-title">
-        Scan this code using your mobile wallet app
-      </DialogTitle>
-      <Grid
-        id="qrcode"
-        container
-        direction="row"
-        justifyContent="center"
-        alignItems="flex-start"
-        className="pb-4"
-      >
-        <QRCode value={address} />
-      </Grid>
-    </Dialog>
-  );
-};
-
-const CompleteState: FC<{
+export interface CompleteStateProps {
   withdrawTx: string;
   withdrawChainName: string;
   withdrawChainId: number;
   sentAmount: string;
-}> = ({ withdrawTx, withdrawChainName, sentAmount, withdrawChainId }) => (
+  styles: string;
+}
+
+const CompleteState: FC<CompleteStateProps> = ({
+  withdrawTx,
+  withdrawChainName,
+  sentAmount,
+  withdrawChainId,
+  styles,
+}) => (
   <>
-    <Divider variant="middle" className="pb-4" />
+    <Divider variant="middle" className={styles} />
     <Grid container alignItems="center" direction="column">
       <Icon color="secondary" fontSize="large">
         <CheckCircleRounded />
@@ -773,12 +790,19 @@ const CompleteState: FC<{
   </>
 );
 
-const ErrorState: FC<{ error: Error; crossChainTransferId: string }> = ({
+export interface ErrorStateProps {
+  error: Error;
+  crossChainTransferId: string;
+  styles: string;
+}
+
+const ErrorState: FC<ErrorStateProps> = ({
   error,
   crossChainTransferId,
+  styles,
 }) => (
   <>
-    <Divider variant="middle" className="pb-4" />
+    <Divider variant="middle" className={styles} />
     <Grid container alignItems="center" direction="column">
       <Icon color="error" fontSize="large">
         <ErrorRounded />

@@ -7,7 +7,7 @@ import {
   TransferNames,
 } from '@connext/vector-types';
 import { createlockHash, getRandomBytes32 } from '@connext/vector-utils';
-import { routerPublicIdentifier, iframeSrc } from '../constants';
+import { iframeSrc } from '../constants';
 
 declare global {
   interface Window {
@@ -28,6 +28,7 @@ class Connext {
   // Create methods
   async connectNode(
     connextNode: BrowserNode | undefined,
+    routerPublicIdentifier: string,
     depositChainId: number,
     withdrawChainId: number
   ) {
@@ -149,7 +150,8 @@ class Connext {
     senderAssetId: string,
     value: string,
     recipientChainId: number,
-    recipientAssetId: string
+    recipientAssetId: string,
+    routerPublicIdentifier: string
   ) {
     await this.basicSanitation({
       fromChainId: senderChainId,
@@ -239,7 +241,8 @@ class Connext {
     recipientChainId: number,
     receiverAssetId: string,
     receiverAddress: string,
-    value: string
+    value: string,
+    routerPublicIdentifier: string
   ) {
     await this.basicSanitation({
       toChainId: recipientChainId,
