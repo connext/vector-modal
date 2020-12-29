@@ -57,6 +57,7 @@ import { EngineEvents } from '@connext/vector-types';
 import { getRandomBytes32 } from '@connext/vector-utils';
 import {
   CHAIN_INFO_URL,
+  getAssetName,
   TransferStates,
   TRANSFER_STATES,
 } from '../../constants';
@@ -66,6 +67,7 @@ import {
   activePhase,
   getAssetBalance,
   hydrateProviders,
+  getExplorerLinkForAsset,
 } from '../../utils';
 import Loading from '../Loading';
 
@@ -149,7 +151,7 @@ const ConnextModal: FC<ConnextModalProps> = ({
   const [withdrawChainName, setWithdrawChainName] = useState<string>(
     withdrawChainId.toString()
   );
-  const [sentAmount, setSentAmount] = useState<string>();
+  const [sentAmount, setSentAmount] = useState<string>('0');
 
   const [withdrawTx, setWithdrawTx] = useState<string>();
   const [crossChainTransfers, setCrossChainTransfers] = useState<{
@@ -159,10 +161,9 @@ const ConnextModal: FC<ConnextModalProps> = ({
 
   const [activeStep, setActiveStep] = React.useState(-1);
 
-  const [
-    activeCrossChainTransferId,
-    setActiveCrossChainTransferId,
-  ] = useState<string>('');
+  const [activeCrossChainTransferId, setActiveCrossChainTransferId] = useState<
+    string
+  >('');
 
   const [error, setError] = useState<Error>();
 
@@ -170,7 +171,7 @@ const ConnextModal: FC<ConnextModalProps> = ({
     crossChainTransfers[activeCrossChainTransferId] ?? TRANSFER_STATES.INITIAL;
 
   const registerEngineEventListeners = (node: BrowserNode): void => {
-    node.on(EngineEvents.DEPOSIT_RECONCILED, (data) => {
+    node.on(EngineEvents.DEPOSIT_RECONCILED, data => {
       console.log(data);
       // if (data.meta.crossChainTransferId) {
       setCrossChainTransferWithErrorTimeout(
@@ -179,7 +180,7 @@ const ConnextModal: FC<ConnextModalProps> = ({
       );
       // }
     });
-    node.on(EngineEvents.CONDITIONAL_TRANSFER_RESOLVED, (data) => {
+    node.on(EngineEvents.CONDITIONAL_TRANSFER_RESOLVED, data => {
       if (
         data.transfer.meta.crossChainTransferId &&
         data.transfer.initiator === node.signerAddress
@@ -190,7 +191,7 @@ const ConnextModal: FC<ConnextModalProps> = ({
         );
       }
     });
-    node.on(EngineEvents.WITHDRAWAL_RESOLVED, (data) => {
+    node.on(EngineEvents.WITHDRAWAL_RESOLVED, data => {
       if (
         data.transfer.meta.crossChainTransferId &&
         data.transfer.initiator === node.signerAddress
@@ -228,14 +229,14 @@ const ConnextModal: FC<ConnextModalProps> = ({
     try {
       const chainInfo: any[] = await utils.fetchJson(CHAIN_INFO_URL);
       const depositChainInfo = chainInfo.find(
-        (info) => info.chainId === depositChainId
+        info => info.chainId === depositChainId
       );
       if (depositChainInfo) {
         setDepositChainName(depositChainInfo.name);
       }
 
       const withdrawChainInfo = chainInfo.find(
-        (info) => info.chainId === withdrawChainId
+        info => info.chainId === withdrawChainId
       );
       if (withdrawChainInfo) {
         setWithdrawChainName(withdrawChainInfo.name);
@@ -288,7 +289,7 @@ const ConnextModal: FC<ConnextModalProps> = ({
         console.log(
           `Starting balance on ${depositChainId} for ${_depositAddress} of asset ${depositAssetId}: ${startingBalance.toString()}`
         );
-        _ethProviders[depositChainId].on('block', async (blockNumber) => {
+        _ethProviders[depositChainId].on('block', async blockNumber => {
           console.log('New blockNumber: ', blockNumber);
           let updatedBalance: BigNumber;
           try {
@@ -328,15 +329,15 @@ const ConnextModal: FC<ConnextModalProps> = ({
                 withdrawalAddress,
                 meta: { crossChainTransferId },
               })
-              .then((result) => {
+              .then(result => {
                 console.log('crossChainTransfer: ', result);
                 setWithdrawTx(result.withdrawalTx);
-                setSentAmount(result.withdrawalAmount);
+                setSentAmount(result.withdrawalAmount ?? '0');
                 setActiveStep(activePhase(TRANSFER_STATES.COMPLETE));
                 updated[crossChainTransferId] = TRANSFER_STATES.COMPLETE;
                 setCrossChainTransfers(updated);
               })
-              .catch((e) => {
+              .catch(e => {
                 setError(e);
                 console.error('Error in crossChainTransfer: ', e);
                 const updated = { ...crossChainTransfers };
@@ -379,7 +380,13 @@ const ConnextModal: FC<ConnextModalProps> = ({
             </Grid>
             <Grid item>
               <Typography gutterBottom variant="h6">
-                Send USDC
+                Send{' '}
+                <a
+                  href={getExplorerLinkForAsset(depositChainId, depositAssetId)}
+                  target="_blank"
+                >
+                  {getAssetName(depositAssetId, depositChainId)}
+                </a>
               </Typography>
             </Grid>
             {/* <Grid item>
@@ -392,7 +399,10 @@ const ConnextModal: FC<ConnextModalProps> = ({
 
           <div style={{ padding: '1rem' }}>
             {initing && (
-              <Loading initializing={initializing} message={'Loading...'} />
+              <Loading
+                initializing={initializing}
+                message={'Setting up channels...'}
+              />
             )}
             {depositAddress ? (
               <>
@@ -435,6 +445,7 @@ const ConnextModal: FC<ConnextModalProps> = ({
                 withdrawTx={withdrawTx!}
                 sentAmount={sentAmount!}
                 withdrawChainId={withdrawChainId}
+                withdrawAssetId={withdrawAssetId}
                 styles={classes.completeState}
               />
             )}
@@ -448,7 +459,11 @@ const ConnextModal: FC<ConnextModalProps> = ({
           </div>
 
           <Grid id="Footer" container direction="row" justifyContent="center">
-            <Typography variant="overline">Powered By Connext</Typography>
+            <Typography variant="overline">
+              <a href="https://connext.network" target="_blank">
+                Powered By Connext
+              </a>
+            </Typography>
           </Grid>
         </Card>
       </Dialog>
@@ -463,7 +478,7 @@ export interface StatusProps {
   styles: string;
 }
 
-const Status: FC<StatusProps> = (props) => {
+const Status: FC<StatusProps> = props => {
   const { depositChainName, withdrawChainName, activeStep, styles } = props;
   const steps = ['Deposit', 'Transfer', 'Withdraw'];
 
@@ -529,7 +544,7 @@ const Options: FC = () => {
   const anchorRef = React.useRef<HTMLButtonElement>(null);
 
   const handleToggle = () => {
-    setOpen((prevOpen) => !prevOpen);
+    setOpen(prevOpen => !prevOpen);
   };
 
   const handleClose = (event: React.MouseEvent<EventTarget>) => {
@@ -644,7 +659,7 @@ export interface EthereumAddressProps {
   styles: string;
 }
 
-const EthereumAddress: FC<EthereumAddressProps> = (props) => {
+const EthereumAddress: FC<EthereumAddressProps> = props => {
   const { depositAddress, styles } = props;
   const [copiedDepositAddress, setCopiedDepositAddress] = useState<boolean>(
     false
@@ -719,7 +734,7 @@ export interface NetworkBarProps {
   styles: string;
 }
 
-const NetworkBar: FC<NetworkBarProps> = (props) => {
+const NetworkBar: FC<NetworkBarProps> = props => {
   const { depositChainName, withdrawChainName, styles } = props;
 
   return (
@@ -751,6 +766,7 @@ const NetworkBar: FC<NetworkBarProps> = (props) => {
 export interface CompleteStateProps {
   withdrawTx: string;
   withdrawChainName: string;
+  withdrawAssetId: string;
   withdrawChainId: number;
   sentAmount: string;
   styles: string;
@@ -760,6 +776,7 @@ const CompleteState: FC<CompleteStateProps> = ({
   withdrawTx,
   withdrawChainName,
   sentAmount,
+  withdrawAssetId,
   withdrawChainId,
   styles,
 }) => (
@@ -775,8 +792,14 @@ const CompleteState: FC<CompleteStateProps> = ({
     </Grid>
 
     <Typography gutterBottom variant="body1" align="center">
-      {utils.parseEther(sentAmount).toString()} has been successfully transfered
-      to {withdrawChainName}
+      {utils.formatEther(sentAmount)}{' '}
+      <a
+        href={getExplorerLinkForAsset(withdrawChainId, withdrawAssetId)}
+        target="_blank"
+      >
+        {getAssetName(withdrawAssetId, withdrawChainId)}
+      </a>{' '}
+      has been successfully transfered to {withdrawChainName}
     </Typography>
 
     <Grid container direction="row" justifyContent="center">

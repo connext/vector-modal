@@ -1,4 +1,6 @@
 import React, { FC } from 'react';
+import { Typography } from '@material-ui/core';
+
 import './style.module.scss';
 // @ts-ignore
 import LoadingGif from '../../assets/loading.gif';
@@ -18,7 +20,9 @@ const Loading: FC<LoadingProps> = props => {
       >
         <img src={LoadingGif} alt="loading"></img>
       </div>
-      <div className="Loading-Message">{props.message}</div>
+      <Typography variant="subtitle2" className="Loading-Message">
+        {props.message}
+      </Typography>
     </div>
   );
 };
