@@ -75,7 +75,7 @@ class Connext {
     if (res.isError) {
       throw new Error(`Error getting state channel ${res.getError()}`);
     }
-    const channel = res.getValue();
+    const channel = res.getValue() as FullChannelState;
     console.log('Updated channel:', channel);
     return channel;
   }
