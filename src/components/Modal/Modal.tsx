@@ -52,7 +52,7 @@ import {
 import { purple, green } from '@material-ui/core/colors';
 // @ts-ignore
 import QRCode from 'qrcode.react';
-import { BigNumber, utils } from 'ethers';
+import { BigNumber, constants, utils } from 'ethers';
 import { EngineEvents } from '@connext/vector-types';
 import { getRandomBytes32 } from '@connext/vector-utils';
 import {
@@ -163,7 +163,7 @@ const ConnextModal: FC<ConnextModalProps> = ({
 
   const [activeCrossChainTransferId, setActiveCrossChainTransferId] = useState<
     string
-  >('');
+  >(constants.HashZero);
 
   const [error, setError] = useState<Error>();
 
@@ -264,6 +264,17 @@ const ConnextModal: FC<ConnextModalProps> = ({
           );
           setDepositAddress(channelPublicIdentifier);
         } catch (e) {
+          console.error('Error initalizing Browser Node: ', e);
+          if (e.message.includes('localStorage not available in this window')) {
+            alert(
+              'Please disable shields or ad blockers and try again. Connext requires cross-site cookies to store your channel states.'
+            );
+          }
+          setCrossChainTransfers({
+            ...crossChainTransfers,
+            [constants.HashZero]: TRANSFER_STATES.ERROR,
+          });
+          setActiveStep(activePhase(TRANSFER_STATES.ERROR));
           setIniting(false);
           setError(e);
           return;
