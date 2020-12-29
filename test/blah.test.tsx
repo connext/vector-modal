@@ -14,6 +14,8 @@ describe('it', () => {
         withdrawAssetId={constants.AddressZero}
         withdrawChainId={1338}
         withdrawalAddress={constants.AddressZero}
+        onClose={() => false}
+        routerPublicIdentifier="vector7tbbTxQp8ppEQUgPsbGiTrVdapLdU5dH7zTbVuXRf1M4CEBU9Q"
       />,
       div
     );
