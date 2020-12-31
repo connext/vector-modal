@@ -17,8 +17,7 @@
     "lint": "tsdx lint",
     "prepare": "tsdx build",
     "size": "size-limit",
-    "analyze": "size-limit --why",
-    "release": "np"
+    "analyze": "size-limit --why"
   },
   "peerDependencies": {
     "react": ">=16"
@@ -50,14 +49,9 @@
     "@size-limit/preset-small-lib": "^4.9.1",
     "@types/react": "^17.0.0",
     "@types/react-dom": "^17.0.0",
-    "autoprefixer": "^10.1.0",
-    "cssnano": "^4.1.10",
-    "husky": "^4.3.6",
-    "np": "^7.1.0",
+    "@types/styled-components": "^5.1.7",
     "react": "^17.0.1",
     "react-dom": "^17.0.1",
-    "rollup-plugin-postcss": "^4.0.0",
-    "sass": "^1.30.0",
     "size-limit": "^4.9.1",
     "tsdx": "^0.14.1",
     "tslib": "^2.0.3",
@@ -67,11 +61,10 @@
     "@connext/vector-browser-node": "0.1.0-rc.2",
     "@connext/vector-types": "0.1.0-rc.2",
     "@connext/vector-utils": "0.1.0-rc.2",
-    "@emotion/react": "^11.1.4",
-    "@emotion/styled": "^11.0.0",
     "@material-ui/core": "^5.0.0-alpha.20",
     "@material-ui/icons": "^4.11.2",
     "ethers": "^5.0.24",
-    "qrcode.react": "^1.0.0"
+    "qrcode.react": "^1.0.0",
+    "styled-components": "^5.2.1"
   }
 }

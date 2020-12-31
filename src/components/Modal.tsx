@@ -60,16 +60,16 @@ import {
   getAssetName,
   TransferStates,
   TRANSFER_STATES,
-} from '../../constants';
-import { connext } from '../../service';
+} from '../constants';
+import { connext } from '../service';
 import {
   getExplorerLinkForTx,
   activePhase,
   getAssetBalance,
   hydrateProviders,
   getExplorerLinkForAsset,
-} from '../../utils';
-import Loading from '../Loading';
+} from '../utils';
+import Loading from './Loading';
 
 const theme = createMuiTheme({
   palette: {
@@ -143,7 +143,6 @@ const ConnextModal: FC<ConnextModalProps> = ({
   connextNode,
 }) => {
   const classes = useStyles();
-  const [initializing, setInitializing] = useState(true);
   const [depositAddress, setDepositAddress] = useState<string>();
   const [depositChainName, setDepositChainName] = useState<string>(
     depositChainId.toString()
@@ -161,9 +160,10 @@ const ConnextModal: FC<ConnextModalProps> = ({
 
   const [activeStep, setActiveStep] = React.useState(-1);
 
-  const [activeCrossChainTransferId, setActiveCrossChainTransferId] = useState<
-    string
-  >(constants.HashZero);
+  const [
+    activeCrossChainTransferId,
+    setActiveCrossChainTransferId,
+  ] = useState<string>(constants.HashZero);
 
   const [error, setError] = useState<Error>();
 
@@ -171,7 +171,7 @@ const ConnextModal: FC<ConnextModalProps> = ({
     crossChainTransfers[activeCrossChainTransferId] ?? TRANSFER_STATES.INITIAL;
 
   const registerEngineEventListeners = (node: BrowserNode): void => {
-    node.on(EngineEvents.DEPOSIT_RECONCILED, data => {
+    node.on(EngineEvents.DEPOSIT_RECONCILED, (data) => {
       console.log(data);
       // if (data.meta.crossChainTransferId) {
       setCrossChainTransferWithErrorTimeout(
@@ -180,7 +180,7 @@ const ConnextModal: FC<ConnextModalProps> = ({
       );
       // }
     });
-    node.on(EngineEvents.CONDITIONAL_TRANSFER_RESOLVED, data => {
+    node.on(EngineEvents.CONDITIONAL_TRANSFER_RESOLVED, (data) => {
       if (
         data.transfer.meta.crossChainTransferId &&
         data.transfer.initiator === node.signerAddress
@@ -191,7 +191,7 @@ const ConnextModal: FC<ConnextModalProps> = ({
         );
       }
     });
-    node.on(EngineEvents.WITHDRAWAL_RESOLVED, data => {
+    node.on(EngineEvents.WITHDRAWAL_RESOLVED, (data) => {
       if (
         data.transfer.meta.crossChainTransferId &&
         data.transfer.initiator === node.signerAddress
@@ -229,14 +229,14 @@ const ConnextModal: FC<ConnextModalProps> = ({
     try {
       const chainInfo: any[] = await utils.fetchJson(CHAIN_INFO_URL);
       const depositChainInfo = chainInfo.find(
-        info => info.chainId === depositChainId
+        (info) => info.chainId === depositChainId
       );
       if (depositChainInfo) {
         setDepositChainName(depositChainInfo.name);
       }
 
       const withdrawChainInfo = chainInfo.find(
-        info => info.chainId === withdrawChainId
+        (info) => info.chainId === withdrawChainId
       );
       if (withdrawChainInfo) {
         setWithdrawChainName(withdrawChainInfo.name);
@@ -247,7 +247,6 @@ const ConnextModal: FC<ConnextModalProps> = ({
   };
 
   useEffect(() => {
-    setInitializing(false);
     const init = async () => {
       if (showModal) {
         await getChainInfo();
@@ -300,7 +299,7 @@ const ConnextModal: FC<ConnextModalProps> = ({
         console.log(
           `Starting balance on ${depositChainId} for ${_depositAddress} of asset ${depositAssetId}: ${startingBalance.toString()}`
         );
-        _ethProviders[depositChainId].on('block', async blockNumber => {
+        _ethProviders[depositChainId].on('block', async (blockNumber) => {
           console.log('New blockNumber: ', blockNumber);
           let updatedBalance: BigNumber;
           try {
@@ -340,7 +339,7 @@ const ConnextModal: FC<ConnextModalProps> = ({
                 withdrawalAddress,
                 meta: { crossChainTransferId },
               })
-              .then(result => {
+              .then((result) => {
                 console.log('crossChainTransfer: ', result);
                 setWithdrawTx(result.withdrawalTx);
                 setSentAmount(result.withdrawalAmount ?? '0');
@@ -348,7 +347,7 @@ const ConnextModal: FC<ConnextModalProps> = ({
                 updated[crossChainTransferId] = TRANSFER_STATES.COMPLETE;
                 setCrossChainTransfers(updated);
               })
-              .catch(e => {
+              .catch((e) => {
                 setError(e);
                 console.error('Error in crossChainTransfer: ', e);
                 const updated = { ...crossChainTransfers };
@@ -409,12 +408,7 @@ const ConnextModal: FC<ConnextModalProps> = ({
           </Grid>
 
           <div style={{ padding: '1rem' }}>
-            {initing && (
-              <Loading
-                initializing={initializing}
-                message={'Setting up channels...'}
-              />
-            )}
+            {initing && <Loading message={'Setting up channels...'} />}
             {depositAddress ? (
               <>
                 <NetworkBar
@@ -435,11 +429,10 @@ const ConnextModal: FC<ConnextModalProps> = ({
                 <Grid container>
                   <Grid item xs={12}>
                     <TextField
-                      label="Receiver Address"
+                      id="receiver-address"
                       defaultValue={withdrawalAddress}
-                      InputProps={{
-                        readOnly: true,
-                      }}
+                      label="Receiver Address"
+                      type="search"
                       fullWidth
                     />
                   </Grid>
@@ -489,7 +482,7 @@ export interface StatusProps {
   styles: string;
 }
 
-const Status: FC<StatusProps> = props => {
+const Status: FC<StatusProps> = (props) => {
   const { depositChainName, withdrawChainName, activeStep, styles } = props;
   const steps = ['Deposit', 'Transfer', 'Withdraw'];
 
@@ -555,7 +548,7 @@ const Options: FC = () => {
   const anchorRef = React.useRef<HTMLButtonElement>(null);
 
   const handleToggle = () => {
-    setOpen(prevOpen => !prevOpen);
+    setOpen((prevOpen) => !prevOpen);
   };
 
   const handleClose = (event: React.MouseEvent<EventTarget>) => {
@@ -670,7 +663,7 @@ export interface EthereumAddressProps {
   styles: string;
 }
 
-const EthereumAddress: FC<EthereumAddressProps> = props => {
+const EthereumAddress: FC<EthereumAddressProps> = (props) => {
   const { depositAddress, styles } = props;
   const [copiedDepositAddress, setCopiedDepositAddress] = useState<boolean>(
     false
@@ -745,7 +738,7 @@ export interface NetworkBarProps {
   styles: string;
 }
 
-const NetworkBar: FC<NetworkBarProps> = props => {
+const NetworkBar: FC<NetworkBarProps> = (props) => {
   const { depositChainName, withdrawChainName, styles } = props;
 
   return (
