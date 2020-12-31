@@ -160,10 +160,9 @@ const ConnextModal: FC<ConnextModalProps> = ({
 
   const [activeStep, setActiveStep] = React.useState(-1);
 
-  const [
-    activeCrossChainTransferId,
-    setActiveCrossChainTransferId,
-  ] = useState<string>(constants.HashZero);
+  const [activeCrossChainTransferId, setActiveCrossChainTransferId] = useState<
+    string
+  >(constants.HashZero);
 
   const [error, setError] = useState<Error>();
 
@@ -171,7 +170,7 @@ const ConnextModal: FC<ConnextModalProps> = ({
     crossChainTransfers[activeCrossChainTransferId] ?? TRANSFER_STATES.INITIAL;
 
   const registerEngineEventListeners = (node: BrowserNode): void => {
-    node.on(EngineEvents.DEPOSIT_RECONCILED, (data) => {
+    node.on(EngineEvents.DEPOSIT_RECONCILED, data => {
       console.log(data);
       // if (data.meta.crossChainTransferId) {
       setCrossChainTransferWithErrorTimeout(
@@ -180,7 +179,7 @@ const ConnextModal: FC<ConnextModalProps> = ({
       );
       // }
     });
-    node.on(EngineEvents.CONDITIONAL_TRANSFER_RESOLVED, (data) => {
+    node.on(EngineEvents.CONDITIONAL_TRANSFER_RESOLVED, data => {
       if (
         data.transfer.meta.crossChainTransferId &&
         data.transfer.initiator === node.signerAddress
@@ -191,7 +190,7 @@ const ConnextModal: FC<ConnextModalProps> = ({
         );
       }
     });
-    node.on(EngineEvents.WITHDRAWAL_RESOLVED, (data) => {
+    node.on(EngineEvents.WITHDRAWAL_RESOLVED, data => {
       if (
         data.transfer.meta.crossChainTransferId &&
         data.transfer.initiator === node.signerAddress
@@ -229,14 +228,14 @@ const ConnextModal: FC<ConnextModalProps> = ({
     try {
       const chainInfo: any[] = await utils.fetchJson(CHAIN_INFO_URL);
       const depositChainInfo = chainInfo.find(
-        (info) => info.chainId === depositChainId
+        info => info.chainId === depositChainId
       );
       if (depositChainInfo) {
         setDepositChainName(depositChainInfo.name);
       }
 
       const withdrawChainInfo = chainInfo.find(
-        (info) => info.chainId === withdrawChainId
+        info => info.chainId === withdrawChainId
       );
       if (withdrawChainInfo) {
         setWithdrawChainName(withdrawChainInfo.name);
@@ -246,11 +245,72 @@ const ConnextModal: FC<ConnextModalProps> = ({
     }
   };
 
+  const blockListenerAndTransfer = async (_depositAddress: string) => {
+    const _ethProviders = hydrateProviders(depositChainId, withdrawChainId);
+    _ethProviders[depositChainId].on('block', async blockNumber => {
+      console.log('New blockNumber: ', blockNumber);
+
+      let transferAmount: BigNumber;
+      try {
+        transferAmount = await getAssetBalance(
+          _ethProviders,
+          depositChainId,
+          depositAssetId,
+          _depositAddress
+        );
+      } catch (e) {
+        setIniting(false);
+        setError(e);
+        return;
+      }
+      console.log(
+        `Balance on ${depositChainId} for ${_depositAddress} of asset ${depositAssetId}: ${transferAmount.toString()}`
+      );
+
+      if (transferAmount.gt(0)) {
+        const crossChainTransferId = getRandomBytes32();
+        setActiveCrossChainTransferId(crossChainTransferId);
+        const updated = { ...crossChainTransfers };
+        updated[crossChainTransferId] = TRANSFER_STATES.DEPOSITING;
+        setCrossChainTransfers(updated);
+        setActiveStep(activePhase(TRANSFER_STATES.DEPOSITING));
+        _ethProviders[depositChainId].off('block');
+
+        await connext
+          .connextClient!.crossChainTransfer({
+            amount: transferAmount.toString(),
+            fromAssetId: depositAssetId,
+            fromChainId: depositChainId,
+            toAssetId: withdrawAssetId,
+            toChainId: withdrawChainId,
+            reconcileDeposit: true,
+            withdrawalAddress,
+            meta: { crossChainTransferId },
+          })
+          .then(result => {
+            console.log('crossChainTransfer: ', result);
+            setWithdrawTx(result.withdrawalTx);
+            setSentAmount(result.withdrawalAmount ?? '0');
+            setActiveStep(activePhase(TRANSFER_STATES.COMPLETE));
+            updated[crossChainTransferId] = TRANSFER_STATES.COMPLETE;
+            setCrossChainTransfers(updated);
+          })
+          .catch(e => {
+            setError(e);
+            console.error('Error in crossChainTransfer: ', e);
+            const updated = { ...crossChainTransfers };
+            updated[crossChainTransferId] = TRANSFER_STATES.ERROR;
+            setActiveStep(activePhase(TRANSFER_STATES.ERROR));
+            setCrossChainTransfers(updated);
+          });
+      }
+    });
+  };
+
   useEffect(() => {
     const init = async () => {
       if (showModal) {
         await getChainInfo();
-        const _ethProviders = hydrateProviders(depositChainId, withdrawChainId);
 
         // browser node object
         let channelPublicIdentifier: string;
@@ -283,80 +343,9 @@ const ConnextModal: FC<ConnextModalProps> = ({
         console.log('INITIALIZED BROWSER NODE');
 
         const _depositAddress: string = channelPublicIdentifier;
-        let startingBalance: BigNumber;
-        try {
-          startingBalance = await getAssetBalance(
-            _ethProviders,
-            depositChainId,
-            depositAssetId,
-            _depositAddress
-          );
-        } catch (e) {
-          setIniting(false);
-          setError(e);
-          return;
-        }
-        console.log(
-          `Starting balance on ${depositChainId} for ${_depositAddress} of asset ${depositAssetId}: ${startingBalance.toString()}`
-        );
-        _ethProviders[depositChainId].on('block', async (blockNumber) => {
-          console.log('New blockNumber: ', blockNumber);
-          let updatedBalance: BigNumber;
-          try {
-            updatedBalance = await getAssetBalance(
-              _ethProviders,
-              depositChainId,
-              depositAssetId,
-              _depositAddress
-            );
-          } catch (e) {
-            console.warn(`Error fetching balance: ${e.message}`);
-            return;
-          }
-          console.log(
-            `Updated balance on ${depositChainId} for ${_depositAddress} of asset ${depositAssetId}: ${updatedBalance.toString()}`
-          );
-          if (updatedBalance.gt(startingBalance)) {
-            const transferAmount = updatedBalance.sub(startingBalance);
-            const crossChainTransferId = getRandomBytes32();
-            setActiveCrossChainTransferId(crossChainTransferId);
-            const updated = { ...crossChainTransfers };
-            updated[crossChainTransferId] = TRANSFER_STATES.DEPOSITING;
-            setCrossChainTransfers(updated);
-            setActiveStep(activePhase(TRANSFER_STATES.DEPOSITING));
-            // TODO: no need to do this if tracking via transferID, but if
-            // modal is only designed for one transfer, meh
-            _ethProviders[depositChainId].off('block');
 
-            await connext
-              .connextClient!.crossChainTransfer({
-                amount: transferAmount.toString(),
-                fromAssetId: depositAssetId,
-                fromChainId: depositChainId,
-                toAssetId: withdrawAssetId,
-                toChainId: withdrawChainId,
-                reconcileDeposit: true,
-                withdrawalAddress,
-                meta: { crossChainTransferId },
-              })
-              .then((result) => {
-                console.log('crossChainTransfer: ', result);
-                setWithdrawTx(result.withdrawalTx);
-                setSentAmount(result.withdrawalAmount ?? '0');
-                setActiveStep(activePhase(TRANSFER_STATES.COMPLETE));
-                updated[crossChainTransferId] = TRANSFER_STATES.COMPLETE;
-                setCrossChainTransfers(updated);
-              })
-              .catch((e) => {
-                setError(e);
-                console.error('Error in crossChainTransfer: ', e);
-                const updated = { ...crossChainTransfers };
-                updated[crossChainTransferId] = TRANSFER_STATES.ERROR;
-                setActiveStep(activePhase(TRANSFER_STATES.ERROR));
-                setCrossChainTransfers(updated);
-              });
-          }
-        });
+        await blockListenerAndTransfer(_depositAddress);
+
         setIniting(false);
       }
     };
@@ -482,7 +471,7 @@ export interface StatusProps {
   styles: string;
 }
 
-const Status: FC<StatusProps> = (props) => {
+const Status: FC<StatusProps> = props => {
   const { depositChainName, withdrawChainName, activeStep, styles } = props;
   const steps = ['Deposit', 'Transfer', 'Withdraw'];
 
@@ -530,11 +519,6 @@ const Status: FC<StatusProps> = (props) => {
           {steps.map((label, index) => (
             <Step key={label}>
               <StepLabel StepIconComponent={StepIcon}>{label}</StepLabel>
-              <StepContent>
-                <Typography variant="subtitle2">
-                  {getStepContent(index)}
-                </Typography>
-              </StepContent>
             </Step>
           ))}
         </Stepper>
@@ -548,7 +532,7 @@ const Options: FC = () => {
   const anchorRef = React.useRef<HTMLButtonElement>(null);
 
   const handleToggle = () => {
-    setOpen((prevOpen) => !prevOpen);
+    setOpen(prevOpen => !prevOpen);
   };
 
   const handleClose = (event: React.MouseEvent<EventTarget>) => {
@@ -663,7 +647,7 @@ export interface EthereumAddressProps {
   styles: string;
 }
 
-const EthereumAddress: FC<EthereumAddressProps> = (props) => {
+const EthereumAddress: FC<EthereumAddressProps> = props => {
   const { depositAddress, styles } = props;
   const [copiedDepositAddress, setCopiedDepositAddress] = useState<boolean>(
     false
@@ -738,7 +722,7 @@ export interface NetworkBarProps {
   styles: string;
 }
 
-const NetworkBar: FC<NetworkBarProps> = (props) => {
+const NetworkBar: FC<NetworkBarProps> = props => {
   const { depositChainName, withdrawChainName, styles } = props;
 
   return (
