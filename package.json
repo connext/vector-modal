@@ -45,6 +45,8 @@
     "access": "public"
   },
   "devDependencies": {
+    "@emotion/react": "^11.1.4",
+    "@emotion/styled": "^11.0.0",
     "@rollup/plugin-image": "^2.0.6",
     "@size-limit/preset-small-lib": "^4.9.1",
     "@types/react": "^17.0.0",
