@@ -1,3 +1,35 @@
+# Local Testing
+
+For local testing, use the following setup with this and the `vector` repo:
+
+- `make start-trio`
+- `make start-iframe-app`
+- inside `modules/browser-node`, run `npm pack`
+- inside `vector-modal` repo, run `npm i /Users/rahul/connext/repos/vector/modules/browser-node/connext-vector-browser-node-0.1.0-rc.4.tgz`
+- use this .env inside `vector-modal`:
+
+```
+REACT_APP_IFRAME_SRC=http://localhost:3030
+REACT_APP_ETH_PROVIDERS={"1337":"http://localhost:8545","1338":"http://localhost:8546"}
+```
+
+- change `vector-modal/example/index.tsx` to use the local config (can modify addresses if needed):
+
+```ts
+<ConnextModal
+  showModal={showModal}
+  routerPublicIdentifier="vector8Uz1BdpA9hV5uTm6QUv5jj1PsUyCH8m8ciA94voCzsxVmrBRor"
+  depositAssetId={'0x9FBDa871d559710256a2502A2517b794B482Db40'}
+  depositChainId={1337}
+  withdrawAssetId={'0x9FBDa871d559710256a2502A2517b794B482Db40'}
+  withdrawChainId={1338}
+  withdrawalAddress={'0x5A9e792143bf2708b4765C144451dCa54f559a19'}
+  onClose={() => setShowModal(false)}
+/>
+```
+
+- run `npm start` inside `vector-modal` and also run `npm start` inside `vector-modal/example`
+
 # TSDX React User Guide
 
 Congrats! You just saved yourself hours of work by bootstrapping this project with TSDX. Let’s get you oriented with what’s here and how to use it.
