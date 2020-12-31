@@ -29,5 +29,7 @@ export const getAssetName = (assetId: string, chainId: number): string => {
   if (assetId === constants.AddressZero) {
     return 'ETH';
   }
-  return ASSET_CHAIN_NAME_MAPPING[chainId][assetId] || 'Token';
+  return ASSET_CHAIN_NAME_MAPPING[chainId]
+    ? ASSET_CHAIN_NAME_MAPPING[chainId][assetId] ?? 'Token'
+    : 'Token';
 };
