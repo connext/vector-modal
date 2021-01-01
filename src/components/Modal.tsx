@@ -112,6 +112,7 @@ const useStyles = makeStyles((theme: Theme) =>
     },
     header: {},
     networkBar: { paddingBottom: '1rem' },
+    steps: { paddingBottom: '1rem' },
     status: { paddingBottom: '1rem' },
     ethereumAddress: { paddingBottom: '1rem' },
     completeState: { paddingBottom: '1rem' },
@@ -352,6 +353,63 @@ const ConnextModal: FC<ConnextModalProps> = ({
     init();
   }, [showModal]);
 
+  const steps = ['Deposit', 'Transfer', 'Withdraw'];
+
+  function getStepContent(step: number) {
+    switch (step) {
+      case -1:
+        return `Waiting for deposit`;
+      case 0:
+        return `Detected deposit on-chain(${depositChainName}), depositing into state channel!`;
+      case 1:
+        return `Transferring from ${depositChainName} to ${withdrawChainName}`;
+      case 2:
+        return `Withdrawing funds back on-chain(${withdrawChainName}!`;
+      case 3:
+        return (
+          <CompleteState
+            withdrawChainName={withdrawChainName}
+            withdrawTx={withdrawTx!}
+            sentAmount={sentAmount!}
+            withdrawChainId={withdrawChainId}
+            withdrawAssetId={withdrawAssetId}
+            styles={classes.completeState}
+          />
+        );
+      case 4:
+        return (
+          <ErrorState
+            error={error ?? new Error('unknown')}
+            crossChainTransferId={activeCrossChainTransferId}
+            styles={classes.errorState}
+          />
+        );
+
+      default:
+        return 'Unknown step';
+    }
+  }
+
+  function StepIcon(props: StepIconProps) {
+    const { active, completed } = props;
+
+    const icon: React.ReactElement = active ? (
+      <CircularProgress size="1rem" color="primary" />
+    ) : completed ? (
+      <CheckCircleRounded color="primary" />
+    ) : (
+      <FiberManualRecordOutlined color="action" />
+    );
+
+    const icons: { [index: string]: React.ReactElement } = {
+      1: icon,
+      2: icon,
+      3: icon,
+    };
+
+    return <div>{icons[String(props.icon)]}</div>;
+  }
+
   return (
     <ThemeProvider theme={theme}>
       <Dialog open={showModal} fullWidth={true} maxWidth="xs">
@@ -395,7 +453,6 @@ const ConnextModal: FC<ConnextModalProps> = ({
               <Options />
             </Grid>
           </Grid>
-
           <div style={{ padding: '1rem' }}>
             {initing && <Loading message={'Setting up channels...'} />}
             {depositAddress ? (
@@ -409,12 +466,26 @@ const ConnextModal: FC<ConnextModalProps> = ({
                   depositAddress={depositAddress}
                   styles={classes.ethereumAddress}
                 />
-                <Status
-                  depositChainName={depositChainName}
-                  withdrawChainName={withdrawChainName}
-                  activeStep={activeStep}
-                  styles={classes.status}
-                />
+                <Grid container className={classes.steps}>
+                  <Grid item xs={12}>
+                    <Stepper activeStep={activeStep}>
+                      {steps.map((label, index) => (
+                        <Step key={label}>
+                          <StepLabel StepIconComponent={StepIcon}>
+                            {label}
+                          </StepLabel>
+                        </Step>
+                      ))}
+                    </Stepper>
+                  </Grid>
+                </Grid>
+                <Grid container className={classes.status}>
+                  <Grid item xs={12}>
+                    <Typography variant="body2" align="center">
+                      {getStepContent(activeStep)}
+                    </Typography>
+                  </Grid>
+                </Grid>
                 <Grid container>
                   <Grid item xs={12}>
                     <TextField
@@ -432,23 +503,6 @@ const ConnextModal: FC<ConnextModalProps> = ({
                 <Skeleton variant="rectangular" height={300} />
               </>
             )}
-            {!initing && transferState === TRANSFER_STATES.COMPLETE && (
-              <CompleteState
-                withdrawChainName={withdrawChainName}
-                withdrawTx={withdrawTx!}
-                sentAmount={sentAmount!}
-                withdrawChainId={withdrawChainId}
-                withdrawAssetId={withdrawAssetId}
-                styles={classes.completeState}
-              />
-            )}
-            {!initing && transferState === TRANSFER_STATES.ERROR && (
-              <ErrorState
-                error={error ?? new Error('unknown')}
-                crossChainTransferId={activeCrossChainTransferId}
-                styles={classes.errorState}
-              />
-            )}
           </div>
 
           <Grid id="Footer" container direction="row" justifyContent="center">
@@ -461,69 +515,6 @@ const ConnextModal: FC<ConnextModalProps> = ({
         </Card>
       </Dialog>
     </ThemeProvider>
-  );
-};
-
-export interface StatusProps {
-  depositChainName: string;
-  withdrawChainName: string;
-  activeStep: number;
-  styles: string;
-}
-
-const Status: FC<StatusProps> = props => {
-  const { depositChainName, withdrawChainName, activeStep, styles } = props;
-  const steps = ['Deposit', 'Transfer', 'Withdraw'];
-
-  function getStepContent(step: number) {
-    switch (step) {
-      case 0:
-        return `Detected deposit on-chain(${depositChainName}), depositing into state channel!`;
-      case 1:
-        return `Transferring from ${depositChainName} to ${withdrawChainName}`;
-      case 2:
-        return `Withdrawing funds back on-chain(${withdrawChainName}!`;
-      default:
-        return 'Unknown step';
-    }
-  }
-
-  function StepIcon(props: StepIconProps) {
-    const { active, completed } = props;
-
-    const icon: React.ReactElement = active ? (
-      <CircularProgress size="1rem" color="primary" />
-    ) : completed ? (
-      <Icon fontSize="small" color="primary">
-        <CheckCircleRounded />
-      </Icon>
-    ) : (
-      <Icon fontSize="small" color="primary">
-        <FiberManualRecordOutlined />
-      </Icon>
-    );
-
-    const icons: { [index: string]: React.ReactElement } = {
-      1: icon,
-      2: icon,
-      3: icon,
-    };
-
-    return <>{icons[String(props.icon)]}</>;
-  }
-
-  return (
-    <Grid container className={styles}>
-      <Grid item xs={12}>
-        <Stepper activeStep={activeStep} orientation="vertical">
-          {steps.map((label, index) => (
-            <Step key={label}>
-              <StepLabel StepIconComponent={StepIcon}>{label}</StepLabel>
-            </Step>
-          ))}
-        </Stepper>
-      </Grid>
-    </Grid>
   );
 };
 
@@ -769,7 +760,6 @@ const CompleteState: FC<CompleteStateProps> = ({
   styles,
 }) => (
   <>
-    <Divider variant="middle" className={styles} />
     <Grid container alignItems="center" direction="column">
       <Icon color="secondary" fontSize="large">
         <CheckCircleRounded />
@@ -814,7 +804,6 @@ const ErrorState: FC<ErrorStateProps> = ({
   styles,
 }) => (
   <>
-    <Divider variant="middle" className={styles} />
     <Grid container alignItems="center" direction="column">
       <Icon color="error" fontSize="large">
         <ErrorRounded />
