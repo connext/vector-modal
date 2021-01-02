@@ -369,13 +369,30 @@ const ConnextModal: FC<ConnextModalProps> = ({
     } else {
       switch (step) {
         case -1:
-          return `Waiting for deposit`;
+          return (
+            <Typography variant="h6" align="center">
+              Waiting for deposit
+            </Typography>
+          );
         case 0:
-          return `Detected deposit on-chain(${depositChainName}), depositing into state channel!`;
+          return (
+            <Typography variant="body2" align="center">
+              Detected deposit on-chain({depositChainName}), depositing into
+              state channel!
+            </Typography>
+          );
         case 1:
-          return `Transferring from ${depositChainName} to ${withdrawChainName}`;
+          return (
+            <Typography variant="body2" align="center">
+              Transferring from {depositChainName} to {withdrawChainName}
+            </Typography>
+          );
         case 2:
-          return `Withdrawing funds back on-chain(${withdrawChainName}!`;
+          return (
+            <Typography variant="body2" align="center">
+              Withdrawing funds back on-chain({withdrawChainName}!
+            </Typography>
+          );
         case 3:
           return (
             <CompleteState
@@ -492,9 +509,7 @@ const ConnextModal: FC<ConnextModalProps> = ({
                 </Grid>
                 <Grid container className={classes.status}>
                   <Grid item xs={12}>
-                    <Typography variant="body2" align="center">
-                      {getStepContent(activeStep)}
-                    </Typography>
+                    {getStepContent(activeStep)}
                   </Grid>
                 </Grid>
                 <Grid container>
@@ -512,7 +527,19 @@ const ConnextModal: FC<ConnextModalProps> = ({
               </>
             ) : (
               <>
-                <Skeleton variant="rectangular" height={300} />
+                {isError ? (
+                  <>
+                    <ErrorState
+                      error={error ?? new Error('unknown')}
+                      crossChainTransferId={activeCrossChainTransferId}
+                      styles={classes.errorState}
+                    />
+                  </>
+                ) : (
+                  <>
+                    <Skeleton variant="rectangular" height={300} />
+                  </>
+                )}
               </>
             )}
           </div>
@@ -821,9 +848,11 @@ const ErrorState: FC<ErrorStateProps> = ({
       </Typography>
     </Grid>
 
-    <Typography gutterBottom variant="caption" color="error" align="center">
-      {`${crossChainTransferId.substring(0, 5)}... - ${error.message}`}
-    </Typography>
+    <Grid container direction="row" justifyContent="center">
+      <Typography gutterBottom variant="caption" color="error" align="center">
+        {`${crossChainTransferId.substring(0, 5)}... - ${error.message}`}
+      </Typography>
+    </Grid>
   </>
 );
 
