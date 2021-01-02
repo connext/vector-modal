@@ -360,11 +360,23 @@ const ConnextModal: FC<ConnextModalProps> = ({
   function getStepContent(step: number) {
     if (isError) {
       return (
-        <ErrorState
-          error={error ?? new Error('unknown')}
-          crossChainTransferId={activeCrossChainTransferId}
-          styles={classes.errorState}
-        />
+        <>
+          <ErrorState
+            error={error ?? new Error('unknown')}
+            crossChainTransferId={activeCrossChainTransferId}
+            styles={classes.errorState}
+          />
+          <Grid container direction="row" justifyContent="center">
+            <Button
+              variant="contained"
+              onClick={() => {
+                blockListenerAndTransfer(depositAddress!);
+              }}
+            >
+              Try Again!
+            </Button>
+          </Grid>
+        </>
       );
     } else {
       switch (step) {
@@ -395,14 +407,26 @@ const ConnextModal: FC<ConnextModalProps> = ({
           );
         case 3:
           return (
-            <CompleteState
-              withdrawChainName={withdrawChainName}
-              withdrawTx={withdrawTx!}
-              sentAmount={sentAmount!}
-              withdrawChainId={withdrawChainId}
-              withdrawAssetId={withdrawAssetId}
-              styles={classes.completeState}
-            />
+            <>
+              <CompleteState
+                withdrawChainName={withdrawChainName}
+                withdrawTx={withdrawTx!}
+                sentAmount={sentAmount!}
+                withdrawChainId={withdrawChainId}
+                withdrawAssetId={withdrawAssetId}
+                styles={classes.completeState}
+              />{' '}
+              <Grid container direction="row" justifyContent="center">
+                <Button
+                  variant="contained"
+                  onClick={() => {
+                    blockListenerAndTransfer(depositAddress!);
+                  }}
+                >
+                  New Cross-Chain Transfer
+                </Button>
+              </Grid>
+            </>
           );
         default:
           return 'Unknown step';
