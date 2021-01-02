@@ -4,7 +4,6 @@ import {
   Dialog,
   DialogTitle,
   Grid,
-  Divider,
   Button,
   Typography,
   Skeleton,
@@ -12,7 +11,6 @@ import {
   Stepper,
   Step,
   StepLabel,
-  StepContent,
   InputAdornment,
   IconButton,
   Card,
@@ -160,6 +158,7 @@ const ConnextModal: FC<ConnextModalProps> = ({
   const [initing, setIniting] = useState<boolean>(true);
 
   const [activeStep, setActiveStep] = React.useState(-1);
+  const [isError, setIsError] = React.useState(false);
 
   const [activeCrossChainTransferId, setActiveCrossChainTransferId] = useState<
     string
@@ -212,6 +211,7 @@ const ConnextModal: FC<ConnextModalProps> = ({
     tracked[crossChainTransferId] = phase;
     setCrossChainTransfers(tracked);
     setActiveStep(activePhase(phase));
+    setIsError(false);
     setTimeout(() => {
       if (crossChainTransfers[crossChainTransferId] !== phase) {
         return;
@@ -220,7 +220,7 @@ const ConnextModal: FC<ConnextModalProps> = ({
       let tracked = { ...crossChainTransfers };
       tracked[crossChainTransferId] = TRANSFER_STATES.ERROR;
       setCrossChainTransfers(tracked);
-      setActiveStep(activePhase(phase));
+      setIsError(true);
       setError(new Error(`No updates within 30s for ${crossChainTransferId}`));
     }, 30_000);
   };
@@ -275,6 +275,7 @@ const ConnextModal: FC<ConnextModalProps> = ({
         updated[crossChainTransferId] = TRANSFER_STATES.DEPOSITING;
         setCrossChainTransfers(updated);
         setActiveStep(activePhase(TRANSFER_STATES.DEPOSITING));
+        setIsError(false);
         _ethProviders[depositChainId].off('block');
 
         await connext
@@ -293,6 +294,7 @@ const ConnextModal: FC<ConnextModalProps> = ({
             setWithdrawTx(result.withdrawalTx);
             setSentAmount(result.withdrawalAmount ?? '0');
             setActiveStep(activePhase(TRANSFER_STATES.COMPLETE));
+            setIsError(false);
             updated[crossChainTransferId] = TRANSFER_STATES.COMPLETE;
             setCrossChainTransfers(updated);
           })
@@ -301,7 +303,7 @@ const ConnextModal: FC<ConnextModalProps> = ({
             console.error('Error in crossChainTransfer: ', e);
             const updated = { ...crossChainTransfers };
             updated[crossChainTransferId] = TRANSFER_STATES.ERROR;
-            setActiveStep(activePhase(TRANSFER_STATES.ERROR));
+            setIsError(true);
             setCrossChainTransfers(updated);
           });
       }
@@ -334,7 +336,7 @@ const ConnextModal: FC<ConnextModalProps> = ({
             ...crossChainTransfers,
             [constants.HashZero]: TRANSFER_STATES.ERROR,
           });
-          setActiveStep(activePhase(TRANSFER_STATES.ERROR));
+          setIsError(true);
           setIniting(false);
           setError(e);
           return;
@@ -356,47 +358,51 @@ const ConnextModal: FC<ConnextModalProps> = ({
   const steps = ['Deposit', 'Transfer', 'Withdraw'];
 
   function getStepContent(step: number) {
-    switch (step) {
-      case -1:
-        return `Waiting for deposit`;
-      case 0:
-        return `Detected deposit on-chain(${depositChainName}), depositing into state channel!`;
-      case 1:
-        return `Transferring from ${depositChainName} to ${withdrawChainName}`;
-      case 2:
-        return `Withdrawing funds back on-chain(${withdrawChainName}!`;
-      case 3:
-        return (
-          <CompleteState
-            withdrawChainName={withdrawChainName}
-            withdrawTx={withdrawTx!}
-            sentAmount={sentAmount!}
-            withdrawChainId={withdrawChainId}
-            withdrawAssetId={withdrawAssetId}
-            styles={classes.completeState}
-          />
-        );
-      case 4:
-        return (
-          <ErrorState
-            error={error ?? new Error('unknown')}
-            crossChainTransferId={activeCrossChainTransferId}
-            styles={classes.errorState}
-          />
-        );
-
-      default:
-        return 'Unknown step';
+    if (isError) {
+      return (
+        <ErrorState
+          error={error ?? new Error('unknown')}
+          crossChainTransferId={activeCrossChainTransferId}
+          styles={classes.errorState}
+        />
+      );
+    } else {
+      switch (step) {
+        case -1:
+          return `Waiting for deposit`;
+        case 0:
+          return `Detected deposit on-chain(${depositChainName}), depositing into state channel!`;
+        case 1:
+          return `Transferring from ${depositChainName} to ${withdrawChainName}`;
+        case 2:
+          return `Withdrawing funds back on-chain(${withdrawChainName}!`;
+        case 3:
+          return (
+            <CompleteState
+              withdrawChainName={withdrawChainName}
+              withdrawTx={withdrawTx!}
+              sentAmount={sentAmount!}
+              withdrawChainId={withdrawChainId}
+              withdrawAssetId={withdrawAssetId}
+              styles={classes.completeState}
+            />
+          );
+        default:
+          return 'Unknown step';
+      }
     }
   }
 
   function StepIcon(props: StepIconProps) {
-    const { active, completed } = props;
-
-    const icon: React.ReactElement = active ? (
-      <CircularProgress size="1rem" color="primary" />
-    ) : completed ? (
+    const { active, completed, error } = props;
+    const icon: React.ReactElement = completed ? (
       <CheckCircleRounded color="primary" />
+    ) : active ? (
+      error ? (
+        <ErrorRounded color="error" />
+      ) : (
+        <CircularProgress size="1rem" color="primary" />
+      )
     ) : (
       <FiberManualRecordOutlined color="action" />
     );
@@ -469,13 +475,18 @@ const ConnextModal: FC<ConnextModalProps> = ({
                 <Grid container className={classes.steps}>
                   <Grid item xs={12}>
                     <Stepper activeStep={activeStep}>
-                      {steps.map((label, index) => (
-                        <Step key={label}>
-                          <StepLabel StepIconComponent={StepIcon}>
-                            {label}
-                          </StepLabel>
-                        </Step>
-                      ))}
+                      {steps.map((label, index) => {
+                        return (
+                          <Step key={label}>
+                            <StepLabel
+                              StepIconComponent={StepIcon}
+                              StepIconProps={{ error: isError }}
+                            >
+                              {label}
+                            </StepLabel>
+                          </Step>
+                        );
+                      })}
                     </Stepper>
                   </Grid>
                 </Grid>
@@ -761,9 +772,7 @@ const CompleteState: FC<CompleteStateProps> = ({
 }) => (
   <>
     <Grid container alignItems="center" direction="column">
-      <Icon color="secondary" fontSize="large">
-        <CheckCircleRounded />
-      </Icon>
+      <CheckCircleRounded color="secondary" fontSize="large" />
       <Typography gutterBottom variant="h6">
         Success
       </Typography>
@@ -805,15 +814,13 @@ const ErrorState: FC<ErrorStateProps> = ({
 }) => (
   <>
     <Grid container alignItems="center" direction="column">
-      <Icon color="error" fontSize="large">
-        <ErrorRounded />
-      </Icon>
-      <Typography gutterBottom variant="h6">
+      <ErrorRounded fontSize="large" color="error" />
+      <Typography gutterBottom variant="caption" color="error">
         Error
       </Typography>
     </Grid>
 
-    <Typography gutterBottom variant="body1" align="center">
+    <Typography gutterBottom variant="caption" color="error" align="center">
       {`${crossChainTransferId.substring(0, 5)}... - ${error.message}`}
     </Typography>
   </>
