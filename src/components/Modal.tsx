@@ -515,7 +515,7 @@ const ConnextModal: FC<ConnextModalProps> = ({
                 <Grid container className={classes.steps}>
                   <Grid item xs={12}>
                     <Stepper activeStep={activeStep}>
-                      {steps.map((label, index) => {
+                      {steps.map(label => {
                         return (
                           <Step key={label}>
                             <StepLabel
@@ -822,7 +822,7 @@ const CompleteState: FC<CompleteStateProps> = ({
   styles,
 }) => (
   <>
-    <Grid container alignItems="center" direction="column">
+    <Grid container className={styles} alignItems="center" direction="column">
       <CheckCircleRounded color="secondary" fontSize="large" />
       <Typography gutterBottom variant="h6">
         Success
@@ -864,7 +864,7 @@ const ErrorState: FC<ErrorStateProps> = ({
   styles,
 }) => (
   <>
-    <Grid container alignItems="center" direction="column">
+    <Grid container className={styles} alignItems="center" direction="column">
       <ErrorRounded fontSize="large" color="error" />
       <Typography gutterBottom variant="caption" color="error">
         Error
