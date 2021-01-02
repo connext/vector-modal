@@ -500,10 +500,11 @@ const ConnextModal: FC<ConnextModalProps> = ({
                 <Grid container>
                   <Grid item xs={12}>
                     <TextField
-                      id="receiver-address"
-                      defaultValue={withdrawalAddress}
                       label="Receiver Address"
-                      type="search"
+                      defaultValue={withdrawalAddress}
+                      InputProps={{
+                        readOnly: true,
+                      }}
                       fullWidth
                     />
                   </Grid>
