@@ -26,7 +26,6 @@ import {
   Tooltip,
   withStyles,
   StepIconProps,
-  Icon,
 } from '@material-ui/core';
 import {
   MoreVert,
