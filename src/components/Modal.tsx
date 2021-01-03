@@ -568,7 +568,7 @@ const ConnextModal: FC<ConnextModalProps> = ({
                   </>
                 ) : (
                   <>
-                    <Skeleton variant="rectangular" height={300} />
+                    <Skeleton variant="rect" height={300} />
                   </>
                 )}
               </>
