@@ -1,12 +1,19 @@
 import { BrowserNode } from '@connext/vector-browser-node';
-import React, { FC, useEffect, useState } from 'react';
+import React, {
+  FC,
+  useRef,
+  useEffect,
+  useState,
+  ReactElement,
+  MouseEvent,
+  KeyboardEvent,
+} from 'react';
 import {
   Dialog,
   DialogTitle,
   Grid,
   Button,
   Typography,
-  Skeleton,
   TextField,
   Stepper,
   Step,
@@ -27,6 +34,7 @@ import {
   withStyles,
   StepIconProps,
 } from '@material-ui/core';
+import { Skeleton } from '@material-ui/lab';
 import {
   MoreVert,
   FileCopy,
@@ -156,8 +164,8 @@ const ConnextModal: FC<ConnextModalProps> = ({
   }>({});
   const [initing, setIniting] = useState<boolean>(true);
 
-  const [activeStep, setActiveStep] = React.useState(-1);
-  const [isError, setIsError] = React.useState(false);
+  const [activeStep, setActiveStep] = useState(-1);
+  const [isError, setIsError] = useState(false);
 
   const [activeCrossChainTransferId, setActiveCrossChainTransferId] = useState<
     string
@@ -435,7 +443,7 @@ const ConnextModal: FC<ConnextModalProps> = ({
 
   function StepIcon(props: StepIconProps) {
     const { active, completed, error } = props;
-    const icon: React.ReactElement = completed ? (
+    const icon: ReactElement = completed ? (
       <CheckCircleRounded color="primary" />
     ) : active ? (
       error ? (
@@ -447,7 +455,7 @@ const ConnextModal: FC<ConnextModalProps> = ({
       <FiberManualRecordOutlined color="action" />
     );
 
-    const icons: { [index: string]: React.ReactElement } = {
+    const icons: { [index: string]: ReactElement } = {
       1: icon,
       2: icon,
       3: icon,
@@ -581,14 +589,14 @@ const ConnextModal: FC<ConnextModalProps> = ({
 };
 
 const Options: FC = () => {
-  const [open, setOpen] = React.useState(false);
-  const anchorRef = React.useRef<HTMLButtonElement>(null);
+  const [open, setOpen] = useState(false);
+  const anchorRef = useRef<HTMLButtonElement>(null);
 
   const handleToggle = () => {
     setOpen(prevOpen => !prevOpen);
   };
 
-  const handleClose = (event: React.MouseEvent<EventTarget>) => {
+  const handleClose = (event: MouseEvent<EventTarget>) => {
     if (
       anchorRef.current &&
       anchorRef.current.contains(event.target as HTMLElement)
@@ -599,7 +607,7 @@ const Options: FC = () => {
     setOpen(false);
   };
 
-  function handleListKeyDown(event: React.KeyboardEvent) {
+  function handleListKeyDown(event: KeyboardEvent) {
     if (event.key === 'Tab') {
       event.preventDefault();
       setOpen(false);
@@ -607,8 +615,8 @@ const Options: FC = () => {
   }
 
   // return focus to the button when we transitioned from !open -> open
-  const prevOpen = React.useRef(open);
-  React.useEffect(() => {
+  const prevOpen = useRef(open);
+  useEffect(() => {
     if (prevOpen.current === true && open === false) {
       anchorRef.current!.focus();
     }
@@ -706,7 +714,7 @@ const EthereumAddress: FC<EthereumAddressProps> = props => {
     false
   );
 
-  const [open, setOpen] = React.useState(false);
+  const [open, setOpen] = useState(false);
 
   const handleOpen = () => {
     setOpen(true);
