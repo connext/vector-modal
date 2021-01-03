@@ -60,9 +60,9 @@
     "typescript": "^4.1.3"
   },
   "dependencies": {
-    "@connext/vector-browser-node": "0.1.0-rc.2",
-    "@connext/vector-types": "0.1.0-rc.2",
-    "@connext/vector-utils": "0.1.0-rc.2",
+    "@connext/vector-browser-node": "0.1.0-rc.13",
+    "@connext/vector-types": "0.1.0-rc.13",
+    "@connext/vector-utils": "0.1.0-rc.13",
     "@material-ui/core": "^5.0.0-alpha.20",
     "@material-ui/icons": "^4.11.2",
     "ethers": "^5.0.24",
