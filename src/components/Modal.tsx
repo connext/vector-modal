@@ -162,7 +162,6 @@ const ConnextModal: FC<ConnextModalProps> = ({
   const [crossChainTransfers, setCrossChainTransfers] = useState<{
     [crossChainTransferId: string]: TransferStates;
   }>({});
-  const [initing, setIniting] = useState<boolean>(true);
 
   const [activeStep, setActiveStep] = useState(-1);
   const [isError, setIsError] = useState(false);
@@ -267,8 +266,8 @@ const ConnextModal: FC<ConnextModalProps> = ({
           _depositAddress
         );
       } catch (e) {
-        setIniting(false);
         setError(e);
+        setIsError(true);
         return;
       }
       console.log(
@@ -343,9 +342,8 @@ const ConnextModal: FC<ConnextModalProps> = ({
             ...crossChainTransfers,
             [constants.HashZero]: TRANSFER_STATES.ERROR,
           });
-          setIsError(true);
-          setIniting(false);
           setError(e);
+          setIsError(true);
           return;
         }
 
@@ -355,8 +353,6 @@ const ConnextModal: FC<ConnextModalProps> = ({
         const _depositAddress: string = channelPublicIdentifier;
 
         await blockListenerAndTransfer(_depositAddress);
-
-        setIniting(false);
       }
     };
     init();
@@ -508,7 +504,6 @@ const ConnextModal: FC<ConnextModalProps> = ({
             </Grid>
           </Grid>
           <div style={{ padding: '1rem' }}>
-            {initing && <Loading message={'Setting up channels...'} />}
             {depositAddress ? (
               <>
                 <NetworkBar
@@ -568,6 +563,7 @@ const ConnextModal: FC<ConnextModalProps> = ({
                   </>
                 ) : (
                   <>
+                    <Loading message={'Setting up channels...'}></Loading>
                     <Skeleton variant="rect" height={300} />
                   </>
                 )}
