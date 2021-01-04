@@ -254,66 +254,89 @@ const ConnextModal: FC<ConnextModalProps> = ({
     }
   };
 
+  const transfer = async (
+    _depositAddress: string,
+    transferAmount: BigNumber
+  ) => {
+    const _ethProviders = hydrateProviders(depositChainId, withdrawChainId);
+    const crossChainTransferId = getRandomBytes32();
+    setActiveCrossChainTransferId(crossChainTransferId);
+    const updated = { ...crossChainTransfers };
+    updated[crossChainTransferId] = TRANSFER_STATES.DEPOSITING;
+    setCrossChainTransfers(updated);
+    setActiveStep(activePhase(TRANSFER_STATES.DEPOSITING));
+    setIsError(false);
+    _ethProviders[depositChainId].off('block');
+
+    await connext
+      .connextClient!.crossChainTransfer({
+        amount: transferAmount.toString(),
+        fromAssetId: depositAssetId,
+        fromChainId: depositChainId,
+        toAssetId: withdrawAssetId,
+        toChainId: withdrawChainId,
+        reconcileDeposit: true,
+        withdrawalAddress,
+        meta: { crossChainTransferId },
+      })
+      .then(result => {
+        console.log('crossChainTransfer: ', result);
+        setWithdrawTx(result.withdrawalTx);
+        setSentAmount(result.withdrawalAmount ?? '0');
+        setActiveStep(activePhase(TRANSFER_STATES.COMPLETE));
+        setIsError(false);
+        updated[crossChainTransferId] = TRANSFER_STATES.COMPLETE;
+        setCrossChainTransfers(updated);
+      })
+      .catch(e => {
+        setError(e);
+        console.error('Error in crossChainTransfer: ', e);
+        const updated = { ...crossChainTransfers };
+        updated[crossChainTransferId] = TRANSFER_STATES.ERROR;
+        setIsError(true);
+        setCrossChainTransfers(updated);
+      });
+  };
+
   const blockListenerAndTransfer = async (_depositAddress: string) => {
     const _ethProviders = hydrateProviders(depositChainId, withdrawChainId);
+
+    let startingBalance: BigNumber;
+    try {
+      startingBalance = await getAssetBalance(
+        _ethProviders,
+        depositChainId,
+        depositAssetId,
+        _depositAddress
+      );
+    } catch (e) {
+      setIniting(false);
+      setError(e);
+      return;
+    }
+    console.log(
+      `Starting balance on ${depositChainId} for ${_depositAddress} of asset ${depositAssetId}: ${startingBalance.toString()}`
+    );
     _ethProviders[depositChainId].on('block', async blockNumber => {
       console.log('New blockNumber: ', blockNumber);
-
-      let transferAmount: BigNumber;
+      let updatedBalance: BigNumber;
       try {
-        transferAmount = await getAssetBalance(
+        updatedBalance = await getAssetBalance(
           _ethProviders,
           depositChainId,
           depositAssetId,
           _depositAddress
         );
       } catch (e) {
-        setError(e);
-        setIsError(true);
+        console.warn(`Error fetching balance: ${e.message}`);
         return;
       }
       console.log(
-        `Balance on ${depositChainId} for ${_depositAddress} of asset ${depositAssetId}: ${transferAmount.toString()}`
+        `Updated balance on ${depositChainId} for ${_depositAddress} of asset ${depositAssetId}: ${updatedBalance.toString()}`
       );
-
-      if (transferAmount.gt(0)) {
-        const crossChainTransferId = getRandomBytes32();
-        setActiveCrossChainTransferId(crossChainTransferId);
-        const updated = { ...crossChainTransfers };
-        updated[crossChainTransferId] = TRANSFER_STATES.DEPOSITING;
-        setCrossChainTransfers(updated);
-        setActiveStep(activePhase(TRANSFER_STATES.DEPOSITING));
-        setIsError(false);
-        _ethProviders[depositChainId].off('block');
-
-        await connext
-          .connextClient!.crossChainTransfer({
-            amount: transferAmount.toString(),
-            fromAssetId: depositAssetId,
-            fromChainId: depositChainId,
-            toAssetId: withdrawAssetId,
-            toChainId: withdrawChainId,
-            reconcileDeposit: true,
-            withdrawalAddress,
-            meta: { crossChainTransferId },
-          })
-          .then(result => {
-            console.log('crossChainTransfer: ', result);
-            setWithdrawTx(result.withdrawalTx);
-            setSentAmount(result.withdrawalAmount ?? '0');
-            setActiveStep(activePhase(TRANSFER_STATES.COMPLETE));
-            setIsError(false);
-            updated[crossChainTransferId] = TRANSFER_STATES.COMPLETE;
-            setCrossChainTransfers(updated);
-          })
-          .catch(e => {
-            setError(e);
-            console.error('Error in crossChainTransfer: ', e);
-            const updated = { ...crossChainTransfers };
-            updated[crossChainTransferId] = TRANSFER_STATES.ERROR;
-            setIsError(true);
-            setCrossChainTransfers(updated);
-          });
+      if (updatedBalance.gt(startingBalance)) {
+        const transferAmount = updatedBalance.sub(startingBalance);
+        await transfer(_depositAddress, transferAmount);
       }
     });
   };
@@ -333,7 +356,6 @@ const ConnextModal: FC<ConnextModalProps> = ({
             depositChainId,
             withdrawChainId
           );
-          setDepositAddress(channelPublicIdentifier);
         } catch (e) {
           console.error('Error initalizing Browser Node: ', e);
           if (e.message.includes('localStorage not available in this window')) {
@@ -354,9 +376,38 @@ const ConnextModal: FC<ConnextModalProps> = ({
         registerEngineEventListeners(connext.connextClient!);
         console.log('INITIALIZED BROWSER NODE');
 
-        const _depositAddress: string = channelPublicIdentifier;
+        const depositChannelRes = await connext.connextClient!.getStateChannelByParticipants(
+          {
+            chainId: depositChainId,
+            counterparty: routerPublicIdentifier,
+          }
+        );
+        if (depositChannelRes.isError) {
+          setError(depositChannelRes.getError());
+          setIsError(true);
+          setIniting(false);
+          return;
+        }
+        const depositChannel = depositChannelRes.getValue();
+        const _depositAddress = depositChannel!.channelAddress;
+        setDepositAddress(_depositAddress);
 
-        await blockListenerAndTransfer(_depositAddress);
+        const offChainAssetBalance = depositChannel!.assetIds.map(
+          (asset, index) => {
+            if (asset === depositAssetId)
+              return depositChannel!.balances[index].amount[0];
+          }
+        );
+
+        console.log(
+          `balance on channel for ${_depositAddress} of asset ${depositAssetId}: ${offChainAssetBalance}`
+        );
+
+        if (offChainAssetBalance) {
+          await transfer(_depositAddress, BigNumber.from(offChainAssetBalance));
+        } else {
+          await blockListenerAndTransfer(_depositAddress);
+        }
         setIniting(false);
       }
     };
