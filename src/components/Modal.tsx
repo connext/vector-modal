@@ -198,6 +198,26 @@ const ConnextModal: FC<ConnextModalProps> = ({
         );
       }
     });
+    node.on(EngineEvents.CONDITIONAL_TRANSFER_RESOLVED, data => {
+      console.log('GOT EVENT: ', data);
+      if (
+        data.transfer.meta.crossChainTransferId &&
+        Object.values(data.transfer.transferResolver)[0] ===
+          constants.HashZero &&
+        data.transfer.chainId === depositChainId
+      ) {
+        let tracked = { ...crossChainTransfers };
+        tracked[data.transfer.meta.crossChainTransferId] =
+          TRANSFER_STATES.ERROR;
+        setCrossChainTransfers(tracked);
+        setIsError(true);
+        setError(
+          new Error(
+            `Transfer was cancelled, funds are preserved in the state channel, please refresh and try again`
+          )
+        );
+      }
+    });
     node.on(EngineEvents.WITHDRAWAL_RESOLVED, data => {
       if (
         data.transfer.meta.crossChainTransferId &&
