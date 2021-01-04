@@ -15,7 +15,7 @@ const Loading: FC<LoadingProps> = props => {
     <>
       {props.initializing ? (
         <>
-          <LoadingFadeout>
+          <Load>
             <LoadingCircle
             // style={{ display: imageLoaded ? "block" : "none" }}
             >
@@ -31,7 +31,7 @@ const Loading: FC<LoadingProps> = props => {
             >
               {props.message}
             </Typography>
-          </LoadingFadeout>
+          </Load>
         </>
       ) : (
         <>
