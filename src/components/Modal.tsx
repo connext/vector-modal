@@ -58,8 +58,8 @@ import { purple, green } from '@material-ui/core/colors';
 // @ts-ignore
 import QRCode from 'qrcode.react';
 import { BigNumber, constants, utils } from 'ethers';
-import { EngineEvents } from '@connext/vector-types';
-import { getRandomBytes32 } from '@connext/vector-utils';
+import { EngineEvents, FullChannelState } from '@connext/vector-types';
+import { getBalanceForAssetId, getRandomBytes32 } from '@connext/vector-utils';
 import {
   CHAIN_INFO_URL,
   getAssetName,
@@ -367,10 +367,9 @@ const ConnextModal: FC<ConnextModalProps> = ({
         setIniting(true);
         await getChainInfo();
 
-        // browser node object
-        let channelPublicIdentifier: string;
         try {
-          channelPublicIdentifier = await connext.connectNode(
+          // browser node object
+          await connext.connectNode(
             connextNode,
             routerPublicIdentifier,
             depositChainId,
@@ -408,23 +407,23 @@ const ConnextModal: FC<ConnextModalProps> = ({
           setIniting(false);
           return;
         }
-        const depositChannel = depositChannelRes.getValue();
+        const depositChannel = depositChannelRes.getValue() as FullChannelState;
         const _depositAddress = depositChannel!.channelAddress;
         setDepositAddress(_depositAddress);
 
-        const offChainAssetBalance = depositChannel!.assetIds.map(
-          (asset, index) => {
-            if (asset === depositAssetId)
-              return depositChannel!.balances[index].amount[0];
-          }
+        const offChainAssetBalance = getBalanceForAssetId(
+          depositChannel!,
+          depositAssetId,
+          'bob'
         );
 
         console.log(
           `balance on channel for ${_depositAddress} of asset ${depositAssetId}: ${offChainAssetBalance}`
         );
 
-        if (offChainAssetBalance) {
-          await transfer(_depositAddress, BigNumber.from(offChainAssetBalance));
+        const balanceBN = BigNumber.from(offChainAssetBalance);
+        if (balanceBN.gt(0)) {
+          await transfer(_depositAddress, balanceBN);
         } else {
           await blockListenerAndTransfer(_depositAddress);
         }
