@@ -411,6 +411,17 @@ const ConnextModal: FC<ConnextModalProps> = ({
         const _depositAddress = depositChannel!.channelAddress;
         setDepositAddress(_depositAddress);
 
+        const depositRes = await connext.connextClient!.reconcileDeposit({
+          channelAddress: depositChannel!.channelAddress,
+          assetId: depositAssetId,
+        });
+        if (depositRes.isError) {
+          setError(depositChannelRes.getError());
+          setIsError(true);
+          setIniting(false);
+          return;
+        }
+
         const offChainAssetBalance = getBalanceForAssetId(
           depositChannel!,
           depositAssetId,
