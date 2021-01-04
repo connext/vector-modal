@@ -795,11 +795,7 @@ const NetworkBar: FC<NetworkBarProps> = props => {
         <Grid item>
           <Chip color="secondary" label={depositChainName} />
         </Grid>
-        <Grid item>
-          <IconButton aria-label="arrow">
-            <DoubleArrow />
-          </IconButton>
-        </Grid>
+        <DoubleArrow />
         <Grid item>
           <Chip color="primary" label={withdrawChainName} />
         </Grid>
@@ -831,27 +827,23 @@ const CompleteState: FC<CompleteStateProps> = ({
       <Typography gutterBottom variant="h6">
         Success
       </Typography>
-    </Grid>
 
-    <Typography gutterBottom variant="body1" align="center">
-      {utils.formatEther(sentAmount)}{' '}
-      <a
-        href={getExplorerLinkForAsset(withdrawChainId, withdrawAssetId)}
-        target="_blank"
-      >
-        {getAssetName(withdrawAssetId, withdrawChainId)}
-      </a>{' '}
-      has been successfully transfered to {withdrawChainName}
-    </Typography>
-
-    <Grid container direction="row" justifyContent="center">
-      <Button
-        variant="contained"
-        href={getExplorerLinkForTx(withdrawChainId, withdrawTx)}
-        target="_blank"
-      >
-        Withdrawal Transaction
-      </Button>
+      <Typography gutterBottom variant="body1" color="secondary" align="center">
+        {utils.formatEther(sentAmount)}{' '}
+        <a
+          href={getExplorerLinkForAsset(withdrawChainId, withdrawAssetId)}
+          target="_blank"
+        >
+          {getAssetName(withdrawAssetId, withdrawChainId)}
+        </a>{' '}
+        has been successfully transfered to {withdrawChainName}:{' '}
+        <a
+          href={getExplorerLinkForTx(withdrawChainId, withdrawTx)}
+          target="_blank"
+        >
+          {withdrawTx}
+        </a>{' '}
+      </Typography>
     </Grid>
   </>
 );
@@ -873,9 +865,7 @@ const ErrorState: FC<ErrorStateProps> = ({
       <Typography gutterBottom variant="caption" color="error">
         Error
       </Typography>
-    </Grid>
 
-    <Grid container direction="row" justifyContent="center">
       <Typography gutterBottom variant="caption" color="error" align="center">
         {`${crossChainTransferId.substring(0, 5)}... - ${error.message}`}
       </Typography>
