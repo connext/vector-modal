@@ -320,8 +320,8 @@ const ConnextModal: FC<ConnextModalProps> = ({
 
   useEffect(() => {
     const init = async () => {
-      setIniting(true);
       if (showModal) {
+        setIniting(true);
         await getChainInfo();
 
         // browser node object
@@ -571,7 +571,7 @@ const ConnextModal: FC<ConnextModalProps> = ({
                     <Loading
                       message={'Setting up channels...'}
                       initializing={initing}
-                    ></Loading>
+                    />
                     <Skeleton variant="rect" height={300} />
                   </>
                 )}
