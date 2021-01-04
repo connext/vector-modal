@@ -5,6 +5,7 @@ import styled from 'styled-components';
 import LoadingGif from '../assets/loading.gif';
 
 interface LoadingProps {
+  initializing: boolean;
   message: string;
 }
 
@@ -12,23 +13,47 @@ const Loading: FC<LoadingProps> = props => {
   //   const [imageLoaded, setImageLoaded] = useState(true);
   return (
     <>
-      <LoadingFadeout>
-        <LoadingCircle
-        // style={{ display: imageLoaded ? "block" : "none" }}
-        >
-          <img
-            src={LoadingGif}
-            alt="loading"
-            style={{ width: '100%', height: '100%' }}
-          ></img>
-        </LoadingCircle>
-        <Typography
-          variant="subtitle2"
-          style={{ marginTop: '24px', fontSize: '14px' }}
-        >
-          {props.message}
-        </Typography>
-      </LoadingFadeout>
+      {props.initializing ? (
+        <>
+          <LoadingFadeout>
+            <LoadingCircle
+            // style={{ display: imageLoaded ? "block" : "none" }}
+            >
+              <img
+                src={LoadingGif}
+                alt="loading"
+                style={{ width: '100%', height: '100%' }}
+              ></img>
+            </LoadingCircle>
+            <Typography
+              variant="subtitle2"
+              style={{ marginTop: '24px', fontSize: '14px' }}
+            >
+              {props.message}
+            </Typography>
+          </LoadingFadeout>
+        </>
+      ) : (
+        <>
+          <LoadingFadeout>
+            <LoadingCircle
+            // style={{ display: imageLoaded ? "block" : "none" }}
+            >
+              <img
+                src={LoadingGif}
+                alt="loading"
+                style={{ width: '100%', height: '100%' }}
+              ></img>
+            </LoadingCircle>
+            <Typography
+              variant="subtitle2"
+              style={{ marginTop: '24px', fontSize: '14px' }}
+            >
+              {props.message}
+            </Typography>
+          </LoadingFadeout>
+        </>
+      )}
     </>
   );
 };

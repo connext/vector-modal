@@ -163,6 +163,8 @@ const ConnextModal: FC<ConnextModalProps> = ({
     [crossChainTransferId: string]: TransferStates;
   }>({});
 
+  const [initing, setIniting] = useState<boolean>(true);
+
   const [activeStep, setActiveStep] = useState(-1);
   const [isError, setIsError] = useState(false);
 
@@ -318,6 +320,7 @@ const ConnextModal: FC<ConnextModalProps> = ({
 
   useEffect(() => {
     const init = async () => {
+      setIniting(true);
       if (showModal) {
         await getChainInfo();
 
@@ -344,6 +347,7 @@ const ConnextModal: FC<ConnextModalProps> = ({
           });
           setError(e);
           setIsError(true);
+          setIniting(false);
           return;
         }
 
@@ -353,6 +357,7 @@ const ConnextModal: FC<ConnextModalProps> = ({
         const _depositAddress: string = channelPublicIdentifier;
 
         await blockListenerAndTransfer(_depositAddress);
+        setIniting(false);
       }
     };
     init();
@@ -563,7 +568,10 @@ const ConnextModal: FC<ConnextModalProps> = ({
                   </>
                 ) : (
                   <>
-                    <Loading message={'Setting up channels...'}></Loading>
+                    <Loading
+                      message={'Setting up channels...'}
+                      initializing={initing}
+                    ></Loading>
                     <Skeleton variant="rect" height={300} />
                   </>
                 )}
