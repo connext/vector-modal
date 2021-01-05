@@ -183,7 +183,10 @@ const ConnextModal: FC<ConnextModalProps> = ({
   ): void => {
     node.on(EngineEvents.DEPOSIT_RECONCILED, data => {
       console.log('EngineEvents.DEPOSIT_RECONCILED: ', data);
-      if (startingBalance.lt(data.channelBalance.amount[1])) {
+      if (
+        startingBalance.lt(data.channelBalance.amount[1]) && // deposit actually added balance
+        data.channelAddress === depositAddress // depositAddress is channelAddress on deposit chain
+      ) {
         // if (data.meta.crossChainTransferId) {
         setCrossChainTransferWithErrorTimeout(
           activeCrossChainTransferId,
