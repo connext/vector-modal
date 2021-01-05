@@ -487,10 +487,10 @@ const ConnextModal: FC<ConnextModalProps> = ({
             <Button
               variant="contained"
               onClick={() => {
-                blockListenerAndTransfer(depositAddress!);
+                window.location.reload();
               }}
             >
-              Try Again!
+              Referesh
             </Button>
           </Grid>
         </>
