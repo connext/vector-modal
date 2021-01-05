@@ -60,14 +60,6 @@ class Connext {
 
     console.log('GET CONFIG: ', configRes[0]);
     this.config = configRes[0];
-
-    const depositChannelState = await this.getChannelByParticipants(
-      this.config.publicIdentifier,
-      routerPublicIdentifier,
-      depositChainId
-    );
-
-    return depositChannelState.channelAddress;
   }
 
   async updateChannel(channelAddress: string): Promise<FullChannelState> {
