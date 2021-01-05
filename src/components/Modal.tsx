@@ -531,17 +531,7 @@ const ConnextModal: FC<ConnextModalProps> = ({
                 withdrawChainId={withdrawChainId}
                 withdrawAssetId={withdrawAssetId}
                 styles={classes.completeState}
-              />{' '}
-              <Grid container direction="row" justifyContent="center">
-                <Button
-                  variant="contained"
-                  onClick={() => {
-                    blockListenerAndTransfer(depositAddress!);
-                  }}
-                >
-                  New Cross-Chain Transfer
-                </Button>
-              </Grid>
+              />
             </>
           );
         default:
@@ -952,14 +942,19 @@ const CompleteState: FC<CompleteStateProps> = ({
         >
           {getAssetName(withdrawAssetId, withdrawChainId)}
         </a>{' '}
-        has been successfully transfered to {withdrawChainName}:{' '}
-        <a
-          href={getExplorerLinkForTx(withdrawChainId, withdrawTx)}
-          target="_blank"
-        >
-          {withdrawTx}
-        </a>{' '}
+        has been successfully transfered to {withdrawChainName}
       </Typography>
+    </Grid>
+
+    <Grid container direction="row" justifyContent="center">
+      <Button
+        variant="contained"
+        color="primary"
+        href={getExplorerLinkForTx(withdrawChainId, withdrawTx)}
+        target="_blank"
+      >
+        Withdraw Transaction
+      </Button>
     </Grid>
   </>
 );
