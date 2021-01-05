@@ -159,6 +159,7 @@ const ConnextModal: FC<ConnextModalProps> = ({
   const [sentAmount, setSentAmount] = useState<string>('0');
 
   const [withdrawTx, setWithdrawTx] = useState<string>();
+
   const [crossChainTransfers, setCrossChainTransfers] = useState<{
     [crossChainTransferId: string]: TransferStates;
   }>({});
@@ -166,13 +167,13 @@ const ConnextModal: FC<ConnextModalProps> = ({
   const [initing, setIniting] = useState<boolean>(true);
 
   const [activeStep, setActiveStep] = useState(-1);
+
   const [isError, setIsError] = useState(false);
+  const [error, setError] = useState<Error>();
 
   const [activeCrossChainTransferId, setActiveCrossChainTransferId] = useState<
     string
   >(constants.HashZero);
-
-  const [error, setError] = useState<Error>();
 
   const [screen, setScreen] = useState<'Home' | 'Recover'>('Home');
 
@@ -374,10 +375,25 @@ const ConnextModal: FC<ConnextModalProps> = ({
     });
   };
 
+  const stateReset = () => {
+    setIniting(true);
+    setActiveStep(-1);
+    setIsError(false);
+    setError(undefined);
+    setDepositAddress(undefined);
+    setActiveCrossChainTransferId(constants.HashZero);
+  };
+
+  const handleClose = () => {
+    const _ethProviders = hydrateProviders(depositChainId, withdrawChainId);
+    _ethProviders[depositChainId].off('block');
+    onClose();
+  };
+
   useEffect(() => {
     const init = async () => {
       if (showModal) {
-        setIniting(true);
+        await stateReset();
         await getChainInfo();
 
         try {
@@ -469,16 +485,6 @@ const ConnextModal: FC<ConnextModalProps> = ({
             crossChainTransferId={activeCrossChainTransferId}
             styles={classes.errorState}
           />
-          <Grid container direction="row" justifyContent="center">
-            <Button
-              variant="contained"
-              onClick={() => {
-                blockListenerAndTransfer(depositAddress!);
-              }}
-            >
-              Try Again!
-            </Button>
-          </Grid>
         </>
       );
     } else {
@@ -533,17 +539,7 @@ const ConnextModal: FC<ConnextModalProps> = ({
                 withdrawChainId={withdrawChainId}
                 withdrawAssetId={withdrawAssetId}
                 styles={classes.completeState}
-              />{' '}
-              <Grid container direction="row" justifyContent="center">
-                <Button
-                  variant="contained"
-                  onClick={() => {
-                    blockListenerAndTransfer(depositAddress!);
-                  }}
-                >
-                  New Cross-Chain Transfer
-                </Button>
-              </Grid>
+              />
             </>
           );
         default:
@@ -587,36 +583,33 @@ const ConnextModal: FC<ConnextModalProps> = ({
             alignItems="center"
             className={classes.header}
           >
-            <Grid item>
-              <IconButton
-                aria-label="close"
-                disabled={[
-                  TRANSFER_STATES.DEPOSITING,
-                  TRANSFER_STATES.TRANSFERRING,
-                  TRANSFER_STATES.WITHDRAWING,
-                ].includes(transferState as any)}
-                onClick={onClose}
+            <IconButton
+              aria-label="close"
+              disabled={[
+                TRANSFER_STATES.DEPOSITING,
+                TRANSFER_STATES.TRANSFERRING,
+                TRANSFER_STATES.WITHDRAWING,
+              ].includes(transferState as any)}
+              onClick={handleClose}
+            >
+              <Close />
+            </IconButton>
+
+            <Typography gutterBottom variant="h6">
+              Send{' '}
+              <a
+                href={getExplorerLinkForAsset(depositChainId, depositAssetId)}
+                target="_blank"
               >
-                <Close />
-              </IconButton>
-            </Grid>
-            <Grid item>
-              <Typography gutterBottom variant="h6">
-                Send{' '}
-                <a
-                  href={getExplorerLinkForAsset(depositChainId, depositAssetId)}
-                  target="_blank"
-                >
-                  {getAssetName(depositAssetId, depositChainId)}
-                </a>
-              </Typography>
-            </Grid>
+                {getAssetName(depositAssetId, depositChainId)}
+              </a>
+            </Typography>
+
             {/* <Grid item>
               <ThemeButton />
             </Grid> */}
-            <Grid item>
-              <Options setScreen={setScreen} />
-            </Grid>
+
+            <Options setScreen={setScreen} />
           </Grid>
           {screen === 'Home' && (
             <div style={{ padding: '1rem' }}>
@@ -968,14 +961,19 @@ const CompleteState: FC<CompleteStateProps> = ({
         >
           {getAssetName(withdrawAssetId, withdrawChainId)}
         </a>{' '}
-        has been successfully transfered to {withdrawChainName}:{' '}
-        <a
-          href={getExplorerLinkForTx(withdrawChainId, withdrawTx)}
-          target="_blank"
-        >
-          {withdrawTx}
-        </a>{' '}
+        has been successfully transfered to {withdrawChainName}
       </Typography>
+    </Grid>
+
+    <Grid container direction="row" justifyContent="center">
+      <Button
+        variant="contained"
+        color="primary"
+        href={getExplorerLinkForTx(withdrawChainId, withdrawTx)}
+        target="_blank"
+      >
+        Withdraw Transaction
+      </Button>
     </Grid>
   </>
 );
@@ -1001,6 +999,16 @@ const ErrorState: FC<ErrorStateProps> = ({
       <Typography gutterBottom variant="caption" color="error" align="center">
         {`${crossChainTransferId.substring(0, 5)}... - ${error.message}`}
       </Typography>
+    </Grid>
+    <Grid container direction="row" justifyContent="center">
+      <Button
+        variant="contained"
+        onClick={() => {
+          window.location.reload();
+        }}
+      >
+        Refresh
+      </Button>
     </Grid>
   </>
 );
