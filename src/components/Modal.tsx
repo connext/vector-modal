@@ -159,6 +159,7 @@ const ConnextModal: FC<ConnextModalProps> = ({
   const [sentAmount, setSentAmount] = useState<string>('0');
 
   const [withdrawTx, setWithdrawTx] = useState<string>();
+
   const [crossChainTransfers, setCrossChainTransfers] = useState<{
     [crossChainTransferId: string]: TransferStates;
   }>({});
@@ -166,13 +167,13 @@ const ConnextModal: FC<ConnextModalProps> = ({
   const [initing, setIniting] = useState<boolean>(true);
 
   const [activeStep, setActiveStep] = useState(-1);
+
   const [isError, setIsError] = useState(false);
+  const [error, setError] = useState<Error>();
 
   const [activeCrossChainTransferId, setActiveCrossChainTransferId] = useState<
     string
   >(constants.HashZero);
-
-  const [error, setError] = useState<Error>();
 
   const transferState: TransferStates =
     crossChainTransfers[activeCrossChainTransferId] ?? TRANSFER_STATES.INITIAL;
@@ -372,10 +373,19 @@ const ConnextModal: FC<ConnextModalProps> = ({
     });
   };
 
+  const stateReset = () => {
+    setIniting(true);
+    setActiveStep(-1);
+    setIsError(false);
+    setError(undefined);
+    setDepositAddress(undefined);
+    setActiveCrossChainTransferId(constants.HashZero);
+  };
+
   useEffect(() => {
     const init = async () => {
       if (showModal) {
-        setIniting(true);
+        await stateReset();
         await getChainInfo();
 
         try {
