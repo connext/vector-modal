@@ -2,11 +2,8 @@ import 'react-app-polyfill/ie11';
 import 'regenerator-runtime/runtime';
 import * as React from 'react';
 import * as ReactDOM from 'react-dom';
-import { config } from 'dotenv';
 
-import { ConnextModal } from '../src';
-
-config();
+import { ConnextModal } from '../';
 
 function App() {
   const [showModal, setShowModal] = React.useState(false);
@@ -16,11 +13,18 @@ function App() {
       <button onClick={() => setShowModal(true)}>Hello World</button>
       <ConnextModal
         showModal={showModal}
-        routerPublicIdentifier="vector7tbbTxQp8ppEQUgPsbGiTrVdapLdU5dH7zTbVuXRf1M4CEBU9Q"
-        depositAssetId={'0xbd69fC70FA1c3AED524Bb4E82Adc5fcCFFcD79Fa'}
-        depositChainId={5}
-        withdrawAssetId={'0xfe4F5145f6e09952a5ba9e956ED0C25e3Fa4c7F1'}
-        withdrawChainId={80001}
+        // prod config
+        // routerPublicIdentifier="vector7tbbTxQp8ppEQUgPsbGiTrVdapLdU5dH7zTbVuXRf1M4CEBU9Q"
+        // depositAssetId={'0xbd69fC70FA1c3AED524Bb4E82Adc5fcCFFcD79Fa'}
+        // depositChainId={5}
+        // withdrawAssetId={'0xfe4F5145f6e09952a5ba9e956ED0C25e3Fa4c7F1'}
+        // withdrawChainId={80001}
+        // local config
+        routerPublicIdentifier="vector8Uz1BdpA9hV5uTm6QUv5jj1PsUyCH8m8ciA94voCzsxVmrBRor"
+        depositAssetId={'0x9FBDa871d559710256a2502A2517b794B482Db40'}
+        depositChainId={1337}
+        withdrawAssetId={'0x9FBDa871d559710256a2502A2517b794B482Db40'}
+        withdrawChainId={1338}
         withdrawalAddress={'0x75e4DD0587663Fce5B2D9aF7fbED3AC54342d3dB'}
         onClose={() => setShowModal(false)}
       />
