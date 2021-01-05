@@ -174,6 +174,8 @@ const ConnextModal: FC<ConnextModalProps> = ({
 
   const [error, setError] = useState<Error>();
 
+  const [screen, setScreen] = useState<'Home' | 'Recover'>('Home');
+
   const transferState: TransferStates =
     crossChainTransfers[activeCrossChainTransferId] ?? TRANSFER_STATES.INITIAL;
 
@@ -613,79 +615,87 @@ const ConnextModal: FC<ConnextModalProps> = ({
               <ThemeButton />
             </Grid> */}
             <Grid item>
-              <Options />
+              <Options setScreen={setScreen} />
             </Grid>
           </Grid>
-          <div style={{ padding: '1rem' }}>
-            {depositAddress ? (
-              <>
-                <NetworkBar
-                  depositChainName={depositChainName}
-                  withdrawChainName={withdrawChainName}
-                  styles={classes.networkBar}
-                />
-                <EthereumAddress
-                  depositAddress={depositAddress}
-                  styles={classes.ethereumAddress}
-                />
-                <Grid container className={classes.steps}>
-                  <Grid item xs={12}>
-                    <Stepper activeStep={activeStep}>
-                      {steps.map(label => {
-                        return (
-                          <Step key={label}>
-                            <StepLabel
-                              StepIconComponent={StepIcon}
-                              StepIconProps={{ error: isError }}
-                            >
-                              {label}
-                            </StepLabel>
-                          </Step>
-                        );
-                      })}
-                    </Stepper>
+          {screen === 'Home' && (
+            <div style={{ padding: '1rem' }}>
+              {depositAddress ? (
+                <>
+                  <NetworkBar
+                    depositChainName={depositChainName}
+                    withdrawChainName={withdrawChainName}
+                    styles={classes.networkBar}
+                  />
+                  <EthereumAddress
+                    depositAddress={depositAddress}
+                    styles={classes.ethereumAddress}
+                  />
+                  <Grid container className={classes.steps}>
+                    <Grid item xs={12}>
+                      <Stepper activeStep={activeStep}>
+                        {steps.map(label => {
+                          return (
+                            <Step key={label}>
+                              <StepLabel
+                                StepIconComponent={StepIcon}
+                                StepIconProps={{ error: isError }}
+                              >
+                                {label}
+                              </StepLabel>
+                            </Step>
+                          );
+                        })}
+                      </Stepper>
+                    </Grid>
                   </Grid>
-                </Grid>
-                <Grid container className={classes.status}>
-                  <Grid item xs={12}>
-                    {getStepContent(activeStep)}
+                  <Grid container className={classes.status}>
+                    <Grid item xs={12}>
+                      {getStepContent(activeStep)}
+                    </Grid>
                   </Grid>
-                </Grid>
-                <Grid container>
-                  <Grid item xs={12}>
-                    <TextField
-                      label="Receiver Address"
-                      defaultValue={withdrawalAddress}
-                      InputProps={{
-                        readOnly: true,
-                      }}
-                      fullWidth
-                    />
+                  <Grid container>
+                    <Grid item xs={12}>
+                      <TextField
+                        label="Receiver Address"
+                        defaultValue={withdrawalAddress}
+                        InputProps={{
+                          readOnly: true,
+                        }}
+                        fullWidth
+                      />
+                    </Grid>
                   </Grid>
-                </Grid>
-              </>
-            ) : (
-              <>
-                {isError ? (
-                  <>
-                    <ErrorState
-                      error={error ?? new Error('unknown')}
-                      crossChainTransferId={activeCrossChainTransferId}
-                      styles={classes.errorState}
-                    />
-                  </>
-                ) : (
-                  <>
-                    <Loading
-                      message={'Setting up channels...'}
-                      initializing={initing}
-                    />
-                    <Skeleton variant="rect" height={300} />
-                  </>
-                )}
-              </>
-            )}
-          </div>
+                </>
+              ) : (
+                <>
+                  {isError ? (
+                    <>
+                      <ErrorState
+                        error={error ?? new Error('unknown')}
+                        crossChainTransferId={activeCrossChainTransferId}
+                        styles={classes.errorState}
+                      />
+                    </>
+                  ) : (
+                    <>
+                      <Loading
+                        message={'Setting up channels...'}
+                        initializing={initing}
+                      />
+                      <Skeleton variant="rect" height={300} />
+                    </>
+                  )}
+                </>
+              )}
+            </div>
+          )}
+
+          {screen === 'Recover' && (
+            <div style={{ padding: '1rem' }}>
+              <Typography variant="h2">Hello</Typography>
+            </div>
+          )}
 
           <Grid id="Footer" container direction="row" justifyContent="center">
             <Typography variant="overline">
@@ -700,7 +710,9 @@ const ConnextModal: FC<ConnextModalProps> = ({
   );
 };
 
-const Options: FC = () => {
+const Options: FC<{ setScreen: (screen: 'Recover' | 'Home') => any }> = ({
+  setScreen,
+}) => {
   const [open, setOpen] = useState(false);
   const anchorRef = useRef<HTMLButtonElement>(null);
 
@@ -768,6 +780,10 @@ const Options: FC = () => {
                   id="menu-list-grow"
                   onKeyDown={handleListKeyDown}
                 >
+                  <MenuItem id="link" onClick={() => setScreen('Recover')}>
+                    {/* <Chat /> */}
+                    Recovery
+                  </MenuItem>
                   <MenuItem
                     id="link"
                     onClick={() =>
