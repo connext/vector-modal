@@ -382,6 +382,12 @@ const ConnextModal: FC<ConnextModalProps> = ({
     setActiveCrossChainTransferId(constants.HashZero);
   };
 
+  const handleClose = () => {
+    const _ethProviders = hydrateProviders(depositChainId, withdrawChainId);
+    _ethProviders[depositChainId].off('block');
+    onClose();
+  };
+
   useEffect(() => {
     const init = async () => {
       if (showModal) {
@@ -593,7 +599,7 @@ const ConnextModal: FC<ConnextModalProps> = ({
                   TRANSFER_STATES.TRANSFERRING,
                   TRANSFER_STATES.WITHDRAWING,
                 ].includes(transferState as any)}
-                onClick={onClose}
+                onClick={handleClose}
               >
                 <Close />
               </IconButton>
