@@ -137,6 +137,8 @@ export type ConnextModalProps = {
   connextNode?: BrowserNode;
 };
 
+type Screens = 'Recover' | 'Home';
+
 const ConnextModal: FC<ConnextModalProps> = ({
   showModal,
   routerPublicIdentifier,
@@ -175,7 +177,7 @@ const ConnextModal: FC<ConnextModalProps> = ({
     string
   >(constants.HashZero);
 
-  const [screen, setScreen] = useState<'Home' | 'Recover'>('Home');
+  const [screen, setScreen] = useState<Screens>('Home');
 
   const transferState: TransferStates =
     crossChainTransfers[activeCrossChainTransferId] ?? TRANSFER_STATES.INITIAL;
@@ -393,7 +395,7 @@ const ConnextModal: FC<ConnextModalProps> = ({
   useEffect(() => {
     const init = async () => {
       if (showModal) {
-        await stateReset();
+        stateReset();
         await getChainInfo();
 
         try {
@@ -609,7 +611,7 @@ const ConnextModal: FC<ConnextModalProps> = ({
               <ThemeButton />
             </Grid> */}
 
-            <Options setScreen={setScreen} />
+            <Options setScreen={setScreen} activeScreen={screen} />
           </Grid>
           {screen === 'Home' && (
             <div style={{ padding: '1rem' }}>
@@ -685,9 +687,10 @@ const ConnextModal: FC<ConnextModalProps> = ({
           )}
 
           {screen === 'Recover' && (
-            <div style={{ padding: '1rem' }}>
-              <Typography variant="h2">Hello</Typography>
-            </div>
+            <Recover
+              depositAddress={depositAddress}
+              depositChainId={depositChainId}
+            />
           )}
 
           <Grid id="Footer" container direction="row" justifyContent="center">
@@ -703,9 +706,10 @@ const ConnextModal: FC<ConnextModalProps> = ({
   );
 };
 
-const Options: FC<{ setScreen: (screen: 'Recover' | 'Home') => any }> = ({
-  setScreen,
-}) => {
+const Options: FC<{
+  setScreen: (screen: Screens) => any;
+  activeScreen: Screens;
+}> = ({ setScreen, activeScreen }) => {
   const [open, setOpen] = useState(false);
   const anchorRef = useRef<HTMLButtonElement>(null);
 
@@ -773,10 +777,22 @@ const Options: FC<{ setScreen: (screen: 'Recover' | 'Home') => any }> = ({
                   id="menu-list-grow"
                   onKeyDown={handleListKeyDown}
                 >
-                  <MenuItem id="link" onClick={() => setScreen('Recover')}>
-                    {/* <Chat /> */}
+                  <MenuItem
+                    id="link"
+                    disabled={activeScreen === 'Home'}
+                    onClick={() => setScreen('Home')}
+                  >
+                    Home
+                  </MenuItem>
+                  <br />
+                  <MenuItem
+                    id="link"
+                    disabled={activeScreen === 'Recover'}
+                    onClick={() => setScreen('Recover')}
+                  >
                     Recovery
                   </MenuItem>
+                  <br />
                   <MenuItem
                     id="link"
                     onClick={() =>
@@ -961,18 +977,18 @@ const CompleteState: FC<CompleteStateProps> = ({
         >
           {getAssetName(withdrawAssetId, withdrawChainId)}
         </a>{' '}
-        has been successfully transfered to {withdrawChainName}
+        has been successfully transferred to {withdrawChainName}
       </Typography>
     </Grid>
 
     <Grid container direction="row" justifyContent="center">
       <Button
-        variant="contained"
+        variant="outlined"
         color="primary"
         href={getExplorerLinkForTx(withdrawChainId, withdrawTx)}
         target="_blank"
       >
-        Withdraw Transaction
+        View Withdrawal Tx
       </Button>
     </Grid>
   </>
@@ -1002,7 +1018,7 @@ const ErrorState: FC<ErrorStateProps> = ({
     </Grid>
     <Grid container direction="row" justifyContent="center">
       <Button
-        variant="contained"
+        variant="outlined"
         onClick={() => {
           window.location.reload();
         }}
@@ -1012,5 +1028,235 @@ const ErrorState: FC<ErrorStateProps> = ({
     </Grid>
   </>
 );
+
+const useRecoverStyles = makeStyles(theme => ({
+  wrapper: {
+    margin: theme.spacing(1),
+    position: 'relative',
+  },
+  buttonProgress: {
+    position: 'absolute',
+    top: '50%',
+    left: '50%',
+    marginTop: -12,
+    marginLeft: -12,
+  },
+}));
+
+const Recover: FC<{ depositAddress?: string; depositChainId: number }> = ({
+  depositAddress,
+  depositChainId,
+}) => {
+  const classes = useRecoverStyles();
+  const [recoverTokenAddress, setRecoverTokenAddress] = useState(
+    constants.AddressZero
+  );
+  const [recoverTokenAddressError, setRecoverTokenAddressError] = useState(
+    false
+  );
+  const [recoverWithdrawalAddress, setRecoverWithdrawalAddress] = useState('');
+  const [
+    recoverWithdrawalAddressError,
+    setRecoverWithdrawalAddressError,
+  ] = useState(false);
+  const [withdrawalTxHash, setWithdrawalTxHash] = useState(constants.HashZero);
+  const [errorMessage, setErrorMessage] = useState('Unknown error');
+  const [status, setStatus] = useState<
+    'Initial' | 'Loading' | 'Success' | 'Error'
+  >('Initial');
+
+  const recover = async (assetId: string, withdrawalAddress: string) => {
+    const deposit = await connext.connextClient!.reconcileDeposit({
+      assetId,
+      channelAddress: depositAddress!,
+    });
+    if (deposit.isError) {
+      setStatus('Error');
+      setErrorMessage(deposit.getError()!.message);
+      throw deposit.getError();
+    }
+
+    const updatedChannel = await connext.connextClient!.getStateChannel({
+      channelAddress: depositAddress!,
+    });
+    if (updatedChannel.isError || !updatedChannel.getValue()) {
+      setStatus('Error');
+      setErrorMessage(
+        updatedChannel.getError()?.message ?? 'Channel not found'
+      );
+      throw updatedChannel.getError() ?? new Error('Channel not found');
+    }
+    const endingBalance = getBalanceForAssetId(
+      updatedChannel.getValue() as FullChannelState,
+      recoverTokenAddress,
+      'bob'
+    );
+
+    const endingBalanceBn = BigNumber.from(endingBalance);
+    if (endingBalanceBn.isZero()) {
+      setStatus('Error');
+      setErrorMessage('No balance found to recover');
+    }
+    console.log(
+      `Found ${endingBalanceBn.toString()} of ${assetId}, attempting withdrawal`
+    );
+
+    const withdrawRes = await connext.connextClient!.withdraw({
+      amount: endingBalance,
+      assetId,
+      channelAddress: depositAddress!,
+      recipient: withdrawalAddress,
+    });
+    if (withdrawRes.isError) {
+      setStatus('Error');
+      throw withdrawRes.getError();
+    }
+    console.log('Withdraw successful: ', withdrawRes.getValue());
+    setWithdrawalTxHash(withdrawRes.getValue().transactionHash!);
+    setStatus('Success');
+  };
+
+  const isValidAddress = (input: string): boolean => {
+    const valid = input.match(/0x[0-9a-fA-F]{40}/);
+    return !!valid;
+  };
+
+  return (
+    <div style={{ padding: '1rem' }}>
+      <Grid container spacing={4}>
+        <Grid item xs={12}>
+          <Typography variant="h6" align="center">
+            Recover lost funds
+          </Typography>
+          <Typography variant="body2" align="center">
+            Uh oh! Did you send the wrong asset to the deposit address? Fill out
+            the details below and we will attempt to recover your assets from
+            the state channels!
+          </Typography>
+        </Grid>
+      </Grid>
+      <Grid container spacing={4}>
+        <Grid item xs={12}>
+          <TextField
+            disabled={status === 'Loading'}
+            label="Token Address (0x000... for ETH)"
+            value={recoverTokenAddress}
+            error={recoverTokenAddressError}
+            helperText={
+              recoverTokenAddressError && 'Must be an Ethereum address'
+            }
+            onChange={event => {
+              setRecoverTokenAddress(event.target.value);
+              setRecoverTokenAddressError(!isValidAddress(event.target.value));
+            }}
+            fullWidth
+            size="small"
+          />
+        </Grid>
+      </Grid>
+      <Grid container spacing={4}>
+        <Grid item xs={12}>
+          <TextField
+            disabled={status === 'Loading'}
+            label="Withdrawal Address"
+            value={recoverWithdrawalAddress}
+            error={recoverWithdrawalAddressError}
+            helperText={
+              recoverWithdrawalAddressError && 'Must be an Ethereum address'
+            }
+            onChange={event => {
+              setRecoverWithdrawalAddress(event.target.value);
+              setRecoverWithdrawalAddressError(
+                !isValidAddress(event.target.value)
+              );
+            }}
+            fullWidth
+            size="small"
+          />
+        </Grid>
+      </Grid>
+      {status !== 'Success' && (
+        <Grid container justifyContent="center" spacing={4}>
+          <Grid item xs={4}>
+            <div className={classes.wrapper}>
+              <Button
+                variant="contained"
+                color="primary"
+                fullWidth
+                disabled={
+                  status === 'Loading' ||
+                  recoverWithdrawalAddressError ||
+                  recoverTokenAddressError ||
+                  !recoverTokenAddress ||
+                  !recoverWithdrawalAddress
+                }
+                onClick={() =>
+                  recover(recoverTokenAddress, recoverWithdrawalAddress)
+                }
+              >
+                Recover
+              </Button>
+              {status === 'Loading' && (
+                <CircularProgress
+                  size={24}
+                  className={classes.buttonProgress}
+                />
+              )}
+            </div>
+          </Grid>
+        </Grid>
+      )}
+      {status === 'Success' && (
+        <>
+          <Grid container alignItems="center" direction="column">
+            <CheckCircleRounded color="secondary" fontSize="large" />
+            <Typography gutterBottom variant="h6">
+              Success
+            </Typography>
+
+            <Typography
+              gutterBottom
+              variant="body1"
+              color="secondary"
+              align="center"
+            >
+              Successfully withdrew funds
+            </Typography>
+          </Grid>
+
+          <Grid container direction="row" justifyContent="center">
+            <Button
+              variant="outlined"
+              color="primary"
+              href={getExplorerLinkForTx(depositChainId, withdrawalTxHash)}
+              target="_blank"
+            >
+              View Withdrawal Tx
+            </Button>
+          </Grid>
+        </>
+      )}
+      {status === 'Error' && (
+        <>
+          <Grid container alignItems="center" direction="column">
+            <ErrorRounded fontSize="large" color="error" />
+            <Typography gutterBottom variant="caption" color="error">
+              Error
+            </Typography>
+
+            <Typography
+              gutterBottom
+              variant="caption"
+              color="error"
+              align="center"
+            >
+              {errorMessage}
+            </Typography>
+          </Grid>
+        </>
+      )}
+    </div>
+  );
+};
 
 export default ConnextModal;
