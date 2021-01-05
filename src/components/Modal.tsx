@@ -479,9 +479,24 @@ const ConnextModal: FC<ConnextModalProps> = ({
       switch (step) {
         case -1:
           return (
-            <Typography variant="h6" align="center">
-              Waiting for deposit
-            </Typography>
+            <>
+              <Typography variant="h6" align="center">
+                Waiting for deposit...
+              </Typography>
+              <Typography variant="body2" align="center">
+                Send ONLY{' '}
+                <a
+                  href={getExplorerLinkForAsset(depositChainId, depositAssetId)}
+                  target="_blank"
+                >
+                  {getAssetName(depositAssetId, depositChainId)}
+                </a>{' '}
+                to the Deposit Address above.
+              </Typography>
+              <Typography variant="body2" align="center">
+                Please do not close or refresh window while in progress!
+              </Typography>
+            </>
           );
         case 0:
           return (
