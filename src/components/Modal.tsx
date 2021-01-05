@@ -483,16 +483,6 @@ const ConnextModal: FC<ConnextModalProps> = ({
             crossChainTransferId={activeCrossChainTransferId}
             styles={classes.errorState}
           />
-          <Grid container direction="row" justifyContent="center">
-            <Button
-              variant="contained"
-              onClick={() => {
-                window.location.reload();
-              }}
-            >
-              Referesh
-            </Button>
-          </Grid>
         </>
       );
     } else {
@@ -591,36 +581,33 @@ const ConnextModal: FC<ConnextModalProps> = ({
             alignItems="center"
             className={classes.header}
           >
-            <Grid item>
-              <IconButton
-                aria-label="close"
-                disabled={[
-                  TRANSFER_STATES.DEPOSITING,
-                  TRANSFER_STATES.TRANSFERRING,
-                  TRANSFER_STATES.WITHDRAWING,
-                ].includes(transferState as any)}
-                onClick={handleClose}
+            <IconButton
+              aria-label="close"
+              disabled={[
+                TRANSFER_STATES.DEPOSITING,
+                TRANSFER_STATES.TRANSFERRING,
+                TRANSFER_STATES.WITHDRAWING,
+              ].includes(transferState as any)}
+              onClick={handleClose}
+            >
+              <Close />
+            </IconButton>
+
+            <Typography gutterBottom variant="h6">
+              Send{' '}
+              <a
+                href={getExplorerLinkForAsset(depositChainId, depositAssetId)}
+                target="_blank"
               >
-                <Close />
-              </IconButton>
-            </Grid>
-            <Grid item>
-              <Typography gutterBottom variant="h6">
-                Send{' '}
-                <a
-                  href={getExplorerLinkForAsset(depositChainId, depositAssetId)}
-                  target="_blank"
-                >
-                  {getAssetName(depositAssetId, depositChainId)}
-                </a>
-              </Typography>
-            </Grid>
+                {getAssetName(depositAssetId, depositChainId)}
+              </a>
+            </Typography>
+
             {/* <Grid item>
               <ThemeButton />
             </Grid> */}
-            <Grid item>
-              <Options />
-            </Grid>
+
+            <Options />
           </Grid>
           <div style={{ padding: '1rem' }}>
             {depositAddress ? (
@@ -996,6 +983,16 @@ const ErrorState: FC<ErrorStateProps> = ({
       <Typography gutterBottom variant="caption" color="error" align="center">
         {`${crossChainTransferId.substring(0, 5)}... - ${error.message}`}
       </Typography>
+    </Grid>
+    <Grid container direction="row" justifyContent="center">
+      <Button
+        variant="contained"
+        onClick={() => {
+          window.location.reload();
+        }}
+      >
+        Refresh
+      </Button>
     </Grid>
   </>
 );
