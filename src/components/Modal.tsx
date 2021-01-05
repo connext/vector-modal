@@ -177,17 +177,23 @@ const ConnextModal: FC<ConnextModalProps> = ({
   const transferState: TransferStates =
     crossChainTransfers[activeCrossChainTransferId] ?? TRANSFER_STATES.INITIAL;
 
-  const registerEngineEventListeners = (node: BrowserNode): void => {
+  const registerEngineEventListeners = (
+    node: BrowserNode,
+    startingBalance: BigNumber
+  ): void => {
     node.on(EngineEvents.DEPOSIT_RECONCILED, data => {
-      console.log(data);
-      // if (data.meta.crossChainTransferId) {
-      setCrossChainTransferWithErrorTimeout(
-        activeCrossChainTransferId,
-        TRANSFER_STATES.TRANSFERRING
-      );
+      console.log('EngineEvents.DEPOSIT_RECONCILED: ', data);
+      if (startingBalance.lt(data.channelBalance.amount[1])) {
+        // if (data.meta.crossChainTransferId) {
+        setCrossChainTransferWithErrorTimeout(
+          activeCrossChainTransferId,
+          TRANSFER_STATES.TRANSFERRING
+        );
+      }
       // }
     });
     node.on(EngineEvents.CONDITIONAL_TRANSFER_RESOLVED, data => {
+      console.log('EngineEvents.CONDITIONAL_TRANSFER_RESOLVED: ', data);
       if (
         data.transfer.meta.crossChainTransferId &&
         data.transfer.initiator === node.signerAddress
@@ -199,7 +205,7 @@ const ConnextModal: FC<ConnextModalProps> = ({
       }
     });
     node.on(EngineEvents.CONDITIONAL_TRANSFER_RESOLVED, data => {
-      console.log('GOT EVENT: ', data);
+      console.log('EngineEvents.CONDITIONAL_TRANSFER_RESOLVED: ', data);
       if (
         data.transfer.meta.crossChainTransferId &&
         Object.values(data.transfer.transferResolver)[0] ===
@@ -219,6 +225,7 @@ const ConnextModal: FC<ConnextModalProps> = ({
       }
     });
     node.on(EngineEvents.WITHDRAWAL_RESOLVED, data => {
+      console.log('EngineEvents.WITHDRAWAL_RESOLVED: ', data);
       if (
         data.transfer.meta.crossChainTransferId &&
         data.transfer.initiator === node.signerAddress
@@ -392,7 +399,6 @@ const ConnextModal: FC<ConnextModalProps> = ({
           return;
         }
 
-        registerEngineEventListeners(connext.connextClient!);
         console.log('INITIALIZED BROWSER NODE');
 
         const depositChannelRes = await connext.connextClient!.getStateChannelByParticipants(
@@ -433,7 +439,9 @@ const ConnextModal: FC<ConnextModalProps> = ({
         );
 
         const balanceBN = BigNumber.from(offChainAssetBalance);
+        registerEngineEventListeners(connext.connextClient!, balanceBN);
         if (balanceBN.gt(0)) {
+          console.log(`Found existing balance, transferring`);
           await transfer(_depositAddress, balanceBN);
         } else {
           await blockListenerAndTransfer(_depositAddress);
