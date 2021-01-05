@@ -366,6 +366,7 @@ const ConnextModal: FC<ConnextModalProps> = ({
       );
       if (updatedBalance.gt(startingBalance)) {
         const transferAmount = updatedBalance.sub(startingBalance);
+        startingBalance = updatedBalance;
         await transfer(_depositAddress, transferAmount);
       }
     });
