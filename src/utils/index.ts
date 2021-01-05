@@ -23,6 +23,9 @@ const getExplorerLink = (chainId: number): string | undefined => {
     case 42: {
       return `https://kovan.etherscan.io`;
     }
+    case 137: {
+      return `https://explorer-mainnet.maticvigil.com`;
+    }
     case 80001: {
       return `https://explorer-mumbai.maticvigil.com`;
     }
