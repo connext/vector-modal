@@ -10,7 +10,6 @@ import React, {
 } from 'react';
 import {
   Dialog,
-  DialogTitle,
   Grid,
   Button,
   Typography,
@@ -41,7 +40,6 @@ import {
   Check,
   Close,
   DoubleArrow,
-  CropFree,
   Brightness4,
   WbSunny,
   CheckCircleRounded,
