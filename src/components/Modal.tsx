@@ -1,13 +1,5 @@
 import { BrowserNode } from '@connext/vector-browser-node';
-import React, {
-  FC,
-  useRef,
-  useEffect,
-  useState,
-  ReactElement,
-  MouseEvent,
-  KeyboardEvent,
-} from 'react';
+import React, { FC, useEffect, useState, ReactElement } from 'react';
 import {
   Dialog,
   Grid,
@@ -23,11 +15,7 @@ import {
   Chip,
   ThemeProvider,
   MenuItem,
-  Popper,
-  MenuList,
-  ClickAwayListener,
-  Paper,
-  Grow,
+  Menu,
   CircularProgress,
   Tooltip,
   withStyles,
@@ -113,6 +101,7 @@ const useStyles = makeStyles((theme: Theme) =>
       height: 'auto',
       minWidth: '390px',
     },
+    dialog: {},
     header: {},
     networkBar: { paddingBottom: '1rem' },
     body: { padding: '1rem' },
@@ -164,6 +153,8 @@ const ConnextModal: FC<ConnextModalProps> = ({
   const [crossChainTransfers, setCrossChainTransfers] = useState<{
     [crossChainTransferId: string]: TransferStates;
   }>({});
+
+  const [message, setMessage] = useState<string>('');
 
   const [initing, setIniting] = useState<boolean>(true);
 
@@ -292,7 +283,7 @@ const ConnextModal: FC<ConnextModalProps> = ({
     _depositAddress: string,
     transferAmount: BigNumber
   ) => {
-    const _ethProviders = hydrateProviders(depositChainId, withdrawChainId);
+    registerEngineEventListeners(connext.connextClient!, transferAmount);
     const crossChainTransferId = getRandomBytes32();
     setActiveCrossChainTransferId(crossChainTransferId);
     const updated = { ...crossChainTransfers };
@@ -300,7 +291,6 @@ const ConnextModal: FC<ConnextModalProps> = ({
     setCrossChainTransfers(updated);
     setActiveStep(activePhase(TRANSFER_STATES.DEPOSITING));
     setIsError(false);
-    _ethProviders[depositChainId].off('block');
 
     await connext
       .connextClient!.crossChainTransfer({
@@ -369,6 +359,7 @@ const ConnextModal: FC<ConnextModalProps> = ({
         `Updated balance on ${depositChainId} for ${_depositAddress} of asset ${depositAssetId}: ${updatedBalance.toString()}`
       );
       if (updatedBalance.gt(startingBalance)) {
+        _ethProviders[depositChainId].off('block');
         const transferAmount = updatedBalance.sub(startingBalance);
         startingBalance = updatedBalance;
         await transfer(_depositAddress, transferAmount);
@@ -383,6 +374,7 @@ const ConnextModal: FC<ConnextModalProps> = ({
     setError(undefined);
     setDepositAddress(undefined);
     setActiveCrossChainTransferId(constants.HashZero);
+    setScreen('Home');
   };
 
   const handleClose = () => {
@@ -394,11 +386,13 @@ const ConnextModal: FC<ConnextModalProps> = ({
   useEffect(() => {
     const init = async () => {
       if (showModal) {
+        setMessage('Loading...');
         stateReset();
         await getChainInfo();
 
         try {
           // browser node object
+          setMessage('Setting up channels...');
           await connext.connectNode(
             connextNode,
             routerPublicIdentifier,
@@ -410,6 +404,11 @@ const ConnextModal: FC<ConnextModalProps> = ({
           if (e.message.includes('localStorage not available in this window')) {
             alert(
               'Please disable shields or ad blockers and try again. Connext requires cross-site cookies to store your channel states.'
+            );
+          }
+          if (e.message.includes("Failed to read the 'localStorage'")) {
+            alert(
+              'Please disable shields or ad blockers or allow third party cookies in your browser and try again. Connext requires cross-site cookies to store your channel states.'
             );
           }
           setCrossChainTransfers({
@@ -424,6 +423,7 @@ const ConnextModal: FC<ConnextModalProps> = ({
 
         console.log('INITIALIZED BROWSER NODE');
 
+        setMessage('Looking for existing channel balance');
         const depositChannelRes = await connext.connextClient!.getStateChannelByParticipants(
           {
             chainId: depositChainId,
@@ -438,7 +438,6 @@ const ConnextModal: FC<ConnextModalProps> = ({
         }
         const depositChannel = depositChannelRes.getValue() as FullChannelState;
         const _depositAddress = depositChannel!.channelAddress;
-        setDepositAddress(_depositAddress);
 
         const depositRes = await connext.connextClient!.reconcileDeposit({
           channelAddress: depositChannel!.channelAddress,
@@ -461,8 +460,8 @@ const ConnextModal: FC<ConnextModalProps> = ({
           `balance on channel for ${_depositAddress} of asset ${depositAssetId}: ${offChainAssetBalance}`
         );
 
+        setDepositAddress(_depositAddress);
         const balanceBN = BigNumber.from(offChainAssetBalance);
-        registerEngineEventListeners(connext.connextClient!, balanceBN);
         if (balanceBN.gt(0)) {
           console.log(`Found existing balance, transferring`);
           await transfer(_depositAddress, balanceBN);
@@ -510,10 +509,10 @@ const ConnextModal: FC<ConnextModalProps> = ({
               </Grid>
               <Grid container className={classes.status}>
                 <Grid item xs={12}>
-                  <Typography variant="h6" align="center">
+                  <Typography variant="h6" align="center" color="textPrimary">
                     Waiting for deposit...
                   </Typography>
-                  <Typography variant="body2" align="center">
+                  <Typography variant="subtitle1" align="center">
                     Send ONLY{' '}
                     <a
                       href={getExplorerLinkForAsset(
@@ -526,7 +525,11 @@ const ConnextModal: FC<ConnextModalProps> = ({
                     </a>{' '}
                     to the Deposit Address above.
                   </Typography>
-                  <Typography variant="body2" align="center">
+                  <Typography
+                    variant="subtitle2"
+                    align="center"
+                    color="textSecondary"
+                  >
                     Please do not close or refresh window while in progress!
                   </Typography>
                 </Grid>
@@ -633,12 +636,17 @@ const ConnextModal: FC<ConnextModalProps> = ({
       3: icon,
     };
 
-    return <div>{icons[String(props.icon)]}</div>;
+    return <>{icons[String(props.icon)]}</>;
   }
 
   return (
     <ThemeProvider theme={theme}>
-      <Dialog open={showModal} fullWidth={true} maxWidth="xs">
+      <Dialog
+        open={showModal}
+        fullWidth={true}
+        maxWidth="xs"
+        className={classes.dialog}
+      >
         <Card className={classes.card}>
           <Grid
             id="Header"
@@ -655,12 +663,12 @@ const ConnextModal: FC<ConnextModalProps> = ({
                 TRANSFER_STATES.TRANSFERRING,
                 TRANSFER_STATES.WITHDRAWING,
               ].includes(transferState as any)}
+              edge="start"
               onClick={handleClose}
             >
               <Close />
             </IconButton>
-
-            <Typography gutterBottom variant="h6">
+            <Typography variant="h6">
               Send{' '}
               <a
                 href={getExplorerLinkForAsset(depositChainId, depositAssetId)}
@@ -687,7 +695,7 @@ const ConnextModal: FC<ConnextModalProps> = ({
                       styles={classes.networkBar}
                     />
 
-                    {activeStep == 1 && (
+                    {activeStep != -1 && (
                       <Grid container className={classes.steps}>
                         <Grid item xs={12}>
                           <Stepper activeStep={activeStep}>
@@ -722,10 +730,7 @@ const ConnextModal: FC<ConnextModalProps> = ({
                       </>
                     ) : (
                       <>
-                        <Loading
-                          message={'Setting up channels...'}
-                          initializing={initing}
-                        />
+                        <Loading message={message} initializing={initing} />
                         <Skeleton variant="rect" height={300} />
                       </>
                     )}
@@ -759,107 +764,75 @@ const Options: FC<{
   setScreen: (screen: Screens) => any;
   activeScreen: Screens;
 }> = ({ setScreen, activeScreen }) => {
-  const [open, setOpen] = useState(false);
-  const anchorRef = useRef<HTMLButtonElement>(null);
+  const [anchorEl, setAnchorEl] = React.useState<null | HTMLElement>(null);
+  const open = Boolean(anchorEl);
 
-  const handleToggle = () => {
-    setOpen(prevOpen => !prevOpen);
+  const handleClick = (event: React.MouseEvent<HTMLElement>) => {
+    setAnchorEl(event.currentTarget);
   };
 
-  const handleClose = (event: MouseEvent<EventTarget>) => {
-    if (
-      anchorRef.current &&
-      anchorRef.current.contains(event.target as HTMLElement)
-    ) {
-      return;
-    }
-
-    setOpen(false);
+  const handleClose = () => {
+    setAnchorEl(null);
   };
 
-  function handleListKeyDown(event: KeyboardEvent) {
-    if (event.key === 'Tab') {
-      event.preventDefault();
-      setOpen(false);
-    }
-  }
-
-  // return focus to the button when we transitioned from !open -> open
-  const prevOpen = useRef(open);
-  useEffect(() => {
-    if (prevOpen.current === true && open === false) {
-      anchorRef.current!.focus();
-    }
-
-    prevOpen.current = open;
-  }, [open]);
   return (
     <>
       <IconButton
-        aria-label="options"
-        ref={anchorRef}
-        aria-controls={open ? 'menu-list-grow' : undefined}
+        aria-label="more"
+        aria-controls="long-menu"
         aria-haspopup="true"
-        onClick={handleToggle}
+        onClick={handleClick}
+        edge="end"
       >
         <MoreVert />
       </IconButton>
-      <Popper
+
+      <Menu
+        id="long-menu"
+        anchorEl={anchorEl}
+        keepMounted
         open={open}
-        anchorEl={anchorRef.current}
-        role={undefined}
-        transition
-        disablePortal
+        onClose={handleClose}
+        PaperProps={{
+          style: {
+            paddingLeft: '4px',
+            paddingRight: '4px',
+            marginTop: '40px',
+            marginLeft: '20px',
+          },
+        }}
       >
-        {({ TransitionProps, placement }) => (
-          <Grow
-            {...TransitionProps}
-            style={{
-              transformOrigin:
-                placement === 'bottom' ? 'center top' : 'center bottom',
-            }}
-          >
-            <Paper>
-              <ClickAwayListener onClickAway={handleClose}>
-                <MenuList
-                  autoFocusItem={open}
-                  id="menu-list-grow"
-                  onKeyDown={handleListKeyDown}
-                >
-                  <MenuItem
-                    id="link"
-                    disabled={activeScreen === 'Home'}
-                    onClick={() => setScreen('Home')}
-                  >
-                    Home
-                  </MenuItem>
-                  <br />
-                  <MenuItem
-                    id="link"
-                    disabled={activeScreen === 'Recover'}
-                    onClick={() => setScreen('Recover')}
-                  >
-                    Recovery
-                  </MenuItem>
-                  <br />
-                  <MenuItem
-                    id="link"
-                    onClick={() =>
-                      window.open(
-                        'https://discord.com/channels/454734546869551114',
-                        '_blank'
-                      )
-                    }
-                  >
-                    {/* <Chat /> */}
-                    Discord
-                  </MenuItem>
-                </MenuList>
-              </ClickAwayListener>
-            </Paper>
-          </Grow>
-        )}
-      </Popper>
+        <MenuItem
+          id="link"
+          disabled={activeScreen === 'Home'}
+          onClick={() => setScreen('Home')}
+          alignItems="center"
+        >
+          Home
+        </MenuItem>
+        <br />
+        <MenuItem
+          id="link"
+          disabled={activeScreen === 'Recover'}
+          onClick={() => setScreen('Recover')}
+          alignItems="center"
+        >
+          Recovery
+        </MenuItem>
+        <br />
+        <MenuItem
+          id="link"
+          onClick={() =>
+            window.open(
+              'https://discord.com/channels/454734546869551114',
+              '_blank'
+            )
+          }
+          alignItems="center"
+        >
+          <Typography variant="inherit">Help</Typography>
+        </MenuItem>
+      </Menu>
     </>
   );
 };
@@ -1059,6 +1032,10 @@ const useRecoverStyles = makeStyles(theme => ({
     marginTop: -12,
     marginLeft: -12,
   },
+  root: {padding: '1rem' },
+  helpText: {padding: '1rem' },
+  assetField: {paddingBottom: '1rem' },
+  addressField: {paddingBottom: '1rem' }
 }));
 
 const Recover: FC<{ depositAddress?: string; depositChainId: number }> = ({
@@ -1140,13 +1117,13 @@ const Recover: FC<{ depositAddress?: string; depositChainId: number }> = ({
   };
 
   return (
-    <div style={{ padding: '1rem' }}>
+    <Grid className={classes.root}>
       <Grid container spacing={4}>
         <Grid item xs={12}>
           <Typography variant="h6" align="center">
             Recover lost funds
           </Typography>
-          <Typography variant="body2" align="center">
+          <Typography variant="body2" align="center" className={classes.helpText}>
             Uh oh! Did you send the wrong asset to the deposit address? Fill out
             the details below and we will attempt to recover your assets from
             the state channels!
@@ -1154,7 +1131,7 @@ const Recover: FC<{ depositAddress?: string; depositChainId: number }> = ({
         </Grid>
       </Grid>
       <Grid container spacing={4}>
-        <Grid item xs={12}>
+        <Grid item xs={12} className={classes.assetField}>
           <TextField
             disabled={status === 'Loading'}
             label="Token Address (0x000... for ETH)"
@@ -1171,9 +1148,7 @@ const Recover: FC<{ depositAddress?: string; depositChainId: number }> = ({
             size="small"
           />
         </Grid>
-      </Grid>
-      <Grid container spacing={4}>
-        <Grid item xs={12}>
+        <Grid item xs={12} className={classes.addressField}>
           <TextField
             disabled={status === 'Loading'}
             label="Withdrawal Address"
@@ -1273,7 +1248,7 @@ const Recover: FC<{ depositAddress?: string; depositChainId: number }> = ({
           </Grid>
         </>
       )}
-    </div>
+    </Grid>
   );
 };
 
