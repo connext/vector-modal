@@ -30,7 +30,9 @@ class Connext {
     connextNode: BrowserNode | undefined,
     routerPublicIdentifier: string,
     depositChainId: number,
-    withdrawChainId: number
+    withdrawChainId: number,
+    depositChainProvider: string,
+    withdrawChainProvider: string
   ) {
     console.log('Connect Node');
     let browserNode: BrowserNode;
@@ -43,6 +45,10 @@ class Connext {
             routerPublicIdentifier,
             iframeSrc,
             supportedChains: [depositChainId, withdrawChainId],
+            chainProviders: {
+              [depositChainId]: depositChainProvider,
+              [withdrawChainId]: withdrawChainProvider,
+            },
           });
         }
         await browserNode.init();

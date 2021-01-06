@@ -117,8 +117,10 @@ export type ConnextModalProps = {
   showModal: boolean;
   routerPublicIdentifier: string;
   depositChainId: number;
+  depositChainProvider: string;
   depositAssetId: string;
   withdrawChainId: number;
+  withdrawChainProvider: string;
   withdrawAssetId: string;
   withdrawalAddress: string;
   onClose: () => void;
@@ -131,8 +133,10 @@ const ConnextModal: FC<ConnextModalProps> = ({
   showModal,
   routerPublicIdentifier,
   depositChainId,
+  depositChainProvider,
   depositAssetId,
   withdrawChainId,
+  withdrawChainProvider,
   withdrawAssetId,
   withdrawalAddress,
   onClose,
@@ -369,7 +373,7 @@ const ConnextModal: FC<ConnextModalProps> = ({
 
   const stateReset = () => {
     setIniting(true);
-    setActiveStep(-1);
+    setActiveStep(3);
     setIsError(false);
     setError(undefined);
     setDepositAddress(undefined);
@@ -397,7 +401,9 @@ const ConnextModal: FC<ConnextModalProps> = ({
             connextNode,
             routerPublicIdentifier,
             depositChainId,
-            withdrawChainId
+            withdrawChainId,
+            depositChainProvider,
+            withdrawChainProvider
           );
         } catch (e) {
           console.error('Error initalizing Browser Node: ', e);
@@ -591,21 +597,9 @@ const ConnextModal: FC<ConnextModalProps> = ({
                     sentAmount={sentAmount!}
                     withdrawChainId={withdrawChainId}
                     withdrawAssetId={withdrawAssetId}
+                    withdrawalAddress={withdrawalAddress}
                     styles={classes.completeState}
                     onClose={handleClose}
-                  />
-                </Grid>
-              </Grid>
-              <Grid container>
-                <Grid item xs={12}>
-                  <TextField
-                    label={`Receiver Address on ${withdrawChainName}`}
-                    defaultValue={withdrawalAddress}
-                    InputProps={{
-                      readOnly: true,
-                    }}
-                    fullWidth
-                    size="small"
                   />
                 </Grid>
               </Grid>
@@ -942,6 +936,7 @@ export interface CompleteStateProps {
   withdrawChainName: string;
   withdrawAssetId: string;
   withdrawChainId: number;
+  withdrawalAddress: string;
   sentAmount: string;
   styles: string;
   onClose: () => void;
@@ -953,8 +948,9 @@ const CompleteState: FC<CompleteStateProps> = ({
   sentAmount,
   withdrawAssetId,
   withdrawChainId,
+  withdrawalAddress,
   styles,
-  onClose
+  onClose,
 }) => (
   <>
     <Grid container className={styles} alignItems="center" direction="column">
@@ -975,18 +971,37 @@ const CompleteState: FC<CompleteStateProps> = ({
       </Typography>
     </Grid>
 
-    <Grid container direction="row" justifyContent="center" spacing={2}>
-      <Button
-        variant="outlined"
-        color="primary"
-        href={getExplorerLinkForTx(withdrawChainId, withdrawTx)}
-        target="_blank"
-      >
-        View Withdrawal Tx
-      </Button>
-      <Button variant="contained" color="primary" onClick={onClose}>
-        Close Modal
-      </Button>
+    <Grid container spacing={4}>
+      <Grid item xs={12}>
+        <TextField
+          label={`Receiver Address on ${withdrawChainName}`}
+          defaultValue={withdrawalAddress}
+          InputProps={{
+            readOnly: true,
+          }}
+          fullWidth
+          size="small"
+        />
+      </Grid>
+      <Grid item xs={12}>
+        <Grid container justifyContent="center">
+          <Button
+            variant="outlined"
+            color="primary"
+            href={getExplorerLinkForTx(withdrawChainId, withdrawTx)}
+            target="_blank"
+          >
+            View Withdrawal Tx
+          </Button>
+        </Grid>
+      </Grid>
+      <Grid item xs={12}>
+        <Grid container justifyContent="center">
+          <Button variant="contained" color="primary" onClick={onClose}>
+            Close Modal
+          </Button>
+        </Grid>
+      </Grid>
     </Grid>
   </>
 );
