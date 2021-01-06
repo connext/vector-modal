@@ -115,6 +115,7 @@ const useStyles = makeStyles((theme: Theme) =>
     },
     header: {},
     networkBar: { paddingBottom: '1rem' },
+    body: { padding: '1rem' },
     steps: { paddingBottom: '1rem' },
     status: { paddingBottom: '1rem' },
     ethereumAddress: { paddingBottom: '1rem' },
@@ -676,58 +677,62 @@ const ConnextModal: FC<ConnextModalProps> = ({
             <Options setScreen={setScreen} activeScreen={screen} />
           </Grid>
           {screen === 'Home' && (
-            <div style={{ padding: '1rem' }}>
-              {depositAddress ? (
-                <>
-                  <NetworkBar
-                    depositChainName={depositChainName}
-                    withdrawChainName={withdrawChainName}
-                    styles={classes.networkBar}
-                  />
+            <>
+              <Grid container id="body" className={classes.body}>
+                {depositAddress ? (
+                  <>
+                    <NetworkBar
+                      depositChainName={depositChainName}
+                      withdrawChainName={withdrawChainName}
+                      styles={classes.networkBar}
+                    />
 
-                  <Grid container className={classes.steps}>
-                    <Grid item xs={12}>
-                      <Stepper activeStep={activeStep}>
-                        {steps.map(label => {
-                          return (
-                            <Step key={label}>
-                              <StepLabel
-                                StepIconComponent={StepIcon}
-                                StepIconProps={{ error: isError }}
-                              >
-                                {label}
-                              </StepLabel>
-                            </Step>
-                          );
-                        })}
-                      </Stepper>
-                    </Grid>
-                  </Grid>
+                    {activeStep == 1 && (
+                      <Grid container className={classes.steps}>
+                        <Grid item xs={12}>
+                          <Stepper activeStep={activeStep}>
+                            {steps.map(label => {
+                              return (
+                                <Step key={label}>
+                                  <StepLabel
+                                    StepIconComponent={StepIcon}
+                                    StepIconProps={{ error: isError }}
+                                  >
+                                    {label}
+                                  </StepLabel>
+                                </Step>
+                              );
+                            })}
+                          </Stepper>
+                        </Grid>
+                      </Grid>
+                    )}
 
-                  {getStepContent(activeStep)}
-                </>
-              ) : (
-                <>
-                  {isError ? (
-                    <>
-                      <ErrorState
-                        error={error ?? new Error('unknown')}
-                        crossChainTransferId={activeCrossChainTransferId}
-                        styles={classes.errorState}
-                      />
-                    </>
-                  ) : (
-                    <>
-                      <Loading
-                        message={'Setting up channels...'}
-                        initializing={initing}
-                      />
-                      <Skeleton variant="rect" height={300} />
-                    </>
-                  )}
-                </>
-              )}
-            </div>
+                    {getStepContent(activeStep)}
+                  </>
+                ) : (
+                  <>
+                    {isError ? (
+                      <>
+                        <ErrorState
+                          error={error ?? new Error('unknown')}
+                          crossChainTransferId={activeCrossChainTransferId}
+                          styles={classes.errorState}
+                        />
+                      </>
+                    ) : (
+                      <>
+                        <Loading
+                          message={'Setting up channels...'}
+                          initializing={initing}
+                        />
+                        <Skeleton variant="rect" height={300} />
+                      </>
+                    )}
+                  </>
+                )}
+              </Grid>
+            </>
           )}
 
           {screen === 'Recover' && (
