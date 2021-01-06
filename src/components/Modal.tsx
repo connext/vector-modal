@@ -494,54 +494,118 @@ const ConnextModal: FC<ConnextModalProps> = ({
         case -1:
           return (
             <>
-              <Typography variant="h6" align="center">
-                Waiting for deposit...
-              </Typography>
-              <Typography variant="body2" align="center">
-                Send ONLY{' '}
-                <a
-                  href={getExplorerLinkForAsset(depositChainId, depositAssetId)}
-                  target="_blank"
-                >
-                  {getAssetName(depositAssetId, depositChainId)}
-                </a>{' '}
-                to the Deposit Address above.
-              </Typography>
-              <Typography variant="body2" align="center">
-                Please do not close or refresh window while in progress!
-              </Typography>
+              <EthereumAddress
+                depositChainName={depositChainName}
+                depositAddress={depositAddress!}
+                styles={classes.ethereumAddress}
+              />
+              <Grid
+                id="qrcode"
+                container
+                direction="row"
+                justifyContent="center"
+                alignItems="flex-start"
+                className={classes.ethereumAddress}
+              >
+                <QRCode value={depositAddress} />
+              </Grid>
+              <Grid container className={classes.status}>
+                <Grid item xs={12}>
+                  <Typography variant="h6" align="center">
+                    Waiting for deposit...
+                  </Typography>
+                  <Typography variant="body2" align="center">
+                    Send ONLY{' '}
+                    <a
+                      href={getExplorerLinkForAsset(
+                        depositChainId,
+                        depositAssetId
+                      )}
+                      target="_blank"
+                    >
+                      {getAssetName(depositAssetId, depositChainId)}
+                    </a>{' '}
+                    to the Deposit Address above.
+                  </Typography>
+                  <Typography variant="body2" align="center">
+                    Please do not close or refresh window while in progress!
+                  </Typography>
+                </Grid>
+              </Grid>
+              <Grid container>
+                <Grid item xs={12}>
+                  <TextField
+                    label={`Receiver Address on ${withdrawChainName}`}
+                    defaultValue={withdrawalAddress}
+                    InputProps={{
+                      readOnly: true,
+                    }}
+                    fullWidth
+                    size="small"
+                  />
+                </Grid>
+              </Grid>
             </>
           );
         case 0:
           return (
-            <Typography variant="body2" align="center">
-              Detected deposit on-chain({depositChainName}), depositing into
-              state channel!
-            </Typography>
+            <Grid container className={classes.status}>
+              <Grid item xs={12}>
+                <Typography variant="body2" align="center">
+                  Detected deposit on-chain({depositChainName}), depositing into
+                  state channel!
+                </Typography>
+              </Grid>
+            </Grid>
           );
         case 1:
           return (
-            <Typography variant="body2" align="center">
-              Transferring from {depositChainName} to {withdrawChainName}
-            </Typography>
+            <Grid container className={classes.status}>
+              <Grid item xs={12}>
+                <Typography variant="body2" align="center">
+                  Transferring from {depositChainName} to {withdrawChainName}
+                </Typography>
+              </Grid>
+            </Grid>
           );
         case 2:
           return (
-            <Typography variant="body2" align="center">
-              Withdrawing funds back on-chain({withdrawChainName}!
-            </Typography>
+            <Grid container className={classes.status}>
+              <Grid item xs={12}>
+                <Typography variant="body2" align="center">
+                  Withdrawing funds to onchain to {withdrawChainName}!
+                </Typography>
+              </Grid>
+            </Grid>
           );
         case 3:
           return (
             <>
-              <CompleteState
-                withdrawChainName={withdrawChainName}
-                withdrawTx={withdrawTx!}
-                sentAmount={sentAmount!}
-                withdrawChainId={withdrawChainId}
-                withdrawAssetId={withdrawAssetId}
-                styles={classes.completeState}
-              />
+              <Grid container className={classes.status}>
+                <Grid item xs={12}>
+                  <CompleteState
+                    withdrawChainName={withdrawChainName}
+                    withdrawTx={withdrawTx!}
+                    sentAmount={sentAmount!}
+                    withdrawChainId={withdrawChainId}
+                    withdrawAssetId={withdrawAssetId}
+                    styles={classes.completeState}
+                  />
+                </Grid>
+              </Grid>
+              <Grid container>
+                <Grid item xs={12}>
+                  <TextField
+                    label={`Receiver Address on ${withdrawChainName}`}
+                    defaultValue={withdrawalAddress}
+                    InputProps={{
+                      readOnly: true,
+                    }}
+                    fullWidth
+                    size="small"
+                  />
+                </Grid>
+              </Grid>
             </>
           );
         default:
@@ -622,10 +686,7 @@ const ConnextModal: FC<ConnextModalProps> = ({
                     withdrawChainName={withdrawChainName}
                     styles={classes.networkBar}
                   />
-                  <EthereumAddress
-                    depositAddress={depositAddress}
-                    styles={classes.ethereumAddress}
-                  />
+
                   <Grid container className={classes.steps}>
                     <Grid item xs={12}>
                       <Stepper activeStep={activeStep}>
@@ -644,23 +705,8 @@ const ConnextModal: FC<ConnextModalProps> = ({
                       </Stepper>
                     </Grid>
                   </Grid>
-                  <Grid container className={classes.status}>
-                    <Grid item xs={12}>
-                      {getStepContent(activeStep)}
-                    </Grid>
-                  </Grid>
-                  <Grid container>
-                    <Grid item xs={12}>
-                      <TextField
-                        label="Receiver Address"
-                        defaultValue={withdrawalAddress}
-                        InputProps={{
-                          readOnly: true,
-                        }}
-                        fullWidth
-                      />
-                    </Grid>
-                  </Grid>
+
+                  {getStepContent(activeStep)}
                 </>
               ) : (
                 <>
@@ -841,6 +887,7 @@ const ThemeButton: FC = () => {
 };
 
 export interface EthereumAddressProps {
+  depositChainName: string;
   depositAddress: string;
   styles: string;
 }
@@ -850,22 +897,12 @@ const EthereumAddress: FC<EthereumAddressProps> = props => {
   const [copiedDepositAddress, setCopiedDepositAddress] = useState<boolean>(
     false
   );
-
-  const [open, setOpen] = useState(false);
-
-  const handleOpen = () => {
-    setOpen(true);
-  };
-
-  const handleClose = () => {
-    setOpen(false);
-  };
   return (
     <>
       <Grid container alignItems="flex-end" className={styles}>
         <Grid item xs={12}>
           <TextField
-            label="Deposit Address"
+            label={`Deposit Address on ${props.depositChainName}`}
             defaultValue={depositAddress}
             InputProps={{
               readOnly: true,
@@ -882,34 +919,12 @@ const EthereumAddress: FC<EthereumAddressProps> = props => {
                   >
                     {!copiedDepositAddress ? <FileCopy /> : <Check />}
                   </IconButton>
-                  <IconButton onClick={handleOpen} edge="end">
-                    <CropFree />
-                  </IconButton>
                 </InputAdornment>
               ),
             }}
             fullWidth
           />
         </Grid>
-        <Dialog
-          onClose={handleClose}
-          aria-labelledby="simple-dialog-title"
-          open={open}
-        >
-          <DialogTitle id="simple-dialog-title">
-            Scan this code using your mobile wallet app
-          </DialogTitle>
-          <Grid
-            id="qrcode"
-            container
-            direction="row"
-            justifyContent="center"
-            alignItems="flex-start"
-            className={styles}
-          >
-            <QRCode value={depositAddress} />
-          </Grid>
-        </Dialog>
       </Grid>
     </>
   );
