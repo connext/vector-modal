@@ -29,6 +29,7 @@ function App() {
         withdrawChainProvider="http://localhost:8546"
         withdrawalAddress={'0x75e4DD0587663Fce5B2D9aF7fbED3AC54342d3dB'}
         onClose={() => setShowModal(false)}
+        onReady={params => console.log('MODAL IS READY =======>', params)}
       />
     </>
   );

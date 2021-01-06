@@ -124,6 +124,10 @@ export type ConnextModalProps = {
   withdrawAssetId: string;
   withdrawalAddress: string;
   onClose: () => void;
+  onReady?: (params: {
+    depositChannelAddress: string;
+    withdrawChannelAddress: string;
+  }) => any;
   connextNode?: BrowserNode;
 };
 
@@ -140,6 +144,7 @@ const ConnextModal: FC<ConnextModalProps> = ({
   withdrawAssetId,
   withdrawalAddress,
   onClose,
+  onReady,
   connextNode,
 }) => {
   const classes = useStyles();
@@ -373,7 +378,7 @@ const ConnextModal: FC<ConnextModalProps> = ({
 
   const stateReset = () => {
     setIniting(true);
-    setActiveStep(3);
+    setActiveStep(-1);
     setIsError(false);
     setError(undefined);
     setDepositAddress(undefined);
@@ -389,93 +394,114 @@ const ConnextModal: FC<ConnextModalProps> = ({
 
   useEffect(() => {
     const init = async () => {
-      if (showModal) {
-        setMessage('Loading...');
-        stateReset();
-        await getChainInfo();
-
-        try {
-          // browser node object
-          setMessage('Setting up channels...');
-          await connext.connectNode(
-            connextNode,
-            routerPublicIdentifier,
-            depositChainId,
-            withdrawChainId,
-            depositChainProvider,
-            withdrawChainProvider
-          );
-        } catch (e) {
-          console.error('Error initalizing Browser Node: ', e);
-          if (e.message.includes('localStorage not available in this window')) {
-            alert(
-              'Please disable shields or ad blockers and try again. Connext requires cross-site cookies to store your channel states.'
-            );
-          }
-          if (e.message.includes("Failed to read the 'localStorage'")) {
-            alert(
-              'Please disable shields or ad blockers or allow third party cookies in your browser and try again. Connext requires cross-site cookies to store your channel states.'
-            );
-          }
-          setCrossChainTransfers({
-            ...crossChainTransfers,
-            [constants.HashZero]: TRANSFER_STATES.ERROR,
-          });
-          setError(e);
-          setIsError(true);
-          setIniting(false);
-          return;
-        }
-
-        console.log('INITIALIZED BROWSER NODE');
-
-        setMessage('Looking for existing channel balance');
-        const depositChannelRes = await connext.connextClient!.getStateChannelByParticipants(
-          {
-            chainId: depositChainId,
-            counterparty: routerPublicIdentifier,
-          }
-        );
-        if (depositChannelRes.isError) {
-          setError(depositChannelRes.getError());
-          setIsError(true);
-          setIniting(false);
-          return;
-        }
-        const depositChannel = depositChannelRes.getValue() as FullChannelState;
-        const _depositAddress = depositChannel!.channelAddress;
-
-        const depositRes = await connext.connextClient!.reconcileDeposit({
-          channelAddress: depositChannel!.channelAddress,
-          assetId: depositAssetId,
-        });
-        if (depositRes.isError) {
-          setError(depositChannelRes.getError());
-          setIsError(true);
-          setIniting(false);
-          return;
-        }
-
-        const offChainAssetBalance = getBalanceForAssetId(
-          depositChannel!,
-          depositAssetId,
-          'bob'
-        );
-
-        console.log(
-          `balance on channel for ${_depositAddress} of asset ${depositAssetId}: ${offChainAssetBalance}`
-        );
-
-        setDepositAddress(_depositAddress);
-        const balanceBN = BigNumber.from(offChainAssetBalance);
-        if (balanceBN.gt(0)) {
-          console.log(`Found existing balance, transferring`);
-          await transfer(_depositAddress, balanceBN);
-        } else {
-          await blockListenerAndTransfer(_depositAddress);
-        }
-        setIniting(false);
+      if (!showModal) {
+        return;
       }
+      setMessage('Loading...');
+      stateReset();
+      await getChainInfo();
+
+      try {
+        // browser node object
+        setMessage('Setting up channels...');
+        await connext.connectNode(
+          connextNode,
+          routerPublicIdentifier,
+          depositChainId,
+          withdrawChainId,
+          depositChainProvider,
+          withdrawChainProvider
+        );
+      } catch (e) {
+        console.error('Error initalizing Browser Node: ', e);
+        if (e.message.includes('localStorage not available in this window')) {
+          alert(
+            'Please disable shields or ad blockers and try again. Connext requires cross-site cookies to store your channel states.'
+          );
+        }
+        if (e.message.includes("Failed to read the 'localStorage'")) {
+          alert(
+            'Please disable shields or ad blockers or allow third party cookies in your browser and try again. Connext requires cross-site cookies to store your channel states.'
+          );
+        }
+        setCrossChainTransfers({
+          ...crossChainTransfers,
+          [constants.HashZero]: TRANSFER_STATES.ERROR,
+        });
+        setError(e);
+        setIsError(true);
+        setIniting(false);
+        return;
+      }
+
+      console.log('INITIALIZED BROWSER NODE');
+
+      setMessage('Looking for existing channel balance');
+      const depositChannelRes = await connext.connextClient!.getStateChannelByParticipants(
+        {
+          chainId: depositChainId,
+          counterparty: routerPublicIdentifier,
+        }
+      );
+      if (depositChannelRes.isError) {
+        setError(depositChannelRes.getError());
+        setIsError(true);
+        setIniting(false);
+        return;
+      }
+      const depositChannel = depositChannelRes.getValue() as FullChannelState;
+      const _depositAddress = depositChannel!.channelAddress;
+
+      const withdrawChannelRes = await connext.connextClient!.getStateChannelByParticipants(
+        {
+          chainId: withdrawChainId,
+          counterparty: routerPublicIdentifier,
+        }
+      );
+      if (withdrawChannelRes.isError) {
+        setError(withdrawChannelRes.getError());
+        setIsError(true);
+        setIniting(false);
+        return;
+      }
+      const withdrawChannel = withdrawChannelRes.getValue() as FullChannelState;
+      // callback for ready
+      if (onReady) {
+        onReady({
+          depositChannelAddress: depositChannel.channelAddress,
+          withdrawChannelAddress: withdrawChannel.channelAddress,
+        });
+      }
+      const depositRes = await connext.connextClient!.reconcileDeposit({
+        channelAddress: depositChannel!.channelAddress,
+        assetId: depositAssetId,
+      });
+      if (depositRes.isError) {
+        setError(depositChannelRes.getError());
+        setIsError(true);
+        setIniting(false);
+        return;
+      }
+
+      const offChainAssetBalance = getBalanceForAssetId(
+        depositChannel!,
+        depositAssetId,
+        'bob'
+      );
+
+      console.log(
+        `Offchain balance for ${_depositAddress} of asset ${depositAssetId}: ${offChainAssetBalance}`
+      );
+
+      setDepositAddress(_depositAddress);
+      const balanceBN = BigNumber.from(offChainAssetBalance);
+      if (balanceBN.gt(0)) {
+        console.log(`Found existing balance, transferring`);
+        await transfer(_depositAddress, balanceBN);
+      } else {
+        await blockListenerAndTransfer(_depositAddress);
+      }
+      setIniting(false);
     };
     init();
   }, [showModal]);
