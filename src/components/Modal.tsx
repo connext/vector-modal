@@ -513,7 +513,7 @@ const ConnextModal: FC<ConnextModalProps> = ({
                     Waiting for deposit...
                   </Typography>
                   <Typography variant="subtitle1" align="center">
-                    Send ONLY{' '}
+                    Send only{' '}
                     <a
                       href={getExplorerLinkForAsset(
                         depositChainId,
@@ -553,7 +553,7 @@ const ConnextModal: FC<ConnextModalProps> = ({
           return (
             <Grid container className={classes.status}>
               <Grid item xs={12}>
-                <Typography variant="body2" align="center">
+                <Typography variant="body1" align="center">
                   Detected deposit on-chain({depositChainName}), depositing into
                   state channel!
                 </Typography>
@@ -564,7 +564,7 @@ const ConnextModal: FC<ConnextModalProps> = ({
           return (
             <Grid container className={classes.status}>
               <Grid item xs={12}>
-                <Typography variant="body2" align="center">
+                <Typography variant="body1" align="center">
                   Transferring from {depositChainName} to {withdrawChainName}
                 </Typography>
               </Grid>
@@ -574,7 +574,7 @@ const ConnextModal: FC<ConnextModalProps> = ({
           return (
             <Grid container className={classes.status}>
               <Grid item xs={12}>
-                <Typography variant="body2" align="center">
+                <Typography variant="body1" align="center">
                   Withdrawing funds to onchain to {withdrawChainName}!
                 </Typography>
               </Grid>
@@ -592,6 +592,7 @@ const ConnextModal: FC<ConnextModalProps> = ({
                     withdrawChainId={withdrawChainId}
                     withdrawAssetId={withdrawAssetId}
                     styles={classes.completeState}
+                    onClose={handleClose}
                   />
                 </Grid>
               </Grid>
@@ -943,6 +944,7 @@ export interface CompleteStateProps {
   withdrawChainId: number;
   sentAmount: string;
   styles: string;
+  onClose: () => void;
 }
 
 const CompleteState: FC<CompleteStateProps> = ({
@@ -952,6 +954,7 @@ const CompleteState: FC<CompleteStateProps> = ({
   withdrawAssetId,
   withdrawChainId,
   styles,
+  onClose
 }) => (
   <>
     <Grid container className={styles} alignItems="center" direction="column">
@@ -972,7 +975,7 @@ const CompleteState: FC<CompleteStateProps> = ({
       </Typography>
     </Grid>
 
-    <Grid container direction="row" justifyContent="center">
+    <Grid container direction="row" justifyContent="center" spacing={2}>
       <Button
         variant="outlined"
         color="primary"
@@ -980,6 +983,9 @@ const CompleteState: FC<CompleteStateProps> = ({
         target="_blank"
       >
         View Withdrawal Tx
+      </Button>
+      <Button variant="contained" color="primary" onClick={onClose}>
+        Close Modal
       </Button>
     </Grid>
   </>
@@ -1032,10 +1038,10 @@ const useRecoverStyles = makeStyles(theme => ({
     marginTop: -12,
     marginLeft: -12,
   },
-  root: {padding: '1rem' },
-  helpText: {padding: '1rem' },
-  assetField: {paddingBottom: '1rem' },
-  addressField: {paddingBottom: '1rem' }
+  root: { padding: '1rem' },
+  helpText: { padding: '1rem' },
+  assetField: { paddingBottom: '1rem' },
+  addressField: { paddingBottom: '1rem' },
 }));
 
 const Recover: FC<{ depositAddress?: string; depositChainId: number }> = ({
@@ -1123,7 +1129,11 @@ const Recover: FC<{ depositAddress?: string; depositChainId: number }> = ({
           <Typography variant="h6" align="center">
             Recover lost funds
           </Typography>
-          <Typography variant="body2" align="center" className={classes.helpText}>
+          <Typography
+            variant="body2"
+            align="center"
+            className={classes.helpText}
+          >
             Uh oh! Did you send the wrong asset to the deposit address? Fill out
             the details below and we will attempt to recover your assets from
             the state channels!
