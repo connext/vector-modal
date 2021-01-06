@@ -21,9 +21,9 @@ function App() {
         // withdrawChainId={80001}
         // local config
         routerPublicIdentifier="vector8Uz1BdpA9hV5uTm6QUv5jj1PsUyCH8m8ciA94voCzsxVmrBRor"
-        depositAssetId={'0x9FBDa871d559710256a2502A2517b794B482Db40'}
+        depositAssetId={'0x0000000000000000000000000000000000000000'}
         depositChainId={1337}
-        withdrawAssetId={'0x9FBDa871d559710256a2502A2517b794B482Db40'}
+        withdrawAssetId={'0x0000000000000000000000000000000000000000'}
         withdrawChainId={1338}
         withdrawalAddress={'0x75e4DD0587663Fce5B2D9aF7fbED3AC54342d3dB'}
         onClose={() => setShowModal(false)}
