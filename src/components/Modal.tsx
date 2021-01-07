@@ -59,7 +59,6 @@ import {
   getAssetBalance,
   hydrateProviders,
   getExplorerLinkForAsset,
-  getExplorerLink,
 } from '../utils';
 import Loading from './Loading';
 
@@ -727,9 +726,7 @@ const ConnextModal: FC<ConnextModalProps> = ({
                   <>
                     <NetworkBar
                       depositChainName={depositChainName}
-                      depositChainId={depositChainId}
                       withdrawChainName={withdrawChainName}
-                      withdrawChainId={withdrawChainId}
                       styles={classes.networkBar}
                     />
 
@@ -945,17 +942,13 @@ const EthereumAddress: FC<EthereumAddressProps> = props => {
 };
 export interface NetworkBarProps {
   depositChainName: string;
-  depositChainId: number;
   withdrawChainName: string;
-  withdrawChainId: number;
   styles: string;
 }
 
 const NetworkBar: FC<NetworkBarProps> = ({
   depositChainName,
-  depositChainId,
   withdrawChainName,
-  withdrawChainId,
   styles,
 }) => {
   return (
@@ -969,25 +962,11 @@ const NetworkBar: FC<NetworkBarProps> = ({
         className={styles}
       >
         <Grid item>
-          <Chip
-            color="secondary"
-            label={depositChainName}
-            clickable
-            onClick={() =>
-              window.open(getExplorerLink(depositChainId), '_blank')
-            }
-          />
+          <Chip color="secondary" label={depositChainName} />
         </Grid>
         <DoubleArrow />
         <Grid item>
-          <Chip
-            color="primary"
-            label={withdrawChainName}
-            clickable
-            onClick={() =>
-              window.open(getExplorerLink(withdrawChainId), '_blank')
-            }
-          />
+          <Chip color="primary" label={withdrawChainName} />
         </Grid>
       </Grid>
     </>
