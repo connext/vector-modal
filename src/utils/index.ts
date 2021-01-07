@@ -9,7 +9,7 @@ import { ERC20Abi } from '@connext/vector-types';
 
 import { TransferStates, ethProvidersOverrides } from '../constants';
 
-const getExplorerLink = (chainId: number): string | undefined => {
+export const getExplorerLink = (chainId: number): string | undefined => {
   switch (chainId) {
     case 1: {
       return `https://etherscan.io`;
