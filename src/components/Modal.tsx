@@ -194,6 +194,20 @@ const ConnextModal: FC<ConnextModalProps> = ({
         // if (data.meta.crossChainTransferId) {
         setCrossChainTransferWithErrorTimeout(
           activeCrossChainTransferId,
+          TRANSFER_STATES.DEPOSITING
+        );
+      }
+      // }
+    });
+    node.on(EngineEvents.CONDITIONAL_TRANSFER_CREATED, data => {
+      console.log('EngineEvents.CONDITIONAL_TRANSFER_CREATED: ', data);
+      if (
+        data.transfer.meta.crossChainTransferId &&
+        data.transfer.initiator === node.signerAddress
+      ) {
+        // if (data.meta.crossChainTransferId) {
+        setCrossChainTransferWithErrorTimeout(
+          data.transfer.meta.crossChainTransferId,
           TRANSFER_STATES.TRANSFERRING
         );
       }
