@@ -1,9 +1,0 @@
-export const TRANSFER_STATES = {
-  INITIAL: 'INITIAL',
-  DEPOSITING: 'DEPOSITING',
-  TRANSFERRING: 'TRANSFERRING',
-  WITHDRAWING: 'WITHDRAWING',
-  COMPLETE: 'COMPLETE',
-  ERROR: 'ERROR',
-} as const;
-export type TransferStates = keyof typeof TRANSFER_STATES;
