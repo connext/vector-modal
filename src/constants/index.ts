@@ -1,7 +1,5 @@
 import { constants } from 'ethers';
 
-import { TRANSFER_STATES, TransferStates } from './types';
-
 export const CHAIN_INFO_URL = 'https://chainid.network/chains.json';
 
 const PROD_IFRAME_WALLET = 'https://wallet.connext.network';
@@ -11,8 +9,6 @@ export const iframeSrc = process.env.REACT_APP_IFRAME_SRC || PROD_IFRAME_WALLET;
 export const ethProvidersOverrides = JSON.parse(
   process.env.REACT_APP_ETH_PROVIDERS || '{}'
 );
-
-export { TransferStates, TRANSFER_STATES };
 
 const ASSET_CHAIN_NAME_MAPPING: {
   [chainId: number]: { [assetId: string]: string };
@@ -42,3 +38,15 @@ export const getAssetName = (assetId: string, chainId: number): string => {
     ? ASSET_CHAIN_NAME_MAPPING[chainId][assetId] ?? 'Token'
     : 'Token';
 };
+
+export const TRANSFER_STATES = {
+  INITIAL: 'INITIAL',
+  DEPOSITING: 'DEPOSITING',
+  TRANSFERRING: 'TRANSFERRING',
+  WITHDRAWING: 'WITHDRAWING',
+  COMPLETE: 'COMPLETE',
+  ERROR: 'ERROR',
+} as const;
+export type TransferStates = keyof typeof TRANSFER_STATES;
+
+export type Screens = 'Recover' | 'Home';
