@@ -344,7 +344,12 @@ const ConnextModal: FC<ConnextModalProps> = ({
   };
 
   const blockListenerAndTransfer = async (_depositAddress: string) => {
-    const _ethProviders = hydrateProviders(depositChainId, withdrawChainId);
+    const _ethProviders = hydrateProviders(
+      depositChainId,
+      depositChainProvider,
+      withdrawChainId,
+      withdrawChainProvider
+    );
 
     let startingBalance: BigNumber;
     try {
@@ -399,7 +404,12 @@ const ConnextModal: FC<ConnextModalProps> = ({
   };
 
   const handleClose = () => {
-    const _ethProviders = hydrateProviders(depositChainId, withdrawChainId);
+    const _ethProviders = hydrateProviders(
+      depositChainId,
+      depositChainProvider,
+      withdrawChainId,
+      withdrawChainProvider
+    );
     _ethProviders[depositChainId].off('block');
     onClose();
   };

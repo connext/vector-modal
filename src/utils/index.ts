@@ -1,13 +1,7 @@
-import {
-  providers,
-  getDefaultProvider,
-  constants,
-  Contract,
-  BigNumber,
-} from 'ethers';
+import { providers, constants, Contract, BigNumber } from 'ethers';
 import { ERC20Abi } from '@connext/vector-types';
 
-import { TransferStates, ethProvidersOverrides } from '../constants';
+import { TransferStates } from '../constants';
 
 export const getExplorerLink = (chainId: number): string | undefined => {
   switch (chainId) {
@@ -61,21 +55,6 @@ export const getExplorerLinkForAsset = (
   return `${base}/token/${assetId}`;
 };
 
-export const getProviderUrlForChain = (chainId: number): string | undefined => {
-  switch (chainId) {
-    case 5: {
-      return `https://goerli.prylabs.net`;
-    }
-    case 80001: {
-      return `https://rpc-mumbai.matic.today`;
-    }
-    case 152709604825713: {
-      return `https://kovan2.arbitrum.io/rpc`;
-    }
-  }
-  return undefined;
-};
-
 export const activePhase = (phase: TransferStates): number => {
   switch (phase) {
     case 'INITIAL': {
@@ -101,26 +80,16 @@ export const activePhase = (phase: TransferStates): number => {
 
 export const hydrateProviders = (
   depositChainId: number,
-  withdrawChainId: number
+  depositProviderUrl: string,
+  withdrawChainId: number,
+  withdrawProviderUrl: string
 ): {
   [chainId: number]: providers.BaseProvider;
 } => {
-  const _ethProviders: { [chainId: number]: providers.BaseProvider } = {};
-  for (const chainId of [depositChainId, withdrawChainId]) {
-    if (ethProvidersOverrides[chainId]) {
-      _ethProviders[chainId] = new providers.JsonRpcProvider(
-        ethProvidersOverrides[chainId]
-      );
-    } else {
-      const providerUrl = getProviderUrlForChain(chainId);
-      if (providerUrl) {
-        _ethProviders[chainId] = new providers.JsonRpcProvider(providerUrl);
-      } else {
-        _ethProviders[chainId] = getDefaultProvider(chainId as any);
-      }
-    }
-  }
-  return _ethProviders;
+  return {
+    [depositChainId]: new providers.JsonRpcProvider(depositProviderUrl),
+    [withdrawChainId]: new providers.JsonRpcProvider(withdrawProviderUrl),
+  };
 };
 
 export const getAssetBalance = async (
