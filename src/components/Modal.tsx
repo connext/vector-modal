@@ -40,8 +40,12 @@ import {
 import { purple, green } from '@material-ui/core/colors';
 // @ts-ignore
 import QRCode from 'qrcode.react';
-import { BigNumber, constants, utils } from 'ethers';
-import { EngineEvents, FullChannelState } from '@connext/vector-types';
+import { BigNumber, constants, Contract, utils } from 'ethers';
+import {
+  EngineEvents,
+  ERC20Abi,
+  FullChannelState,
+} from '@connext/vector-types';
 import { getBalanceForAssetId, getRandomBytes32 } from '@connext/vector-utils';
 import {
   CHAIN_INFO_URL,
@@ -153,6 +157,7 @@ const ConnextModal: FC<ConnextModalProps> = ({
   const [withdrawChainName, setWithdrawChainName] = useState<string>(
     withdrawChainId.toString()
   );
+  const [withdrawAssetDecimals, setWithdrawAssetDecimals] = useState(18);
   const [sentAmount, setSentAmount] = useState<string>('0');
 
   const [withdrawTx, setWithdrawTx] = useState<string>();
@@ -297,6 +302,43 @@ const ConnextModal: FC<ConnextModalProps> = ({
       }
     } catch (e) {
       console.warn(`Could not fetch chain info from ${CHAIN_INFO_URL}`);
+    }
+  };
+
+  const getWithdrawAssetDecimals = async () => {
+    const _ethProviders = hydrateProviders(
+      depositChainId,
+      depositChainProvider,
+      withdrawChainId,
+      withdrawChainProvider
+    );
+
+    const token = new Contract(
+      withdrawAssetId,
+      ERC20Abi,
+      _ethProviders[withdrawChainId]
+    );
+
+    if (withdrawAssetId !== constants.AddressZero) {
+      try {
+        const supply = await token.totalSupply();
+        console.log('supply: ', supply);
+        const decimals = await token.decimals();
+        console.log(
+          `Detected token decimals for withdrawChainId ${withdrawChainId}: `,
+          decimals
+        );
+        setWithdrawAssetDecimals(decimals);
+      } catch (e) {
+        console.error(
+          `Error detecting decimals, unsafely falling back to 18 decimals for withdrawChainId ${withdrawChainId}: `,
+          e
+        );
+      }
+    } else {
+      console.log(
+        `Using native asset 18 decimals for withdrawChainId ${withdrawChainId}`
+      );
     }
   };
 
@@ -457,6 +499,8 @@ const ConnextModal: FC<ConnextModalProps> = ({
       }
 
       console.log('INITIALIZED BROWSER NODE');
+
+      await getWithdrawAssetDecimals();
 
       setMessage('Looking for existing channel balance');
       const depositChannelRes = await connext.connextClient!.getStateChannelByParticipants(
@@ -645,6 +689,7 @@ const ConnextModal: FC<ConnextModalProps> = ({
                     sentAmount={sentAmount!}
                     withdrawChainId={withdrawChainId}
                     withdrawAssetId={withdrawAssetId}
+                    withdrawAssetDecimals={withdrawAssetDecimals}
                     withdrawalAddress={withdrawalAddress}
                     styles={classes.completeState}
                     onClose={handleClose}
@@ -909,6 +954,7 @@ export interface CompleteStateProps {
   withdrawChainName: string;
   withdrawAssetId: string;
   withdrawChainId: number;
+  withdrawAssetDecimals: number;
   withdrawalAddress: string;
   sentAmount: string;
   styles: string;
@@ -921,6 +967,7 @@ const CompleteState: FC<CompleteStateProps> = ({
   sentAmount,
   withdrawAssetId,
   withdrawChainId,
+  withdrawAssetDecimals,
   withdrawalAddress,
   styles,
   onClose,
@@ -933,7 +980,7 @@ const CompleteState: FC<CompleteStateProps> = ({
       </Typography>
 
       <Typography gutterBottom variant="body1" color="secondary" align="center">
-        {utils.formatEther(sentAmount)}{' '}
+        {utils.formatUnits(sentAmount, withdrawAssetDecimals)}{' '}
         <a
           href={getExplorerLinkForAsset(withdrawChainId, withdrawAssetId)}
           target="_blank"
