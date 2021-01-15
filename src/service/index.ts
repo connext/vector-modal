@@ -1,6 +1,7 @@
 import { ethers } from 'ethers';
 import { BrowserNode } from '@connext/vector-browser-node';
 import { iframeSrc } from '../constants';
+import { swapSupportedByRouter } from '../utils';
 
 declare global {
   interface Window {
@@ -17,32 +18,46 @@ class Connext {
     routerPublicIdentifier: string,
     depositChainId: number,
     withdrawChainId: number,
+    depositAssetId: string,
+    withdrawAssetId: string,
     depositChainProvider: string,
     withdrawChainProvider: string
   ) {
     console.log('Connect Node');
     let browserNode: BrowserNode;
     if (!this.connextClient) {
-      try {
-        if (connextNode) {
-          browserNode = connextNode;
-        } else {
-          browserNode = new BrowserNode({
-            routerPublicIdentifier,
-            iframeSrc,
-            supportedChains: [depositChainId, withdrawChainId],
-            chainProviders: {
-              [depositChainId]: depositChainProvider,
-              [withdrawChainId]: withdrawChainProvider,
-            },
-          });
-        }
-        await browserNode.init();
-        this.connextClient = browserNode;
-      } catch (e) {
-        console.error(e);
-        throw new Error(`connecting to iframe: ${e}`);
+      if (connextNode) {
+        browserNode = connextNode;
+      } else {
+        browserNode = new BrowserNode({
+          routerPublicIdentifier,
+          iframeSrc,
+          supportedChains: [depositChainId, withdrawChainId],
+          chainProviders: {
+            [depositChainId]: depositChainProvider,
+            [withdrawChainId]: withdrawChainProvider,
+          },
+        });
       }
+
+      await browserNode.init();
+      // once you have the browser node, make sure the swap is supported
+      // by the connected router before creating channels
+      const config = await browserNode.getRouterConfig({
+        routerIdentifier: routerPublicIdentifier,
+      });
+      if (config.isError) {
+        throw config.getError();
+      }
+      swapSupportedByRouter(
+        depositChainId,
+        withdrawChainId,
+        depositAssetId,
+        withdrawAssetId,
+        config.getValue()
+      );
+      this.connextClient = browserNode;
+
       console.log('connection success');
     }
 

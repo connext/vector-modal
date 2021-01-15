@@ -46,6 +46,7 @@ import {
   EngineEvents,
   ERC20Abi,
   FullChannelState,
+  RouterConfigResponse,
 } from '@connext/vector-types';
 import { getBalanceForAssetId, getRandomBytes32 } from '@connext/vector-utils';
 import {
@@ -62,7 +63,7 @@ import {
   getAssetBalance,
   hydrateProviders,
   getExplorerLinkForAsset,
-  supportedByRouter,
+  swapAffordableByRouter,
 } from '../utils';
 import Loading from './Loading';
 import Options from './Options';
@@ -186,6 +187,9 @@ const ConnextModal: FC<ConnextModalProps> = ({
   >(constants.HashZero);
 
   const [screen, setScreen] = useState<Screens>('Home');
+  const [routerConfig, setRouterConfig] = useState<
+    RouterConfigResponse | undefined
+  >(undefined);
 
   const transferState: TransferStates =
     crossChainTransfers[activeCrossChainTransferId] ?? TRANSFER_STATES.INITIAL;
@@ -352,6 +356,34 @@ const ConnextModal: FC<ConnextModalProps> = ({
     _depositAddress: string,
     transferAmount: BigNumber
   ) => {
+    // Before doing anything, check that the router can afford this transfer
+    const withdrawChannelRes = await connext.connextClient!.getStateChannelByParticipants(
+      {
+        chainId: withdrawChainId,
+        counterparty: routerPublicIdentifier,
+      }
+    );
+    if (withdrawChannelRes.isError) {
+      setError(withdrawChannelRes.getError());
+      setIsError(true);
+      return;
+    }
+    try {
+      await swapAffordableByRouter(
+        depositChainId,
+        withdrawChainId,
+        depositAssetId,
+        withdrawAssetId,
+        transferAmount.toString(),
+        withdrawChannelRes.getValue() as FullChannelState,
+        routerConfig!,
+        _ethProviders
+      );
+    } catch (e) {
+      setError(e);
+      setIsError(true);
+      return;
+    }
     registerEngineEventListeners(connext.connextClient!, transferAmount);
     const crossChainTransferId = getRandomBytes32();
     setActiveCrossChainTransferId(crossChainTransferId);
@@ -481,6 +513,8 @@ const ConnextModal: FC<ConnextModalProps> = ({
           routerPublicIdentifier,
           depositChainId,
           withdrawChainId,
+          depositAssetId,
+          withdrawAssetId,
           depositChainProvider,
           withdrawChainProvider
         );
@@ -540,6 +574,16 @@ const ConnextModal: FC<ConnextModalProps> = ({
           withdrawChannelAddress: withdrawChannel.channelAddress,
         });
       }
+
+      const config = await connext.connextClient!.getRouterConfig({
+        routerIdentifier: routerPublicIdentifier,
+      });
+      if (config.isError) {
+        throw config.getError();
+      }
+      const _routerConfig = config.getValue();
+      setRouterConfig(_routerConfig);
+
       const depositRes = await connext.connextClient!.reconcileDeposit({
         channelAddress: depositChannel!.channelAddress,
         assetId: depositAssetId,
@@ -559,39 +603,28 @@ const ConnextModal: FC<ConnextModalProps> = ({
         `Offchain balance for ${_depositAddress} of asset ${depositAssetId}: ${offChainAssetBalance}`
       );
 
-      // Should block deposit address from showing if any of
-      // the following are true:
-      // - swap is not supported
-      // - receiver channel router balance + onchain balance of
-      //   router signer is < swapped amount
-      // - router has no native asset for gas to collateralize
-      const routerConfig = await connext.connextClient!.getRouterConfig({
-        routerIdentifier: routerPublicIdentifier,
-      });
-      if (routerConfig.isError) {
-        handleError(routerConfig.getError()!);
-        return;
-      }
+      // Before displaying deposit addr, check that router can afford a
+      // minimum transfer
       try {
-        await supportedByRouter(
+        await swapAffordableByRouter(
           depositChainId,
           withdrawChainId,
           depositAssetId,
           withdrawAssetId,
-          minimumCollateral ?? offChainAssetBalance ?? '0',
+          offChainAssetBalance ?? minimumCollateral ?? '0',
           withdrawChannel,
-          routerConfig.getValue(),
+          _routerConfig,
           _ethProviders
         );
       } catch (e) {
         handleError(e);
         return;
       }
-
-      setDepositAddress(_depositAddress);
       const balanceBN = BigNumber.from(offChainAssetBalance);
+      setDepositAddress(_depositAddress);
       if (balanceBN.gt(0)) {
         console.log(`Found existing balance, transferring`);
+        // Before beginning transfer, make sure it is affordable by router
         await transfer(_depositAddress, balanceBN);
       } else {
         await blockListenerAndTransfer(_depositAddress);

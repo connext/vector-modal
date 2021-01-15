@@ -8,7 +8,7 @@ For local testing, use the following setup with this and the `vector` repo:
 - inside `vector-modal` repo, run `npm i /Users/rahul/connext/repos/vector/modules/browser-node/connext-vector-browser-node-0.1.0-rc.4.tgz`
 - use this .env inside `vector-modal`:
 
-```
+```sh
 REACT_APP_IFRAME_SRC=http://localhost:3030
 REACT_APP_ETH_PROVIDERS={"1337":"http://localhost:8545","1338":"http://localhost:8546"}
 ```
