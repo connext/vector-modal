@@ -1,7 +1,12 @@
 import { providers, constants, Contract, BigNumber } from 'ethers';
-import { ERC20Abi } from '@connext/vector-types';
+import {
+  ERC20Abi,
+  FullChannelState,
+  RouterConfigResponse,
+} from '@connext/vector-types';
 
 import { TransferStates } from '../constants';
+import { calculateExchangeAmount, inverse } from '@connext/vector-utils';
 
 export const getExplorerLink = (chainId: number): string | undefined => {
   switch (chainId) {
@@ -102,7 +107,85 @@ export const getAssetBalance = async (
     assetId === constants.AddressZero
       ? await ethProviders[chainId].getBalance(address)
       : await new Contract(assetId, ERC20Abi, ethProviders[chainId]).balanceOf(
-        address
+          address
         );
   return balance;
+};
+
+export const supportedByRouter = async (
+  depositChainId: number,
+  withdrawChainId: number,
+  fromAssetId: string,
+  toAssetId: string,
+  transferAmount: string,
+  withdrawChannel: FullChannelState,
+  routerConfig: RouterConfigResponse,
+  ethProviders: { [chainId: number]: providers.BaseProvider }
+): Promise<void> => {
+  // Should block deposit address from showing if any of
+  // the following are true:
+  // - swap is not supported
+  // - receiver channel router balance + onchain balance of
+  //   router signer is < swapped amount
+  // - router has no native asset for gas to collateralize
+  const { supportedChains, allowedSwaps } = routerConfig;
+  if (
+    !supportedChains.includes(depositChainId) ||
+    !supportedChains.includes(withdrawChainId)
+  ) {
+    throw new Error('Deposit/withdraw chains are not supported by router');
+  }
+
+  let invertedSwap = false;
+  const swap = allowedSwaps.find(s => {
+    const noninverted =
+      s.fromAssetId.toLowerCase() === fromAssetId.toLowerCase() &&
+      s.fromChainId === depositChainId &&
+      s.toAssetId.toLowerCase() === toAssetId.toLowerCase() &&
+      s.toChainId === withdrawChainId;
+    const inverted =
+      s.toAssetId.toLowerCase() === fromAssetId.toLowerCase() &&
+      s.toChainId === depositChainId &&
+      s.fromAssetId.toLowerCase() === toAssetId.toLowerCase() &&
+      s.fromChainId === withdrawChainId;
+    invertedSwap = inverted;
+    return noninverted || inverted;
+  });
+  if (!swap) {
+    throw new Error('Swap is not supported by router');
+  }
+
+  const onchainFromAsset = await getAssetBalance(
+    ethProviders,
+    withdrawChainId,
+    toAssetId,
+    withdrawChannel.alice
+  );
+  const assetIdx = withdrawChannel.assetIds.findIndex(
+    a => a.toLowerCase() === toAssetId.toLowerCase()
+  );
+  const offchainFromAsset = BigNumber.from(
+    (withdrawChannel.balances[assetIdx]?.amount ?? [])[0] ?? '0'
+  );
+  const holdings = onchainFromAsset.add(offchainFromAsset);
+  const swappedAmount = calculateExchangeAmount(
+    transferAmount,
+    invertedSwap ? inverse(swap.hardcodedRate) : swap.hardcodedRate
+  );
+  if (holdings.lt(swappedAmount)) {
+    throw new Error('Router has insufficient balance for transfer');
+  }
+
+  const nativeAsset = await getAssetBalance(
+    ethProviders,
+    withdrawChainId,
+    constants.AddressZero,
+    withdrawChannel.alice
+  );
+  // NOTE: MUST change this check for optimism (no native asset)
+  // also, bc gas costs change across chain no real way to have a
+  // reliable min other than 0
+  if (nativeAsset.lte(0) && offchainFromAsset.lt(swappedAmount)) {
+    throw new Error('Router has insufficient balance for gas');
+  }
 };
