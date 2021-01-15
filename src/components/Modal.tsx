@@ -62,6 +62,7 @@ import {
   getAssetBalance,
   hydrateProviders,
   getExplorerLinkForAsset,
+  supportedByRouter,
 } from '../utils';
 import Loading from './Loading';
 import Options from './Options';
@@ -134,6 +135,9 @@ export type ConnextModalProps = {
     withdrawChannelAddress: string;
   }) => any;
   connextNode?: BrowserNode;
+  // deposit addr wont be displayed unless
+  // router has at least this much collateral
+  minimumCollateral?: string;
 };
 
 const ConnextModal: FC<ConnextModalProps> = ({
@@ -149,6 +153,7 @@ const ConnextModal: FC<ConnextModalProps> = ({
   onClose,
   onReady,
   connextNode,
+  minimumCollateral,
 }) => {
   const classes = useStyles();
   const [depositAddress, setDepositAddress] = useState<string>();
@@ -356,8 +361,8 @@ const ConnextModal: FC<ConnextModalProps> = ({
     setActiveStep(activePhase(TRANSFER_STATES.DEPOSITING));
     setIsError(false);
 
-    await connext
-      .connextClient!.crossChainTransfer({
+    try {
+      const result = await connext.connextClient!.crossChainTransfer({
         amount: transferAmount.toString(),
         fromAssetId: depositAssetId,
         fromChainId: depositChainId,
@@ -366,24 +371,22 @@ const ConnextModal: FC<ConnextModalProps> = ({
         reconcileDeposit: true,
         withdrawalAddress,
         meta: { crossChainTransferId },
-      })
-      .then(result => {
-        console.log('crossChainTransfer: ', result);
-        setWithdrawTx(result.withdrawalTx);
-        setSentAmount(result.withdrawalAmount ?? '0');
-        setActiveStep(activePhase(TRANSFER_STATES.COMPLETE));
-        setIsError(false);
-        updated[crossChainTransferId] = TRANSFER_STATES.COMPLETE;
-        setCrossChainTransfers(updated);
-      })
-      .catch(e => {
-        setError(e);
-        console.error('Error in crossChainTransfer: ', e);
-        const updated = { ...crossChainTransfers };
-        updated[crossChainTransferId] = TRANSFER_STATES.ERROR;
-        setIsError(true);
-        setCrossChainTransfers(updated);
       });
+      console.log('crossChainTransfer: ', result);
+      setWithdrawTx(result.withdrawalTx);
+      setSentAmount(result.withdrawalAmount ?? '0');
+      setActiveStep(activePhase(TRANSFER_STATES.COMPLETE));
+      setIsError(false);
+      updated[crossChainTransferId] = TRANSFER_STATES.COMPLETE;
+      setCrossChainTransfers(updated);
+    } catch (e) {
+      setError(e);
+      console.error('Error in crossChainTransfer: ', e);
+      const updated = { ...crossChainTransfers };
+      updated[crossChainTransferId] = TRANSFER_STATES.ERROR;
+      setIsError(true);
+      setCrossChainTransfers(updated);
+    }
   };
 
   const blockListenerAndTransfer = async (_depositAddress: string) => {
@@ -462,6 +465,14 @@ const ConnextModal: FC<ConnextModalProps> = ({
       stateReset();
       await getChainInfo();
 
+      // create helper to handle error
+      const handleError = (e: Error) => {
+        setError(e);
+        setIsError(true);
+        setIniting(false);
+        return;
+      };
+
       try {
         // browser node object
         setMessage('Setting up channels...');
@@ -489,9 +500,7 @@ const ConnextModal: FC<ConnextModalProps> = ({
           ...crossChainTransfers,
           [constants.HashZero]: TRANSFER_STATES.ERROR,
         });
-        setError(e);
-        setIsError(true);
-        setIniting(false);
+        handleError(e);
         return;
       }
 
@@ -507,9 +516,7 @@ const ConnextModal: FC<ConnextModalProps> = ({
         }
       );
       if (depositChannelRes.isError) {
-        setError(depositChannelRes.getError());
-        setIsError(true);
-        setIniting(false);
+        handleError(depositChannelRes.getError()!);
         return;
       }
       const depositChannel = depositChannelRes.getValue() as FullChannelState;
@@ -522,9 +529,7 @@ const ConnextModal: FC<ConnextModalProps> = ({
         }
       );
       if (withdrawChannelRes.isError) {
-        setError(withdrawChannelRes.getError());
-        setIsError(true);
-        setIniting(false);
+        handleError(withdrawChannelRes.getError()!);
         return;
       }
       const withdrawChannel = withdrawChannelRes.getValue() as FullChannelState;
@@ -540,9 +545,7 @@ const ConnextModal: FC<ConnextModalProps> = ({
         assetId: depositAssetId,
       });
       if (depositRes.isError) {
-        setError(depositChannelRes.getError());
-        setIsError(true);
-        setIniting(false);
+        handleError(depositRes.getError()!);
         return;
       }
 
@@ -555,6 +558,35 @@ const ConnextModal: FC<ConnextModalProps> = ({
       console.log(
         `Offchain balance for ${_depositAddress} of asset ${depositAssetId}: ${offChainAssetBalance}`
       );
+
+      // Should block deposit address from showing if any of
+      // the following are true:
+      // - swap is not supported
+      // - receiver channel router balance + onchain balance of
+      //   router signer is < swapped amount
+      // - router has no native asset for gas to collateralize
+      const routerConfig = await connext.connextClient!.getRouterConfig({
+        routerIdentifier: routerPublicIdentifier,
+      });
+      if (routerConfig.isError) {
+        handleError(routerConfig.getError()!);
+        return;
+      }
+      try {
+        await supportedByRouter(
+          depositChainId,
+          withdrawChainId,
+          depositAssetId,
+          withdrawAssetId,
+          minimumCollateral ?? offChainAssetBalance ?? '0',
+          withdrawChannel,
+          routerConfig.getValue(),
+          _ethProviders
+        );
+      } catch (e) {
+        handleError(e);
+        return;
+      }
 
       setDepositAddress(_depositAddress);
       const balanceBN = BigNumber.from(offChainAssetBalance);
