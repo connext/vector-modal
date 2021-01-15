@@ -151,7 +151,6 @@ const ConnextModal: FC<ConnextModalProps> = ({
   connextNode,
 }) => {
   const classes = useStyles();
-  const [listener, setListener] = useState<boolean>();
   const [depositAddress, setDepositAddress] = useState<string>();
   const [depositChainName, setDepositChainName] = useState<string>(
     depositChainId.toString()
@@ -404,10 +403,10 @@ const ConnextModal: FC<ConnextModalProps> = ({
     console.log(
       `Starting balance on ${depositChainId} for ${_depositAddress} of asset ${depositAssetId}: ${startingBalance.toString()}`
     );
-    setListener(true);
+
     _ethProviders[depositChainId].on('block', async blockNumber => {
       console.log('New blockNumber: ', blockNumber);
-      console.log(listener);
+
       let updatedBalance: BigNumber;
       try {
         updatedBalance = await getAssetBalance(
@@ -451,8 +450,6 @@ const ConnextModal: FC<ConnextModalProps> = ({
   };
 
   const handleClose = () => {
-    setListener(false);
-    console.log(listener);
     onClose();
   };
 
