@@ -18,7 +18,6 @@ import {
   Tooltip,
   withStyles,
   StepIconProps,
-  Alert,
 } from '@material-ui/core';
 import { Skeleton } from '@material-ui/lab';
 import {
@@ -112,9 +111,11 @@ const useStyles = makeStyles((theme: Theme) =>
     body: { padding: '1rem' },
     steps: { paddingBottom: '1rem' },
     status: { paddingBottom: '1rem' },
-    ethereumAddress: { paddingBottom: '1rem' },
+    qrcode: { paddingBottom: '1rem' },
+    ethereumAddress: {},
     completeState: { paddingBottom: '1rem' },
     errorState: { paddingBottom: '1rem' },
+    footer: {},
   })
 );
 
@@ -191,6 +192,29 @@ const ConnextModal: FC<ConnextModalProps> = ({
     withdrawChainId,
     withdrawChainProvider
   );
+
+  const [activeTip, setActiveTip] = useState(0);
+
+  const tips = () => {
+    switch (activeTip) {
+      case 0:
+        return 'Please do not close or refresh window while transfer in progress!';
+
+      case 1:
+        return `Send only ${getAssetName(
+          depositAssetId,
+          depositChainId
+        )} to the above Deposit Address.`;
+
+      default:
+        setActiveTip(0);
+        return 'Please do not close or refresh window while transfer in progress!';
+    }
+  };
+
+  const setTips = () => {
+    setActiveTip(activeTip + 1);
+  };
 
   const registerEngineEventListeners = (
     node: BrowserNode,
@@ -500,6 +524,7 @@ const ConnextModal: FC<ConnextModalProps> = ({
       await getWithdrawAssetDecimals();
 
       setMessage('Looking for existing channel balance');
+      setTips();
       const depositChannelRes = await connext.connextClient!.getStateChannelByParticipants(
         {
           chainId: depositChainId,
@@ -587,44 +612,25 @@ const ConnextModal: FC<ConnextModalProps> = ({
         case -1:
           return (
             <>
-              <EthereumAddress
-                depositChainName={depositChainName}
-                depositAddress={depositAddress!}
-                styles={classes.ethereumAddress}
-              />
               <Grid
                 id="qrcode"
                 container
                 direction="row"
                 justifyContent="center"
                 alignItems="flex-start"
-                className={classes.ethereumAddress}
+                className={classes.qrcode}
               >
-                <QRCode value={depositAddress} />
+                <QRCode
+                  value={depositAddress}
+                  size={200}
+                  includeMargin={true}
+                />
               </Grid>
-              <Grid container>
-                <Grid item xs={12}>
-                  <Typography variant="h6" align="center" color="textPrimary">
-                    Waiting for deposit...
-                  </Typography>
-                  <Alert severity="info">
-                    Send only{' '}
-                    <a
-                      href={getExplorerLinkForAsset(
-                        depositChainId,
-                        depositAssetId
-                      )}
-                      target="_blank"
-                    >
-                      {getAssetName(depositAssetId, depositChainId)}
-                    </a>{' '}
-                    to the above Deposit Address.
-                  </Alert>
-                  <Alert severity="info" color="warning">
-                    Please do not close or refresh window while in progress!
-                  </Alert>
-                </Grid>
-              </Grid>
+              <EthereumAddress
+                depositChainName={depositChainName}
+                depositAddress={depositAddress!}
+                styles={classes.ethereumAddress}
+              />
             </>
           );
         case 0:
@@ -798,7 +804,11 @@ const ConnextModal: FC<ConnextModalProps> = ({
                       </>
                     ) : (
                       <>
-                        <Loading message={message} initializing={initing} />
+                        <Loading
+                          message={message}
+                          tip={tips()}
+                          initializing={initing}
+                        />
                         <Skeleton variant="rect" height={300} />
                       </>
                     )}
@@ -815,7 +825,13 @@ const ConnextModal: FC<ConnextModalProps> = ({
             />
           )}
 
-          <Grid id="Footer" container direction="row" justifyContent="center">
+          <Grid
+            id="Footer"
+            className={classes.footer}
+            container
+            direction="row"
+            justifyContent="center"
+          >
             <Typography variant="overline">
               <a href="https://connext.network" target="_blank">
                 Powered By Connext
