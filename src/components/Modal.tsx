@@ -18,6 +18,7 @@ import {
   Tooltip,
   withStyles,
   StepIconProps,
+  Alert,
 } from '@material-ui/core';
 import { Skeleton } from '@material-ui/lab';
 import {
@@ -150,6 +151,7 @@ const ConnextModal: FC<ConnextModalProps> = ({
   connextNode,
 }) => {
   const classes = useStyles();
+  const [listener, setListener] = useState<boolean>();
   const [depositAddress, setDepositAddress] = useState<string>();
   const [depositChainName, setDepositChainName] = useState<string>(
     depositChainId.toString()
@@ -183,6 +185,13 @@ const ConnextModal: FC<ConnextModalProps> = ({
 
   const transferState: TransferStates =
     crossChainTransfers[activeCrossChainTransferId] ?? TRANSFER_STATES.INITIAL;
+
+  const _ethProviders = hydrateProviders(
+    depositChainId,
+    depositChainProvider,
+    withdrawChainId,
+    withdrawChainProvider
+  );
 
   const registerEngineEventListeners = (
     node: BrowserNode,
@@ -306,13 +315,6 @@ const ConnextModal: FC<ConnextModalProps> = ({
   };
 
   const getWithdrawAssetDecimals = async () => {
-    const _ethProviders = hydrateProviders(
-      depositChainId,
-      depositChainProvider,
-      withdrawChainId,
-      withdrawChainProvider
-    );
-
     const token = new Contract(
       withdrawAssetId,
       ERC20Abi,
@@ -386,13 +388,6 @@ const ConnextModal: FC<ConnextModalProps> = ({
   };
 
   const blockListenerAndTransfer = async (_depositAddress: string) => {
-    const _ethProviders = hydrateProviders(
-      depositChainId,
-      depositChainProvider,
-      withdrawChainId,
-      withdrawChainProvider
-    );
-
     let startingBalance: BigNumber;
     try {
       startingBalance = await getAssetBalance(
@@ -409,8 +404,10 @@ const ConnextModal: FC<ConnextModalProps> = ({
     console.log(
       `Starting balance on ${depositChainId} for ${_depositAddress} of asset ${depositAssetId}: ${startingBalance.toString()}`
     );
+    setListener(true);
     _ethProviders[depositChainId].on('block', async blockNumber => {
       console.log('New blockNumber: ', blockNumber);
+      console.log(listener);
       let updatedBalance: BigNumber;
       try {
         updatedBalance = await getAssetBalance(
@@ -426,6 +423,14 @@ const ConnextModal: FC<ConnextModalProps> = ({
       console.log(
         `Updated balance on ${depositChainId} for ${_depositAddress} of asset ${depositAssetId}: ${updatedBalance.toString()}`
       );
+
+      if (updatedBalance.lt(startingBalance)) {
+        startingBalance = updatedBalance;
+        console.log(
+          `Starting balance on ${depositChainId} for ${_depositAddress} of asset ${depositAssetId}: ${startingBalance.toString()}`
+        );
+      }
+
       if (updatedBalance.gt(startingBalance)) {
         _ethProviders[depositChainId].off('block');
         const transferAmount = updatedBalance.sub(startingBalance);
@@ -446,13 +451,8 @@ const ConnextModal: FC<ConnextModalProps> = ({
   };
 
   const handleClose = () => {
-    const _ethProviders = hydrateProviders(
-      depositChainId,
-      depositChainProvider,
-      withdrawChainId,
-      withdrawChainProvider
-    );
-    _ethProviders[depositChainId].off('block');
+    setListener(false);
+    console.log(listener);
     onClose();
   };
 
@@ -605,12 +605,12 @@ const ConnextModal: FC<ConnextModalProps> = ({
               >
                 <QRCode value={depositAddress} />
               </Grid>
-              <Grid container className={classes.status}>
+              <Grid container>
                 <Grid item xs={12}>
                   <Typography variant="h6" align="center" color="textPrimary">
                     Waiting for deposit...
                   </Typography>
-                  <Typography variant="subtitle1" align="center">
+                  <Alert severity="info">
                     Send only{' '}
                     <a
                       href={getExplorerLinkForAsset(
@@ -621,28 +621,11 @@ const ConnextModal: FC<ConnextModalProps> = ({
                     >
                       {getAssetName(depositAssetId, depositChainId)}
                     </a>{' '}
-                    to the Deposit Address above.
-                  </Typography>
-                  <Typography
-                    variant="subtitle2"
-                    align="center"
-                    color="textSecondary"
-                  >
+                    to the above Deposit Address.
+                  </Alert>
+                  <Alert severity="info" color="warning">
                     Please do not close or refresh window while in progress!
-                  </Typography>
-                </Grid>
-              </Grid>
-              <Grid container>
-                <Grid item xs={12}>
-                  <TextField
-                    label={`Receiver Address on ${withdrawChainName}`}
-                    defaultValue={withdrawalAddress}
-                    InputProps={{
-                      readOnly: true,
-                    }}
-                    fullWidth
-                    size="small"
-                  />
+                  </Alert>
                 </Grid>
               </Grid>
             </>
