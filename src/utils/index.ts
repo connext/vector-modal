@@ -96,13 +96,13 @@ export const getAssetBalance = async (
   ethProviders: { [chainId: number]: providers.BaseProvider },
   chainId: number,
   assetId: string,
-  balanceOfAddress: string
+  address: string
 ): Promise<BigNumber> => {
   const balance =
     assetId === constants.AddressZero
-      ? await ethProviders[chainId].getBalance(balanceOfAddress)
+      ? await ethProviders[chainId].getBalance(address)
       : await new Contract(assetId, ERC20Abi, ethProviders[chainId]).balanceOf(
-          balanceOfAddress
+        address
         );
   return balance;
 };
