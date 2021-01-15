@@ -338,6 +338,13 @@ const ConnextModal: FC<ConnextModalProps> = ({
   };
 
   const getWithdrawAssetDecimals = async () => {
+    const _ethProviders = hydrateProviders(
+      depositChainId,
+      depositChainProvider,
+      withdrawChainId,
+      withdrawChainProvider
+    );
+
     const token = new Contract(
       withdrawAssetId,
       ERC20Abi,
@@ -411,6 +418,13 @@ const ConnextModal: FC<ConnextModalProps> = ({
   };
 
   const blockListenerAndTransfer = async (_depositAddress: string) => {
+    const _ethProviders = hydrateProviders(
+      depositChainId,
+      depositChainProvider,
+      withdrawChainId,
+      withdrawChainProvider
+    );
+
     let startingBalance: BigNumber;
     try {
       startingBalance = await getAssetBalance(
@@ -427,10 +441,8 @@ const ConnextModal: FC<ConnextModalProps> = ({
     console.log(
       `Starting balance on ${depositChainId} for ${_depositAddress} of asset ${depositAssetId}: ${startingBalance.toString()}`
     );
-
     _ethProviders[depositChainId].on('block', async blockNumber => {
       console.log('New blockNumber: ', blockNumber);
-
       let updatedBalance: BigNumber;
       try {
         updatedBalance = await getAssetBalance(
@@ -446,14 +458,6 @@ const ConnextModal: FC<ConnextModalProps> = ({
       console.log(
         `Updated balance on ${depositChainId} for ${_depositAddress} of asset ${depositAssetId}: ${updatedBalance.toString()}`
       );
-
-      if (updatedBalance.lt(startingBalance)) {
-        startingBalance = updatedBalance;
-        console.log(
-          `Starting balance on ${depositChainId} for ${_depositAddress} of asset ${depositAssetId}: ${startingBalance.toString()}`
-        );
-      }
-
       if (updatedBalance.gt(startingBalance)) {
         _ethProviders[depositChainId].off('block');
         const transferAmount = updatedBalance.sub(startingBalance);
@@ -474,6 +478,13 @@ const ConnextModal: FC<ConnextModalProps> = ({
   };
 
   const handleClose = () => {
+    const _ethProviders = hydrateProviders(
+      depositChainId,
+      depositChainProvider,
+      withdrawChainId,
+      withdrawChainProvider
+    );
+    _ethProviders[depositChainId].off('block');
     onClose();
   };
 
