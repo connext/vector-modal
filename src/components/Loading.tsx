@@ -7,6 +7,7 @@ import LoadingGif from '../assets/loading.gif';
 interface LoadingProps {
   initializing: boolean;
   message: string;
+  tip: string;
 }
 
 const Loading: FC<LoadingProps> = props => {
@@ -27,9 +28,16 @@ const Loading: FC<LoadingProps> = props => {
             </LoadingCircle>
             <Typography
               variant="subtitle2"
-              style={{ marginTop: '24px', fontSize: '14px' }}
+              style={{
+                marginTop: '24px',
+                fontSize: '14px',
+                paddingBottom: '16px',
+              }}
             >
               {props.message}
+            </Typography>
+            <Typography variant="subtitle2" style={{ fontSize: '11px' }}>
+              {props.tip}
             </Typography>
           </Load>
         </>
