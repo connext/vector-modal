@@ -388,8 +388,8 @@ const ConnextModal: FC<ConnextModalProps> = ({
     setActiveStep(activePhase(TRANSFER_STATES.DEPOSITING));
     setIsError(false);
 
-    await connext
-      .connextClient!.crossChainTransfer({
+    try {
+      const result = await connext.connextClient!.crossChainTransfer({
         amount: transferAmount.toString(),
         fromAssetId: depositAssetId,
         fromChainId: depositChainId,
@@ -398,24 +398,22 @@ const ConnextModal: FC<ConnextModalProps> = ({
         reconcileDeposit: true,
         withdrawalAddress,
         meta: { crossChainTransferId },
-      })
-      .then(result => {
-        console.log('crossChainTransfer: ', result);
-        setWithdrawTx(result.withdrawalTx);
-        setSentAmount(result.withdrawalAmount ?? '0');
-        setActiveStep(activePhase(TRANSFER_STATES.COMPLETE));
-        setIsError(false);
-        updated[crossChainTransferId] = TRANSFER_STATES.COMPLETE;
-        setCrossChainTransfers(updated);
-      })
-      .catch(e => {
-        setError(e);
-        console.error('Error in crossChainTransfer: ', e);
-        const updated = { ...crossChainTransfers };
-        updated[crossChainTransferId] = TRANSFER_STATES.ERROR;
-        setIsError(true);
-        setCrossChainTransfers(updated);
       });
+      console.log('crossChainTransfer: ', result);
+      setWithdrawTx(result.withdrawalTx);
+      setSentAmount(result.withdrawalAmount ?? '0');
+      setActiveStep(activePhase(TRANSFER_STATES.COMPLETE));
+      setIsError(false);
+      updated[crossChainTransferId] = TRANSFER_STATES.COMPLETE;
+      setCrossChainTransfers(updated);
+    } catch (e) {
+      setError(e);
+      console.error('Error in crossChainTransfer: ', e);
+      const updated = { ...crossChainTransfers };
+      updated[crossChainTransferId] = TRANSFER_STATES.ERROR;
+      setIsError(true);
+      setCrossChainTransfers(updated);
+    }
   };
 
   const blockListenerAndTransfer = async (_depositAddress: string) => {
