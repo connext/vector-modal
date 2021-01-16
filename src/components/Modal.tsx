@@ -183,6 +183,8 @@ const ConnextModal: FC<ConnextModalProps> = ({
 
   const [screen, setScreen] = useState<Screens>('Home');
 
+  const [vectorListenersStarted, setVectorListenersStarted] = useState(false);
+
   const transferState: TransferStates =
     crossChainTransfers[activeCrossChainTransferId] ?? TRANSFER_STATES.INITIAL;
 
@@ -220,6 +222,7 @@ const ConnextModal: FC<ConnextModalProps> = ({
     node: BrowserNode,
     startingBalance: BigNumber
   ): void => {
+    console.log('Starting Vector listeners');
     node.on(EngineEvents.DEPOSIT_RECONCILED, data => {
       console.log('EngineEvents.DEPOSIT_RECONCILED: ', data);
       if (
@@ -338,13 +341,6 @@ const ConnextModal: FC<ConnextModalProps> = ({
   };
 
   const getWithdrawAssetDecimals = async () => {
-    const _ethProviders = hydrateProviders(
-      depositChainId,
-      depositChainProvider,
-      withdrawChainId,
-      withdrawChainProvider
-    );
-
     const token = new Contract(
       withdrawAssetId,
       ERC20Abi,
@@ -378,7 +374,12 @@ const ConnextModal: FC<ConnextModalProps> = ({
     _depositAddress: string,
     transferAmount: BigNumber
   ) => {
-    registerEngineEventListeners(connext.connextClient!, transferAmount);
+    if (!vectorListenersStarted) {
+      registerEngineEventListeners(connext.connextClient!, transferAmount);
+      setVectorListenersStarted(true);
+    } else {
+      console.log('Vector listeners already running');
+    }
     const crossChainTransferId = getRandomBytes32();
     setActiveCrossChainTransferId(crossChainTransferId);
     const updated = { ...crossChainTransfers };
@@ -478,12 +479,6 @@ const ConnextModal: FC<ConnextModalProps> = ({
   };
 
   const handleClose = () => {
-    const _ethProviders = hydrateProviders(
-      depositChainId,
-      depositChainProvider,
-      withdrawChainId,
-      withdrawChainProvider
-    );
     _ethProviders[depositChainId].off('block');
     onClose();
   };
