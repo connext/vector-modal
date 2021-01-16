@@ -184,6 +184,7 @@ const ConnextModal: FC<ConnextModalProps> = ({
   const [screen, setScreen] = useState<Screens>('Home');
 
   const [vectorListenersStarted, setVectorListenersStarted] = useState(false);
+  const [listener, setListener] = useState<ReturnType<typeof setInterval>>();
 
   const transferState: TransferStates =
     crossChainTransfers[activeCrossChainTransferId] ?? TRANSFER_STATES.INITIAL;
@@ -417,16 +418,9 @@ const ConnextModal: FC<ConnextModalProps> = ({
   };
 
   const blockListenerAndTransfer = async (_depositAddress: string) => {
-    const _ethProviders = hydrateProviders(
-      depositChainId,
-      depositChainProvider,
-      withdrawChainId,
-      withdrawChainProvider
-    );
-
-    let startingBalance: BigNumber;
+    let initialBalance: BigNumber;
     try {
-      startingBalance = await getAssetBalance(
+      initialBalance = await getAssetBalance(
         _ethProviders,
         depositChainId,
         depositAssetId,
@@ -438,32 +432,38 @@ const ConnextModal: FC<ConnextModalProps> = ({
       return;
     }
     console.log(
-      `Starting balance on ${depositChainId} for ${_depositAddress} of asset ${depositAssetId}: ${startingBalance.toString()}`
+      `Starting balance on ${depositChainId} for ${_depositAddress} of asset ${depositAssetId}: ${initialBalance.toString()}`
     );
-    _ethProviders[depositChainId].on('block', async blockNumber => {
-      console.log('New blockNumber: ', blockNumber);
-      let updatedBalance: BigNumber;
-      try {
-        updatedBalance = await getAssetBalance(
-          _ethProviders,
-          depositChainId,
-          depositAssetId,
-          _depositAddress
+
+    setListener(
+      setInterval(async () => {
+        let updatedBalance: BigNumber;
+        try {
+          updatedBalance = await getAssetBalance(
+            _ethProviders,
+            depositChainId,
+            depositAssetId,
+            _depositAddress
+          );
+        } catch (e) {
+          console.warn(`Error fetching balance: ${e.message}`);
+          return;
+        }
+        console.log(
+          `Updated balance on ${depositChainId} for ${_depositAddress} of asset ${depositAssetId}: ${updatedBalance.toString()}`
         );
-      } catch (e) {
-        console.warn(`Error fetching balance: ${e.message}`);
-        return;
-      }
-      console.log(
-        `Updated balance on ${depositChainId} for ${_depositAddress} of asset ${depositAssetId}: ${updatedBalance.toString()}`
-      );
-      if (updatedBalance.gt(startingBalance)) {
-        _ethProviders[depositChainId].off('block');
-        const transferAmount = updatedBalance.sub(startingBalance);
-        startingBalance = updatedBalance;
-        await transfer(_depositAddress, transferAmount);
-      }
-    });
+        if (updatedBalance.lt(initialBalance)) {
+          initialBalance = updatedBalance;
+        }
+
+        if (updatedBalance.gt(initialBalance)) {
+          clearInterval(listener!);
+          const transferAmount = updatedBalance.sub(initialBalance);
+          initialBalance = updatedBalance;
+          await transfer(_depositAddress, transferAmount);
+        }
+      }, 5_000)
+    );
   };
 
   const stateReset = () => {
@@ -477,7 +477,7 @@ const ConnextModal: FC<ConnextModalProps> = ({
   };
 
   const handleClose = () => {
-    _ethProviders[depositChainId].off('block');
+    clearInterval(listener!);
     onClose();
   };
 
