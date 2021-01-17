@@ -51,7 +51,6 @@
     "@size-limit/preset-small-lib": "^4.9.1",
     "@types/react": "^17.0.0",
     "@types/react-dom": "^17.0.0",
-    "@types/styled-components": "^5.1.7",
     "react": "^17.0.1",
     "react-dom": "^17.0.1",
     "size-limit": "^4.9.1",
@@ -67,7 +66,6 @@
     "@material-ui/icons": "^5.0.0-alpha.22",
     "@material-ui/lab": "^4.0.0-alpha.57",
     "ethers": "^5.0.24",
-    "qrcode.react": "^1.0.1",
-    "styled-components": "^5.2.1"
+    "qrcode.react": "^1.0.1"
   }
 }
