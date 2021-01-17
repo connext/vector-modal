@@ -18,6 +18,7 @@ import {
   Tooltip,
   withStyles,
   StepIconProps,
+  Alert,
 } from '@material-ui/core';
 import {
   FileCopy,
@@ -110,8 +111,12 @@ const useStyles = makeStyles((theme: Theme) =>
     body: { padding: '1rem' },
     steps: { paddingBottom: '1rem' },
     status: { paddingBottom: '1rem' },
-    qrcode: { paddingBottom: '1rem' },
-    ethereumAddress: {},
+    qrcode: {
+      paddingBottom: '1rem',
+      filter: 'drop-shadow(0px 0px 4px rgba(0, 0, 0, 0.25))',
+      borderRadius: '5px',
+    },
+    ethereumAddress: { paddingBottom: '1rem' },
     completeState: { paddingBottom: '1rem' },
     errorState: { paddingBottom: '1rem' },
     footer: {},
@@ -195,6 +200,7 @@ const ConnextModal: FC<ConnextModalProps> = ({
 
   const [activeTip, setActiveTip] = useState(0);
   const [activeMessage, setActiveMessage] = useState(0);
+  const [activeHeaderMessage, setActiveHeaderMessage] = useState(0);
 
   const tips = () => {
     switch (activeTip) {
@@ -227,6 +233,50 @@ const ConnextModal: FC<ConnextModalProps> = ({
       default:
         setActiveMessage(0);
         return 'Connecting to Network...';
+    }
+  };
+
+  const headerMessage = () => {
+    switch (activeHeaderMessage) {
+      case 0:
+        return (
+          <>
+            <Typography variant="h6">
+              Send{' '}
+              <a
+                href={getExplorerLinkForAsset(depositChainId, depositAssetId)}
+                target="_blank"
+              >
+                {getAssetName(depositAssetId, depositChainId)}
+              </a>
+            </Typography>
+          </>
+        );
+
+      case 1:
+        return (
+          <>
+            <Typography variant="h6">
+              Sending{' '}
+              <a
+                href={getExplorerLinkForAsset(depositChainId, depositAssetId)}
+                target="_blank"
+              >
+                {getAssetName(depositAssetId, depositChainId)}
+              </a>
+            </Typography>
+          </>
+        );
+
+      case 2:
+        return <Typography variant="h6">Success!</Typography>;
+
+      case 3:
+        return <Typography variant="h6">Error!</Typography>;
+
+      default:
+        setActiveHeaderMessage(0);
+        return;
     }
   };
 
@@ -390,6 +440,7 @@ const ConnextModal: FC<ConnextModalProps> = ({
     _depositAddress: string,
     transferAmount: BigNumber
   ) => {
+    setActiveHeaderMessage(1);
     if (!vectorListenersStarted) {
       registerEngineEventListeners(connext.connextClient!, transferAmount);
       setVectorListenersStarted(true);
@@ -420,6 +471,7 @@ const ConnextModal: FC<ConnextModalProps> = ({
       setSentAmount(result.withdrawalAmount ?? '0');
       setActiveStep(activePhase(TRANSFER_STATES.COMPLETE));
       setIsError(false);
+      setActiveHeaderMessage(2);
       updated[crossChainTransferId] = TRANSFER_STATES.COMPLETE;
       setCrossChainTransfers(updated);
     } catch (e) {
@@ -428,6 +480,7 @@ const ConnextModal: FC<ConnextModalProps> = ({
       const updated = { ...crossChainTransfers };
       updated[crossChainTransferId] = TRANSFER_STATES.ERROR;
       setIsError(true);
+      setActiveHeaderMessage(3);
       setCrossChainTransfers(updated);
     }
   };
@@ -489,6 +542,7 @@ const ConnextModal: FC<ConnextModalProps> = ({
     setDepositAddress(undefined);
     setActiveCrossChainTransferId(constants.HashZero);
     setScreen('Home');
+    setActiveHeaderMessage(0);
   };
 
   const handleClose = () => {
@@ -633,6 +687,17 @@ const ConnextModal: FC<ConnextModalProps> = ({
           return (
             <>
               <Grid
+                container
+                justifyContent="center"
+                style={{
+                  paddingBottom: '16px',
+                }}
+              >
+                <Alert severity="error">
+                  Do not use this component in Incognito Mode{' '}
+                </Alert>
+              </Grid>
+              <Grid
                 id="qrcode"
                 container
                 direction="row"
@@ -642,7 +707,7 @@ const ConnextModal: FC<ConnextModalProps> = ({
               >
                 <QRCode
                   value={depositAddress}
-                  size={200}
+                  size={250}
                   includeMargin={true}
                 />
               </Grid>
@@ -651,38 +716,60 @@ const ConnextModal: FC<ConnextModalProps> = ({
                 depositAddress={depositAddress!}
                 styles={classes.ethereumAddress}
               />
+              <Footer styles={classes.footer} />
             </>
           );
         case 0:
           return (
-            <Grid container className={classes.status}>
-              <Grid item xs={12}>
-                <Typography variant="body1" align="center">
-                  Detected deposit on-chain({depositChainName}), depositing into
-                  state channel!
-                </Typography>
+            <>
+              <Grid container className={classes.status}>
+                <Grid item xs={12}>
+                  <Typography variant="body1" align="center">
+                    Detected deposit on-chain({depositChainName}), depositing
+                    into state channel!
+                  </Typography>
+                </Grid>
               </Grid>
-            </Grid>
+              <Grid container justifyContent="center">
+                <Alert severity="warning">
+                  Please do not close or refresh this page
+                </Alert>
+              </Grid>
+            </>
           );
         case 1:
           return (
-            <Grid container className={classes.status}>
-              <Grid item xs={12}>
-                <Typography variant="body1" align="center">
-                  Transferring from {depositChainName} to {withdrawChainName}
-                </Typography>
+            <>
+              <Grid container className={classes.status}>
+                <Grid item xs={12}>
+                  <Typography variant="body1" align="center">
+                    Transferring from {depositChainName} to {withdrawChainName}
+                  </Typography>
+                </Grid>
               </Grid>
-            </Grid>
+              <Grid container justifyContent="center">
+                <Alert severity="warning">
+                  Please do not close or refresh this page
+                </Alert>
+              </Grid>
+            </>
           );
         case 2:
           return (
-            <Grid container className={classes.status}>
-              <Grid item xs={12}>
-                <Typography variant="body1" align="center">
-                  Withdrawing funds to onchain to {withdrawChainName}!
-                </Typography>
+            <>
+              <Grid container className={classes.status}>
+                <Grid item xs={12}>
+                  <Typography variant="body1" align="center">
+                    Withdrawing funds to onchain to {withdrawChainName}!
+                  </Typography>
+                </Grid>
               </Grid>
-            </Grid>
+              <Grid container justifyContent="center">
+                <Alert severity="warning">
+                  Please do not close or refresh this page
+                </Alert>
+              </Grid>
+            </>
           );
         case 3:
           return (
@@ -702,6 +789,7 @@ const ConnextModal: FC<ConnextModalProps> = ({
                   />
                 </Grid>
               </Grid>
+              <Footer styles={classes.footer} />
             </>
           );
         default:
@@ -742,50 +830,42 @@ const ConnextModal: FC<ConnextModalProps> = ({
         className={classes.dialog}
       >
         <Card className={classes.card}>
+          {depositAddress && (
+            <Grid
+              id="Header"
+              container
+              direction="row"
+              justifyContent="space-between"
+              alignItems="center"
+              className={classes.header}
+            >
+              <IconButton
+                aria-label="close"
+                disabled={[
+                  TRANSFER_STATES.DEPOSITING,
+                  TRANSFER_STATES.TRANSFERRING,
+                  TRANSFER_STATES.WITHDRAWING,
+                ].includes(transferState as any)}
+                edge="start"
+                onClick={handleClose}
+              >
+                <Close />
+              </IconButton>
+
+              {headerMessage()}
+
+              {/* <Grid item>
+                        <ThemeButton />
+                      </Grid> */}
+
+              <Options setScreen={setScreen} activeScreen={screen} />
+            </Grid>
+          )}
           {screen === 'Home' && (
             <>
               <Grid container id="body" className={classes.body}>
                 {depositAddress ? (
                   <>
-                    <Grid
-                      id="Header"
-                      container
-                      direction="row"
-                      justifyContent="space-between"
-                      alignItems="center"
-                      className={classes.header}
-                    >
-                      <IconButton
-                        aria-label="close"
-                        disabled={[
-                          TRANSFER_STATES.DEPOSITING,
-                          TRANSFER_STATES.TRANSFERRING,
-                          TRANSFER_STATES.WITHDRAWING,
-                        ].includes(transferState as any)}
-                        edge="start"
-                        onClick={handleClose}
-                      >
-                        <Close />
-                      </IconButton>
-                      <Typography variant="h6">
-                        Send{' '}
-                        <a
-                          href={getExplorerLinkForAsset(
-                            depositChainId,
-                            depositAssetId
-                          )}
-                          target="_blank"
-                        >
-                          {getAssetName(depositAssetId, depositChainId)}
-                        </a>
-                      </Typography>
-
-                      {/* <Grid item>
-                        <ThemeButton />
-                      </Grid> */}
-
-                      <Options setScreen={setScreen} activeScreen={screen} />
-                    </Grid>
                     {activeStep != -1 && (
                       <Grid container className={classes.steps}>
                         <Grid item xs={12}>
@@ -853,25 +933,14 @@ const ConnextModal: FC<ConnextModalProps> = ({
           )}
 
           {screen === 'Recover' && (
-            <Recover
-              depositAddress={depositAddress}
-              depositChainId={depositChainId}
-            />
+            <>
+              <Recover
+                depositAddress={depositAddress}
+                depositChainId={depositChainId}
+              />
+              <Footer styles={classes.footer} />
+            </>
           )}
-
-          <Grid
-            id="Footer"
-            className={classes.footer}
-            container
-            direction="row"
-            justifyContent="center"
-          >
-            <Typography variant="overline">
-              <a href="https://connext.network" target="_blank">
-                Powered By Connext
-              </a>
-            </Typography>
-          </Grid>
         </Card>
       </Dialog>
     </ThemeProvider>
@@ -900,6 +969,29 @@ const ThemeButton: FC = () => {
         {isDark ? <WbSunny /> : <Brightness4 />}
       </IconButton>
     </StyledTooltip>
+  );
+};
+
+interface FooterProps {
+  styles: string;
+}
+
+const Footer: FC<FooterProps> = props => {
+  const { styles } = props;
+  return (
+    <Grid
+      id="Footer"
+      className={styles}
+      container
+      direction="row"
+      justifyContent="center"
+    >
+      <Typography variant="overline">
+        <a href="https://connext.network" target="_blank">
+          Powered By Connext
+        </a>
+      </Typography>
+    </Grid>
   );
 };
 
