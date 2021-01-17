@@ -19,7 +19,6 @@ import {
   withStyles,
   StepIconProps,
 } from '@material-ui/core';
-import { Skeleton } from '@material-ui/lab';
 import {
   FileCopy,
   Check,
@@ -37,7 +36,7 @@ import {
   Theme,
   createMuiTheme,
 } from '@material-ui/core/styles';
-import { purple, green } from '@material-ui/core/colors';
+import { red, blue } from '@material-ui/core/colors';
 // @ts-ignore
 import QRCode from 'qrcode.react';
 import { BigNumber, constants, Contract, utils } from 'ethers';
@@ -70,10 +69,10 @@ const theme = createMuiTheme({
   palette: {
     mode: 'light',
     primary: {
-      main: purple[500],
+      main: red[500],
     },
     secondary: {
-      main: green[700],
+      main: blue[500],
     },
   },
   typography: {
@@ -107,7 +106,7 @@ const useStyles = makeStyles((theme: Theme) =>
     },
     dialog: {},
     header: {},
-    networkBar: { paddingBottom: '1rem' },
+    networkBar: { paddingBottom: '1.5rem' },
     body: { padding: '1rem' },
     steps: { paddingBottom: '1rem' },
     status: { paddingBottom: '1rem' },
@@ -168,8 +167,6 @@ const ConnextModal: FC<ConnextModalProps> = ({
     [crossChainTransferId: string]: TransferStates;
   }>({});
 
-  const [message, setMessage] = useState<string>('');
-
   const [initing, setIniting] = useState<boolean>(true);
 
   const [activeStep, setActiveStep] = useState(-1);
@@ -197,6 +194,7 @@ const ConnextModal: FC<ConnextModalProps> = ({
   );
 
   const [activeTip, setActiveTip] = useState(0);
+  const [activeMessage, setActiveMessage] = useState(0);
 
   const tips = () => {
     switch (activeTip) {
@@ -212,6 +210,23 @@ const ConnextModal: FC<ConnextModalProps> = ({
       default:
         setActiveTip(0);
         return 'Please do not close or refresh window while transfer in progress!';
+    }
+  };
+
+  const message = () => {
+    switch (activeMessage) {
+      case 0:
+        return 'Connecting to Network...';
+
+      case 1:
+        return `Setting Up Deposit Address...`;
+
+      case 2:
+        return `Looking for existing Channel Balance...`;
+
+      default:
+        setActiveMessage(0);
+        return 'Connecting to Network...';
     }
   };
 
@@ -486,13 +501,12 @@ const ConnextModal: FC<ConnextModalProps> = ({
       if (!showModal) {
         return;
       }
-      setMessage('Loading...');
+      setActiveMessage(0);
       stateReset();
       await getChainInfo();
 
       try {
         // browser node object
-        setMessage('Setting up channels...');
         await connext.connectNode(
           connextNode,
           routerPublicIdentifier,
@@ -527,7 +541,7 @@ const ConnextModal: FC<ConnextModalProps> = ({
 
       await getWithdrawAssetDecimals();
 
-      setMessage('Looking for existing channel balance');
+      setActiveMessage(1);
       setTips();
       const depositChannelRes = await connext.connextClient!.getStateChannelByParticipants(
         {
@@ -564,6 +578,8 @@ const ConnextModal: FC<ConnextModalProps> = ({
           withdrawChannelAddress: withdrawChannel.channelAddress,
         });
       }
+
+      setActiveMessage(2);
       const depositRes = await connext.connextClient!.reconcileDeposit({
         channelAddress: depositChannel!.channelAddress,
         assetId: depositAssetId,
@@ -726,53 +742,50 @@ const ConnextModal: FC<ConnextModalProps> = ({
         className={classes.dialog}
       >
         <Card className={classes.card}>
-          <Grid
-            id="Header"
-            container
-            direction="row"
-            justifyContent="space-between"
-            alignItems="center"
-            className={classes.header}
-          >
-            <IconButton
-              aria-label="close"
-              disabled={[
-                TRANSFER_STATES.DEPOSITING,
-                TRANSFER_STATES.TRANSFERRING,
-                TRANSFER_STATES.WITHDRAWING,
-              ].includes(transferState as any)}
-              edge="start"
-              onClick={handleClose}
-            >
-              <Close />
-            </IconButton>
-            <Typography variant="h6">
-              Send{' '}
-              <a
-                href={getExplorerLinkForAsset(depositChainId, depositAssetId)}
-                target="_blank"
-              >
-                {getAssetName(depositAssetId, depositChainId)}
-              </a>
-            </Typography>
-
-            {/* <Grid item>
-              <ThemeButton />
-            </Grid> */}
-
-            <Options setScreen={setScreen} activeScreen={screen} />
-          </Grid>
           {screen === 'Home' && (
             <>
               <Grid container id="body" className={classes.body}>
                 {depositAddress ? (
                   <>
-                    <NetworkBar
-                      depositChainName={depositChainName}
-                      withdrawChainName={withdrawChainName}
-                      styles={classes.networkBar}
-                    />
+                    <Grid
+                      id="Header"
+                      container
+                      direction="row"
+                      justifyContent="space-between"
+                      alignItems="center"
+                      className={classes.header}
+                    >
+                      <IconButton
+                        aria-label="close"
+                        disabled={[
+                          TRANSFER_STATES.DEPOSITING,
+                          TRANSFER_STATES.TRANSFERRING,
+                          TRANSFER_STATES.WITHDRAWING,
+                        ].includes(transferState as any)}
+                        edge="start"
+                        onClick={handleClose}
+                      >
+                        <Close />
+                      </IconButton>
+                      <Typography variant="h6">
+                        Send{' '}
+                        <a
+                          href={getExplorerLinkForAsset(
+                            depositChainId,
+                            depositAssetId
+                          )}
+                          target="_blank"
+                        >
+                          {getAssetName(depositAssetId, depositChainId)}
+                        </a>
+                      </Typography>
 
+                      {/* <Grid item>
+                        <ThemeButton />
+                      </Grid> */}
+
+                      <Options setScreen={setScreen} activeScreen={screen} />
+                    </Grid>
                     {activeStep != -1 && (
                       <Grid container className={classes.steps}>
                         <Grid item xs={12}>
@@ -809,11 +822,28 @@ const ConnextModal: FC<ConnextModalProps> = ({
                     ) : (
                       <>
                         <Loading
-                          message={message}
+                          message={message()}
                           tip={tips()}
                           initializing={initing}
                         />
-                        <Skeleton variant="rect" height={300} />
+                        <NetworkBar
+                          depositChainName={depositChainName}
+                          withdrawChainName={withdrawChainName}
+                          styles={classes.networkBar}
+                        />
+                        <Grid container>
+                          <Grid item xs={12}>
+                            <TextField
+                              label={`Receiver Address on ${withdrawChainName}`}
+                              defaultValue={withdrawalAddress}
+                              InputProps={{
+                                readOnly: true,
+                              }}
+                              fullWidth
+                              size="small"
+                            />
+                          </Grid>
+                        </Grid>
                       </>
                     )}
                   </>
@@ -938,11 +968,11 @@ const NetworkBar: FC<NetworkBarProps> = ({
         className={styles}
       >
         <Grid item>
-          <Chip color="secondary" label={depositChainName} />
+          <Chip color="primary" label={depositChainName} />
         </Grid>
         <DoubleArrow />
         <Grid item>
-          <Chip color="primary" label={withdrawChainName} />
+          <Chip color="secondary" label={withdrawChainName} />
         </Grid>
       </Grid>
     </>
@@ -1007,7 +1037,7 @@ const CompleteState: FC<CompleteStateProps> = ({
         <Grid container justifyContent="center">
           <Button
             variant="outlined"
-            color="primary"
+            color="secondary"
             href={getExplorerLinkForTx(withdrawChainId, withdrawTx)}
             target="_blank"
           >
@@ -1017,7 +1047,7 @@ const CompleteState: FC<CompleteStateProps> = ({
       </Grid>
       <Grid item xs={12}>
         <Grid container justifyContent="center">
-          <Button variant="contained" color="primary" onClick={onClose}>
+          <Button variant="contained" color="secondary" onClick={onClose}>
             Close Modal
           </Button>
         </Grid>
