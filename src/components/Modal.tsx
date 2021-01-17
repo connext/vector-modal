@@ -46,6 +46,7 @@ import {
   EngineEvents,
   ERC20Abi,
   FullChannelState,
+  FullTransferState,
 } from '@connext/vector-types';
 import { getBalanceForAssetId, getRandomBytes32 } from '@connext/vector-utils';
 import {
@@ -306,6 +307,8 @@ const ConnextModal: FC<ConnextModalProps> = ({
             data.meta.crossChainTransferId,
             TRANSFER_STATES.DEPOSITING
           );
+          console.log('SETTING SENT AMOUNT >>>>>>>>');
+          setSentAmount(data.channelBalance.amount[1]);
         }
       }
     });
@@ -319,17 +322,26 @@ const ConnextModal: FC<ConnextModalProps> = ({
           data.transfer.meta.crossChainTransferId,
           TRANSFER_STATES.TRANSFERRING
         );
+        console.log('SETTING SENT AMOUNT >>>>>>>>');
+        setSentAmount(
+          BigNumber.from(data.transfer.balance.amount[0]).gt(0)
+            ? data.transfer.balance.amount[0]
+            : data.transfer.balance.amount[1]
+        );
       }
     });
     node.on(EngineEvents.CONDITIONAL_TRANSFER_RESOLVED, data => {
       console.log('EngineEvents.CONDITIONAL_TRANSFER_RESOLVED: ', data);
-      if (
-        data.transfer.meta.crossChainTransferId &&
-        data.transfer.initiator === node.signerAddress
-      ) {
+      if (data.transfer.meta.crossChainTransferId) {
         setCrossChainTransferWithErrorTimeout(
           data.transfer.meta.crossChainTransferId,
           TRANSFER_STATES.WITHDRAWING
+        );
+        console.log('SETTING SENT AMOUNT >>>>>>>>');
+        setSentAmount(
+          BigNumber.from(data.transfer.balance.amount[0]).gt(0)
+            ? data.transfer.balance.amount[0]
+            : data.transfer.balance.amount[1]
         );
       }
     });
@@ -345,6 +357,12 @@ const ConnextModal: FC<ConnextModalProps> = ({
         tracked[data.transfer.meta.crossChainTransferId] =
           TRANSFER_STATES.ERROR;
         setCrossChainTransfers(tracked);
+        console.log('SETTING SENT AMOUNT >>>>>>>>');
+        setSentAmount(
+          BigNumber.from(data.transfer.balance.amount[0]).gt(0)
+            ? data.transfer.balance.amount[0]
+            : data.transfer.balance.amount[1]
+        );
         setIsError(true);
         setError(
           new Error(
@@ -353,14 +371,25 @@ const ConnextModal: FC<ConnextModalProps> = ({
         );
       }
     });
-    node.on(EngineEvents.WITHDRAWAL_RESOLVED, data => {
-      console.log('EngineEvents.WITHDRAWAL_RESOLVED: ', data);
+    node.on(EngineEvents.WITHDRAWAL_RECONCILED, async data => {
+      console.log('EngineEvents.WITHDRAWAL_RECONCILED_EVENT: ', data);
+      const transferRes = await node.getTransfer({
+        transferId: data.transferId,
+      });
+      if (transferRes?.isError) {
+        setIsError(true);
+        setError(transferRes.getError());
+        return;
+      }
+      const transfer = transferRes?.getValue() as FullTransferState;
       if (
-        data.transfer.meta.crossChainTransferId &&
-        data.transfer.initiator === node.signerAddress
+        transfer.meta.crossChainTransferId &&
+        transfer.initiator === node.signerAddress &&
+        transfer.channelAddress !== depositAddress // withdrawal channel
       ) {
+        setWithdrawTx(data.transactionHash);
         setCrossChainTransferWithErrorTimeout(
-          data.transfer.meta.crossChainTransferId,
+          data.meta.crossChainTransferId,
           TRANSFER_STATES.COMPLETE
         );
       }
@@ -466,6 +495,7 @@ const ConnextModal: FC<ConnextModalProps> = ({
       });
       console.log('crossChainTransfer: ', result);
       setWithdrawTx(result.withdrawalTx);
+      console.log('SETTING SENT AMOUNT from transfer() >>>>>>>>');
       setSentAmount(result.withdrawalAmount ?? '0');
       setActiveStep(activePhase(TRANSFER_STATES.COMPLETE));
       setIsError(false);
@@ -673,7 +703,12 @@ const ConnextModal: FC<ConnextModalProps> = ({
       );
       if (errored) {
         console.error('Errored resuming transfers: ', errored.error);
-        setError(new Error(errored.error?.message));
+        const errorMessage = errored.error?.message.includes(
+          'transfer was cancelled'
+        )
+          ? `Transfer was cancelled, funds are preserved in the state channel, please refresh and try again`
+          : errored.error?.message;
+        setError(new Error(errorMessage));
         setIsError(true);
         setIniting(false);
         return;
