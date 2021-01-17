@@ -1,8 +1,6 @@
 import React, { FC } from 'react';
-import { Typography } from '@material-ui/core';
+import { Typography, Grid, CircularProgress } from '@material-ui/core';
 import styled from 'styled-components';
-// @ts-ignore
-import LoadingGif from '../assets/loading.gif';
 
 interface LoadingProps {
   initializing: boolean;
@@ -14,52 +12,40 @@ const Loading: FC<LoadingProps> = props => {
   //   const [imageLoaded, setImageLoaded] = useState(true);
   return (
     <>
-      {props.initializing ? (
+      {props.initializing && (
         <>
-          <Load>
-            <LoadingCircle
-            // style={{ display: imageLoaded ? "block" : "none" }}
+          <Grid container direction="row" justifyContent="center">
+            <Typography
+              variant="h5"
+              style={{
+                paddingBottom: '16px',
+              }}
             >
-              <img
-                src={LoadingGif}
-                alt="loading"
-                style={{ width: '100%', height: '100%' }}
-              ></img>
-            </LoadingCircle>
+              Setting Things Up
+            </Typography>
+          </Grid>
+          <Grid container direction="row" justifyContent="center">
+            <CircularProgress size="3rem" color="inherit" />
+          </Grid>
+
+          <Grid container direction="row" justifyContent="center">
             <Typography
               variant="subtitle2"
               style={{
-                marginTop: '24px',
+                marginTop: '16px',
                 fontSize: '14px',
                 paddingBottom: '16px',
               }}
             >
               {props.message}
             </Typography>
-            <Typography variant="subtitle2" style={{ fontSize: '11px' }}>
-              {props.tip}
-            </Typography>
-          </Load>
-        </>
-      ) : (
-        <>
-          <LoadingFadeout>
-            <LoadingCircle
-            // style={{ display: imageLoaded ? "block" : "none" }}
-            >
-              <img
-                src={LoadingGif}
-                alt="loading"
-                style={{ width: '100%', height: '100%' }}
-              ></img>
-            </LoadingCircle>
-            <Typography
-              variant="subtitle2"
-              style={{ marginTop: '24px', fontSize: '14px' }}
-            >
-              {props.message}
-            </Typography>
-          </LoadingFadeout>
+
+            {/* <Grid item xs={12}>
+              <Typography variant="subtitle2" style={{ fontSize: '11px' }}>
+                {props.tip}
+              </Typography>
+            </Grid> */}
+          </Grid>
         </>
       )}
     </>
