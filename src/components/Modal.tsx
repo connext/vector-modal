@@ -1245,7 +1245,7 @@ const ErrorState: FC<ErrorStateProps> = ({
           variant="caption"
           color={cancelled ? `primary` : `error`}
         >
-          Error
+          {cancelled ? 'Alert' : 'Error'}
         </Typography>
 
         <Typography
