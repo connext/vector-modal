@@ -183,6 +183,9 @@ const ConnextModal: FC<ConnextModalProps> = ({
 
   const [screen, setScreen] = useState<Screens>('Home');
 
+  const [vectorListenersStarted, setVectorListenersStarted] = useState(false);
+  const [listener, setListener] = useState<ReturnType<typeof setInterval>>();
+
   const transferState: TransferStates =
     crossChainTransfers[activeCrossChainTransferId] ?? TRANSFER_STATES.INITIAL;
 
@@ -220,6 +223,7 @@ const ConnextModal: FC<ConnextModalProps> = ({
     node: BrowserNode,
     startingBalance: BigNumber
   ): void => {
+    console.log('Starting Vector listeners');
     node.on(EngineEvents.DEPOSIT_RECONCILED, data => {
       console.log('EngineEvents.DEPOSIT_RECONCILED: ', data);
       if (
@@ -338,13 +342,6 @@ const ConnextModal: FC<ConnextModalProps> = ({
   };
 
   const getWithdrawAssetDecimals = async () => {
-    const _ethProviders = hydrateProviders(
-      depositChainId,
-      depositChainProvider,
-      withdrawChainId,
-      withdrawChainProvider
-    );
-
     const token = new Contract(
       withdrawAssetId,
       ERC20Abi,
@@ -378,7 +375,12 @@ const ConnextModal: FC<ConnextModalProps> = ({
     _depositAddress: string,
     transferAmount: BigNumber
   ) => {
-    registerEngineEventListeners(connext.connextClient!, transferAmount);
+    if (!vectorListenersStarted) {
+      registerEngineEventListeners(connext.connextClient!, transferAmount);
+      setVectorListenersStarted(true);
+    } else {
+      console.log('Vector listeners already running');
+    }
     const crossChainTransferId = getRandomBytes32();
     setActiveCrossChainTransferId(crossChainTransferId);
     const updated = { ...crossChainTransfers };
@@ -387,8 +389,8 @@ const ConnextModal: FC<ConnextModalProps> = ({
     setActiveStep(activePhase(TRANSFER_STATES.DEPOSITING));
     setIsError(false);
 
-    await connext
-      .connextClient!.crossChainTransfer({
+    try {
+      const result = await connext.connextClient!.crossChainTransfer({
         amount: transferAmount.toString(),
         fromAssetId: depositAssetId,
         fromChainId: depositChainId,
@@ -397,37 +399,28 @@ const ConnextModal: FC<ConnextModalProps> = ({
         reconcileDeposit: true,
         withdrawalAddress,
         meta: { crossChainTransferId },
-      })
-      .then(result => {
-        console.log('crossChainTransfer: ', result);
-        setWithdrawTx(result.withdrawalTx);
-        setSentAmount(result.withdrawalAmount ?? '0');
-        setActiveStep(activePhase(TRANSFER_STATES.COMPLETE));
-        setIsError(false);
-        updated[crossChainTransferId] = TRANSFER_STATES.COMPLETE;
-        setCrossChainTransfers(updated);
-      })
-      .catch(e => {
-        setError(e);
-        console.error('Error in crossChainTransfer: ', e);
-        const updated = { ...crossChainTransfers };
-        updated[crossChainTransferId] = TRANSFER_STATES.ERROR;
-        setIsError(true);
-        setCrossChainTransfers(updated);
       });
+      console.log('crossChainTransfer: ', result);
+      setWithdrawTx(result.withdrawalTx);
+      setSentAmount(result.withdrawalAmount ?? '0');
+      setActiveStep(activePhase(TRANSFER_STATES.COMPLETE));
+      setIsError(false);
+      updated[crossChainTransferId] = TRANSFER_STATES.COMPLETE;
+      setCrossChainTransfers(updated);
+    } catch (e) {
+      setError(e);
+      console.error('Error in crossChainTransfer: ', e);
+      const updated = { ...crossChainTransfers };
+      updated[crossChainTransferId] = TRANSFER_STATES.ERROR;
+      setIsError(true);
+      setCrossChainTransfers(updated);
+    }
   };
 
   const blockListenerAndTransfer = async (_depositAddress: string) => {
-    const _ethProviders = hydrateProviders(
-      depositChainId,
-      depositChainProvider,
-      withdrawChainId,
-      withdrawChainProvider
-    );
-
-    let startingBalance: BigNumber;
+    let initialBalance: BigNumber;
     try {
-      startingBalance = await getAssetBalance(
+      initialBalance = await getAssetBalance(
         _ethProviders,
         depositChainId,
         depositAssetId,
@@ -439,32 +432,38 @@ const ConnextModal: FC<ConnextModalProps> = ({
       return;
     }
     console.log(
-      `Starting balance on ${depositChainId} for ${_depositAddress} of asset ${depositAssetId}: ${startingBalance.toString()}`
+      `Starting balance on ${depositChainId} for ${_depositAddress} of asset ${depositAssetId}: ${initialBalance.toString()}`
     );
-    _ethProviders[depositChainId].on('block', async blockNumber => {
-      console.log('New blockNumber: ', blockNumber);
-      let updatedBalance: BigNumber;
-      try {
-        updatedBalance = await getAssetBalance(
-          _ethProviders,
-          depositChainId,
-          depositAssetId,
-          _depositAddress
+
+    setListener(
+      setInterval(async () => {
+        let updatedBalance: BigNumber;
+        try {
+          updatedBalance = await getAssetBalance(
+            _ethProviders,
+            depositChainId,
+            depositAssetId,
+            _depositAddress
+          );
+        } catch (e) {
+          console.warn(`Error fetching balance: ${e.message}`);
+          return;
+        }
+        console.log(
+          `Updated balance on ${depositChainId} for ${_depositAddress} of asset ${depositAssetId}: ${updatedBalance.toString()}`
         );
-      } catch (e) {
-        console.warn(`Error fetching balance: ${e.message}`);
-        return;
-      }
-      console.log(
-        `Updated balance on ${depositChainId} for ${_depositAddress} of asset ${depositAssetId}: ${updatedBalance.toString()}`
-      );
-      if (updatedBalance.gt(startingBalance)) {
-        _ethProviders[depositChainId].off('block');
-        const transferAmount = updatedBalance.sub(startingBalance);
-        startingBalance = updatedBalance;
-        await transfer(_depositAddress, transferAmount);
-      }
-    });
+        if (updatedBalance.lt(initialBalance)) {
+          initialBalance = updatedBalance;
+        }
+
+        if (updatedBalance.gt(initialBalance)) {
+          clearInterval(listener!);
+          const transferAmount = updatedBalance.sub(initialBalance);
+          initialBalance = updatedBalance;
+          await transfer(_depositAddress, transferAmount);
+        }
+      }, 5_000)
+    );
   };
 
   const stateReset = () => {
@@ -478,13 +477,7 @@ const ConnextModal: FC<ConnextModalProps> = ({
   };
 
   const handleClose = () => {
-    const _ethProviders = hydrateProviders(
-      depositChainId,
-      depositChainProvider,
-      withdrawChainId,
-      withdrawChainProvider
-    );
-    _ethProviders[depositChainId].off('block');
+    clearInterval(listener!);
     onClose();
   };
 

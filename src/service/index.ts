@@ -38,7 +38,10 @@ class Connext {
           });
         }
         await browserNode.init();
-        await browserNode.reclaimPendingCrossChainTransfers();
+
+        // TODO: DONT TURN THIS ON
+        // we need to resolve issues in the router that stop the transfer from safely being forwarded
+        // await browserNode.reclaimPendingCrossChainTransfers();
         this.connextClient = browserNode;
       } catch (e) {
         console.error(e);
