@@ -1231,29 +1231,46 @@ const ErrorState: FC<ErrorStateProps> = ({
   error,
   crossChainTransferId,
   styles,
-}) => (
-  <>
-    <Grid container className={styles} alignItems="center" direction="column">
-      <ErrorRounded fontSize="large" color="error" />
-      <Typography gutterBottom variant="caption" color="error">
-        Error
-      </Typography>
+}) => {
+  const cancelled = error.message.includes('Transfer was cancelled');
+  return (
+    <>
+      <Grid container className={styles} alignItems="center" direction="column">
+        <ErrorRounded
+          fontSize="large"
+          color={cancelled ? `primary` : `error`}
+        />
+        <Typography
+          gutterBottom
+          variant="caption"
+          color={cancelled ? `primary` : `error`}
+        >
+          Error
+        </Typography>
 
-      <Typography gutterBottom variant="caption" color="error" align="center">
-        {`${crossChainTransferId.substring(0, 5)}... - ${error.message}`}
-      </Typography>
-    </Grid>
-    <Grid container direction="row" justifyContent="center">
-      <Button
-        variant="outlined"
-        onClick={() => {
-          window.location.reload();
-        }}
-      >
-        Refresh
-      </Button>
-    </Grid>
-  </>
-);
+        <Typography
+          gutterBottom
+          variant="caption"
+          color={cancelled ? `primary` : `error`}
+          align="center"
+        >
+          {cancelled
+            ? `The transfer could not complete, likely because of a communication issue. Funds are preserved in the state channel. Refreshing usually works in this scenario.`
+            : `${crossChainTransferId.substring(0, 5)}... - ${error.message}`}
+        </Typography>
+      </Grid>
+      <Grid container direction="row" justifyContent="center">
+        <Button
+          variant="outlined"
+          onClick={() => {
+            window.location.reload();
+          }}
+        >
+          Refresh
+        </Button>
+      </Grid>
+    </>
+  );
+};
 
 export default ConnextModal;
