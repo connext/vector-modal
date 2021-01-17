@@ -105,7 +105,7 @@ class Connext {
       toAssetId: recipientAssetId,
       reconcileDeposit: true,
       withdrawalAddress: withdrawalAddress,
-      meta: { crossChainTransferId },
+      crossChainTransferId,
     };
 
     let result;

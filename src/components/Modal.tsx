@@ -398,7 +398,7 @@ const ConnextModal: FC<ConnextModalProps> = ({
         toChainId: withdrawChainId,
         reconcileDeposit: true,
         withdrawalAddress,
-        meta: { crossChainTransferId },
+        crossChainTransferId,
       });
       console.log('crossChainTransfer: ', result);
       setWithdrawTx(result.withdrawalTx);
