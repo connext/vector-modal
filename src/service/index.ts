@@ -38,7 +38,6 @@ class Connext {
           });
         }
         await browserNode.init();
-        await browserNode.resumePendingCrossChainTransfers();
         this.connextClient = browserNode;
       } catch (e) {
         console.error(e);

@@ -297,13 +297,13 @@ const ConnextModal: FC<ConnextModalProps> = ({
         startingBalance.lt(data.channelBalance.amount[1]) && // deposit actually added balance
         data.channelAddress === depositAddress // depositAddress is channelAddress on deposit chain
       ) {
-        // if (data.meta.crossChainTransferId) {
-        setCrossChainTransferWithErrorTimeout(
-          activeCrossChainTransferId,
-          TRANSFER_STATES.DEPOSITING
-        );
+        if (data.meta.crossChainTransferId) {
+          setCrossChainTransferWithErrorTimeout(
+            data.meta.crossChainTransferId,
+            TRANSFER_STATES.DEPOSITING
+          );
+        }
       }
-      // }
     });
     node.on(EngineEvents.CONDITIONAL_TRANSFER_CREATED, data => {
       console.log('EngineEvents.CONDITIONAL_TRANSFER_CREATED: ', data);
@@ -311,13 +311,11 @@ const ConnextModal: FC<ConnextModalProps> = ({
         data.transfer.meta.crossChainTransferId &&
         data.transfer.initiator === node.signerAddress
       ) {
-        // if (data.meta.crossChainTransferId) {
         setCrossChainTransferWithErrorTimeout(
           data.transfer.meta.crossChainTransferId,
           TRANSFER_STATES.TRANSFERRING
         );
       }
-      // }
     });
     node.on(EngineEvents.CONDITIONAL_TRANSFER_RESOLVED, data => {
       console.log('EngineEvents.CONDITIONAL_TRANSFER_RESOLVED: ', data);
@@ -443,12 +441,6 @@ const ConnextModal: FC<ConnextModalProps> = ({
     transferAmount: BigNumber
   ) => {
     setActiveHeaderMessage(1);
-    if (!vectorListenersStarted) {
-      registerEngineEventListeners(connext.connextClient!, transferAmount);
-      setVectorListenersStarted(true);
-    } else {
-      console.log('Vector listeners already running');
-    }
     const crossChainTransferId = getRandomBytes32();
     setActiveCrossChainTransferId(crossChainTransferId);
     const updated = { ...crossChainTransfers };
@@ -657,6 +649,31 @@ const ConnextModal: FC<ConnextModalProps> = ({
       console.log(
         `Offchain balance for ${_depositAddress} of asset ${depositAssetId}: ${offChainAssetBalance}`
       );
+
+      if (!vectorListenersStarted) {
+        registerEngineEventListeners(
+          connext.connextClient!,
+          BigNumber.from(offChainAssetBalance)
+        );
+        setVectorListenersStarted(true);
+      } else {
+        console.log('Vector listeners already running');
+      }
+
+      // resume transfers - if there are errors throw the first one you find to
+      // show the error on the UI. this will not catch multiple errors, but multiple pending
+      // transfers erroring should not happen often
+      const transfers = await connext.connextClient!.resumePendingCrossChainTransfers();
+      const errored = Object.values(transfers).find(
+        transfer => !!transfer.error
+      );
+      if (errored) {
+        console.error('Errored resuming transfers: ', errored.error);
+        setError(new Error(errored.error?.message));
+        setIsError(true);
+        setIniting(false);
+        return;
+      }
 
       setDepositAddress(_depositAddress);
       const balanceBN = BigNumber.from(offChainAssetBalance);
