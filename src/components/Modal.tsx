@@ -237,6 +237,9 @@ const ConnextModal: FC<ConnextModalProps> = ({
       case 2:
         return `Looking for existing Channel Balance...`;
 
+      case 3:
+        return `Checking for incomplete transfers...`;
+
       default:
         setActiveMessage(0);
         return 'Connecting to Network...';
@@ -697,17 +700,20 @@ const ConnextModal: FC<ConnextModalProps> = ({
       // resume transfers - if there are errors throw the first one you find to
       // show the error on the UI. this will not catch multiple errors, but multiple pending
       // transfers erroring should not happen often
+      setActiveMessage(3);
       const transfers = await connext.connextClient!.resumePendingCrossChainTransfers();
-      const errored = Object.values(transfers).find(
-        transfer => !!transfer.error
+      const erroredEntry = Object.entries(transfers).find(
+        ([, transfer]) => !!transfer.error
       );
-      if (errored) {
+      if (erroredEntry) {
+        const [erroredId, errored] = erroredEntry;
         console.error('Errored resuming transfers: ', errored.error);
         const errorMessage = errored.error?.message.includes(
           'transfer was cancelled'
         )
           ? `Transfer was cancelled, funds are preserved in the state channel, please refresh and try again`
           : errored.error?.message;
+        setActiveCrossChainTransferId(erroredId);
         setError(new Error(errorMessage));
         setIsError(true);
         setIniting(false);
