@@ -30,6 +30,7 @@ import {
   CheckCircleRounded,
   FiberManualRecordOutlined,
   ErrorRounded,
+  CheckCircleTwoTone,
 } from '@material-ui/icons';
 import {
   makeStyles,
@@ -37,7 +38,7 @@ import {
   Theme,
   createMuiTheme,
 } from '@material-ui/core/styles';
-import { red, blue } from '@material-ui/core/colors';
+import { purple, blue } from '@material-ui/core/colors';
 // @ts-ignore
 import QRCode from 'qrcode.react';
 import { BigNumber, constants, Contract, utils } from 'ethers';
@@ -70,7 +71,7 @@ const theme = createMuiTheme({
   palette: {
     mode: 'light',
     primary: {
-      main: red[500],
+      main: purple[500],
     },
     secondary: {
       main: blue[500],
@@ -202,6 +203,7 @@ const ConnextModal: FC<ConnextModalProps> = ({
   const [activeMessage, setActiveMessage] = useState(0);
   const [activeHeaderMessage, setActiveHeaderMessage] = useState(0);
 
+  const [amount, setAmount] = useState<BigNumber>(BigNumber.from(0));
   const tips = () => {
     switch (activeTip) {
       case 0:
@@ -454,7 +456,7 @@ const ConnextModal: FC<ConnextModalProps> = ({
     setCrossChainTransfers(updated);
     setActiveStep(activePhase(TRANSFER_STATES.DEPOSITING));
     setIsError(false);
-
+    setAmount(transferAmount);
     try {
       const result = await connext.connextClient!.crossChainTransfer({
         amount: transferAmount.toString(),
@@ -543,6 +545,7 @@ const ConnextModal: FC<ConnextModalProps> = ({
     setActiveCrossChainTransferId(constants.HashZero);
     setScreen('Home');
     setActiveHeaderMessage(0);
+    setAmount(BigNumber.from(0));
   };
 
   const handleClose = () => {
@@ -725,8 +728,7 @@ const ConnextModal: FC<ConnextModalProps> = ({
               <Grid container className={classes.status}>
                 <Grid item xs={12}>
                   <Typography variant="body1" align="center">
-                    Detected deposit on-chain({depositChainName}), depositing
-                    into state channel!
+                    Deposit detected on {depositChainName}...
                   </Typography>
                 </Grid>
               </Grid>
@@ -743,7 +745,10 @@ const ConnextModal: FC<ConnextModalProps> = ({
               <Grid container className={classes.status}>
                 <Grid item xs={12}>
                   <Typography variant="body1" align="center">
-                    Transferring from {depositChainName} to {withdrawChainName}
+                    Transferring{' '}
+                    {utils.formatUnits(amount, withdrawAssetDecimals)}{' '}
+                    {getAssetName(depositAssetId, depositChainId)} to{' '}
+                    {withdrawChainName}...
                   </Typography>
                 </Grid>
               </Grid>
@@ -760,7 +765,10 @@ const ConnextModal: FC<ConnextModalProps> = ({
               <Grid container className={classes.status}>
                 <Grid item xs={12}>
                   <Typography variant="body1" align="center">
-                    Withdrawing funds to onchain to {withdrawChainName}!
+                    Withdrawing{' '}
+                    {utils.formatUnits(amount, withdrawAssetDecimals)}{' '}
+                    {getAssetName(withdrawAssetId, withdrawChainId)} to{' '}
+                    {withdrawChainName}...
                   </Typography>
                 </Grid>
               </Grid>
@@ -1096,20 +1104,16 @@ const CompleteState: FC<CompleteStateProps> = ({
 }) => (
   <>
     <Grid container className={styles} alignItems="center" direction="column">
-      <CheckCircleRounded color="secondary" fontSize="large" />
+      <CheckCircleTwoTone color="secondary" fontSize="large" />
       <Typography gutterBottom variant="h6">
-        Success
-      </Typography>
-
-      <Typography gutterBottom variant="body1" color="secondary" align="center">
-        {utils.formatUnits(sentAmount, withdrawAssetDecimals)}{' '}
+        Successfully sent {utils.formatUnits(sentAmount, withdrawAssetDecimals)}{' '}
         <a
           href={getExplorerLinkForAsset(withdrawChainId, withdrawAssetId)}
           target="_blank"
         >
           {getAssetName(withdrawAssetId, withdrawChainId)}
-        </a>{' '}
-        has been successfully transferred to {withdrawChainName}
+        </a>
+        !
       </Typography>
     </Grid>
 
@@ -1133,7 +1137,7 @@ const CompleteState: FC<CompleteStateProps> = ({
             href={getExplorerLinkForTx(withdrawChainId, withdrawTx)}
             target="_blank"
           >
-            View Withdrawal Tx
+            Transaction Receipt
           </Button>
         </Grid>
       </Grid>
