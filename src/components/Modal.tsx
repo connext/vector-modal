@@ -38,7 +38,7 @@ import {
   Theme,
   createMuiTheme,
 } from '@material-ui/core/styles';
-import { purple, blue } from '@material-ui/core/colors';
+import { purple, blue, green } from '@material-ui/core/colors';
 // @ts-ignore
 import QRCode from 'qrcode.react';
 import { BigNumber, constants, Contract, utils } from 'ethers';
@@ -76,6 +76,9 @@ const theme = createMuiTheme({
     secondary: {
       main: blue[500],
     },
+    success: {
+      main: green[500],
+    },
   },
   typography: {
     fontFamily: [
@@ -106,6 +109,7 @@ const useStyles = makeStyles((theme: Theme) =>
       height: 'auto',
       minWidth: '390px',
     },
+    success: { color: green[500] },
     dialog: {},
     header: {},
     networkBar: { paddingBottom: '1.5rem' },
@@ -810,6 +814,7 @@ const ConnextModal: FC<ConnextModalProps> = ({
                     withdrawAssetDecimals={withdrawAssetDecimals}
                     withdrawalAddress={withdrawalAddress}
                     styles={classes.completeState}
+                    styleSuccess={classes.success}
                     onClose={handleClose}
                   />
                 </Grid>
@@ -826,12 +831,12 @@ const ConnextModal: FC<ConnextModalProps> = ({
   function StepIcon(props: StepIconProps) {
     const { active, completed, error } = props;
     const icon: ReactElement = completed ? (
-      <CheckCircleRounded color="primary" />
+      <CheckCircleRounded className={classes.success} />
     ) : active ? (
       error ? (
         <ErrorRounded color="error" />
       ) : (
-        <CircularProgress size="1rem" color="primary" />
+        <CircularProgress size="1rem" color="inherit" />
       )
     ) : (
       <FiberManualRecordOutlined color="action" />
@@ -1105,6 +1110,7 @@ export interface CompleteStateProps {
   withdrawalAddress: string;
   sentAmount: string;
   styles: string;
+  styleSuccess: string;
   onClose: () => void;
 }
 
@@ -1117,11 +1123,12 @@ const CompleteState: FC<CompleteStateProps> = ({
   withdrawAssetDecimals,
   withdrawalAddress,
   styles,
+  styleSuccess,
   onClose,
 }) => (
   <>
     <Grid container className={styles} alignItems="center" direction="column">
-      <CheckCircleTwoTone color="secondary" fontSize="large" />
+      <CheckCircleTwoTone className={styleSuccess} fontSize="large" />
       <Typography gutterBottom variant="h6">
         Successfully sent {utils.formatUnits(sentAmount, withdrawAssetDecimals)}{' '}
         <a
@@ -1150,7 +1157,7 @@ const CompleteState: FC<CompleteStateProps> = ({
         <Grid container justifyContent="center">
           <Button
             variant="outlined"
-            color="secondary"
+            className={styleSuccess}
             href={getExplorerLinkForTx(withdrawChainId, withdrawTx)}
             target="_blank"
           >
@@ -1160,7 +1167,11 @@ const CompleteState: FC<CompleteStateProps> = ({
       </Grid>
       <Grid item xs={12}>
         <Grid container justifyContent="center">
-          <Button variant="contained" color="secondary" onClick={onClose}>
+          <Button
+            variant="contained"
+            className={styleSuccess}
+            onClick={onClose}
+          >
             Close Modal
           </Button>
         </Grid>
