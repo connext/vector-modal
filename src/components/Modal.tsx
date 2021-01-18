@@ -707,17 +707,6 @@ const ConnextModal: FC<ConnextModalProps> = ({
         return;
       }
 
-      try {
-        await waitForSenderCancels(
-          connext.connextClient!,
-          _evts[EngineEvents.CONDITIONAL_TRANSFER_RESOLVED],
-          depositChannel.channelAddress
-        );
-      } catch (e) {
-        handleError(e, 'Error in waitForSenderCancels');
-        return;
-      }
-
       // const [depositActive, withdrawActive] = await Promise.all([
       //   connext.connextClient!.getActiveTransfers({
       //     channelAddress: depositChannel.channelAddress,
@@ -739,8 +728,6 @@ const ConnextModal: FC<ConnextModalProps> = ({
       //   withdrawActive.getValue().map(t => t.transferId)
       // );
 
-      setActiveMessage(2);
-
       // set a listener to check for transfers that may have been pushed after a refresh after the hanging transfers have already been canceled
       _evts.CONDITIONAL_TRANSFER_CREATED.pipe(data => {
         console.log('crosschain: ', activeCrossChainTransferIdRef.current);
@@ -760,6 +747,19 @@ const ConnextModal: FC<ConnextModalProps> = ({
           _evts!
         );
       });
+
+      try {
+        await waitForSenderCancels(
+          connext.connextClient!,
+          _evts[EngineEvents.CONDITIONAL_TRANSFER_RESOLVED],
+          depositChannel.channelAddress
+        );
+      } catch (e) {
+        handleError(e, 'Error in waitForSenderCancels');
+        return;
+      }
+
+      setActiveMessage(2);
 
       try {
         await reconcileDeposit(
