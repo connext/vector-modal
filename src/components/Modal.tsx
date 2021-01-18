@@ -693,8 +693,10 @@ const ConnextModal: FC<ConnextModalProps> = ({
         offChainDepositAssetBalance.gt(0) &&
         offChainWithdrawAssetBalance.gt(0)
       ) {
-        handleError(new Error('Balance exists in both channels'));
-        // TODO: go to recovery screen here to withdraw from channels
+        console.warn(
+          'Balance exists in both channels, transferring first, then withdrawing'
+        );
+        await transfer(_depositAddress, offChainDepositAssetBalance, _evts);
         return;
       }
 
