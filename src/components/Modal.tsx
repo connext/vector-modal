@@ -213,7 +213,10 @@ const ConnextModal: FC<ConnextModalProps> = ({
 
   const [amount, setAmount] = useState<BigNumber>(BigNumber.from(0));
 
-  const handleError = (e: Error | undefined) => {
+  const handleError = (e: Error | undefined, message?: string) => {
+    if (message) {
+      console.error(message, e);
+    }
     setError(e);
     setIsError(true);
     setIniting(false);
@@ -288,7 +291,7 @@ const ConnextModal: FC<ConnextModalProps> = ({
         depositAssetId
       );
     } catch (e) {
-      handleError(e);
+      handleError(e, 'Error in reconcileDeposit');
       return;
     }
     // call createFromAssetTransfer
@@ -307,7 +310,7 @@ const ConnextModal: FC<ConnextModalProps> = ({
       );
       preImageVar = preImage;
     } catch (e) {
-      handleError(e);
+      handleError(e, 'Error in createFromAssetTransfer');
       return;
     }
 
@@ -322,11 +325,10 @@ const ConnextModal: FC<ConnextModalProps> = ({
         })
         .waitFor(300_000);
     } catch (e) {
-      console.error(
-        'Did not see CONDITIONAL_TRANSFER_CREATED after 300 seconds',
-        e
+      handleError(
+        e,
+        'Did not see CONDITIONAL_TRANSFER_CREATED after 300 seconds'
       );
-      handleError(e);
       return;
     }
 
@@ -394,11 +396,10 @@ const ConnextModal: FC<ConnextModalProps> = ({
         return;
       }
     } catch (e) {
-      console.error(
-        'Did not receive the receiver transfer resolution after 45 seconds',
-        e
+      handleError(
+        e,
+        'Did not receive the receiver transfer resolution after 45 seconds'
       );
-      handleError(e);
       return;
     }
 
@@ -429,10 +430,7 @@ const ConnextModal: FC<ConnextModalProps> = ({
       );
     } catch (e) {
       // TODO: handle error on withdrawals, go to contact screen
-      console.error('Error in crossChainTransfer: ', e);
-
-      setIsError(true);
-      handleError(e);
+      handleError(e, 'Error in crossChainTransfer');
       setActiveHeaderMessage(3);
       return;
     }
@@ -453,7 +451,6 @@ const ConnextModal: FC<ConnextModalProps> = ({
           // tx reverted
           // TODO: go to contact screen
           console.error('Transaction reverted onchain', receipt);
-          setIsError(true);
           handleError(new Error('Withdrawal transaction reverted'));
           setActiveHeaderMessage(3);
           return;
@@ -549,7 +546,6 @@ const ConnextModal: FC<ConnextModalProps> = ({
           withdrawChainProvider
         );
       } catch (e) {
-        console.error('Error initalizing Browser Node: ', e);
         if (e.message.includes('localStorage not available in this window')) {
           alert(
             'Please disable shields or ad blockers and try again. Connext requires cross-site cookies to store your channel states.'
@@ -561,7 +557,7 @@ const ConnextModal: FC<ConnextModalProps> = ({
           );
         }
 
-        handleError(e);
+        handleError(e, 'Error initalizing Browser Node');
         return;
       }
 
@@ -571,8 +567,9 @@ const ConnextModal: FC<ConnextModalProps> = ({
       await getWithdrawAssetDecimals();
 
       // create evt containers
-      if (!evts) {
-        const _evts = createEvtContainer(connext.connextClient!);
+      let _evts = evts;
+      if (!_evts) {
+        _evts = createEvtContainer(connext.connextClient!);
         setEvts(_evts);
       }
 
@@ -585,7 +582,7 @@ const ConnextModal: FC<ConnextModalProps> = ({
           depositChainId
         );
       } catch (e) {
-        handleError(e);
+        handleError(e, 'Could not get sender channel');
         return;
       }
       const _depositAddress = depositChannel!.channelAddress;
@@ -599,7 +596,7 @@ const ConnextModal: FC<ConnextModalProps> = ({
           withdrawChainId
         );
       } catch (e) {
-        handleError(e);
+        handleError(e, 'Could not get receiver channel');
         return;
       }
 
@@ -624,7 +621,7 @@ const ConnextModal: FC<ConnextModalProps> = ({
           transferAmount
         );
       } catch (e) {
-        handleError(e);
+        handleError(e, 'Error in verifyRouterSupportsTransfer');
         return;
       }
 
@@ -632,14 +629,14 @@ const ConnextModal: FC<ConnextModalProps> = ({
       try {
         await cancelHangingToTransfers(
           connext.connextClient!,
-          evts![EngineEvents.CONDITIONAL_TRANSFER_CREATED],
+          _evts[EngineEvents.CONDITIONAL_TRANSFER_CREATED],
           depositChainId,
           withdrawChainId,
           withdrawAssetId,
           routerPublicIdentifier
         );
       } catch (e) {
-        handleError(e);
+        handleError(e, 'Error in cancelHangingToTransfers');
         return;
       }
 
@@ -651,7 +648,7 @@ const ConnextModal: FC<ConnextModalProps> = ({
           depositAssetId
         );
       } catch (e) {
-        handleError(e);
+        handleError(e, 'Error in reconcileDeposit');
         return;
       }
 
@@ -663,7 +660,7 @@ const ConnextModal: FC<ConnextModalProps> = ({
           depositChainId
         );
       } catch (e) {
-        handleError(e);
+        handleError(e, 'Could not get sender channel');
         return;
       }
 
@@ -681,14 +678,14 @@ const ConnextModal: FC<ConnextModalProps> = ({
         `Offchain balance for ${withdrawChannel.channelAddress} of asset ${withdrawAssetId}: ${offChainWithdrawAssetBalance}`
       );
 
-      // if (
-      //   offChainDepositAssetBalance.gt(0) &&
-      //   offChainWithdrawAssetBalance.gt(0)
-      // ) {
-      //   handleError(new Error('Balance exists in both channels'));
-      //   // TODO: go to recovery screen here to withdraw from channels
-      //   return;
-      // }
+      if (
+        offChainDepositAssetBalance.gt(0) &&
+        offChainWithdrawAssetBalance.gt(0)
+      ) {
+        handleError(new Error('Balance exists in both channels'));
+        // TODO: go to recovery screen here to withdraw from channels
+        return;
+      }
 
       // if offChainDepositAssetBalance > 0
       if (offChainDepositAssetBalance.gt(0)) {
@@ -1248,7 +1245,11 @@ const ErrorState: FC<ErrorStateProps> = ({
         >
           {cancelled
             ? `The transfer could not complete, likely because of a communication issue. Funds are preserved in the state channel. Refreshing usually works in this scenario.`
-            : `${crossChainTransferId.substring(0, 5)}... - ${error.message}`}
+            : `${
+                crossChainTransferId !== constants.HashZero
+                  ? `${crossChainTransferId.substring(0, 5)}... - `
+                  : ''
+              }${error.message}`}
         </Typography>
       </Grid>
       <Grid container direction="row" justifyContent="center">
