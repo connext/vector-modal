@@ -15,8 +15,7 @@ import {
   getBalanceForAssetId,
   getRandomBytes32,
 } from '@connext/vector-utils';
-import { providers, Contract, BigNumber, constants } from 'ethers';
-import { formatEther, getAddress } from 'ethers/lib/utils';
+import { providers, Contract, BigNumber, constants, utils } from 'ethers';
 import { Evt } from 'evt';
 import { getOnchainBalance } from './helpers';
 import { iframeSrc } from '../constants';
@@ -107,8 +106,8 @@ export const createFromAssetTransfer = async (
     routerPublicIdentifier,
     fromChainId
   );
-  const fromAssetId = getAddress(_fromAssetId);
-  const toAssetId = getAddress(_toAssetId);
+  const fromAssetId = utils.getAddress(_fromAssetId);
+  const toAssetId = utils.getAddress(_toAssetId);
   const assetIdx = depositChannel.assetIds.findIndex(a => a === fromAssetId);
   if (assetIdx === -1) {
     throw new Error('Asset not in channel, please deposit');
@@ -205,7 +204,7 @@ export const cancelHangingToTransfers = async (
     toChainId
   );
 
-  const toAssetId = getAddress(_toAssetId);
+  const toAssetId = utils.getAddress(_toAssetId);
   const transfers = await node.getActiveTransfers({
     publicIdentifier: withdrawChannel.bobIdentifier,
     channelAddress: withdrawChannel.channelAddress,
@@ -221,19 +220,20 @@ export const cancelHangingToTransfers = async (
     const wasForwarded = !!t.meta?.routingId;
     return amResponder && correctAsset && isHashlock && wasForwarded;
   });
-  for (const transferToCancel of toCancel) {
-    console.log(
-      'Cancelling hanging receiver transfer:',
-      transferToCancel.meta!.routingId
-    );
-    const params: NodeParams.ResolveTransfer = {
-      publicIdentifier: withdrawChannel.bobIdentifier,
-      channelAddress: withdrawChannel.channelAddress,
-      transferId: transferToCancel.transferId,
-      transferResolver: { preImage: constants.HashZero },
-    };
 
-    await Promise.all([
+  // wait for all hanging transfers to cancel
+  await Promise.all(
+    toCancel.map(async transferToCancel => {
+      console.log(
+        'Cancelling hanging receiver transfer:',
+        transferToCancel.meta!.routingId
+      );
+      const params: NodeParams.ResolveTransfer = {
+        publicIdentifier: withdrawChannel.bobIdentifier,
+        channelAddress: withdrawChannel.channelAddress,
+        transferId: transferToCancel.transferId,
+        transferResolver: { preImage: constants.HashZero },
+      };
       // for receiver transfer cancellatino
       new Promise(async (res, rej) => {
         const resolveRes = await node.resolveTransfer(params);
@@ -243,18 +243,17 @@ export const cancelHangingToTransfers = async (
         }
         return res(resolveRes.getValue());
       }),
-
-      // for sender transfer cancellation
-      evt.waitFor(
-        data =>
-          data.transfer.meta.routingId === transferToCancel.meta!.routingId &&
-          data.channelAddress === depositChannel.channelAddress &&
-          Object.values(data.transfer.transferResolver)[0] ===
-            constants.HashZero,
-        45_000
-      ),
-    ]);
-  }
+        // for sender transfer cancellation
+        evt.waitFor(
+          data =>
+            data.transfer.meta.routingId === transferToCancel.meta!.routingId &&
+            data.channelAddress === depositChannel.channelAddress &&
+            Object.values(data.transfer.transferResolver)[0] ===
+              constants.HashZero,
+          45_000
+        );
+    })
+  );
 };
 
 export const withdrawToAsset = async (
@@ -270,7 +269,7 @@ export const withdrawToAsset = async (
     toChainId
   );
 
-  const toAssetId = getAddress(_toAssetId);
+  const toAssetId = utils.getAddress(_toAssetId);
   const toWithdraw = getBalanceForAssetId(withdrawChannel, toAssetId, 'bob');
   if (toWithdraw === '0') {
     throw new Error('Asset not in receiver channel');
@@ -317,8 +316,8 @@ export const verifyRouterSupportsTransfer = async (
     toChainId
   );
 
-  const fromAssetId = getAddress(_fromAssetId);
-  const toAssetId = getAddress(_toAssetId);
+  const fromAssetId = utils.getAddress(_fromAssetId);
+  const toAssetId = utils.getAddress(_toAssetId);
   const config = await node.getRouterConfig({
     routerIdentifier: withdrawChannel.aliceIdentifier,
   });
@@ -351,7 +350,7 @@ export const verifyRouterSupportsTransfer = async (
   }
 
   // Verify sufficient gas
-  const minGas = formatEther('0.1');
+  const minGas = utils.parseEther('0.1');
   const routerGasBudget = await getOnchainBalance(
     ethProvider,
     constants.AddressZero,
@@ -378,7 +377,7 @@ export const verifyRouterSupportsTransfer = async (
     return;
   }
 
-  const collateralCushion = formatEther('1');
+  const collateralCushion = utils.parseEther('1');
   const min = routerOnchain.add(routerOffchain).add(collateralCushion);
   if (min.lt(transferAmount)) {
     throw new Error('Router has insufficient collateral');
