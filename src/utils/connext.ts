@@ -7,6 +7,7 @@ import {
   EngineEvents,
   FullChannelState,
   NodeParams,
+  NodeResponses,
   TransferNames,
   WithdrawalReconciledPayload,
 } from '@connext/vector-types';
@@ -192,7 +193,7 @@ export const cancelHangingToTransfers = async (
   toChainId: number,
   _toAssetId: string,
   routerPublicIdentifier: string
-): Promise<void> => {
+): Promise<(NodeResponses.ResolveTransfer | undefined)[]> => {
   const depositChannel = await getChannelForChain(
     node,
     routerPublicIdentifier,
@@ -222,29 +223,30 @@ export const cancelHangingToTransfers = async (
   });
 
   // wait for all hanging transfers to cancel
-  await Promise.all(
+  const hangingResolutions = (await Promise.all(
     toCancel.map(async transferToCancel => {
-      console.log(
-        'Cancelling hanging receiver transfer:',
-        transferToCancel.meta!.routingId
-      );
-      const params: NodeParams.ResolveTransfer = {
-        publicIdentifier: withdrawChannel.bobIdentifier,
-        channelAddress: withdrawChannel.channelAddress,
-        transferId: transferToCancel.transferId,
-        transferResolver: { preImage: constants.HashZero },
-      };
-      // for receiver transfer cancellatino
-      new Promise(async (res, rej) => {
-        const resolveRes = await node.resolveTransfer(params);
-        if (resolveRes.isError) {
-          console.error('Failed to cancel transfer:', resolveRes.getError());
-          return rej(resolveRes.getError()?.message);
-        }
-        return res(resolveRes.getValue());
-      }),
+      try {
+        console.log(
+          'Cancelling hanging receiver transfer:',
+          transferToCancel.meta!.routingId
+        );
+        const params: NodeParams.ResolveTransfer = {
+          publicIdentifier: withdrawChannel.bobIdentifier,
+          channelAddress: withdrawChannel.channelAddress,
+          transferId: transferToCancel.transferId,
+          transferResolver: { preImage: constants.HashZero },
+        };
+        // for receiver transfer cancellatino
+        const resolved = await new Promise(async (res, rej) => {
+          const resolveRes = await node.resolveTransfer(params);
+          if (resolveRes.isError) {
+            console.error('Failed to cancel transfer:', resolveRes.getError());
+            return rej(resolveRes.getError()?.message);
+          }
+          return res(resolveRes.getValue());
+        });
         // for sender transfer cancellation
-        evt.waitFor(
+        await evt.waitFor(
           data =>
             data.transfer.meta.routingId === transferToCancel.meta!.routingId &&
             data.channelAddress === depositChannel.channelAddress &&
@@ -252,8 +254,14 @@ export const cancelHangingToTransfers = async (
               constants.HashZero,
           45_000
         );
+        return resolved;
+      } catch (e) {
+        console.error('Error cancelling hanging', e);
+        return undefined;
+      }
     })
-  );
+  )) as (NodeResponses.ResolveTransfer | undefined)[];
+  return hangingResolutions;
 };
 
 export const withdrawToAsset = async (
