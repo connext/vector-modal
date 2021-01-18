@@ -202,7 +202,7 @@ export const waitForSenderCancels = async (
             data.channelAddress === depositChannelAddress &&
             Object.values(data.transfer.transferResolver)[0] ===
               constants.HashZero,
-          45_000
+          300_000
         );
       } catch (e) {
         console.error('Timed out waiting for cancellation:', e);
