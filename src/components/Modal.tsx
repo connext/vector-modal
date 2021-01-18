@@ -184,8 +184,6 @@ const ConnextModal: FC<ConnextModalProps> = ({
 
   const [initing, setIniting] = useState<boolean>(true);
 
-  const [activeStep, setActiveStep] = useState(-1);
-
   const [isError, setIsError] = useState(false);
   const [error, setError] = useState<Error>();
 
@@ -200,6 +198,8 @@ const ConnextModal: FC<ConnextModalProps> = ({
   const [transferState, setTransferState] = useState<TransferStates>(
     TRANSFER_STATES.INITIAL
   );
+
+  const activeStep = activePhase(transferState);
 
   const _ethProviders = hydrateProviders(
     depositChainId,
@@ -278,7 +278,6 @@ const ConnextModal: FC<ConnextModalProps> = ({
     const crossChainTransferId = getRandomBytes32();
     setActiveCrossChainTransferId(crossChainTransferId);
     setTransferState(TRANSFER_STATES.DEPOSITING);
-    setActiveStep(activePhase(TRANSFER_STATES.DEPOSITING));
     setIsError(false);
     setAmount(transferAmount);
 
@@ -293,6 +292,9 @@ const ConnextModal: FC<ConnextModalProps> = ({
       return;
     }
     // call createFromAssetTransfer
+
+    setTransferState(TRANSFER_STATES.TRANSFERRING);
+
     let preImageVar;
     try {
       const { preImage } = await createFromAssetTransfer(
@@ -409,6 +411,12 @@ const ConnextModal: FC<ConnextModalProps> = ({
       );
     }
 
+    await withdraw();
+  };
+
+  const withdraw = async () => {
+    setTransferState(TRANSFER_STATES.WITHDRAWING);
+
     // now go to withdrawal screen
     let result;
     try {
@@ -433,7 +441,7 @@ const ConnextModal: FC<ConnextModalProps> = ({
     setWithdrawTx(result.withdrawalTx);
     setSentAmount(result.withdrawalAmount ?? '0');
     setTransferState(TRANSFER_STATES.COMPLETE);
-    setActiveStep(activePhase(TRANSFER_STATES.COMPLETE));
+
     setIsError(false);
     setActiveHeaderMessage(2);
 
@@ -487,6 +495,10 @@ const ConnextModal: FC<ConnextModalProps> = ({
           `Updated balance on ${depositChainId} for ${_depositAddress} of asset ${depositAssetId}: ${updatedDeposits.toString()}`
         );
 
+        if (updatedDeposits.lt(initialDeposits)) {
+          initialDeposits = updatedDeposits;
+        }
+
         if (updatedDeposits.gt(initialDeposits)) {
           clearInterval(listener!);
           const transferAmount = updatedDeposits.sub(initialDeposits);
@@ -499,7 +511,7 @@ const ConnextModal: FC<ConnextModalProps> = ({
 
   const stateReset = () => {
     setIniting(true);
-    setActiveStep(-1);
+    setTransferState(TRANSFER_STATES.INITIAL);
     setIsError(false);
     setError(undefined);
     setDepositAddress(undefined);
@@ -686,8 +698,8 @@ const ConnextModal: FC<ConnextModalProps> = ({
 
       // if offchainWithdrawBalance > 0
       else if (offChainWithdrawAssetBalance.gt(0)) {
-        // TODO: withdraw
         // then go to withdraw screen with transfer amount == balance
+        await withdraw();
       }
 
       // if both are zero, register listener and display
