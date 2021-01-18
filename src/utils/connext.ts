@@ -95,28 +95,34 @@ export const reconcileDeposit = async (
 
 export const createFromAssetTransfer = async (
   node: BrowserNode,
-  fromChannel: FullChannelState,
+  fromChainId: number,
   _fromAssetId: string,
   toChainId: number,
   _toAssetId: string,
+  routerPublicIdentifier: string,
   crossChainTransferId = getRandomBytes32()
 ): Promise<{ transferId: string; preImage: string }> => {
+  const depositChannel = await getChannelForChain(
+    node,
+    routerPublicIdentifier,
+    fromChainId
+  );
   const fromAssetId = getAddress(_fromAssetId);
   const toAssetId = getAddress(_toAssetId);
-  const assetIdx = fromChannel.assetIds.findIndex(a => a === fromAssetId);
+  const assetIdx = depositChannel.assetIds.findIndex(a => a === fromAssetId);
   if (assetIdx === -1) {
     throw new Error('Asset not in channel, please deposit');
   }
-  const toTransfer = getBalanceForAssetId(fromChannel, fromAssetId, 'bob');
+  const toTransfer = getBalanceForAssetId(depositChannel, fromAssetId, 'bob');
   if (toTransfer === '0') {
     throw new Error('Asset not in channel, please deposit');
   }
   const preImage = getRandomBytes32();
   const params: NodeParams.ConditionalTransfer = {
-    recipient: fromChannel.bobIdentifier,
+    recipient: depositChannel.bobIdentifier,
     recipientChainId: toChainId,
     recipientAssetId: toAssetId,
-    channelAddress: fromChannel.channelAddress,
+    channelAddress: depositChannel.channelAddress,
     type: TransferNames.HashlockTransfer,
     assetId: fromAssetId,
     amount: toTransfer,
@@ -127,7 +133,7 @@ export const createFromAssetTransfer = async (
       toAssetId,
     },
     details: { expiry: '0', lockHash: createlockHash(preImage) },
-    publicIdentifier: fromChannel.bobIdentifier,
+    publicIdentifier: depositChannel.bobIdentifier,
   };
   const ret = await node.conditionalTransfer(params);
   if (ret.isError) {
@@ -142,14 +148,21 @@ export const createFromAssetTransfer = async (
 
 export const resolveToAssetTransfer = async (
   node: BrowserNode,
-  toChannel: FullChannelState,
+  toChainId: number,
   preImage: string,
-  crossChainTransferId: string
+  crossChainTransferId: string,
+  routerPublicIdentifier: string
 ): Promise<{ transferId: string }> => {
+  const withdrawChannel = await getChannelForChain(
+    node,
+    routerPublicIdentifier,
+    toChainId
+  );
+
   const transfer = await node.getTransferByRoutingId({
-    channelAddress: toChannel.channelAddress,
+    channelAddress: withdrawChannel.channelAddress,
     routingId: crossChainTransferId,
-    publicIdentifier: toChannel.bobIdentifier,
+    publicIdentifier: withdrawChannel.bobIdentifier,
   });
   if (transfer.isError) {
     throw transfer.getError();
@@ -160,8 +173,8 @@ export const resolveToAssetTransfer = async (
     );
   }
   const params: NodeParams.ResolveTransfer = {
-    publicIdentifier: toChannel.bobIdentifier,
-    channelAddress: toChannel.channelAddress,
+    publicIdentifier: withdrawChannel.bobIdentifier,
+    channelAddress: withdrawChannel.channelAddress,
     transferId: transfer.getValue()!.transferId,
     transferResolver: { preImage },
     meta: { crossChainTransferId, routingId: crossChainTransferId },
@@ -176,21 +189,33 @@ export const resolveToAssetTransfer = async (
 export const cancelHangingToTransfers = async (
   node: BrowserNode,
   evt: Evt<ConditionalTransferResolvedPayload>,
-  toChannel: FullChannelState,
-  fromChannel: FullChannelState,
-  _toAssetId: string
+  fromChainId: number,
+  toChainId: number,
+  _toAssetId: string,
+  routerPublicIdentifier: string
 ): Promise<void> => {
+  const depositChannel = await getChannelForChain(
+    node,
+    routerPublicIdentifier,
+    fromChainId
+  );
+  const withdrawChannel = await getChannelForChain(
+    node,
+    routerPublicIdentifier,
+    toChainId
+  );
+
   const toAssetId = getAddress(_toAssetId);
   const transfers = await node.getActiveTransfers({
-    publicIdentifier: toChannel.bobIdentifier,
-    channelAddress: toChannel.channelAddress,
+    publicIdentifier: withdrawChannel.bobIdentifier,
+    channelAddress: withdrawChannel.channelAddress,
   });
   if (transfers.isError) {
     throw transfers.getError();
   }
 
   const toCancel = transfers.getValue().filter(t => {
-    const amResponder = t.responderIdentifier === toChannel.bobIdentifier;
+    const amResponder = t.responderIdentifier === withdrawChannel.bobIdentifier;
     const correctAsset = t.assetId === toAssetId;
     const isHashlock = Object.keys(t.transferState).includes('lockHash');
     const wasForwarded = !!t.meta?.routingId;
@@ -202,8 +227,8 @@ export const cancelHangingToTransfers = async (
       transferToCancel.meta!.routingId
     );
     const params: NodeParams.ResolveTransfer = {
-      publicIdentifier: toChannel.bobIdentifier,
-      channelAddress: toChannel.channelAddress,
+      publicIdentifier: withdrawChannel.bobIdentifier,
+      channelAddress: withdrawChannel.channelAddress,
       transferId: transferToCancel.transferId,
       transferResolver: { preImage: constants.HashZero },
     };
@@ -223,7 +248,7 @@ export const cancelHangingToTransfers = async (
       evt.waitFor(
         data =>
           data.transfer.meta.routingId === transferToCancel.meta!.routingId &&
-          data.channelAddress === fromChannel.channelAddress &&
+          data.channelAddress === depositChannel.channelAddress &&
           Object.values(data.transfer.transferResolver)[0] ===
             constants.HashZero,
         45_000
@@ -234,20 +259,28 @@ export const cancelHangingToTransfers = async (
 
 export const withdrawToAsset = async (
   node: BrowserNode,
-  toChannel: FullChannelState,
+  toChainId: number,
   _toAssetId: string,
-  recipientAddr: string
+  recipientAddr: string,
+  routerPublicIdentifier: string
 ): Promise<{ withdrawalTx: string; withdrawalAmount: string }> => {
+  const withdrawChannel = await getChannelForChain(
+    node,
+    routerPublicIdentifier,
+    toChainId
+  );
+
   const toAssetId = getAddress(_toAssetId);
-  const toWithdraw = getBalanceForAssetId(toChannel, toAssetId, 'bob');
+  const toWithdraw = getBalanceForAssetId(withdrawChannel, toAssetId, 'bob');
   if (toWithdraw === '0') {
     throw new Error('Asset not in receiver channel');
   }
+
   const params: NodeParams.Withdraw = {
     amount: toWithdraw,
     assetId: toAssetId,
-    channelAddress: toChannel.channelAddress,
-    publicIdentifier: toChannel.bobIdentifier,
+    channelAddress: withdrawChannel.channelAddress,
+    publicIdentifier: withdrawChannel.bobIdentifier,
     recipient: recipientAddr,
   };
   const ret = await node.withdraw(params);
@@ -270,18 +303,24 @@ export const withdrawToAsset = async (
 // return strings, does not need to be retried
 export const verifyRouterSupportsTransfer = async (
   node: BrowserNode,
-  toChannel: FullChannelState,
   fromChainId: number,
   _fromAssetId: string,
   toChainId: number,
   _toAssetId: string,
   ethProvider: providers.BaseProvider, // For `to` chain
+  routerPublicIdentifier: string,
   transferAmount?: string
 ): Promise<void> => {
+  const withdrawChannel = await getChannelForChain(
+    node,
+    routerPublicIdentifier,
+    toChainId
+  );
+
   const fromAssetId = getAddress(_fromAssetId);
   const toAssetId = getAddress(_toAssetId);
   const config = await node.getRouterConfig({
-    routerIdentifier: toChannel.aliceIdentifier,
+    routerIdentifier: withdrawChannel.aliceIdentifier,
   });
   if (config.isError) {
     throw new Error('Router config unavailable');
@@ -316,7 +355,7 @@ export const verifyRouterSupportsTransfer = async (
   const routerGasBudget = await getOnchainBalance(
     ethProvider,
     constants.AddressZero,
-    toChannel.alice
+    withdrawChannel.alice
   );
   if (routerGasBudget.lt(minGas)) {
     throw new Error('Router has insufficient gas funds');
@@ -330,10 +369,10 @@ export const verifyRouterSupportsTransfer = async (
   const routerOnchain = await getOnchainBalance(
     ethProvider,
     toAssetId,
-    toChannel.alice
+    withdrawChannel.alice
   );
   const routerOffchain = BigNumber.from(
-    getBalanceForAssetId(toChannel, toAssetId, 'alice')
+    getBalanceForAssetId(withdrawChannel, toAssetId, 'alice')
   );
   if (routerOffchain.gte(transferAmount)) {
     return;
