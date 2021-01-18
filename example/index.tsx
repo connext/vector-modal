@@ -10,7 +10,7 @@ function App() {
 
   return (
     <>
-      <button onClick={() => setShowModal(true)}>Hello World</button>
+      <button onClick={() => setShowModal(true)}>Show Modal</button>
       <ConnextModal
         showModal={showModal}
         onClose={() => setShowModal(false)}
