@@ -68,6 +68,7 @@ import {
   createFromAssetTransfer,
   withdrawToAsset,
   resolveToAssetTransfer,
+  waitForSenderCancels,
 } from '../utils';
 import Loading from './Loading';
 import Options from './Options';
@@ -544,9 +545,6 @@ const ConnextModal: FC<ConnextModalProps> = ({
 
       try {
         // browser node object
-        // TODO: remove the service, use stateless functions
-        // keeping connect function stateful only
-        // cause subsequent init() call is failing
         await connext.connectNode(
           connextNode,
           routerPublicIdentifier,
@@ -609,6 +607,17 @@ const ConnextModal: FC<ConnextModalProps> = ({
         return;
       }
 
+      try {
+        await waitForSenderCancels(
+          connext.connextClient!,
+          _evts[EngineEvents.CONDITIONAL_TRANSFER_RESOLVED],
+          depositChannel.channelAddress
+        );
+      } catch (e) {
+        handleError(e, 'Error in waitForSenderCancels');
+        return;
+      }
+
       // callback for ready
       if (onReady) {
         onReady({
@@ -635,7 +644,7 @@ const ConnextModal: FC<ConnextModalProps> = ({
         return;
       }
 
-      // prune any existing transfers
+      // prune any existing receiver transfers
       try {
         const hangingResolutions = await cancelHangingToTransfers(
           connext.connextClient!,
