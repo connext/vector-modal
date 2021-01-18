@@ -19,6 +19,47 @@ import { providers, Contract, BigNumber, constants } from 'ethers';
 import { formatEther, getAddress } from 'ethers/lib/utils';
 import { Evt } from 'evt';
 import { getOnchainBalance } from './helpers';
+import { iframeSrc } from '../constants';
+
+export const connectNode = async (
+  connextNode: BrowserNode | undefined,
+  routerPublicIdentifier: string,
+  depositChainId: number,
+  withdrawChainId: number,
+  depositChainProvider: string,
+  withdrawChainProvider: string
+): Promise<BrowserNode> => {
+  console.log('Connect Node');
+  let browserNode: BrowserNode;
+
+  try {
+    if (connextNode) {
+      browserNode = connextNode;
+    } else {
+      browserNode = new BrowserNode({
+        routerPublicIdentifier,
+        iframeSrc,
+        supportedChains: [depositChainId, withdrawChainId],
+        chainProviders: {
+          [depositChainId]: depositChainProvider,
+          [withdrawChainId]: withdrawChainProvider,
+        },
+      });
+    }
+    await browserNode.init();
+  } catch (e) {
+    console.error(e);
+    throw new Error(`connecting to iframe: ${e}`);
+  }
+  console.log('connection success');
+
+  const configRes = await browserNode.getConfig();
+  if (!configRes[0]) throw new Error(`Error getConfig: node connection failed`);
+
+  console.log('GET CONFIG: ', configRes[0]);
+
+  return browserNode;
+};
 
 export const getTotalDepositsBob = async (
   channelAddress: string,
@@ -196,7 +237,7 @@ export const withdrawToAsset = async (
   toChannel: FullChannelState,
   _toAssetId: string,
   recipientAddr: string
-): Promise<string> => {
+): Promise<{ withdrawalTx: string; withdrawalAmount: string }> => {
   const toAssetId = getAddress(_toAssetId);
   const toWithdraw = getBalanceForAssetId(toChannel, toAssetId, 'bob');
   if (toWithdraw === '0') {
@@ -218,7 +259,12 @@ export const withdrawToAsset = async (
     // TODO: prompt router to retry sending transaction
     throw new Error('Router failed to withdraw');
   }
-  return transactionHash;
+
+  const result = {
+    withdrawalTx: transactionHash,
+    withdrawalAmount: toWithdraw,
+  };
+  return result;
 };
 
 // return strings, does not need to be retried
