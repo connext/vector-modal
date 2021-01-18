@@ -669,28 +669,6 @@ const ConnextModal: FC<ConnextModalProps> = ({
           withdrawChannelAddress: withdrawChannel.channelAddress,
         });
       }
-
-      // set a listener to check for transfers that may have been pushed after a refresh after the hanging transfers have already been canceled
-      _evts.CONDITIONAL_TRANSFER_RESOLVED.pipe(
-        data =>
-          data.transfer.responderIdentifier ===
-            connext.connextClient?.publicIdentifier &&
-          !!data.transfer.meta.crossChainTransferId
-      ).attach(async data => {
-        console.log('CONDITIONAL_TRANSFER_RESOLVED >>>>>>>>> data: ', data);
-        console.log('preImage: ', preImageRef.current);
-        if (!preImageRef.current) {
-          console.log('Cancelling transfer that we do not have preImage for');
-          // no preImage, so cancel the transfer
-          await cancelTransfer(
-            _depositAddress,
-            withdrawChannel.channelAddress,
-            data.transfer.transferId,
-            data.transfer.meta.crossChainTransferId,
-            _evts!
-          );
-        }
-      });
       setEvts(_evts);
 
       // validate router before proceeding
@@ -727,6 +705,29 @@ const ConnextModal: FC<ConnextModalProps> = ({
       }
 
       setActiveMessage(2);
+
+      // set a listener to check for transfers that may have been pushed after a refresh after the hanging transfers have already been canceled
+      _evts.CONDITIONAL_TRANSFER_RESOLVED.pipe(
+        data =>
+          data.transfer.responderIdentifier ===
+            connext.connextClient?.publicIdentifier &&
+          !!data.transfer.meta.crossChainTransferId
+      ).attach(async data => {
+        console.log('CONDITIONAL_TRANSFER_RESOLVED >>>>>>>>> data: ', data);
+        console.log('preImage: ', preImageRef.current);
+        if (!preImageRef.current) {
+          console.log('Cancelling transfer that we do not have preImage for');
+          // no preImage, so cancel the transfer
+          await cancelTransfer(
+            _depositAddress,
+            withdrawChannel.channelAddress,
+            data.transfer.transferId,
+            data.transfer.meta.crossChainTransferId,
+            _evts!
+          );
+        }
+      });
+
       try {
         await reconcileDeposit(
           connext.connextClient!,
