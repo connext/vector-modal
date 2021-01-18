@@ -332,7 +332,7 @@ export const verifyRouterSupportsTransfer = async (
   ) {
     throw new Error(`Router does not support chains`);
   }
-
+  // @ts-ignore
   const swap = allowedSwaps.find(s => {
     const noninverted =
       s.fromAssetId.toLowerCase() === fromAssetId.toLowerCase() &&
