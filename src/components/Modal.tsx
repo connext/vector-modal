@@ -46,7 +46,6 @@ import {
   EngineEvents,
   ERC20Abi,
   FullChannelState,
-  FullTransferState,
 } from '@connext/vector-types';
 import { getBalanceForAssetId, getRandomBytes32 } from '@connext/vector-utils';
 import {
@@ -186,10 +185,6 @@ const ConnextModal: FC<ConnextModalProps> = ({
 
   const [withdrawTx, setWithdrawTx] = useState<string>();
 
-  const [crossChainTransfers, setCrossChainTransfers] = useState<{
-    [crossChainTransferId: string]: TransferStates;
-  }>({});
-
   const [initing, setIniting] = useState<boolean>(true);
 
   const [activeStep, setActiveStep] = useState(-1);
@@ -205,8 +200,9 @@ const ConnextModal: FC<ConnextModalProps> = ({
 
   const [listener, setListener] = useState<NodeJS.Timeout>();
 
-  const transferState: TransferStates =
-    crossChainTransfers[activeCrossChainTransferId] ?? TRANSFER_STATES.INITIAL;
+  const [transferState, setTransferState] = useState<TransferStates>(
+    TRANSFER_STATES.INITIAL
+  );
 
   const _ethProviders = hydrateProviders(
     depositChainId,
@@ -311,135 +307,6 @@ const ConnextModal: FC<ConnextModalProps> = ({
     setIniting(false);
   };
 
-  const registerEngineEventListeners = (
-    node: BrowserNode,
-    startingBalance: BigNumber
-  ): void => {
-    console.log('Starting Vector listeners');
-    node.on(EngineEvents.DEPOSIT_RECONCILED, data => {
-      console.log('EngineEvents.DEPOSIT_RECONCILED: ', data);
-      if (
-        startingBalance.lt(data.channelBalance.amount[1]) && // deposit actually added balance
-        data.channelAddress === depositAddress // depositAddress is channelAddress on deposit chain
-      ) {
-        if (data.meta.crossChainTransferId) {
-          setCrossChainTransferWithErrorTimeout(
-            data.meta.crossChainTransferId,
-            TRANSFER_STATES.DEPOSITING
-          );
-          console.log('SETTING SENT AMOUNT >>>>>>>>');
-          setSentAmount(data.channelBalance.amount[1]);
-        }
-      }
-    });
-    node.on(EngineEvents.CONDITIONAL_TRANSFER_CREATED, data => {
-      console.log('EngineEvents.CONDITIONAL_TRANSFER_CREATED: ', data);
-      if (
-        data.transfer.meta.crossChainTransferId &&
-        data.transfer.initiator === node.signerAddress
-      ) {
-        setCrossChainTransferWithErrorTimeout(
-          data.transfer.meta.crossChainTransferId,
-          TRANSFER_STATES.TRANSFERRING
-        );
-        console.log('SETTING SENT AMOUNT >>>>>>>>');
-        setSentAmount(
-          BigNumber.from(data.transfer.balance.amount[0]).gt(0)
-            ? data.transfer.balance.amount[0]
-            : data.transfer.balance.amount[1]
-        );
-      }
-    });
-    node.on(EngineEvents.CONDITIONAL_TRANSFER_RESOLVED, data => {
-      console.log('EngineEvents.CONDITIONAL_TRANSFER_RESOLVED: ', data);
-      if (data.transfer.meta.crossChainTransferId) {
-        setCrossChainTransferWithErrorTimeout(
-          data.transfer.meta.crossChainTransferId,
-          TRANSFER_STATES.WITHDRAWING
-        );
-        console.log('SETTING SENT AMOUNT >>>>>>>>');
-        setSentAmount(
-          BigNumber.from(data.transfer.balance.amount[0]).gt(0)
-            ? data.transfer.balance.amount[0]
-            : data.transfer.balance.amount[1]
-        );
-      }
-    });
-    node.on(EngineEvents.CONDITIONAL_TRANSFER_RESOLVED, data => {
-      console.log('EngineEvents.CONDITIONAL_TRANSFER_RESOLVED: ', data);
-      if (
-        data.transfer.meta.crossChainTransferId &&
-        Object.values(data.transfer.transferResolver)[0] ===
-          constants.HashZero &&
-        data.transfer.chainId === depositChainId
-      ) {
-        let tracked = { ...crossChainTransfers };
-        tracked[data.transfer.meta.crossChainTransferId] =
-          TRANSFER_STATES.ERROR;
-        setCrossChainTransfers(tracked);
-        console.log('SETTING SENT AMOUNT >>>>>>>>');
-        setSentAmount(
-          BigNumber.from(data.transfer.balance.amount[0]).gt(0)
-            ? data.transfer.balance.amount[0]
-            : data.transfer.balance.amount[1]
-        );
-        setIsError(true);
-        setError(
-          new Error(
-            `Transfer was cancelled, funds are preserved in the state channel, please refresh and try again`
-          )
-        );
-      }
-    });
-    node.on(EngineEvents.WITHDRAWAL_RECONCILED, async data => {
-      console.log('EngineEvents.WITHDRAWAL_RECONCILED_EVENT: ', data);
-      const transferRes = await node.getTransfer({
-        transferId: data.transferId,
-      });
-      if (transferRes?.isError) {
-        setIsError(true);
-        setError(transferRes.getError());
-        return;
-      }
-      const transfer = transferRes?.getValue() as FullTransferState;
-      if (
-        transfer.meta.crossChainTransferId &&
-        transfer.initiator === node.signerAddress &&
-        transfer.channelAddress !== depositAddress // withdrawal channel
-      ) {
-        setWithdrawTx(data.transactionHash);
-        setCrossChainTransferWithErrorTimeout(
-          data.meta.crossChainTransferId,
-          TRANSFER_STATES.COMPLETE
-        );
-      }
-    });
-
-    ////// NEW -- EVTS
-  };
-
-  const setCrossChainTransferWithErrorTimeout = (
-    crossChainTransferId: string,
-    phase: TransferStates
-  ) => {
-    let tracked = { ...crossChainTransfers };
-    tracked[crossChainTransferId] = phase;
-    setCrossChainTransfers(tracked);
-    setActiveStep(activePhase(phase));
-    setIsError(false);
-    setTimeout(() => {
-      if (crossChainTransfers[crossChainTransferId] !== phase) {
-        return;
-      }
-      // Error if not updated
-      let tracked = { ...crossChainTransfers };
-      tracked[crossChainTransferId] = TRANSFER_STATES.ERROR;
-      setCrossChainTransfers(tracked);
-      setIsError(true);
-      setError(new Error(`No updates within 30s for ${crossChainTransferId}`));
-    }, 30_000);
-  };
-
   const getChainInfo = async () => {
     try {
       const chainInfo: any[] = await utils.fetchJson(CHAIN_INFO_URL);
@@ -498,15 +365,11 @@ const ConnextModal: FC<ConnextModalProps> = ({
     setActiveHeaderMessage(1);
     const crossChainTransferId = getRandomBytes32();
     setActiveCrossChainTransferId(crossChainTransferId);
-
-    const updated = { ...crossChainTransfers };
-    updated[crossChainTransferId] = TRANSFER_STATES.DEPOSITING;
-    setCrossChainTransfers(updated);
+    setTransferState(TRANSFER_STATES.DEPOSITING);
     setActiveStep(activePhase(TRANSFER_STATES.DEPOSITING));
     setIsError(false);
     setAmount(transferAmount);
 
-    let depositChannel: FullChannelState;
     try {
       await reconcileDeposit(
         connext.connextClient!,
@@ -517,19 +380,6 @@ const ConnextModal: FC<ConnextModalProps> = ({
       handleError(e);
       return;
     }
-
-    // After reconciling, get channel again
-    try {
-      depositChannel = await getChannelForChain(
-        connext.connextClient!,
-        routerPublicIdentifier,
-        depositChainId
-      );
-    } catch (e) {
-      handleError(e);
-      return;
-    }
-
     // call createFromAssetTransfer
     let preImageVar;
     try {
@@ -547,9 +397,7 @@ const ConnextModal: FC<ConnextModalProps> = ({
       return;
     }
 
-    const resolveConditionalCreated = await evts![
-      EngineEvents.CONDITIONAL_TRANSFER_CREATED
-    ]
+    await evts![EngineEvents.CONDITIONAL_TRANSFER_CREATED]
       .pipe(data => {
         return (
           data.transfer.meta?.routingId === crossChainTransferId &&
@@ -630,12 +478,10 @@ const ConnextModal: FC<ConnextModalProps> = ({
     } catch (e) {
       // TODO: handle error on withdrawals, go to contact screen
       console.error('Error in crossChainTransfer: ', e);
-      const updated = { ...crossChainTransfers };
-      updated[crossChainTransferId] = TRANSFER_STATES.ERROR;
+
       setIsError(true);
       handleError(e);
       setActiveHeaderMessage(3);
-      setCrossChainTransfers(updated);
       return;
     }
     // display tx hash through explorer -> handles by the event.
@@ -643,11 +489,10 @@ const ConnextModal: FC<ConnextModalProps> = ({
     setWithdrawTx(result.withdrawalTx);
     console.log('SETTING SENT AMOUNT from transfer() >>>>>>>>');
     setSentAmount(result.withdrawalAmount ?? '0');
+    setTransferState(TRANSFER_STATES.COMPLETE);
     setActiveStep(activePhase(TRANSFER_STATES.COMPLETE));
     setIsError(false);
     setActiveHeaderMessage(2);
-    updated[crossChainTransferId] = TRANSFER_STATES.COMPLETE;
-    setCrossChainTransfers(updated);
   };
 
   const blockListenerAndTransfer = async (_depositAddress: string) => {
@@ -745,10 +590,7 @@ const ConnextModal: FC<ConnextModalProps> = ({
             'Please disable shields or ad blockers or allow third party cookies in your browser and try again. Connext requires cross-site cookies to store your channel states.'
           );
         }
-        setCrossChainTransfers({
-          ...crossChainTransfers,
-          [constants.HashZero]: TRANSFER_STATES.ERROR,
-        });
+
         handleError(e);
         return;
       }
