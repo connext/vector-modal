@@ -68,7 +68,6 @@ import {
   createFromAssetTransfer,
   withdrawToAsset,
   resolveToAssetTransfer,
-  cancelToAssetTransfer,
 } from '../utils';
 import Loading from './Loading';
 import Options from './Options';
