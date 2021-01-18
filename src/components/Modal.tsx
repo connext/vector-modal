@@ -222,6 +222,7 @@ const ConnextModal: FC<ConnextModalProps> = ({
     setError(e);
     setIsError(true);
     setIniting(false);
+    setPreImage(undefined);
   };
 
   const getChainInfo = async () => {
@@ -452,6 +453,7 @@ const ConnextModal: FC<ConnextModalProps> = ({
       );
       return;
     }
+    setPreImage(undefined);
 
     try {
       await senderResolve;
@@ -568,6 +570,7 @@ const ConnextModal: FC<ConnextModalProps> = ({
     setScreen('Home');
     setActiveHeaderMessage(0);
     setAmount(BigNumber.from(0));
+    setPreImage(undefined);
   };
 
   const handleClose = () => {
@@ -667,6 +670,7 @@ const ConnextModal: FC<ConnextModalProps> = ({
           !!data.transfer.meta.crossChainTransferId
       ).attach(async data => {
         if (!preImage) {
+          console.log('Cancelling transfer that we do not have preImage for');
           // no preImage, so cancel the transfer
           await cancelTransfer(
             _depositAddress,
