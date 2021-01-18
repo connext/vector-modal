@@ -273,45 +273,6 @@ const ConnextModal: FC<ConnextModalProps> = ({
     }
   };
 
-  const cancelTransfer = async (
-    depositChannelAddress: string,
-    withdrawChannelAddress: string,
-    transferId: string,
-    crossChainTransferId: string,
-    _evts: EvtContainer
-  ) => {
-    // show a better screen here, loading UI
-    handleError(new Error('Cancelling transfer'));
-
-    const senderResolution = _evts.CONDITIONAL_TRANSFER_RESOLVED.pipe(
-      data =>
-        data.transfer.meta.crossChainTransferId === crossChainTransferId &&
-        data.channelAddress === depositChannelAddress
-    ).waitFor(45_000);
-
-    const receiverResolution = _evts.CONDITIONAL_TRANSFER_RESOLVED.pipe(
-      data =>
-        data.transfer.meta.crossChainTransferId === crossChainTransferId &&
-        data.channelAddress === withdrawChannelAddress
-    ).waitFor(45_000);
-    try {
-      await cancelToAssetTransfer(
-        connext.connextClient!,
-        withdrawChannelAddress,
-        transferId
-      );
-    } catch (e) {
-      handleError(e, 'Error in cancelToAssetTransfer');
-    }
-
-    try {
-      await Promise.all([senderResolution, receiverResolution]);
-      handleError(new Error('Transfer cancelled'));
-    } catch (e) {
-      handleError(e, 'Error waiting for sender and receiver cancellations');
-    }
-  };
-
   const transfer = async (
     _depositAddress: string,
     transferAmount: BigNumber,
