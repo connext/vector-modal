@@ -186,6 +186,23 @@ export const resolveToAssetTransfer = async (
   return { transferId: transfer.getValue()!.transferId };
 };
 
+export const cancelToAssetTransfer = async (
+  node: BrowserNode,
+  withdrawChannelAddess: string,
+  transferId: string
+): Promise<NodeResponses.ResolveTransfer> => {
+  const params = {
+    channelAddress: withdrawChannelAddess,
+    transferId: transferId,
+    transferResolver: { preImage: constants.HashZero },
+  };
+  const ret = await node.resolveTransfer(params);
+  if (ret.isError) {
+    throw ret.getError();
+  }
+  return ret.getValue();
+};
+
 export const cancelHangingToTransfers = async (
   node: BrowserNode,
   evt: Evt<ConditionalTransferResolvedPayload>,

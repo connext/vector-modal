@@ -68,6 +68,7 @@ import {
   createFromAssetTransfer,
   withdrawToAsset,
   resolveToAssetTransfer,
+  cancelToAssetTransfer,
 } from '../utils';
 import Loading from './Loading';
 import Options from './Options';
@@ -190,6 +191,7 @@ const ConnextModal: FC<ConnextModalProps> = ({
   const [activeCrossChainTransferId, setActiveCrossChainTransferId] = useState<
     string
   >(constants.HashZero);
+  const [preImage, setPreImage] = useState();
 
   const [screen, setScreen] = useState<Screens>('Home');
 
@@ -270,6 +272,45 @@ const ConnextModal: FC<ConnextModalProps> = ({
       console.log(
         `Using native asset 18 decimals for withdrawChainId ${withdrawChainId}`
       );
+    }
+  };
+
+  const cancelTransfer = async (
+    depositChannelAddress: string,
+    withdrawChannelAddress: string,
+    transferId: string,
+    crossChainTransferId: string,
+    _evts: EvtContainer
+  ) => {
+    // show a better screen here, loading UI
+    handleError(new Error('Cancelling transfer'));
+
+    const senderResolution = _evts.CONDITIONAL_TRANSFER_RESOLVED.pipe(
+      data =>
+        data.transfer.meta.crossChainTransferId === crossChainTransferId &&
+        data.channelAddress === depositChannelAddress
+    ).waitFor(45_000);
+
+    const receiverResolution = _evts.CONDITIONAL_TRANSFER_RESOLVED.pipe(
+      data =>
+        data.transfer.meta.crossChainTransferId === crossChainTransferId &&
+        data.channelAddress === withdrawChannelAddress
+    ).waitFor(45_000);
+    try {
+      await cancelToAssetTransfer(
+        connext.connextClient!,
+        withdrawChannelAddress,
+        transferId
+      );
+    } catch (e) {
+      handleError(e, 'Error in cancelToAssetTransfer');
+    }
+
+    try {
+      await Promise.all([senderResolution, receiverResolution]);
+      handleError(new Error('Transfer cancelled'));
+    } catch (e) {
+      handleError(e, 'Error waiting for sender and receiver cancellations');
     }
   };
 
@@ -617,6 +658,24 @@ const ConnextModal: FC<ConnextModalProps> = ({
           withdrawChannelAddress: withdrawChannel.channelAddress,
         });
       }
+
+      _evts.CONDITIONAL_TRANSFER_RESOLVED.pipe(
+        data =>
+          data.transfer.responderIdentifier ===
+            connext.connextClient?.publicIdentifier &&
+          !!data.transfer.meta.crossChainTransferId
+      ).attach(async data => {
+        if (!preImage) {
+          // no preImage, so cancel the transfer
+          await cancelTransfer(
+            _depositAddress,
+            withdrawChannel.channelAddress,
+            data.transfer.transferId,
+            data.transfer.meta.crossChainTransferId,
+            _evts!
+          );
+        }
+      });
 
       // validate router before proceeding
       try {
