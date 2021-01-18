@@ -191,12 +191,6 @@ const ConnextModal: FC<ConnextModalProps> = ({
   const [activeCrossChainTransferId, setActiveCrossChainTransferId] = useState<
     string
   >(constants.HashZero);
-  const [preImage, _setPreImage] = useState<string>();
-  const preImageRef = React.useRef(preImage);
-  const setPreImage = (data: string | undefined) => {
-    preImageRef.current = data;
-    _setPreImage(data);
-  };
 
   const [screen, setScreen] = useState<Screens>('Home');
 
@@ -227,7 +221,6 @@ const ConnextModal: FC<ConnextModalProps> = ({
     setError(e);
     setIsError(true);
     setIniting(false);
-    setPreImage(undefined);
   };
 
   const getChainInfo = async () => {
@@ -370,8 +363,6 @@ const ConnextModal: FC<ConnextModalProps> = ({
       handleError(e, 'Error in createFromAssetTransfer');
       return;
     }
-    setPreImage(preImageVar);
-    console.log('setPreImage(preImageVar);: ', preImageVar);
 
     // wait a long time for this, it needs to send onchain txs
     try {
@@ -461,7 +452,6 @@ const ConnextModal: FC<ConnextModalProps> = ({
       );
       return;
     }
-    setPreImage(undefined);
 
     try {
       await senderResolve;
@@ -576,7 +566,6 @@ const ConnextModal: FC<ConnextModalProps> = ({
     setScreen('Home');
     setActiveHeaderMessage(0);
     setAmount(BigNumber.from(0));
-    setPreImage(undefined);
   };
 
   const handleClose = () => {
@@ -703,28 +692,6 @@ const ConnextModal: FC<ConnextModalProps> = ({
       }
 
       setActiveMessage(2);
-
-      // set a listener to check for transfers that may have been pushed after a refresh after the hanging transfers have already been canceled
-      _evts.CONDITIONAL_TRANSFER_RESOLVED.pipe(
-        data =>
-          data.transfer.responderIdentifier ===
-            connext.connextClient?.publicIdentifier &&
-          !!data.transfer.meta.crossChainTransferId
-      ).attach(async data => {
-        console.log('CONDITIONAL_TRANSFER_RESOLVED >>>>>>>>> data: ', data);
-        console.log('preImage: ', preImageRef.current);
-        if (!preImageRef.current) {
-          console.log('Cancelling transfer that we do not have preImage for');
-          // no preImage, so cancel the transfer
-          await cancelTransfer(
-            _depositAddress,
-            withdrawChannel.channelAddress,
-            data.transfer.transferId,
-            data.transfer.meta.crossChainTransferId,
-            _evts!
-          );
-        }
-      });
 
       try {
         await reconcileDeposit(
