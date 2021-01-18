@@ -15,8 +15,6 @@ import {
   Chip,
   ThemeProvider,
   CircularProgress,
-  Tooltip,
-  withStyles,
   StepIconProps,
   Alert,
 } from '@material-ui/core';
@@ -25,8 +23,6 @@ import {
   Check,
   Close,
   DoubleArrow,
-  Brightness4,
-  WbSunny,
   CheckCircleRounded,
   FiberManualRecordOutlined,
   ErrorRounded,
@@ -54,6 +50,7 @@ import {
   TransferStates,
   TRANSFER_STATES,
   Screens,
+  message,
 } from '../constants';
 import { connext } from '../service';
 import {
@@ -211,95 +208,10 @@ const ConnextModal: FC<ConnextModalProps> = ({
     withdrawChainProvider
   );
 
-  const [activeTip, setActiveTip] = useState(0);
   const [activeMessage, setActiveMessage] = useState(0);
   const [activeHeaderMessage, setActiveHeaderMessage] = useState(0);
 
   const [amount, setAmount] = useState<BigNumber>(BigNumber.from(0));
-  const tips = () => {
-    switch (activeTip) {
-      case 0:
-        return 'Please do not close or refresh window while transfer in progress!';
-
-      case 1:
-        return `Send only ${getAssetName(
-          depositAssetId,
-          depositChainId
-        )} to the above Deposit Address.`;
-
-      default:
-        setActiveTip(0);
-        return 'Please do not close or refresh window while transfer in progress!';
-    }
-  };
-
-  const message = () => {
-    switch (activeMessage) {
-      case 0:
-        return 'Connecting to Network...';
-
-      case 1:
-        return `Setting Up Deposit Address...`;
-
-      case 2:
-        return `Looking for existing Channel Balance...`;
-
-      case 3:
-        return `Checking for incomplete transfers...`;
-
-      default:
-        setActiveMessage(0);
-        return 'Connecting to Network...';
-    }
-  };
-
-  const headerMessage = () => {
-    switch (activeHeaderMessage) {
-      case 0:
-        return (
-          <>
-            <Typography variant="h6">
-              Send{' '}
-              <a
-                href={getExplorerLinkForAsset(depositChainId, depositAssetId)}
-                target="_blank"
-              >
-                {getAssetName(depositAssetId, depositChainId)}
-              </a>
-            </Typography>
-          </>
-        );
-
-      case 1:
-        return (
-          <>
-            <Typography variant="h6">
-              Sending{' '}
-              <a
-                href={getExplorerLinkForAsset(depositChainId, depositAssetId)}
-                target="_blank"
-              >
-                {getAssetName(depositAssetId, depositChainId)}
-              </a>
-            </Typography>
-          </>
-        );
-
-      case 2:
-        return <Typography variant="h6">Success!</Typography>;
-
-      case 3:
-        return <Typography variant="h6">Error!</Typography>;
-
-      default:
-        setActiveHeaderMessage(0);
-        return;
-    }
-  };
-
-  const setTips = () => {
-    setActiveTip(activeTip + 1);
-  };
 
   const handleError = (e: Error | undefined) => {
     setError(e);
@@ -607,7 +519,6 @@ const ConnextModal: FC<ConnextModalProps> = ({
       }
 
       setActiveMessage(1);
-      setTips();
       let depositChannel: FullChannelState;
       try {
         depositChannel = await getChannelForChain(
@@ -744,6 +655,48 @@ const ConnextModal: FC<ConnextModalProps> = ({
     init();
   }, [showModal]);
 
+  const headerMessage = (activeHeader: number) => {
+    switch (activeHeader) {
+      case 0:
+        return (
+          <>
+            <Typography variant="h6">
+              Send{' '}
+              <a
+                href={getExplorerLinkForAsset(depositChainId, depositAssetId)}
+                target="_blank"
+              >
+                {getAssetName(depositAssetId, depositChainId)}
+              </a>
+            </Typography>
+          </>
+        );
+
+      case 1:
+        return (
+          <>
+            <Typography variant="h6">
+              Sending{' '}
+              <a
+                href={getExplorerLinkForAsset(depositChainId, depositAssetId)}
+                target="_blank"
+              >
+                {getAssetName(depositAssetId, depositChainId)}
+              </a>
+            </Typography>
+          </>
+        );
+
+      case 2:
+        return <Typography variant="h6">Success!</Typography>;
+
+      case 3:
+        return <Typography variant="h6">Error!</Typography>;
+
+      default:
+        return;
+    }
+  };
   const steps = ['Deposit', 'Transfer', 'Withdraw'];
 
   function getStepContent(step: number) {
@@ -934,11 +887,7 @@ const ConnextModal: FC<ConnextModalProps> = ({
                 <Close />
               </IconButton>
 
-              {headerMessage()}
-
-              {/* <Grid item>
-                        <ThemeButton />
-                      </Grid> */}
+              {headerMessage(activeHeaderMessage)}
 
               <Options setScreen={setScreen} activeScreen={screen} />
             </Grid>
@@ -984,8 +933,7 @@ const ConnextModal: FC<ConnextModalProps> = ({
                     ) : (
                       <>
                         <Loading
-                          message={message()}
-                          tip={tips()}
+                          message={message(activeMessage)}
                           initializing={initing}
                         />
                         <NetworkBar
@@ -1026,31 +974,6 @@ const ConnextModal: FC<ConnextModalProps> = ({
         </Card>
       </Dialog>
     </ThemeProvider>
-  );
-};
-
-// @ts-ignore
-const ThemeButton: FC = () => {
-  const [isDark, setIsDark] = useState(false);
-
-  theme.palette.mode = isDark ? 'dark' : 'light';
-
-  const StyledTooltip = withStyles({
-    tooltip: {
-      marginTop: '0.2rem',
-      backgroundColor: 'rgba(0,0,0,0.72)',
-      color: '#fff',
-    },
-  })(Tooltip);
-
-  return (
-    <StyledTooltip
-      title={isDark ? 'Switch to Light mode' : 'Switch to Dark mode'}
-    >
-      <IconButton onClick={() => setIsDark(!isDark)}>
-        {isDark ? <WbSunny /> : <Brightness4 />}
-      </IconButton>
-    </StyledTooltip>
   );
 };
 

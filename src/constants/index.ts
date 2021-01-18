@@ -50,3 +50,22 @@ export const TRANSFER_STATES = {
 export type TransferStates = keyof typeof TRANSFER_STATES;
 
 export type Screens = 'Recover' | 'Home';
+
+export const message = (activeMessage: number) => {
+  switch (activeMessage) {
+    case 0:
+      return 'Connecting to Network...';
+
+    case 1:
+      return `Setting Up Deposit Address...`;
+
+    case 2:
+      return `Looking for existing Channel Balance...`;
+
+    case 3:
+      return `Checking for incomplete transfers...`;
+
+    default:
+      return 'Connecting to Network...';
+  }
+};

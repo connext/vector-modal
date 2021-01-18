@@ -4,7 +4,6 @@ import { Typography, Grid, CircularProgress } from '@material-ui/core';
 interface LoadingProps {
   initializing: boolean;
   message: string;
-  tip: string;
 }
 
 const Loading: FC<LoadingProps> = props => {
@@ -38,12 +37,6 @@ const Loading: FC<LoadingProps> = props => {
             >
               {props.message}
             </Typography>
-
-            {/* <Grid item xs={12}>
-              <Typography variant="subtitle2" style={{ fontSize: '11px' }}>
-                {props.tip}
-              </Typography>
-            </Grid> */}
           </Grid>
         </>
       )}
