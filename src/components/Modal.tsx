@@ -275,7 +275,8 @@ const ConnextModal: FC<ConnextModalProps> = ({
 
   const transfer = async (
     _depositAddress: string,
-    transferAmount: BigNumber
+    transferAmount: BigNumber,
+    _evts: EvtContainer
   ) => {
     setActiveHeaderMessage(1);
     const crossChainTransferId = getRandomBytes32();
@@ -323,7 +324,7 @@ const ConnextModal: FC<ConnextModalProps> = ({
 
     // wait a long time for this, it needs to send onchain txs
     try {
-      await evts![EngineEvents.CONDITIONAL_TRANSFER_CREATED]
+      await _evts[EngineEvents.CONDITIONAL_TRANSFER_CREATED]
         .pipe(data => {
           return (
             data.transfer.meta?.routingId === crossChainTransferId &&
@@ -347,7 +348,7 @@ const ConnextModal: FC<ConnextModalProps> = ({
     // okay to move forward if this rejects
 
     // cannot move forward until this resolves
-    const receiverResolve = evts![EngineEvents.CONDITIONAL_TRANSFER_RESOLVED]
+    const receiverResolve = _evts[EngineEvents.CONDITIONAL_TRANSFER_RESOLVED]
       .pipe(data => {
         return (
           data.transfer.meta?.routingId === crossChainTransferId &&
@@ -356,7 +357,7 @@ const ConnextModal: FC<ConnextModalProps> = ({
       })
       .waitFor(45_000);
 
-    const senderCancel = evts![EngineEvents.CONDITIONAL_TRANSFER_RESOLVED]
+    const senderCancel = _evts[EngineEvents.CONDITIONAL_TRANSFER_RESOLVED]
       .pipe(data => {
         return (
           data.transfer.meta?.routingId === crossChainTransferId &&
@@ -371,7 +372,7 @@ const ConnextModal: FC<ConnextModalProps> = ({
     // refresh screen (maybe do this on a callback in event instead of doing
     // what i just did above)
 
-    const senderResolve = evts![EngineEvents.CONDITIONAL_TRANSFER_RESOLVED]
+    const senderResolve = _evts[EngineEvents.CONDITIONAL_TRANSFER_RESOLVED]
       .pipe(data => {
         return (
           data.transfer.meta?.routingId === crossChainTransferId &&
@@ -465,7 +466,10 @@ const ConnextModal: FC<ConnextModalProps> = ({
       });
   };
 
-  const blockListenerAndTransfer = async (_depositAddress: string) => {
+  const blockListenerAndTransfer = async (
+    _depositAddress: string,
+    _evts: EvtContainer
+  ) => {
     let initialDeposits: BigNumber;
     try {
       initialDeposits = await getTotalDepositsBob(
@@ -506,7 +510,7 @@ const ConnextModal: FC<ConnextModalProps> = ({
           clearInterval(listener!);
           const transferAmount = updatedDeposits.sub(initialDeposits);
           initialDeposits = updatedDeposits;
-          await transfer(_depositAddress, transferAmount);
+          await transfer(_depositAddress, transferAmount, _evts);
         }
       }, 5_000)
     );
@@ -696,7 +700,7 @@ const ConnextModal: FC<ConnextModalProps> = ({
       // if offChainDepositAssetBalance > 0
       if (offChainDepositAssetBalance.gt(0)) {
         // then start transfer
-        await transfer(_depositAddress, offChainDepositAssetBalance);
+        await transfer(_depositAddress, offChainDepositAssetBalance, _evts);
       }
 
       // if offchainWithdrawBalance > 0
@@ -709,7 +713,7 @@ const ConnextModal: FC<ConnextModalProps> = ({
       // QR code
       else {
         console.log(`Starting block listener`);
-        await blockListenerAndTransfer(_depositAddress);
+        await blockListenerAndTransfer(_depositAddress, _evts);
       }
 
       setIniting(false);
