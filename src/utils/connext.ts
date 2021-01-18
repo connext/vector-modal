@@ -230,22 +230,22 @@ export const verifyRouterSupportsTransfer = async (
   toChainId: number,
   _toAssetId: string,
   ethProvider: providers.BaseProvider, // For `to` chain
-  transferAmount?: BigNumber
-): Promise<string | undefined> => {
+  transferAmount?: string
+): Promise<void> => {
   const fromAssetId = getAddress(_fromAssetId);
   const toAssetId = getAddress(_toAssetId);
   const config = await node.getRouterConfig({
     routerIdentifier: toChannel.aliceIdentifier,
   });
   if (config.isError) {
-    return 'Router config unavailable';
+    throw new Error('Router config unavailable');
   }
   const { supportedChains, allowedSwaps } = config.getValue();
   if (
     !supportedChains.includes(fromChainId) ||
     !supportedChains.includes(toChainId)
   ) {
-    return `Router does not support chains`;
+    throw new Error(`Router does not support chains`);
   }
 
   const swap = allowedSwaps.find(s => {
@@ -262,7 +262,7 @@ export const verifyRouterSupportsTransfer = async (
     return noninverted || inverted;
   });
   if (!swap) {
-    return 'Swap is not supported by router';
+    throw new Error('Swap is not supported by router');
   }
 
   // Verify sufficient gas
@@ -273,12 +273,12 @@ export const verifyRouterSupportsTransfer = async (
     toChannel.alice
   );
   if (routerGasBudget.lt(minGas)) {
-    return 'Router has insufficient gas funds';
+    throw new Error('Router has insufficient gas funds');
   }
 
   // if there is a transfer amount supplied, verify collateral
   if (!transferAmount) {
-    return undefined;
+    return;
   }
 
   const routerOnchain = await getOnchainBalance(
@@ -290,16 +290,16 @@ export const verifyRouterSupportsTransfer = async (
     getBalanceForAssetId(toChannel, toAssetId, 'alice')
   );
   if (routerOffchain.gte(transferAmount)) {
-    return undefined;
+    return;
   }
 
   const collateralCushion = formatEther('1');
   const min = routerOnchain.add(routerOffchain).add(collateralCushion);
   if (min.lt(transferAmount)) {
-    return 'Router has insufficient collateral';
+    throw new Error('Router has insufficient collateral');
   }
 
-  return undefined;
+  return;
 };
 
 export type EvtContainer = {
@@ -337,4 +337,23 @@ export const createEvtContainer = (node: BrowserNode): EvtContainer => {
     [EngineEvents.DEPOSIT_RECONCILED]: deposit,
     [EngineEvents.WITHDRAWAL_RECONCILED]: withdraw,
   };
+};
+
+export const getChannelForChain = async (
+  node: BrowserNode,
+  routerIdentifier: string,
+  chainId: number
+): Promise<FullChannelState> => {
+  const depositChannelRes = await node.getStateChannelByParticipants({
+    chainId,
+    counterparty: routerIdentifier,
+  });
+  if (depositChannelRes.isError) {
+    throw depositChannelRes.getError();
+  }
+  const channel = depositChannelRes.getValue();
+  if (!channel) {
+    throw new Error(`Could not find channel on ${chainId}`);
+  }
+  return channel as FullChannelState;
 };
