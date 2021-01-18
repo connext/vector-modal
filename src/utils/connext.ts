@@ -69,7 +69,7 @@ export const getTotalDepositsBob = async (
   const code = await provider.getCode(channelAddress);
   if (code === '0x') {
     // channel not deployed, all $$ at addr is users
-    return getOnchainBalance(provider, channelAddress, assetId);
+    return getOnchainBalance(provider, assetId, channelAddress);
   }
   // get from chain
   return new Contract(

@@ -285,9 +285,12 @@ const ConnextModal: FC<ConnextModalProps> = ({
     setAmount(transferAmount);
 
     try {
+      console.log(
+        `Calling reconcileDeposit with ${_depositAddress} and ${depositAssetId}`
+      );
       await reconcileDeposit(
         connext.connextClient!,
-        depositAddress!,
+        _depositAddress,
         depositAssetId
       );
     } catch (e) {
@@ -467,8 +470,7 @@ const ConnextModal: FC<ConnextModalProps> = ({
         _ethProviders[depositChainId]
       );
     } catch (e) {
-      setIniting(false);
-      setError(e);
+      handleError(e, 'Error getting total deposits');
       return;
     }
     console.log(
@@ -702,6 +704,7 @@ const ConnextModal: FC<ConnextModalProps> = ({
       // if both are zero, register listener and display
       // QR code
       else {
+        console.log(`Starting block listener`);
         await blockListenerAndTransfer(_depositAddress);
       }
 
