@@ -637,7 +637,7 @@ const ConnextModal: FC<ConnextModalProps> = ({
 
       // prune any existing transfers
       try {
-        await cancelHangingToTransfers(
+        const hangingResolutions = await cancelHangingToTransfers(
           connext.connextClient!,
           _evts[EngineEvents.CONDITIONAL_TRANSFER_CREATED],
           depositChainId,
@@ -645,6 +645,7 @@ const ConnextModal: FC<ConnextModalProps> = ({
           withdrawAssetId,
           routerPublicIdentifier
         );
+        console.log('hangingResolutions: ', hangingResolutions);
       } catch (e) {
         handleError(e, 'Error in cancelHangingToTransfers');
         return;
