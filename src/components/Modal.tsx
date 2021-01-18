@@ -71,6 +71,7 @@ import {
   getChannelForChain,
   createFromAssetTransfer,
   withdrawToAsset,
+  resolveToAssetTransfer,
 } from '../utils';
 import Loading from './Loading';
 import Options from './Options';
@@ -200,11 +201,8 @@ const ConnextModal: FC<ConnextModalProps> = ({
     string
   >(constants.HashZero);
 
-  const [preImage, setPreImage] = useState<string>(constants.HashZero);
-
   const [screen, setScreen] = useState<Screens>('Home');
 
-  const [vectorListenersStarted, setVectorListenersStarted] = useState(false);
   const [listener, setListener] = useState<NodeJS.Timeout>();
 
   const transferState: TransferStates =
@@ -418,21 +416,6 @@ const ConnextModal: FC<ConnextModalProps> = ({
     });
 
     ////// NEW -- EVTS
-    evts![EngineEvents.CONDITIONAL_TRANSFER_CREATED]
-      .pipe(data => {
-        return (
-          data.transfer.meta?.routingId === crossChainTransferId &&
-          data.transfer.initiatorIdentifier === routerPublicIdentifier
-        );
-      })
-      .attach(async data => {
-        await resolveToAssetTransfer(
-          connext.connextClient!,
-          withdrawChannel,
-          preImage,
-          crossChainTransferId
-        );
-      });
   };
 
   const setCrossChainTransferWithErrorTimeout = (
@@ -548,20 +531,32 @@ const ConnextModal: FC<ConnextModalProps> = ({
     }
 
     // call createFromAssetTransfer
+    let preImageVar;
     try {
-      const { transferId, preImage } = await createFromAssetTransfer(
+      const { preImage } = await createFromAssetTransfer(
         connext.connextClient!,
-        depositChannel,
+        depositChainId,
         depositAssetId,
         withdrawChainId,
         withdrawAssetId,
         crossChainTransferId
       );
-      setPreImage(preImage);
+      preImageVar = preImage;
     } catch (e) {
       handleError(e);
       return;
     }
+
+    const resolveConditionalCreated = await evts![
+      EngineEvents.CONDITIONAL_TRANSFER_CREATED
+    ]
+      .pipe(data => {
+        return (
+          data.transfer.meta?.routingId === crossChainTransferId &&
+          data.transfer.initiatorIdentifier === routerPublicIdentifier
+        );
+      })
+      .waitFor();
 
     // once createFromAssetTransfer resolves, then you should
     // go to in progress screen
@@ -572,9 +567,7 @@ const ConnextModal: FC<ConnextModalProps> = ({
     // TODO: figure out best timeout
 
     // cannot move forward until this resolves
-    const receiverResolve = await evts![
-      EngineEvents.CONDITIONAL_TRANSFER_RESOLVED
-    ]
+    const receiverResolve = evts![EngineEvents.CONDITIONAL_TRANSFER_RESOLVED]
       .pipe(data => {
         return (
           data.transfer.meta?.routingId === crossChainTransferId &&
@@ -582,6 +575,7 @@ const ConnextModal: FC<ConnextModalProps> = ({
         );
       })
       .waitFor();
+
     const senderCancel = evts![EngineEvents.CONDITIONAL_TRANSFER_RESOLVED]
       .pipe(data => {
         return (
@@ -592,7 +586,6 @@ const ConnextModal: FC<ConnextModalProps> = ({
         );
       })
       .waitFor(45_000);
-    await Promise.race([receiverResolve, senderCancel]);
 
     // If the sender cancel happened before the receiver resolve, show
     // refresh screen (maybe do this on a callback in event instead of doing
@@ -607,6 +600,15 @@ const ConnextModal: FC<ConnextModalProps> = ({
       })
       .waitFor(45_000);
 
+    await resolveToAssetTransfer(
+      connext.connextClient!,
+      withdrawChainId,
+      preImageVar,
+      crossChainTransferId,
+      routerPublicIdentifier
+    );
+    await Promise.race([receiverResolve, senderCancel]);
+
     try {
       await senderResolve;
     } catch (e) {
@@ -615,25 +617,15 @@ const ConnextModal: FC<ConnextModalProps> = ({
       );
     }
 
-    let withdrawChannel: FullChannelState;
-    try {
-      withdrawChannel = await getChannelForChain(
-        connext.connextClient!,
-        routerPublicIdentifier,
-        withdrawChainId
-      );
-    } catch (e) {
-      handleError(e);
-      return;
-    }
     // now go to withdrawal screen
     let result;
     try {
       result = await withdrawToAsset(
         connext.connextClient!,
-        withdrawChannel,
+        withdrawChainId,
         withdrawAssetId,
-        withdrawalAddress
+        withdrawalAddress,
+        routerPublicIdentifier
       );
     } catch (e) {
       // TODO: handle error on withdrawals, go to contact screen
@@ -767,8 +759,10 @@ const ConnextModal: FC<ConnextModalProps> = ({
       await getWithdrawAssetDecimals();
 
       // create evt containers
-      const _evts = createEvtContainer(connext.connextClient!);
-      setEvts(_evts);
+      if (!evts) {
+        const _evts = createEvtContainer(connext.connextClient!);
+        setEvts(_evts);
+      }
 
       setActiveMessage(1);
       setTips();
@@ -810,12 +804,12 @@ const ConnextModal: FC<ConnextModalProps> = ({
       try {
         await verifyRouterSupportsTransfer(
           connext.connextClient!,
-          withdrawChannel,
           depositChainId,
           depositAssetId,
           withdrawChainId,
           withdrawAssetId,
           _ethProviders[withdrawChainId],
+          routerPublicIdentifier,
           transferAmount
         );
       } catch (e) {
@@ -827,10 +821,11 @@ const ConnextModal: FC<ConnextModalProps> = ({
       try {
         await cancelHangingToTransfers(
           connext.connextClient!,
-          _evts[EngineEvents.CONDITIONAL_TRANSFER_CREATED],
-          withdrawChannel,
-          depositChannel,
-          withdrawAssetId
+          evts![EngineEvents.CONDITIONAL_TRANSFER_CREATED],
+          depositChainId,
+          withdrawChainId,
+          withdrawAssetId,
+          routerPublicIdentifier
         );
       } catch (e) {
         handleError(e);
@@ -875,32 +870,19 @@ const ConnextModal: FC<ConnextModalProps> = ({
         `Offchain balance for ${withdrawChannel.channelAddress} of asset ${withdrawAssetId}: ${offChainWithdrawAssetBalance}`
       );
 
-      if (
-        offChainDepositAssetBalance.gt(0) &&
-        offChainWithdrawAssetBalance.gt(0)
-      ) {
-        handleError(new Error('Balance exists in both channels'));
-        // TODO: go to recovery screen here to withdraw from channels
-        return;
-      }
+      // if (
+      //   offChainDepositAssetBalance.gt(0) &&
+      //   offChainWithdrawAssetBalance.gt(0)
+      // ) {
+      //   handleError(new Error('Balance exists in both channels'));
+      //   // TODO: go to recovery screen here to withdraw from channels
+      //   return;
+      // }
 
       // if offChainDepositAssetBalance > 0
-      else if (offChainDepositAssetBalance.gt(0)) {
+      if (offChainDepositAssetBalance.gt(0)) {
         // then start transfer
-        if (!vectorListenersStarted) {
-          registerEngineEventListeners(
-            connext.connextClient!,
-            BigNumber.from(offChainDepositAssetBalance)
-          );
-          setVectorListenersStarted(true);
-        } else {
-          console.log('Vector listeners already running');
-        }
-        await transfer(
-          _depositAddress,
-          offChainDepositAssetBalance,
-          depositChannel
-        );
+        await transfer(_depositAddress, offChainDepositAssetBalance);
       }
 
       // if offchainWithdrawBalance > 0
