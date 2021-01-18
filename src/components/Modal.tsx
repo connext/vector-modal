@@ -489,7 +489,6 @@ const ConnextModal: FC<ConnextModalProps> = ({
         routerPublicIdentifier
       );
     } catch (e) {
-      // TODO: handle error on withdrawals, go to contact screen
       handleError(e, 'Error in crossChainTransfer');
       setActiveHeaderMessage(3);
       return;
@@ -518,7 +517,7 @@ const ConnextModal: FC<ConnextModalProps> = ({
       });
   };
 
-  const blockListenerAndTransfer = async (
+  const depositListenerAndTransfer = async (
     _depositAddress: string,
     _evts: EvtContainer
   ) => {
@@ -537,35 +536,34 @@ const ConnextModal: FC<ConnextModalProps> = ({
       `Starting balance on ${depositChainId} for ${_depositAddress} of asset ${depositAssetId}: ${initialDeposits.toString()}`
     );
 
-    setListener(
-      setInterval(async () => {
-        let updatedDeposits: BigNumber;
-        try {
-          updatedDeposits = await getTotalDepositsBob(
-            _depositAddress,
-            depositAssetId,
-            _ethProviders[depositChainId]
-          );
-        } catch (e) {
-          console.warn(`Error fetching balance: ${e.message}`);
-          return;
-        }
-        console.log(
-          `Updated balance on ${depositChainId} for ${_depositAddress} of asset ${depositAssetId}: ${updatedDeposits.toString()}`
+    let depositListener = setInterval(async () => {
+      let updatedDeposits: BigNumber;
+      try {
+        updatedDeposits = await getTotalDepositsBob(
+          _depositAddress,
+          depositAssetId,
+          _ethProviders[depositChainId]
         );
+      } catch (e) {
+        console.warn(`Error fetching balance: ${e.message}`);
+        return;
+      }
+      console.log(
+        `Updated balance on ${depositChainId} for ${_depositAddress} of asset ${depositAssetId}: ${updatedDeposits.toString()}`
+      );
 
-        if (updatedDeposits.lt(initialDeposits)) {
-          initialDeposits = updatedDeposits;
-        }
+      if (updatedDeposits.lt(initialDeposits)) {
+        initialDeposits = updatedDeposits;
+      }
 
-        if (updatedDeposits.gt(initialDeposits)) {
-          clearInterval(listener!);
-          const transferAmount = updatedDeposits.sub(initialDeposits);
-          initialDeposits = updatedDeposits;
-          await transfer(_depositAddress, transferAmount, _evts);
-        }
-      }, 5_000)
-    );
+      if (updatedDeposits.gt(initialDeposits)) {
+        clearInterval(depositListener!);
+        const transferAmount = updatedDeposits.sub(initialDeposits);
+        initialDeposits = updatedDeposits;
+        await transfer(_depositAddress, transferAmount, _evts);
+      }
+    }, 5_000);
+    setListener(depositListener);
   };
 
   const stateReset = () => {
@@ -792,7 +790,7 @@ const ConnextModal: FC<ConnextModalProps> = ({
       // QR code
       else {
         console.log(`Starting block listener`);
-        await blockListenerAndTransfer(_depositAddress, _evts);
+        await depositListenerAndTransfer(_depositAddress, _evts);
       }
 
       setIniting(false);
@@ -1337,7 +1335,7 @@ const ErrorState: FC<ErrorStateProps> = ({
             ? `The transfer could not complete, likely because of a communication issue. Funds are preserved in the state channel. Refreshing usually works in this scenario.`
             : `${
                 crossChainTransferId !== constants.HashZero
-                  ? `${crossChainTransferId.substring(0, 5)}... - `
+                  ? `${crossChainTransferId.substring(0, 10)}... - `
                   : ''
               }${error.message}`}
         </Typography>
