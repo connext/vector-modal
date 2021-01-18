@@ -191,7 +191,12 @@ const ConnextModal: FC<ConnextModalProps> = ({
   const [activeCrossChainTransferId, setActiveCrossChainTransferId] = useState<
     string
   >(constants.HashZero);
-  const [preImage, setPreImage] = useState<string>();
+  const [preImage, _setPreImage] = useState<string>();
+  const preImageRef = React.useRef(preImage);
+  const setPreImage = (data: string | undefined) => {
+    preImageRef.current = data;
+    _setPreImage(data);
+  };
 
   const [screen, setScreen] = useState<Screens>('Home');
 
@@ -349,14 +354,16 @@ const ConnextModal: FC<ConnextModalProps> = ({
       console.log(
         `Calling createFromAssetTransfer ${depositChainId} ${depositAssetId} ${withdrawChainId} ${withdrawAssetId} ${crossChainTransferId}`
       );
-      const { preImage } = await createFromAssetTransfer(
+      const preImage = getRandomBytes32();
+      await createFromAssetTransfer(
         connext.connextClient!,
         depositChainId,
         depositAssetId,
         withdrawChainId,
         withdrawAssetId,
         routerPublicIdentifier,
-        crossChainTransferId
+        crossChainTransferId,
+        preImage
       );
       preImageVar = preImage;
     } catch (e) {
@@ -364,6 +371,7 @@ const ConnextModal: FC<ConnextModalProps> = ({
       return;
     }
     setPreImage(preImageVar);
+    console.log('setPreImage(preImageVar);: ', preImageVar);
 
     // wait a long time for this, it needs to send onchain txs
     try {
@@ -625,7 +633,6 @@ const ConnextModal: FC<ConnextModalProps> = ({
       let _evts = evts;
       if (!_evts) {
         _evts = createEvtContainer(connext.connextClient!);
-        setEvts(_evts);
       }
 
       setActiveMessage(1);
@@ -663,13 +670,16 @@ const ConnextModal: FC<ConnextModalProps> = ({
         });
       }
 
+      // set a listener to check for transfers that may have been pushed after a refresh after the hanging transfers have already been canceled
       _evts.CONDITIONAL_TRANSFER_RESOLVED.pipe(
         data =>
           data.transfer.responderIdentifier ===
             connext.connextClient?.publicIdentifier &&
           !!data.transfer.meta.crossChainTransferId
       ).attach(async data => {
-        if (!preImage) {
+        console.log('CONDITIONAL_TRANSFER_RESOLVED >>>>>>>>> data: ', data);
+        console.log('preImage: ', preImageRef.current);
+        if (!preImageRef.current) {
           console.log('Cancelling transfer that we do not have preImage for');
           // no preImage, so cancel the transfer
           await cancelTransfer(
@@ -681,6 +691,7 @@ const ConnextModal: FC<ConnextModalProps> = ({
           );
         }
       });
+      setEvts(_evts);
 
       // validate router before proceeding
       try {

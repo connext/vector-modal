@@ -11,11 +11,7 @@ import {
   TransferNames,
   WithdrawalReconciledPayload,
 } from '@connext/vector-types';
-import {
-  createlockHash,
-  getBalanceForAssetId,
-  getRandomBytes32,
-} from '@connext/vector-utils';
+import { createlockHash, getBalanceForAssetId } from '@connext/vector-utils';
 import { providers, Contract, BigNumber, constants, utils } from 'ethers';
 import { Evt } from 'evt';
 import { getOnchainBalance } from './helpers';
@@ -100,7 +96,8 @@ export const createFromAssetTransfer = async (
   toChainId: number,
   _toAssetId: string,
   routerPublicIdentifier: string,
-  crossChainTransferId = getRandomBytes32()
+  crossChainTransferId: string,
+  preImage: string
 ): Promise<{ transferId: string; preImage: string }> => {
   const depositChannel = await getChannelForChain(
     node,
@@ -117,7 +114,6 @@ export const createFromAssetTransfer = async (
   if (toTransfer === '0') {
     throw new Error('Asset not in channel, please deposit');
   }
-  const preImage = getRandomBytes32();
   const params: NodeParams.ConditionalTransfer = {
     recipient: depositChannel.bobIdentifier,
     recipientChainId: toChainId,
