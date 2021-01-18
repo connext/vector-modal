@@ -182,6 +182,44 @@ export const resolveToAssetTransfer = async (
   return { transferId: transfer.getValue()!.transferId };
 };
 
+export const waitForSenderCancels = async (
+  node: BrowserNode,
+  evt: Evt<ConditionalTransferResolvedPayload>,
+  depositChannelAddress: string
+) => {
+  const active = await node.getActiveTransfers({
+    channelAddress: depositChannelAddress,
+  });
+  if (active.isError) {
+    throw active.getError();
+  }
+  await Promise.all(
+    active.getValue().map(async t => {
+      try {
+        await evt.waitFor(
+          data =>
+            data.transfer.transferId === t.transferId &&
+            data.channelAddress === depositChannelAddress &&
+            Object.values(data.transfer.transferResolver)[0] ===
+              constants.HashZero,
+          45_000
+        );
+      } catch (e) {
+        console.error('Timed out waiting for cancellation:', e);
+      }
+    })
+  );
+  const final = await node.getActiveTransfers({
+    channelAddress: depositChannelAddress,
+  });
+  if (final.isError) {
+    throw final.getError();
+  }
+  if (final.getValue().length > 0) {
+    throw new Error('Hanging sender transfers');
+  }
+};
+
 export const cancelHangingToTransfers = async (
   node: BrowserNode,
   evt: Evt<ConditionalTransferResolvedPayload>,
