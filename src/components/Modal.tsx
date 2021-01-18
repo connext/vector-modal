@@ -607,17 +607,6 @@ const ConnextModal: FC<ConnextModalProps> = ({
         return;
       }
 
-      try {
-        await waitForSenderCancels(
-          connext.connextClient!,
-          _evts[EngineEvents.CONDITIONAL_TRANSFER_RESOLVED],
-          depositChannel.channelAddress
-        );
-      } catch (e) {
-        handleError(e, 'Error in waitForSenderCancels');
-        return;
-      }
-
       // callback for ready
       if (onReady) {
         onReady({
@@ -657,6 +646,17 @@ const ConnextModal: FC<ConnextModalProps> = ({
         console.log('hangingResolutions: ', hangingResolutions);
       } catch (e) {
         handleError(e, 'Error in cancelHangingToTransfers');
+        return;
+      }
+
+      try {
+        await waitForSenderCancels(
+          connext.connextClient!,
+          _evts[EngineEvents.CONDITIONAL_TRANSFER_RESOLVED],
+          depositChannel.channelAddress
+        );
+      } catch (e) {
+        handleError(e, 'Error in waitForSenderCancels');
         return;
       }
 
