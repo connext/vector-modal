@@ -646,6 +646,7 @@ const ConnextModal: FC<ConnextModalProps> = ({
       setCrossChainTransfers(updated);
       return;
     }
+    // display tx hash through explorer -> handles by the event.
     console.log('crossChainTransfer: ', result);
     setWithdrawTx(result.withdrawalTx);
     console.log('SETTING SENT AMOUNT from transfer() >>>>>>>>');
@@ -655,22 +656,6 @@ const ConnextModal: FC<ConnextModalProps> = ({
     setActiveHeaderMessage(2);
     updated[crossChainTransferId] = TRANSFER_STATES.COMPLETE;
     setCrossChainTransfers(updated);
-    // display tx hash through explorer -> handles by the event.
-
-    try {
-      const result = await connext.connextClient!.crossChainTransfer({
-        amount: transferAmount.toString(),
-        fromAssetId: depositAssetId,
-        fromChainId: depositChainId,
-        toAssetId: withdrawAssetId,
-        toChainId: withdrawChainId,
-        reconcileDeposit: true,
-        withdrawalAddress,
-        crossChainTransferId,
-      });
-
-    } catch (e) {
-
   };
 
   const blockListenerAndTransfer = async (_depositAddress: string) => {
@@ -746,6 +731,8 @@ const ConnextModal: FC<ConnextModalProps> = ({
       try {
         // browser node object
         // TODO: remove the service, use stateless functions
+        // keeping connect function stateful only
+        // cause subsequent init() call is failing
         await connext.connectNode(
           connextNode,
           routerPublicIdentifier,
