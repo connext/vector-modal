@@ -303,12 +303,16 @@ const ConnextModal: FC<ConnextModalProps> = ({
 
     let preImageVar;
     try {
+      console.log(
+        `Calling createFromAssetTransfer ${depositChainId} ${depositAssetId} ${withdrawChainId} ${withdrawAssetId} ${crossChainTransferId}`
+      );
       const { preImage } = await createFromAssetTransfer(
         connext.connextClient!,
         depositChainId,
         depositAssetId,
         withdrawChainId,
         withdrawAssetId,
+        routerPublicIdentifier,
         crossChainTransferId
       );
       preImageVar = preImage;
