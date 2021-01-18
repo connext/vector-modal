@@ -191,7 +191,7 @@ const ConnextModal: FC<ConnextModalProps> = ({
   const [activeCrossChainTransferId, setActiveCrossChainTransferId] = useState<
     string
   >(constants.HashZero);
-  const [preImage, setPreImage] = useState();
+  const [preImage, setPreImage] = useState<string>();
 
   const [screen, setScreen] = useState<Screens>('Home');
 
@@ -362,6 +362,7 @@ const ConnextModal: FC<ConnextModalProps> = ({
       handleError(e, 'Error in createFromAssetTransfer');
       return;
     }
+    setPreImage(preImageVar);
 
     // wait a long time for this, it needs to send onchain txs
     try {
