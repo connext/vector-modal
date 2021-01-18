@@ -189,9 +189,16 @@ const ConnextModal: FC<ConnextModalProps> = ({
   const [isError, setIsError] = useState(false);
   const [error, setError] = useState<Error>();
 
-  const [activeCrossChainTransferId, setActiveCrossChainTransferId] = useState<
+  const [activeCrossChainTransferId, _setActiveCrossChainTransferId] = useState<
     string
   >(constants.HashZero);
+  const activeCrossChainTransferIdRef = React.useRef(
+    activeCrossChainTransferId
+  );
+  const setActiveCrossChainTransferId = (data: string) => {
+    activeCrossChainTransferIdRef.current = data;
+    _setActiveCrossChainTransferId(data);
+  };
   const [preImage, _setPreImage] = useState<string>();
   const preImageRef = React.useRef(preImage);
   const setPreImage = (data: string | undefined) => {
@@ -735,14 +742,15 @@ const ConnextModal: FC<ConnextModalProps> = ({
       setActiveMessage(2);
 
       // set a listener to check for transfers that may have been pushed after a refresh after the hanging transfers have already been canceled
-      _evts.CONDITIONAL_TRANSFER_CREATED.pipe(
-        data =>
+      _evts.CONDITIONAL_TRANSFER_CREATED.pipe(data => {
+        console.log('crosschain: ', activeCrossChainTransferIdRef.current);
+        console.log('CONDITIONAL_TRANSFER_CREATED >>>>>>>>> data: ', data);
+        return (
           data.transfer.responderIdentifier ===
             connext.connextClient?.publicIdentifier &&
-          data.transfer.meta.routingId !== activeCrossChainTransferId
-      ).attach(async data => {
-        console.log('CONDITIONAL_TRANSFER_CREATED >>>>>>>>> data: ', data);
-        console.log('preImage: ', preImageRef.current);
+          data.transfer.meta.routingId !== activeCrossChainTransferIdRef.current
+        );
+      }).attach(async data => {
         console.warn('cancelling transfer thats not active');
         await cancelTransfer(
           _depositAddress,
