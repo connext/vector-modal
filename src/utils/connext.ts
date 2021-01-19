@@ -470,15 +470,19 @@ export const createEvtContainer = (node: BrowserNode): EvtContainer => {
   const withdraw = Evt.create<WithdrawalReconciledPayload>();
 
   node.on(EngineEvents.CONDITIONAL_TRANSFER_CREATED, data => {
+    console.log('EngineEvents.CONDITIONAL_TRANSFER_CREATED: ', data);
     createdTransfer.post(data);
   });
   node.on(EngineEvents.CONDITIONAL_TRANSFER_RESOLVED, data => {
+    console.log('EngineEvents.CONDITIONAL_TRANSFER_RESOLVED: ', data);
     resolvedTransfer.post(data);
   });
   node.on(EngineEvents.DEPOSIT_RECONCILED, data => {
+    console.log('EngineEvents.DEPOSIT_RECONCILED: ', data);
     deposit.post(data);
   });
   node.on(EngineEvents.WITHDRAWAL_RECONCILED, data => {
+    console.log('EngineEvents.WITHDRAWAL_RECONCILED: ', data);
     withdraw.post(data);
   });
   return {
