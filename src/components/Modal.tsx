@@ -310,7 +310,7 @@ const ConnextModal: FC<ConnextModalProps> = ({
     _evts: EvtContainer
   ) => {
     // show a better screen here, loading UI
-    handleError(new Error('Cancelling transfer'));
+    handleError(new Error('Cancelling transfer...'));
 
     const senderResolution = _evts.CONDITIONAL_TRANSFER_RESOLVED.pipe(
       data =>
@@ -335,7 +335,7 @@ const ConnextModal: FC<ConnextModalProps> = ({
 
     try {
       await Promise.all([senderResolution, receiverResolution]);
-      handleError(new Error('Transfer cancelled'));
+      handleError(new Error('Transfer was cancelled'));
     } catch (e) {
       handleError(e, 'Error waiting for sender and receiver cancellations');
     }
@@ -370,13 +370,12 @@ const ConnextModal: FC<ConnextModalProps> = ({
 
     setTransferState(TRANSFER_STATES.TRANSFERRING);
 
-    let preImageVar;
+    const preImage = getRandomBytes32();
     try {
       console.log(
         `Calling createFromAssetTransfer ${depositChainId} ${depositAssetId} ${withdrawChainId} ${withdrawAssetId} ${crossChainTransferId}`
       );
-      const preImage = getRandomBytes32();
-      await createFromAssetTransfer(
+      const transferDeets = await createFromAssetTransfer(
         connext.connextClient!,
         depositChainId,
         depositAssetId,
@@ -386,49 +385,14 @@ const ConnextModal: FC<ConnextModalProps> = ({
         crossChainTransferId,
         preImage
       );
-      preImageVar = preImage;
+      console.log('createFromAssetTransfer transferDeets: ', transferDeets);
     } catch (e) {
-      handleError(e, 'Error in createFromAssetTransfer');
+      handleError(e, 'Error in createFromAssetTransfer: ');
       return;
     }
-    setPreImage(preImageVar);
-    console.log('setPreImage(preImageVar);: ', preImageVar);
+    setPreImage(preImage);
 
-    // wait a long time for this, it needs to send onchain txs
-    try {
-      await _evts[EngineEvents.CONDITIONAL_TRANSFER_CREATED]
-        .pipe(data => {
-          return (
-            data.transfer.meta?.routingId === crossChainTransferId &&
-            data.transfer.initiatorIdentifier === routerPublicIdentifier
-          );
-        })
-        .waitFor(300_000);
-    } catch (e) {
-      handleError(
-        e,
-        'Did not see CONDITIONAL_TRANSFER_CREATED after 300 seconds'
-      );
-      return;
-    }
-
-    // once createFromAssetTransfer resolves, then you should
-    // go to in progress screen
-
-    // get promises
-
-    // okay to move forward if this rejects
-
-    // cannot move forward until this resolves
-    const receiverResolve = _evts[EngineEvents.CONDITIONAL_TRANSFER_RESOLVED]
-      .pipe(data => {
-        return (
-          data.transfer.meta?.routingId === crossChainTransferId &&
-          data.transfer.initiatorIdentifier === routerPublicIdentifier
-        );
-      })
-      .waitFor(45_000);
-
+    // listen for a sender-side cancellation, if it happens, short-circuit and show cancellation
     const senderCancel = _evts[EngineEvents.CONDITIONAL_TRANSFER_RESOLVED]
       .pipe(data => {
         return (
@@ -438,11 +402,45 @@ const ConnextModal: FC<ConnextModalProps> = ({
             constants.HashZero
         );
       })
-      .waitFor(45_000);
+      .waitFor(300_000);
 
-    // If the sender cancel happened before the receiver resolve, show
-    // refresh screen (maybe do this on a callback in event instead of doing
-    // what i just did above)
+    const receiverCreate = _evts[EngineEvents.CONDITIONAL_TRANSFER_CREATED]
+      .pipe(data => {
+        return (
+          data.transfer.meta?.routingId === crossChainTransferId &&
+          data.transfer.initiatorIdentifier === routerPublicIdentifier
+        );
+      })
+      .waitFor(300_000);
+
+    // wait a long time for this, it needs to send onchain txs
+    // if the receiver create doesnt complete, sender side can get cancelled
+    try {
+      const senderCanceledOrReceiverCreated = await Promise.race([
+        senderCancel,
+        receiverCreate,
+      ]);
+      console.log(
+        'Received senderCanceledOrReceiverCreated: ',
+        senderCanceledOrReceiverCreated
+      );
+      if (
+        Object.values(
+          senderCanceledOrReceiverCreated.transfer.transferResolver ?? {}
+        )[0] === constants.HashZero
+      ) {
+        console.warn('Transfer was cancelled');
+        // TODO: SHOW CANCELLATION SCREEN
+        handleError(new Error('Transfer was cancelled'));
+        return;
+      }
+    } catch (e) {
+      handleError(
+        e,
+        'Did not receive transfer after 300 seconds, please try again later or attempt recovery'
+      );
+      return;
+    }
 
     const senderResolve = _evts[EngineEvents.CONDITIONAL_TRANSFER_RESOLVED]
       .pipe(data => {
@@ -453,33 +451,16 @@ const ConnextModal: FC<ConnextModalProps> = ({
       })
       .waitFor(45_000);
 
-    await resolveToAssetTransfer(
-      connext.connextClient!,
-      withdrawChainId,
-      preImageVar,
-      crossChainTransferId,
-      routerPublicIdentifier
-    );
     try {
-      const receiverResolvedData = await Promise.race([
-        receiverResolve,
-        senderCancel,
-      ]);
-      if (
-        Object.values(
-          receiverResolvedData.transfer.transferResolver ?? {}
-        )[0] === constants.HashZero
-      ) {
-        console.log('Transfer was cancelled');
-        // TODO: SHOW CANCELLATION SCREEN
-        handleError(new Error('Transfer was cancelled'));
-        return;
-      }
-    } catch (e) {
-      handleError(
-        e,
-        'Did not receive the receiver transfer resolution after 45 seconds'
+      await resolveToAssetTransfer(
+        connext.connextClient!,
+        withdrawChainId,
+        preImage,
+        crossChainTransferId,
+        routerPublicIdentifier
       );
+    } catch (e) {
+      handleError(e, 'Error in resolveToAssetTransfer: ');
       return;
     }
     setPreImage(undefined);
@@ -488,7 +469,7 @@ const ConnextModal: FC<ConnextModalProps> = ({
       await senderResolve;
     } catch (e) {
       console.warn(
-        'Did not find reclaim event from router, proceeding with withdrawal',
+        'Did not find resolve event from router, proceeding with withdrawal',
         e
       );
     }
@@ -751,15 +732,13 @@ const ConnextModal: FC<ConnextModalProps> = ({
 
       // set a listener to check for transfers that may have been pushed after a refresh after the hanging transfers have already been canceled
       _evts.CONDITIONAL_TRANSFER_CREATED.pipe(data => {
-        console.log('crosschain: ', activeCrossChainTransferIdRef.current);
-        console.log('CONDITIONAL_TRANSFER_CREATED >>>>>>>>> data: ', data);
         return (
           data.transfer.responderIdentifier ===
             connext.connextClient?.publicIdentifier &&
           data.transfer.meta.routingId !== activeCrossChainTransferIdRef.current
         );
       }).attach(async data => {
-        console.warn('cancelling transfer thats not active');
+        console.warn('Cancelling transfer thats not active');
         await cancelTransfer(
           _depositAddress,
           withdrawChannel.channelAddress,
@@ -770,7 +749,7 @@ const ConnextModal: FC<ConnextModalProps> = ({
       });
 
       try {
-        console.log('waiting for sender cancellations..');
+        console.log('Waiting for sender cancellations..');
         await waitForSenderCancels(
           connext.connextClient!,
           _evts[EngineEvents.CONDITIONAL_TRANSFER_RESOLVED],
