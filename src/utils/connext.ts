@@ -193,8 +193,11 @@ export const waitForSenderCancels = async (
   if (active.isError) {
     throw active.getError();
   }
+  const hashlock = active.getValue().filter(t => {
+    return Object.keys(t.transferState).includes('lockHash');
+  });
   await Promise.all(
-    active.getValue().map(async t => {
+    hashlock.map(async t => {
       try {
         await evt.waitFor(
           data =>
@@ -215,7 +218,10 @@ export const waitForSenderCancels = async (
   if (final.isError) {
     throw final.getError();
   }
-  if (final.getValue().length > 0) {
+  const remaining = final.getValue().filter(t => {
+    return Object.keys(t.transferState).includes('lockHash');
+  });
+  if (remaining.length > 0) {
     throw new Error('Hanging sender transfers');
   }
 };
