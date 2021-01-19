@@ -40,6 +40,7 @@ export const getAssetName = (assetId: string, chainId: number): string => {
 };
 
 export const TRANSFER_STATES = {
+  LOADING: 'LOADING',
   INITIAL: 'INITIAL',
   DEPOSITING: 'DEPOSITING',
   TRANSFERRING: 'TRANSFERRING',
@@ -48,6 +49,13 @@ export const TRANSFER_STATES = {
   ERROR: 'ERROR',
 } as const;
 export type TransferStates = keyof typeof TRANSFER_STATES;
+
+export const ERROR_STATES = {
+  REFRESH: 'REFRESH',
+  CONTACT_INFO: 'CONTACT_INFO',
+  RETRY: 'RETRY',
+} as const;
+export type ErrorStates = keyof typeof ERROR_STATES;
 
 export type Screens = 'Recover' | 'Home';
 
