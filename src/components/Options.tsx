@@ -2,12 +2,13 @@ import React, { FC } from 'react';
 import { Typography, IconButton, MenuItem, Menu } from '@material-ui/core';
 
 import { MoreVert } from '@material-ui/icons';
-import { Screens } from '../constants';
+import { TRANSFER_STATES, TransferStates, Screens } from '../constants';
 
 const Options: FC<{
+  transferState: TransferStates;
   setScreen: (screen: Screens) => any;
   activeScreen: Screens;
-}> = ({ setScreen, activeScreen }) => {
+}> = ({ setScreen, activeScreen, transferState }) => {
   const [anchorEl, setAnchorEl] = React.useState<null | HTMLElement>(null);
   const open = Boolean(anchorEl);
 
@@ -23,6 +24,11 @@ const Options: FC<{
     <>
       <IconButton
         aria-label="more"
+        disabled={[
+          TRANSFER_STATES.DEPOSITING,
+          TRANSFER_STATES.TRANSFERRING,
+          TRANSFER_STATES.WITHDRAWING,
+        ].includes(transferState as any)}
         aria-controls="long-menu"
         aria-haspopup="true"
         onClick={handleClick}
