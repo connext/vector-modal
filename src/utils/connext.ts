@@ -196,6 +196,7 @@ export const waitForSenderCancels = async (
   await Promise.all(
     active.getValue().map(async t => {
       try {
+        console.log('Waiting for sender cancellation: ', t);
         await evt.waitFor(
           data =>
             data.transfer.transferId === t.transferId &&
