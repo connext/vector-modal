@@ -60,10 +60,10 @@ export const message = (activeMessage: number) => {
       return `Setting Up Deposit Address...`;
 
     case 2:
-      return `Looking for existing Channel Balance...`;
+      return `Loading most recent transfers...`;
 
     case 3:
-      return `Checking for incomplete transfers...`;
+      return `Looking for existing Channel Balance...`;
 
     default:
       return 'Connecting to Network...';

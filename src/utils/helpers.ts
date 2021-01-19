@@ -5,6 +5,9 @@ import { delay } from '@connext/vector-utils';
 
 export const activePhase = (phase: TransferStates): number => {
   switch (phase) {
+    case 'LOADING': {
+      return -2;
+    }
     case 'INITIAL': {
       return -1;
     }

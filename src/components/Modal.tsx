@@ -211,7 +211,7 @@ const ConnextModal: FC<ConnextModalProps> = ({
   const [listener, setListener] = useState<NodeJS.Timeout>();
 
   const [transferState, setTransferState] = useState<TransferStates>(
-    TRANSFER_STATES.INITIAL
+    TRANSFER_STATES.LOADING
   );
 
   const activeStep = activePhase(transferState);
@@ -576,7 +576,7 @@ const ConnextModal: FC<ConnextModalProps> = ({
 
   const stateReset = () => {
     setIniting(true);
-    setTransferState(TRANSFER_STATES.INITIAL);
+    setTransferState(TRANSFER_STATES.LOADING);
     setIsError(false);
     setError(undefined);
     setDepositAddress(undefined);
@@ -691,6 +691,7 @@ const ConnextModal: FC<ConnextModalProps> = ({
         return;
       }
 
+      setActiveMessage(2);
       // prune any existing receiver transfers
       try {
         const hangingResolutions = await cancelHangingToTransfers(
@@ -707,26 +708,32 @@ const ConnextModal: FC<ConnextModalProps> = ({
         return;
       }
 
-      // const [depositActive, withdrawActive] = await Promise.all([
-      //   connext.connextClient!.getActiveTransfers({
-      //     channelAddress: depositChannel.channelAddress,
-      //   }),
-      //   connext.connextClient!.getActiveTransfers({
-      //     channelAddress: withdrawChannel.channelAddress,
-      //   }),
-      // ]);
-      // console.error(
-      //   '****** [post receiver process] deposit active on init',
-      //   depositActive.getValue().length,
-      //   'ids:',
-      //   depositActive.getValue().map(t => t.transferId)
-      // );
-      // console.error(
-      //   '****** [post receiver process] withdraw active on init',
-      //   withdrawActive.getValue().length,
-      //   'ids:',
-      //   withdrawActive.getValue().map(t => t.transferId)
-      // );
+      const [depositActive, withdrawActive] = await Promise.all([
+        connext.connextClient!.getActiveTransfers({
+          channelAddress: depositChannel.channelAddress,
+        }),
+        connext.connextClient!.getActiveTransfers({
+          channelAddress: withdrawChannel.channelAddress,
+        }),
+      ]);
+      const depositHashlock = depositActive
+        .getValue()
+        .filter(t => Object.keys(t.transferState).includes('lockHash'));
+      const withdrawHashlock = withdrawActive
+        .getValue()
+        .filter(t => Object.keys(t.transferState).includes('lockHash'));
+      console.warn(
+        'deposit active on init',
+        depositHashlock.length,
+        'ids:',
+        depositHashlock.map(t => t.transferId)
+      );
+      console.warn(
+        'withdraw active on init',
+        withdrawHashlock.length,
+        'ids:',
+        withdrawHashlock.map(t => t.transferId)
+      );
 
       // set a listener to check for transfers that may have been pushed after a refresh after the hanging transfers have already been canceled
       _evts.CONDITIONAL_TRANSFER_CREATED.pipe(data => {
@@ -749,18 +756,19 @@ const ConnextModal: FC<ConnextModalProps> = ({
       });
 
       try {
+        console.log('waiting for sender cancellations..');
         await waitForSenderCancels(
           connext.connextClient!,
           _evts[EngineEvents.CONDITIONAL_TRANSFER_RESOLVED],
           depositChannel.channelAddress
         );
+        console.log('done!');
       } catch (e) {
         handleError(e, 'Error in waitForSenderCancels');
         return;
       }
 
-      setActiveMessage(2);
-
+      setActiveMessage(3);
       try {
         await reconcileDeposit(
           connext.connextClient!,
@@ -808,7 +816,6 @@ const ConnextModal: FC<ConnextModalProps> = ({
         await transfer(_depositAddress, offChainDepositAssetBalance, _evts);
         return;
       }
-
       // if offChainDepositAssetBalance > 0
       if (offChainDepositAssetBalance.gt(0)) {
         // then start transfer
@@ -824,6 +831,8 @@ const ConnextModal: FC<ConnextModalProps> = ({
       // if both are zero, register listener and display
       // QR code
       else {
+        // sets up deposit screen
+        setTransferState(TRANSFER_STATES.INITIAL);
         console.log(`Starting block listener`);
         await depositListenerAndTransfer(_depositAddress, _evts);
       }
@@ -877,8 +886,9 @@ const ConnextModal: FC<ConnextModalProps> = ({
   };
   const steps = ['Deposit', 'Transfer', 'Withdraw'];
 
-  function getStepContent(step: number) {
+  function getScreen(step: number) {
     if (isError) {
+      // ERROR SCREEN
       return (
         <>
           <ErrorState
@@ -890,6 +900,35 @@ const ConnextModal: FC<ConnextModalProps> = ({
       );
     } else {
       switch (step) {
+        // LOADING SCREEN
+        case -2:
+          return (
+            <>
+              <Loading
+                message={message(activeMessage)}
+                initializing={initing}
+              />
+              <NetworkBar
+                depositChainName={depositChainName}
+                withdrawChainName={withdrawChainName}
+                styles={classes.networkBar}
+              />
+              <Grid container>
+                <Grid item xs={12}>
+                  <TextField
+                    label={`Receiver Address on ${withdrawChainName}`}
+                    defaultValue={withdrawalAddress}
+                    InputProps={{
+                      readOnly: true,
+                    }}
+                    fullWidth
+                    size="small"
+                  />
+                </Grid>
+              </Grid>
+            </>
+          );
+        // DEPOSIT SCREEN
         case -1:
           return (
             <>
@@ -926,6 +965,7 @@ const ConnextModal: FC<ConnextModalProps> = ({
               <Footer styles={classes.footer} />
             </>
           );
+        // STATUS SCREEEN
         case 0:
           return (
             <>
@@ -1043,7 +1083,7 @@ const ConnextModal: FC<ConnextModalProps> = ({
         className={classes.dialog}
       >
         <Card className={classes.card}>
-          {depositAddress && (
+          {activeStep != -2 && (
             <Grid
               id="Header"
               container
@@ -1067,79 +1107,43 @@ const ConnextModal: FC<ConnextModalProps> = ({
 
               {headerMessage(activeHeaderMessage)}
 
-              <Options setScreen={setScreen} activeScreen={screen} />
+              <Options
+                setScreen={setScreen}
+                activeScreen={screen}
+                transferState={transferState}
+              />
             </Grid>
           )}
           {screen === 'Home' && (
             <>
               <Grid container id="body" className={classes.body}>
-                {depositAddress ? (
-                  <>
-                    {activeStep != -1 && (
-                      <Grid container className={classes.steps}>
-                        <Grid item xs={12}>
-                          <Stepper activeStep={activeStep}>
-                            {steps.map(label => {
-                              return (
-                                <Step key={label}>
-                                  <StepLabel
-                                    StepIconComponent={StepIcon}
-                                    StepIconProps={{ error: isError }}
-                                  >
-                                    {label}
-                                  </StepLabel>
-                                </Step>
-                              );
-                            })}
-                          </Stepper>
-                        </Grid>
+                <>
+                  {activeStep > -1 && (
+                    <Grid container className={classes.steps}>
+                      <Grid item xs={12}>
+                        <Stepper activeStep={activeStep}>
+                          {steps.map(label => {
+                            return (
+                              <Step key={label}>
+                                <StepLabel
+                                  StepIconComponent={StepIcon}
+                                  StepIconProps={{ error: isError }}
+                                >
+                                  {label}
+                                </StepLabel>
+                              </Step>
+                            );
+                          })}
+                        </Stepper>
                       </Grid>
-                    )}
+                    </Grid>
+                  )}
 
-                    {getStepContent(activeStep)}
-                  </>
-                ) : (
-                  <>
-                    {isError ? (
-                      <>
-                        <ErrorState
-                          error={error ?? new Error('unknown')}
-                          crossChainTransferId={activeCrossChainTransferId}
-                          styles={classes.errorState}
-                        />
-                      </>
-                    ) : (
-                      <>
-                        <Loading
-                          message={message(activeMessage)}
-                          initializing={initing}
-                        />
-                        <NetworkBar
-                          depositChainName={depositChainName}
-                          withdrawChainName={withdrawChainName}
-                          styles={classes.networkBar}
-                        />
-                        <Grid container>
-                          <Grid item xs={12}>
-                            <TextField
-                              label={`Receiver Address on ${withdrawChainName}`}
-                              defaultValue={withdrawalAddress}
-                              InputProps={{
-                                readOnly: true,
-                              }}
-                              fullWidth
-                              size="small"
-                            />
-                          </Grid>
-                        </Grid>
-                      </>
-                    )}
-                  </>
-                )}
+                  {getScreen(activeStep)}
+                </>
               </Grid>
             </>
           )}
-
           {screen === 'Recover' && (
             <>
               <Recover
@@ -1322,7 +1326,6 @@ const CompleteState: FC<CompleteStateProps> = ({
         <Grid container justifyContent="center">
           <Button
             variant="contained"
-            className={styleSuccess}
             onClick={onClose}
           >
             Close Modal
