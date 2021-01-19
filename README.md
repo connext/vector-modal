@@ -1,3 +1,11 @@
+# Example
+
+The easiest way to integrate the modal component is to follow the example in `example/`.
+
+# Documentation
+
+Docs are available [here](https://betadocs.connext.network/doc/un-IUm2QFi2_oakW2lvw7/fN08Bt7HhUNdarkXh-F8q)
+
 # Local Testing
 
 For local testing, use the following setup with this and the `vector` repo:
@@ -10,7 +18,6 @@ For local testing, use the following setup with this and the `vector` repo:
 
 ```
 REACT_APP_IFRAME_SRC=http://localhost:3030
-REACT_APP_ETH_PROVIDERS={"1337":"http://localhost:8545","1338":"http://localhost:8546"}
 ```
 
 - change `vector-modal/example/index.tsx` to use the local config (can modify addresses if needed):
