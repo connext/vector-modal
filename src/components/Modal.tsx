@@ -47,8 +47,10 @@ import { getBalanceForAssetId, getRandomBytes32 } from '@connext/vector-utils';
 import {
   CHAIN_INFO_URL,
   getAssetName,
-  TransferStates,
   TRANSFER_STATES,
+  TransferStates,
+  ERROR_STATES,
+  ErrorStates,
   Screens,
   message,
 } from '../constants';
@@ -213,6 +215,9 @@ const ConnextModal: FC<ConnextModalProps> = ({
   const [transferState, setTransferState] = useState<TransferStates>(
     TRANSFER_STATES.LOADING
   );
+  const [errorState, setErrorState] = useState<ErrorStates>(
+    ERROR_STATES.REFRESH
+  );
 
   const activeStep = activePhase(transferState);
 
@@ -228,10 +233,18 @@ const ConnextModal: FC<ConnextModalProps> = ({
 
   const [amount, setAmount] = useState<BigNumber>(BigNumber.from(0));
 
-  const handleError = (e: Error | undefined, message?: string) => {
+  const handleError = (
+    e: Error | undefined,
+    message?: string,
+    pErrorState?: ErrorStates
+  ) => {
     if (message) {
       console.error(message, e);
     }
+    if (pErrorState) {
+      setErrorState(pErrorState);
+    }
+    setErrorState(ERROR_STATES.REFRESH);
     setError(e);
     setIsError(true);
     setIniting(false);
@@ -577,6 +590,7 @@ const ConnextModal: FC<ConnextModalProps> = ({
   const stateReset = () => {
     setIniting(true);
     setTransferState(TRANSFER_STATES.LOADING);
+    setErrorState(ERROR_STATES.REFRESH);
     setIsError(false);
     setError(undefined);
     setDepositAddress(undefined);
@@ -891,8 +905,9 @@ const ConnextModal: FC<ConnextModalProps> = ({
       // ERROR SCREEN
       return (
         <>
-          <ErrorState
+          <ErrorScreen
             error={error ?? new Error('unknown')}
+            errorState={errorState}
             crossChainTransferId={activeCrossChainTransferId}
             styles={classes.errorState}
           />
@@ -1324,10 +1339,7 @@ const CompleteState: FC<CompleteStateProps> = ({
       </Grid>
       <Grid item xs={12}>
         <Grid container justifyContent="center">
-          <Button
-            variant="contained"
-            onClick={onClose}
-          >
+          <Button variant="contained" onClick={onClose}>
             Close Modal
           </Button>
         </Grid>
@@ -1338,12 +1350,14 @@ const CompleteState: FC<CompleteStateProps> = ({
 
 export interface ErrorStateProps {
   error: Error;
+  errorState: ErrorStates;
   crossChainTransferId: string;
   styles: string;
 }
 
-const ErrorState: FC<ErrorStateProps> = ({
+const ErrorScreen: FC<ErrorStateProps> = ({
   error,
+  errorState,
   crossChainTransferId,
   styles,
 }) => {
@@ -1378,16 +1392,49 @@ const ErrorState: FC<ErrorStateProps> = ({
               }${error.message}`}
         </Typography>
       </Grid>
-      <Grid container direction="row" justifyContent="center">
-        <Button
-          variant="outlined"
-          onClick={() => {
-            window.location.reload();
-          }}
-        >
-          Refresh
-        </Button>
-      </Grid>
+
+      {errorState === ERROR_STATES.REFRESH && (
+        <Grid container direction="row" justifyContent="center">
+          <Button
+            variant="outlined"
+            onClick={() => {
+              window.location.reload();
+            }}
+          >
+            Refresh
+          </Button>
+        </Grid>
+      )}
+
+      {errorState === ERROR_STATES.CONTACT_INFO && (
+        <>
+          <Typography
+            gutterBottom
+            variant="caption"
+            color="primary"
+            align="center"
+          >
+            Uh oh, looks like you got an unexpected error. Please try to
+            refresh, or if that doesn't work, contact us on Discord for more
+            support
+          </Typography>
+
+          <Grid container direction="row" justifyContent="center">
+            <Button
+              variant="outlined"
+              id="link"
+              onClick={() =>
+                window.open(
+                  'https://discord.com/channels/454734546869551114',
+                  '_blank'
+                )
+              }
+            >
+              Discord
+            </Button>
+          </Grid>
+        </>
+      )}
     </>
   );
 };
