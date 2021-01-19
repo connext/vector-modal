@@ -691,6 +691,7 @@ const ConnextModal: FC<ConnextModalProps> = ({
         return;
       }
 
+      setActiveMessage(2);
       // prune any existing receiver transfers
       try {
         const hangingResolutions = await cancelHangingToTransfers(
@@ -707,26 +708,32 @@ const ConnextModal: FC<ConnextModalProps> = ({
         return;
       }
 
-      // const [depositActive, withdrawActive] = await Promise.all([
-      //   connext.connextClient!.getActiveTransfers({
-      //     channelAddress: depositChannel.channelAddress,
-      //   }),
-      //   connext.connextClient!.getActiveTransfers({
-      //     channelAddress: withdrawChannel.channelAddress,
-      //   }),
-      // ]);
-      // console.error(
-      //   '****** [post receiver process] deposit active on init',
-      //   depositActive.getValue().length,
-      //   'ids:',
-      //   depositActive.getValue().map(t => t.transferId)
-      // );
-      // console.error(
-      //   '****** [post receiver process] withdraw active on init',
-      //   withdrawActive.getValue().length,
-      //   'ids:',
-      //   withdrawActive.getValue().map(t => t.transferId)
-      // );
+      const [depositActive, withdrawActive] = await Promise.all([
+        connext.connextClient!.getActiveTransfers({
+          channelAddress: depositChannel.channelAddress,
+        }),
+        connext.connextClient!.getActiveTransfers({
+          channelAddress: withdrawChannel.channelAddress,
+        }),
+      ]);
+      const depositHashlock = depositActive
+        .getValue()
+        .filter(t => Object.keys(t.transferState).includes('lockHash'));
+      const withdrawHashlock = withdrawActive
+        .getValue()
+        .filter(t => Object.keys(t.transferState).includes('lockHash'));
+      console.warn(
+        'deposit active on init',
+        depositHashlock.length,
+        'ids:',
+        depositHashlock.map(t => t.transferId)
+      );
+      console.warn(
+        'withdraw active on init',
+        withdrawHashlock.length,
+        'ids:',
+        withdrawHashlock.map(t => t.transferId)
+      );
 
       // set a listener to check for transfers that may have been pushed after a refresh after the hanging transfers have already been canceled
       _evts.CONDITIONAL_TRANSFER_CREATED.pipe(data => {
@@ -749,18 +756,19 @@ const ConnextModal: FC<ConnextModalProps> = ({
       });
 
       try {
+        console.log('waiting for sender cancellations..');
         await waitForSenderCancels(
           connext.connextClient!,
           _evts[EngineEvents.CONDITIONAL_TRANSFER_RESOLVED],
           depositChannel.channelAddress
         );
+        console.log('done!');
       } catch (e) {
         handleError(e, 'Error in waitForSenderCancels');
         return;
       }
 
-      setActiveMessage(2);
-
+      setActiveMessage(3);
       try {
         await reconcileDeposit(
           connext.connextClient!,
