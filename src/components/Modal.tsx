@@ -402,7 +402,7 @@ const ConnextModal: FC<ConnextModalProps> = ({
             constants.HashZero
         );
       })
-      .waitFor(300_000);
+      .waitFor(500_000);
 
     const receiverCreate = _evts[EngineEvents.CONDITIONAL_TRANSFER_CREATED]
       .pipe(data => {
@@ -411,7 +411,7 @@ const ConnextModal: FC<ConnextModalProps> = ({
           data.transfer.initiatorIdentifier === routerPublicIdentifier
         );
       })
-      .waitFor(300_000);
+      .waitFor(500_000);
 
     // wait a long time for this, it needs to send onchain txs
     // if the receiver create doesnt complete, sender side can get cancelled
@@ -430,14 +430,13 @@ const ConnextModal: FC<ConnextModalProps> = ({
         )[0] === constants.HashZero
       ) {
         console.warn('Transfer was cancelled');
-        // TODO: SHOW CANCELLATION SCREEN
         handleError(new Error('Transfer was cancelled'));
         return;
       }
     } catch (e) {
       handleError(
         e,
-        'Did not receive transfer after 300 seconds, please try again later or attempt recovery'
+        'Did not receive transfer after 500 seconds, please try again later or attempt recovery'
       );
       return;
     }
