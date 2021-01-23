@@ -1,4 +1,5 @@
 import { constants } from 'ethers';
+import { theme, useStyles } from './style';
 
 export const CHAIN_INFO_URL = 'https://chainid.network/chains.json';
 
@@ -77,3 +78,5 @@ export const message = (activeMessage: number) => {
       return 'Connecting to Network...';
   }
 };
+
+export { theme, useStyles };

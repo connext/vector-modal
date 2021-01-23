@@ -28,24 +28,12 @@ import {
   ErrorRounded,
   CheckCircleTwoTone,
 } from '@material-ui/icons';
-import {
-  makeStyles,
-  createStyles,
-  Theme,
-  createMuiTheme,
-} from '@material-ui/core/styles';
-import { purple, blue, green } from '@material-ui/core/colors';
 // @ts-ignore
 import QRCode from 'qrcode.react';
-import { BigNumber, constants, Contract, utils } from 'ethers';
-import {
-  EngineEvents,
-  ERC20Abi,
-  FullChannelState,
-} from '@connext/vector-types';
+import { BigNumber, constants, utils } from 'ethers';
+import { EngineEvents, FullChannelState } from '@connext/vector-types';
 import { getBalanceForAssetId, getRandomBytes32 } from '@connext/vector-utils';
 import {
-  CHAIN_INFO_URL,
   getAssetName,
   TRANSFER_STATES,
   TransferStates,
@@ -53,6 +41,8 @@ import {
   ErrorStates,
   Screens,
   message,
+  theme,
+  useStyles,
 } from '../constants';
 import { connext } from '../service';
 import {
@@ -72,71 +62,12 @@ import {
   resolveToAssetTransfer,
   waitForSenderCancels,
   cancelToAssetTransfer,
+  getChainInfo,
+  getWithdrawAssetDecimals,
 } from '../utils';
 import Loading from './Loading';
 import Options from './Options';
 import Recover from './Recover';
-
-const theme = createMuiTheme({
-  palette: {
-    mode: 'light',
-    primary: {
-      main: purple[500],
-    },
-    secondary: {
-      main: blue[500],
-    },
-    success: {
-      main: green[500],
-    },
-  },
-  typography: {
-    fontFamily: [
-      '-apple-system',
-      'BlinkMacSystemFont',
-      '"Segoe UI"',
-      'Roboto',
-      '"Helvetica Neue"',
-      'Arial',
-      'sans-serif',
-      '"Apple Color Emoji"',
-      '"Segoe UI Emoji"',
-      '"Segoe UI Symbol"',
-    ].join(','),
-  },
-  spacing: 2,
-});
-
-const useStyles = makeStyles((theme: Theme) =>
-  createStyles({
-    root: {
-      width: '100%',
-    },
-    spacing: {
-      margin: theme.spacing(3, 2),
-    },
-    card: {
-      height: 'auto',
-      minWidth: '390px',
-    },
-    success: { color: green[500] },
-    dialog: {},
-    header: {},
-    networkBar: { paddingBottom: '1.5rem' },
-    body: { padding: '1rem' },
-    steps: { paddingBottom: '1rem' },
-    status: { paddingBottom: '1rem' },
-    qrcode: {
-      paddingBottom: '1rem',
-      filter: 'drop-shadow(0px 0px 4px rgba(0, 0, 0, 0.25))',
-      borderRadius: '5px',
-    },
-    ethereumAddress: { paddingBottom: '1rem' },
-    completeState: { paddingBottom: '1rem' },
-    errorState: { paddingBottom: '1rem' },
-    footer: {},
-  })
-);
 
 export type ConnextModalProps = {
   showModal: boolean;
@@ -194,13 +125,7 @@ const ConnextModal: FC<ConnextModalProps> = ({
   const [activeCrossChainTransferId, _setActiveCrossChainTransferId] = useState<
     string
   >(constants.HashZero);
-  const activeCrossChainTransferIdRef = React.useRef(
-    activeCrossChainTransferId
-  );
-  const setActiveCrossChainTransferId = (data: string) => {
-    activeCrossChainTransferIdRef.current = data;
-    _setActiveCrossChainTransferId(data);
-  };
+
   const [preImage, _setPreImage] = useState<string>();
   const preImageRef = React.useRef(preImage);
   const setPreImage = (data: string | undefined) => {
@@ -209,7 +134,6 @@ const ConnextModal: FC<ConnextModalProps> = ({
   };
 
   const [screen, setScreen] = useState<Screens>('Home');
-
   const [listener, setListener] = useState<NodeJS.Timeout>();
 
   const [transferState, setTransferState] = useState<TransferStates>(
@@ -218,6 +142,18 @@ const ConnextModal: FC<ConnextModalProps> = ({
   const [errorState, setErrorState] = useState<ErrorStates>(
     ERROR_STATES.REFRESH
   );
+  const [activeMessage, setActiveMessage] = useState(0);
+  const [activeHeaderMessage, setActiveHeaderMessage] = useState(0);
+
+  const [amount, setAmount] = useState<BigNumber>(BigNumber.from(0));
+
+  const activeCrossChainTransferIdRef = React.useRef(
+    activeCrossChainTransferId
+  );
+  const setActiveCrossChainTransferId = (data: string) => {
+    activeCrossChainTransferIdRef.current = data;
+    _setActiveCrossChainTransferId(data);
+  };
 
   const activeStep = activePhase(transferState);
 
@@ -227,11 +163,6 @@ const ConnextModal: FC<ConnextModalProps> = ({
     withdrawChainId,
     withdrawChainProvider
   );
-
-  const [activeMessage, setActiveMessage] = useState(0);
-  const [activeHeaderMessage, setActiveHeaderMessage] = useState(0);
-
-  const [amount, setAmount] = useState<BigNumber>(BigNumber.from(0));
 
   const handleError = (
     e: Error | undefined,
@@ -249,57 +180,6 @@ const ConnextModal: FC<ConnextModalProps> = ({
     setIsError(true);
     setIniting(false);
     setPreImage(undefined);
-  };
-
-  const getChainInfo = async () => {
-    try {
-      const chainInfo: any[] = await utils.fetchJson(CHAIN_INFO_URL);
-      const depositChainInfo = chainInfo.find(
-        info => info.chainId === depositChainId
-      );
-      if (depositChainInfo) {
-        setDepositChainName(depositChainInfo.name);
-      }
-
-      const withdrawChainInfo = chainInfo.find(
-        info => info.chainId === withdrawChainId
-      );
-      if (withdrawChainInfo) {
-        setWithdrawChainName(withdrawChainInfo.name);
-      }
-    } catch (e) {
-      console.warn(`Could not fetch chain info from ${CHAIN_INFO_URL}`);
-    }
-  };
-
-  const getWithdrawAssetDecimals = async () => {
-    const token = new Contract(
-      withdrawAssetId,
-      ERC20Abi,
-      _ethProviders[withdrawChainId]
-    );
-
-    if (withdrawAssetId !== constants.AddressZero) {
-      try {
-        const supply = await token.totalSupply();
-        console.log('supply: ', supply);
-        const decimals = await token.decimals();
-        console.log(
-          `Detected token decimals for withdrawChainId ${withdrawChainId}: `,
-          decimals
-        );
-        setWithdrawAssetDecimals(decimals);
-      } catch (e) {
-        console.error(
-          `Error detecting decimals, unsafely falling back to 18 decimals for withdrawChainId ${withdrawChainId}: `,
-          e
-        );
-      }
-    } else {
-      console.log(
-        `Using native asset 18 decimals for withdrawChainId ${withdrawChainId}`
-      );
-    }
   };
 
   const cancelTransfer = async (
@@ -593,7 +473,10 @@ const ConnextModal: FC<ConnextModalProps> = ({
       }
       setActiveMessage(0);
       stateReset();
-      await getChainInfo();
+      const _depositChainName = await getChainInfo(depositChainId);
+      setDepositChainName(_depositChainName);
+      const _withdrawChainName = await getChainInfo(withdrawChainId);
+      setWithdrawChainName(_withdrawChainName);
 
       try {
         // browser node object
@@ -624,7 +507,12 @@ const ConnextModal: FC<ConnextModalProps> = ({
       console.log('INITIALIZED BROWSER NODE');
 
       // get decimals for withdrawal asset
-      await getWithdrawAssetDecimals();
+      const decimals = await getWithdrawAssetDecimals(
+        withdrawChainId,
+        withdrawAssetId,
+        _ethProviders[withdrawChainId]
+      );
+      setWithdrawAssetDecimals(decimals);
 
       // create evt containers
       let _evts = evts;
