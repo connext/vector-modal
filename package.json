@@ -63,10 +63,9 @@
     "@emotion/react": "^11.1.4",
     "@emotion/styled": "^11.0.0",
     "@material-ui/core": "^5.0.0-alpha.22",
-    "@material-ui/icons": "^5.0.0-alpha.22",
-    "@material-ui/lab": "^4.0.0-alpha.57",
     "ethers": "^5.0.24",
     "evt": "1.9.12",
-    "qrcode.react": "^1.0.1"
+    "qrcode.react": "^1.0.1",
+    "react-feather": "^2.0.9"
   }
 }

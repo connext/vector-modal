@@ -19,15 +19,14 @@ import {
   Alert,
 } from '@material-ui/core';
 import {
-  FileCopy,
+  Clipboard,
   Check,
-  Close,
-  DoubleArrow,
-  CheckCircleRounded,
-  FiberManualRecordOutlined,
-  ErrorRounded,
-  CheckCircleTwoTone,
-} from '@material-ui/icons';
+  CheckCircle,
+  X,
+  ChevronsRight,
+  Circle,
+  AlertCircle,
+} from 'react-feather';
 // @ts-ignore
 import QRCode from 'qrcode.react';
 import { BigNumber, constants, utils } from 'ethers';
@@ -935,15 +934,15 @@ const ConnextModal: FC<ConnextModalProps> = ({
   function StepIcon(props: StepIconProps) {
     const { active, completed, error } = props;
     const icon: ReactElement = completed ? (
-      <CheckCircleRounded className={classes.success} />
+      <CheckCircle className={classes.success} />
     ) : active ? (
       error ? (
-        <ErrorRounded color="error" />
+        <AlertCircle color="error" />
       ) : (
         <CircularProgress size="1rem" color="inherit" />
       )
     ) : (
-      <FiberManualRecordOutlined color="action" />
+      <Circle color="action" />
     );
 
     const icons: { [index: string]: ReactElement } = {
@@ -983,7 +982,7 @@ const ConnextModal: FC<ConnextModalProps> = ({
                 edge="start"
                 onClick={handleClose}
               >
-                <Close />
+                <X />
               </IconButton>
 
               {headerMessage(activeHeaderMessage)}
@@ -1094,7 +1093,7 @@ const EthereumAddress: FC<EthereumAddressProps> = props => {
                     }}
                     edge="end"
                   >
-                    {!copiedDepositAddress ? <FileCopy /> : <Check />}
+                    {!copiedDepositAddress ? <Clipboard /> : <Check />}
                   </IconButton>
                 </InputAdornment>
               ),
@@ -1130,7 +1129,7 @@ const NetworkBar: FC<NetworkBarProps> = ({
         <Grid item>
           <Chip color="primary" label={depositChainName} />
         </Grid>
-        <DoubleArrow />
+        <ChevronsRight />
         <Grid item>
           <Chip color="secondary" label={withdrawChainName} />
         </Grid>
@@ -1166,7 +1165,7 @@ const CompleteState: FC<CompleteStateProps> = ({
 }) => (
   <>
     <Grid container className={styles} alignItems="center" direction="column">
-      <CheckCircleTwoTone className={styleSuccess} fontSize="large" />
+      <CheckCircle className={styleSuccess} fontSize="large" />
       <Typography gutterBottom variant="h6">
         Successfully sent {utils.formatUnits(sentAmount, withdrawAssetDecimals)}{' '}
         <a
@@ -1231,10 +1230,7 @@ const ErrorScreen: FC<ErrorStateProps> = ({
   return (
     <>
       <Grid container className={styles} alignItems="center" direction="column">
-        <ErrorRounded
-          fontSize="large"
-          color={cancelled ? `primary` : `error`}
-        />
+        <AlertCircle fontSize="large" color={cancelled ? `primary` : `error`} />
         <Typography
           gutterBottom
           variant="caption"

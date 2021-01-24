@@ -1,7 +1,7 @@
 import React, { FC } from 'react';
 import { Typography, IconButton, MenuItem, Menu } from '@material-ui/core';
 
-import { MoreVert } from '@material-ui/icons';
+import { MoreVertical } from 'react-feather';
 import { TRANSFER_STATES, TransferStates, Screens } from '../constants';
 
 const Options: FC<{
@@ -34,7 +34,7 @@ const Options: FC<{
         onClick={handleClick}
         edge="end"
       >
-        <MoreVert />
+        <MoreVertical />
       </IconButton>
 
       <Menu

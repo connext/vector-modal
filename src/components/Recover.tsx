@@ -7,7 +7,7 @@ import {
   CircularProgress,
 } from '@material-ui/core';
 
-import { CheckCircleRounded, ErrorRounded } from '@material-ui/icons';
+import { CheckCircle, AlertCircle } from 'react-feather';
 import { makeStyles } from '@material-ui/core/styles';
 
 import { BigNumber, constants } from 'ethers';
@@ -202,7 +202,7 @@ const Recover: FC<{ depositAddress?: string; depositChainId: number }> = ({
       {status === 'Success' && (
         <>
           <Grid container alignItems="center" direction="column">
-            <CheckCircleRounded color="secondary" fontSize="large" />
+            <CheckCircle color="secondary" fontSize="large" />
             <Typography gutterBottom variant="h6">
               Success
             </Typography>
@@ -232,7 +232,7 @@ const Recover: FC<{ depositAddress?: string; depositChainId: number }> = ({
       {status === 'Error' && (
         <>
           <Grid container alignItems="center" direction="column">
-            <ErrorRounded fontSize="large" color="error" />
+            <AlertCircle fontSize="large" color="error" />
             <Typography gutterBottom variant="caption" color="error">
               Error
             </Typography>
