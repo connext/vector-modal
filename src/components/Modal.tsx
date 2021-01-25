@@ -95,16 +95,18 @@ const ConnextModal: FC<ConnextModalProps> = ({
   routerPublicIdentifier,
   depositChainId,
   depositChainProvider,
-  depositAssetId,
+  depositAssetId: _depositAssetId,
   withdrawChainId,
   withdrawChainProvider,
-  withdrawAssetId,
+  withdrawAssetId: _withdrawAssetId,
   withdrawalAddress,
   onClose,
   onReady,
   connextNode,
   transferAmount,
 }) => {
+  const depositAssetId = utils.getAddress(_depositAssetId);
+  const withdrawAssetId = utils.getAddress(_withdrawAssetId);
   const classes = useStyles();
   const [depositAddress, setDepositAddress] = useState<string>();
   const [depositChainName, setDepositChainName] = useState<string>(

@@ -80,9 +80,12 @@ export const getTotalDepositsBob = async (
 export const reconcileDeposit = async (
   node: BrowserNode,
   channelAddress: string,
-  assetId: string
+  _assetId: string
 ) => {
-  const ret = await node.reconcileDeposit({ channelAddress, assetId });
+  const ret = await node.reconcileDeposit({
+    channelAddress,
+    assetId: utils.getAddress(_assetId),
+  });
   if (ret.isError) {
     throw ret.getError();
   }
@@ -106,13 +109,13 @@ export const createFromAssetTransfer = async (
   );
   const fromAssetId = utils.getAddress(_fromAssetId);
   const toAssetId = utils.getAddress(_toAssetId);
-  const assetIdx = depositChannel.assetIds.findIndex(a => a === fromAssetId);
-  if (assetIdx === -1) {
-    throw new Error('Asset not in channel, please deposit');
-  }
   const toTransfer = getBalanceForAssetId(depositChannel, fromAssetId, 'bob');
   if (toTransfer === '0') {
-    throw new Error('Asset not in channel, please deposit');
+    throw new Error(
+      `Asset (${fromAssetId}) not in channel, please deposit. Assets: ${depositChannel.assetIds.join(
+        ','
+      )}`
+    );
   }
   const params: NodeParams.ConditionalTransfer = {
     recipient: depositChannel.bobIdentifier,
