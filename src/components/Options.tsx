@@ -1,7 +1,7 @@
 import React, { FC } from 'react';
 import { Typography, IconButton, MenuItem, Menu } from '@material-ui/core';
 
-import { MoreVertical } from 'react-feather';
+import { List } from 'react-feather';
 import { TRANSFER_STATES, TransferStates, Screens } from '../constants';
 
 const Options: FC<{
@@ -32,9 +32,8 @@ const Options: FC<{
         aria-controls="long-menu"
         aria-haspopup="true"
         onClick={handleClick}
-        edge="end"
       >
-        <MoreVertical />
+        <List />
       </IconButton>
 
       <Menu
