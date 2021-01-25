@@ -26,9 +26,11 @@ import {
   ChevronsRight,
   Circle,
   AlertCircle,
+  Send,
 } from 'react-feather';
 // @ts-ignore
 import QRCode from 'qrcode.react';
+import { FeedbackFish } from '@feedback-fish/react';
 import { BigNumber, constants, utils } from 'ethers';
 import { EngineEvents, FullChannelState } from '@connext/vector-types';
 import { getBalanceForAssetId, getRandomBytes32 } from '@connext/vector-utils';
@@ -987,11 +989,18 @@ const ConnextModal: FC<ConnextModalProps> = ({
 
               {headerMessage(activeHeaderMessage)}
 
-              <Options
-                setScreen={setScreen}
-                activeScreen={screen}
-                transferState={transferState}
-              />
+              <Grid>
+                <FeedbackFish projectId="aba3b7b0fe6009">
+                  <IconButton aria-label="feedback">
+                    <Send />
+                  </IconButton>
+                </FeedbackFish>
+                <Options
+                  setScreen={setScreen}
+                  activeScreen={screen}
+                  transferState={transferState}
+                />
+              </Grid>
             </Grid>
           )}
           {screen === 'Home' && (
