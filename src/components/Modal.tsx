@@ -17,6 +17,7 @@ import {
   CircularProgress,
   StepIconProps,
   Alert,
+  Link,
 } from '@material-ui/core';
 import {
   Clipboard,
@@ -173,10 +174,11 @@ const ConnextModal: FC<ConnextModalProps> = ({
     if (message) {
       console.error(message, e);
     }
+
+    setErrorState(ERROR_STATES.REFRESH);
     if (pErrorState) {
       setErrorState(pErrorState);
     }
-    setErrorState(ERROR_STATES.REFRESH);
     setError(e);
     setIsError(true);
     setIniting(false);
@@ -244,7 +246,7 @@ const ConnextModal: FC<ConnextModalProps> = ({
         depositAssetId
       );
     } catch (e) {
-      handleError(e, 'Error in reconcileDeposit');
+      handleError(e, 'Error in reconcileDeposit', ERROR_STATES.RETRY);
       return;
     }
     // call createFromAssetTransfer
@@ -268,7 +270,7 @@ const ConnextModal: FC<ConnextModalProps> = ({
       );
       console.log('createFromAssetTransfer transferDeets: ', transferDeets);
     } catch (e) {
-      handleError(e, 'Error in createFromAssetTransfer: ');
+      handleError(e, 'Error in createFromAssetTransfer: ', ERROR_STATES.RETRY);
       return;
     }
     setPreImage(preImage);
@@ -311,13 +313,18 @@ const ConnextModal: FC<ConnextModalProps> = ({
         )[0] === constants.HashZero
       ) {
         console.warn('Transfer was cancelled');
-        handleError(new Error('Transfer was cancelled'));
+        handleError(
+          new Error('Transfer was cancelled'),
+          undefined,
+          ERROR_STATES.RETRY
+        );
         return;
       }
     } catch (e) {
       handleError(
         e,
-        'Did not receive transfer after 500 seconds, please try again later or attempt recovery'
+        'Did not receive transfer after 500 seconds, please try again later or attempt recovery',
+        ERROR_STATES.RETRY
       );
       return;
     }
@@ -340,7 +347,7 @@ const ConnextModal: FC<ConnextModalProps> = ({
         routerPublicIdentifier
       );
     } catch (e) {
-      handleError(e, 'Error in resolveToAssetTransfer: ');
+      handleError(e, 'Error in resolveToAssetTransfer: ', ERROR_STATES.RETRY);
       return;
     }
     setPreImage(undefined);
@@ -371,8 +378,7 @@ const ConnextModal: FC<ConnextModalProps> = ({
         routerPublicIdentifier
       );
     } catch (e) {
-      handleError(e, 'Error in crossChainTransfer');
-      setActiveHeaderMessage(3);
+      handleError(e, 'Error in crossChainTransfer', ERROR_STATES.RETRY);
       return;
     }
     // display tx hash through explorer -> handles by the event.
@@ -392,8 +398,11 @@ const ConnextModal: FC<ConnextModalProps> = ({
           // tx reverted
           // TODO: go to contact screen
           console.error('Transaction reverted onchain', receipt);
-          handleError(new Error('Withdrawal transaction reverted'));
-          setActiveHeaderMessage(3);
+          handleError(
+            new Error('Withdrawal transaction reverted'),
+            undefined,
+            ERROR_STATES.CONTACT_INFO
+          );
           return;
         }
       });
@@ -458,6 +467,7 @@ const ConnextModal: FC<ConnextModalProps> = ({
     setActiveCrossChainTransferId(constants.HashZero);
     setScreen('Home');
     setActiveHeaderMessage(0);
+    setActiveMessage(0);
     setAmount(BigNumber.from(0));
     setPreImage(undefined);
   };
@@ -467,12 +477,228 @@ const ConnextModal: FC<ConnextModalProps> = ({
     onClose();
   };
 
+  const modalInit = async () => {
+    stateReset();
+    // get decimals for withdrawal asset
+    const decimals = await getWithdrawAssetDecimals(
+      withdrawChainId,
+      withdrawAssetId,
+      _ethProviders[withdrawChainId]
+    );
+    setWithdrawAssetDecimals(decimals);
+
+    // create evt containers
+    let _evts = evts;
+    if (!_evts) {
+      _evts = createEvtContainer(connext.connextClient!);
+    }
+
+    setActiveMessage(1);
+    let depositChannel: FullChannelState;
+    try {
+      depositChannel = await getChannelForChain(
+        connext.connextClient!,
+        routerPublicIdentifier,
+        depositChainId
+      );
+    } catch (e) {
+      handleError(e, 'Could not get sender channel');
+      return;
+    }
+    const _depositAddress = depositChannel!.channelAddress;
+    setDepositAddress(_depositAddress);
+
+    let withdrawChannel: FullChannelState;
+    try {
+      withdrawChannel = await getChannelForChain(
+        connext.connextClient!,
+        routerPublicIdentifier,
+        withdrawChainId
+      );
+    } catch (e) {
+      handleError(e, 'Could not get receiver channel');
+      return;
+    }
+
+    // callback for ready
+    if (onReady) {
+      onReady({
+        depositChannelAddress: depositChannel.channelAddress,
+        withdrawChannelAddress: withdrawChannel.channelAddress,
+      });
+    }
+    setEvts(_evts);
+
+    // validate router before proceeding
+    try {
+      await verifyRouterSupportsTransfer(
+        connext.connextClient!,
+        depositChainId,
+        depositAssetId,
+        withdrawChainId,
+        withdrawAssetId,
+        _ethProviders[withdrawChainId],
+        routerPublicIdentifier,
+        transferAmount
+      );
+    } catch (e) {
+      handleError(e, 'Error in verifyRouterSupportsTransfer');
+      return;
+    }
+
+    setActiveMessage(2);
+    // prune any existing receiver transfers
+    try {
+      const hangingResolutions = await cancelHangingToTransfers(
+        connext.connextClient!,
+        _evts[EngineEvents.CONDITIONAL_TRANSFER_CREATED],
+        depositChainId,
+        withdrawChainId,
+        withdrawAssetId,
+        routerPublicIdentifier
+      );
+      console.log('hangingResolutions: ', hangingResolutions);
+    } catch (e) {
+      handleError(e, 'Error in cancelHangingToTransfers');
+      return;
+    }
+
+    const [depositActive, withdrawActive] = await Promise.all([
+      connext.connextClient!.getActiveTransfers({
+        channelAddress: depositChannel.channelAddress,
+      }),
+      connext.connextClient!.getActiveTransfers({
+        channelAddress: withdrawChannel.channelAddress,
+      }),
+    ]);
+    const depositHashlock = depositActive
+      .getValue()
+      .filter(t => Object.keys(t.transferState).includes('lockHash'));
+    const withdrawHashlock = withdrawActive
+      .getValue()
+      .filter(t => Object.keys(t.transferState).includes('lockHash'));
+    console.warn(
+      'deposit active on init',
+      depositHashlock.length,
+      'ids:',
+      depositHashlock.map(t => t.transferId)
+    );
+    console.warn(
+      'withdraw active on init',
+      withdrawHashlock.length,
+      'ids:',
+      withdrawHashlock.map(t => t.transferId)
+    );
+
+    // set a listener to check for transfers that may have been pushed after a refresh after the hanging transfers have already been canceled
+    _evts.CONDITIONAL_TRANSFER_CREATED.pipe(data => {
+      return (
+        data.transfer.responderIdentifier ===
+          connext.connextClient?.publicIdentifier &&
+        data.transfer.meta.routingId !== activeCrossChainTransferIdRef.current
+      );
+    }).attach(async data => {
+      console.warn('Cancelling transfer thats not active');
+      await cancelTransfer(
+        _depositAddress,
+        withdrawChannel.channelAddress,
+        data.transfer.transferId,
+        data.transfer.meta.crossChainTransferId,
+        _evts!
+      );
+    });
+
+    try {
+      console.log('Waiting for sender cancellations..');
+      await waitForSenderCancels(
+        connext.connextClient!,
+        _evts[EngineEvents.CONDITIONAL_TRANSFER_RESOLVED],
+        depositChannel.channelAddress
+      );
+      console.log('done!');
+    } catch (e) {
+      handleError(e, 'Error in waitForSenderCancels');
+      return;
+    }
+
+    setActiveMessage(3);
+    try {
+      await reconcileDeposit(
+        connext.connextClient!,
+        depositChannel.channelAddress,
+        depositAssetId
+      );
+    } catch (e) {
+      handleError(e, 'Error in reconcileDeposit');
+      return;
+    }
+
+    // After reconciling, get channel again
+    try {
+      depositChannel = await getChannelForChain(
+        connext.connextClient!,
+        routerPublicIdentifier,
+        depositChainId
+      );
+    } catch (e) {
+      handleError(e, 'Could not get sender channel');
+      return;
+    }
+
+    const offChainDepositAssetBalance = BigNumber.from(
+      getBalanceForAssetId(depositChannel, depositAssetId, 'bob')
+    );
+    console.log(
+      `Offchain balance for ${_depositAddress} of asset ${depositAssetId}: ${offChainDepositAssetBalance}`
+    );
+
+    const offChainWithdrawAssetBalance = BigNumber.from(
+      getBalanceForAssetId(withdrawChannel, withdrawAssetId, 'bob')
+    );
+    console.log(
+      `Offchain balance for ${withdrawChannel.channelAddress} of asset ${withdrawAssetId}: ${offChainWithdrawAssetBalance}`
+    );
+
+    if (
+      offChainDepositAssetBalance.gt(0) &&
+      offChainWithdrawAssetBalance.gt(0)
+    ) {
+      console.warn(
+        'Balance exists in both channels, transferring first, then withdrawing'
+      );
+      await transfer(_depositAddress, offChainDepositAssetBalance, _evts);
+      return;
+    }
+    // if offChainDepositAssetBalance > 0
+    if (offChainDepositAssetBalance.gt(0)) {
+      // then start transfer
+      await transfer(_depositAddress, offChainDepositAssetBalance, _evts);
+    }
+
+    // if offchainWithdrawBalance > 0
+    else if (offChainWithdrawAssetBalance.gt(0)) {
+      // then go to withdraw screen with transfer amount == balance
+      await withdraw();
+    }
+
+    // if both are zero, register listener and display
+    // QR code
+    else {
+      // sets up deposit screen
+      setTransferState(TRANSFER_STATES.INITIAL);
+      console.log(`Starting block listener`);
+      await depositListenerAndTransfer(_depositAddress, _evts);
+    }
+
+    setIniting(false);
+  };
+
   useEffect(() => {
     const init = async () => {
       if (!showModal) {
         return;
       }
-      setActiveMessage(0);
+
       stateReset();
       const _depositChainName = await getChainInfo(depositChainId);
       setDepositChainName(_depositChainName);
@@ -506,263 +732,58 @@ const ConnextModal: FC<ConnextModalProps> = ({
       }
 
       console.log('INITIALIZED BROWSER NODE');
-
-      // get decimals for withdrawal asset
-      const decimals = await getWithdrawAssetDecimals(
-        withdrawChainId,
-        withdrawAssetId,
-        _ethProviders[withdrawChainId]
-      );
-      setWithdrawAssetDecimals(decimals);
-
-      // create evt containers
-      let _evts = evts;
-      if (!_evts) {
-        _evts = createEvtContainer(connext.connextClient!);
-      }
-
-      setActiveMessage(1);
-      let depositChannel: FullChannelState;
-      try {
-        depositChannel = await getChannelForChain(
-          connext.connextClient!,
-          routerPublicIdentifier,
-          depositChainId
-        );
-      } catch (e) {
-        handleError(e, 'Could not get sender channel');
-        return;
-      }
-      const _depositAddress = depositChannel!.channelAddress;
-      setDepositAddress(_depositAddress);
-
-      let withdrawChannel: FullChannelState;
-      try {
-        withdrawChannel = await getChannelForChain(
-          connext.connextClient!,
-          routerPublicIdentifier,
-          withdrawChainId
-        );
-      } catch (e) {
-        handleError(e, 'Could not get receiver channel');
-        return;
-      }
-
-      // callback for ready
-      if (onReady) {
-        onReady({
-          depositChannelAddress: depositChannel.channelAddress,
-          withdrawChannelAddress: withdrawChannel.channelAddress,
-        });
-      }
-      setEvts(_evts);
-
-      // validate router before proceeding
-      try {
-        await verifyRouterSupportsTransfer(
-          connext.connextClient!,
-          depositChainId,
-          depositAssetId,
-          withdrawChainId,
-          withdrawAssetId,
-          _ethProviders[withdrawChainId],
-          routerPublicIdentifier,
-          transferAmount
-        );
-      } catch (e) {
-        handleError(e, 'Error in verifyRouterSupportsTransfer');
-        return;
-      }
-
-      setActiveMessage(2);
-      // prune any existing receiver transfers
-      try {
-        const hangingResolutions = await cancelHangingToTransfers(
-          connext.connextClient!,
-          _evts[EngineEvents.CONDITIONAL_TRANSFER_CREATED],
-          depositChainId,
-          withdrawChainId,
-          withdrawAssetId,
-          routerPublicIdentifier
-        );
-        console.log('hangingResolutions: ', hangingResolutions);
-      } catch (e) {
-        handleError(e, 'Error in cancelHangingToTransfers');
-        return;
-      }
-
-      const [depositActive, withdrawActive] = await Promise.all([
-        connext.connextClient!.getActiveTransfers({
-          channelAddress: depositChannel.channelAddress,
-        }),
-        connext.connextClient!.getActiveTransfers({
-          channelAddress: withdrawChannel.channelAddress,
-        }),
-      ]);
-      const depositHashlock = depositActive
-        .getValue()
-        .filter(t => Object.keys(t.transferState).includes('lockHash'));
-      const withdrawHashlock = withdrawActive
-        .getValue()
-        .filter(t => Object.keys(t.transferState).includes('lockHash'));
-      console.warn(
-        'deposit active on init',
-        depositHashlock.length,
-        'ids:',
-        depositHashlock.map(t => t.transferId)
-      );
-      console.warn(
-        'withdraw active on init',
-        withdrawHashlock.length,
-        'ids:',
-        withdrawHashlock.map(t => t.transferId)
-      );
-
-      // set a listener to check for transfers that may have been pushed after a refresh after the hanging transfers have already been canceled
-      _evts.CONDITIONAL_TRANSFER_CREATED.pipe(data => {
-        return (
-          data.transfer.responderIdentifier ===
-            connext.connextClient?.publicIdentifier &&
-          data.transfer.meta.routingId !== activeCrossChainTransferIdRef.current
-        );
-      }).attach(async data => {
-        console.warn('Cancelling transfer thats not active');
-        await cancelTransfer(
-          _depositAddress,
-          withdrawChannel.channelAddress,
-          data.transfer.transferId,
-          data.transfer.meta.crossChainTransferId,
-          _evts!
-        );
-      });
-
-      try {
-        console.log('Waiting for sender cancellations..');
-        await waitForSenderCancels(
-          connext.connextClient!,
-          _evts[EngineEvents.CONDITIONAL_TRANSFER_RESOLVED],
-          depositChannel.channelAddress
-        );
-        console.log('done!');
-      } catch (e) {
-        handleError(e, 'Error in waitForSenderCancels');
-        return;
-      }
-
-      setActiveMessage(3);
-      try {
-        await reconcileDeposit(
-          connext.connextClient!,
-          depositChannel.channelAddress,
-          depositAssetId
-        );
-      } catch (e) {
-        handleError(e, 'Error in reconcileDeposit');
-        return;
-      }
-
-      // After reconciling, get channel again
-      try {
-        depositChannel = await getChannelForChain(
-          connext.connextClient!,
-          routerPublicIdentifier,
-          depositChainId
-        );
-      } catch (e) {
-        handleError(e, 'Could not get sender channel');
-        return;
-      }
-
-      const offChainDepositAssetBalance = BigNumber.from(
-        getBalanceForAssetId(depositChannel, depositAssetId, 'bob')
-      );
-      console.log(
-        `Offchain balance for ${_depositAddress} of asset ${depositAssetId}: ${offChainDepositAssetBalance}`
-      );
-
-      const offChainWithdrawAssetBalance = BigNumber.from(
-        getBalanceForAssetId(withdrawChannel, withdrawAssetId, 'bob')
-      );
-      console.log(
-        `Offchain balance for ${withdrawChannel.channelAddress} of asset ${withdrawAssetId}: ${offChainWithdrawAssetBalance}`
-      );
-
-      if (
-        offChainDepositAssetBalance.gt(0) &&
-        offChainWithdrawAssetBalance.gt(0)
-      ) {
-        console.warn(
-          'Balance exists in both channels, transferring first, then withdrawing'
-        );
-        await transfer(_depositAddress, offChainDepositAssetBalance, _evts);
-        return;
-      }
-      // if offChainDepositAssetBalance > 0
-      if (offChainDepositAssetBalance.gt(0)) {
-        // then start transfer
-        await transfer(_depositAddress, offChainDepositAssetBalance, _evts);
-      }
-
-      // if offchainWithdrawBalance > 0
-      else if (offChainWithdrawAssetBalance.gt(0)) {
-        // then go to withdraw screen with transfer amount == balance
-        await withdraw();
-      }
-
-      // if both are zero, register listener and display
-      // QR code
-      else {
-        // sets up deposit screen
-        setTransferState(TRANSFER_STATES.INITIAL);
-        console.log(`Starting block listener`);
-        await depositListenerAndTransfer(_depositAddress, _evts);
-      }
-
-      setIniting(false);
+      await modalInit();
     };
     init();
   }, [showModal]);
 
   const headerMessage = (activeHeader: number) => {
-    switch (activeHeader) {
-      case 0:
-        return (
-          <>
-            <Typography variant="h6">
-              Send{' '}
-              <a
-                href={getExplorerLinkForAsset(depositChainId, depositAssetId)}
-                target="_blank"
-              >
-                {getAssetName(depositAssetId, depositChainId)}
-              </a>
-            </Typography>
-          </>
-        );
+    const preventDefault = (event: React.SyntheticEvent) =>
+      event.preventDefault();
+    if (isError) {
+      return <Typography variant="h6">Error!</Typography>;
+    } else if (screen === 'Recover') {
+      return <Typography variant="h6">Recovery</Typography>;
+    } else {
+      switch (activeHeader) {
+        case 0:
+          return (
+            <>
+              <Typography variant="h6">
+                Send{' '}
+                <Link
+                  href={getExplorerLinkForAsset(depositChainId, depositAssetId)}
+                  target="_blank"
+                  onClick={preventDefault}
+                >
+                  {getAssetName(depositAssetId, depositChainId)}
+                </Link>
+              </Typography>
+            </>
+          );
 
-      case 1:
-        return (
-          <>
-            <Typography variant="h6">
-              Sending{' '}
-              <a
-                href={getExplorerLinkForAsset(depositChainId, depositAssetId)}
-                target="_blank"
-              >
-                {getAssetName(depositAssetId, depositChainId)}
-              </a>
-            </Typography>
-          </>
-        );
+        case 1:
+          return (
+            <>
+              <Typography variant="h6">
+                Sending{' '}
+                <Link
+                  href={getExplorerLinkForAsset(depositChainId, depositAssetId)}
+                  target="_blank"
+                  onClick={preventDefault}
+                >
+                  {getAssetName(depositAssetId, depositChainId)}
+                </Link>
+              </Typography>
+            </>
+          );
 
-      case 2:
-        return <Typography variant="h6">Success!</Typography>;
+        case 2:
+          return <Typography variant="h6">Success!</Typography>;
 
-      case 3:
-        return <Typography variant="h6">Error!</Typography>;
-
-      default:
-        return;
+        default:
+          return;
+      }
     }
   };
   const steps = ['Deposit', 'Transfer', 'Withdraw'];
@@ -777,6 +798,7 @@ const ConnextModal: FC<ConnextModalProps> = ({
             errorState={errorState}
             crossChainTransferId={activeCrossChainTransferId}
             styles={classes.errorState}
+            retry={modalInit}
           />
         </>
       );
@@ -981,7 +1003,6 @@ const ConnextModal: FC<ConnextModalProps> = ({
                   TRANSFER_STATES.TRANSFERRING,
                   TRANSFER_STATES.WITHDRAWING,
                 ].includes(transferState as any)}
-                edge="start"
                 onClick={handleClose}
               >
                 <X />
@@ -1054,6 +1075,8 @@ interface FooterProps {
 
 const Footer: FC<FooterProps> = props => {
   const { styles } = props;
+  const preventDefault = (event: React.SyntheticEvent) =>
+    event.preventDefault();
   return (
     <Grid
       id="Footer"
@@ -1063,9 +1086,13 @@ const Footer: FC<FooterProps> = props => {
       justifyContent="center"
     >
       <Typography variant="overline">
-        <a href="https://connext.network" target="_blank">
+        <Link
+          href="https://connext.network"
+          target="_blank"
+          onClick={preventDefault}
+        >
           Powered By Connext
-        </a>
+        </Link>
       </Typography>
     </Grid>
   );
@@ -1171,62 +1198,68 @@ const CompleteState: FC<CompleteStateProps> = ({
   styles,
   styleSuccess,
   onClose,
-}) => (
-  <>
-    <Grid container className={styles} alignItems="center" direction="column">
-      <CheckCircle className={styleSuccess} fontSize="large" />
-      <Typography gutterBottom variant="h6">
-        Successfully sent {utils.formatUnits(sentAmount, withdrawAssetDecimals)}{' '}
-        <a
-          href={getExplorerLinkForAsset(withdrawChainId, withdrawAssetId)}
-          target="_blank"
-        >
-          {getAssetName(withdrawAssetId, withdrawChainId)}
-        </a>
-        !
-      </Typography>
-    </Grid>
-
-    <Grid container spacing={4}>
-      <Grid item xs={12}>
-        <TextField
-          label={`Receiver Address on ${withdrawChainName}`}
-          defaultValue={withdrawalAddress}
-          InputProps={{
-            readOnly: true,
-          }}
-          fullWidth
-          size="small"
-        />
-      </Grid>
-      <Grid item xs={12}>
-        <Grid container justifyContent="center">
-          <Button
-            variant="outlined"
-            className={styleSuccess}
-            href={getExplorerLinkForTx(withdrawChainId, withdrawTx)}
+}) => {
+  const preventDefault = (event: React.SyntheticEvent) =>
+    event.preventDefault();
+  return (
+    <>
+      <Grid container className={styles} alignItems="center" direction="column">
+        <CheckCircle className={styleSuccess} fontSize="large" />
+        <Typography gutterBottom variant="h6">
+          Successfully sent{' '}
+          {utils.formatUnits(sentAmount, withdrawAssetDecimals)}{' '}
+          <Link
+            href={getExplorerLinkForAsset(withdrawChainId, withdrawAssetId)}
             target="_blank"
+            onClick={preventDefault}
           >
-            Transaction Receipt
-          </Button>
+            {getAssetName(withdrawAssetId, withdrawChainId)}!
+          </Link>
+        </Typography>
+      </Grid>
+
+      <Grid container spacing={4}>
+        <Grid item xs={12}>
+          <TextField
+            label={`Receiver Address on ${withdrawChainName}`}
+            defaultValue={withdrawalAddress}
+            InputProps={{
+              readOnly: true,
+            }}
+            fullWidth
+            size="small"
+          />
+        </Grid>
+        <Grid item xs={12}>
+          <Grid container justifyContent="center">
+            <Button
+              variant="outlined"
+              className={styleSuccess}
+              href={getExplorerLinkForTx(withdrawChainId, withdrawTx)}
+              target="_blank"
+            >
+              Transaction Receipt
+            </Button>
+          </Grid>
+        </Grid>
+        <Grid item xs={12}>
+          <Grid container justifyContent="center">
+            <Button variant="contained" onClick={onClose}>
+              Close Modal
+            </Button>
+          </Grid>
         </Grid>
       </Grid>
-      <Grid item xs={12}>
-        <Grid container justifyContent="center">
-          <Button variant="contained" onClick={onClose}>
-            Close Modal
-          </Button>
-        </Grid>
-      </Grid>
-    </Grid>
-  </>
-);
+    </>
+  );
+};
 
 export interface ErrorStateProps {
   error: Error;
   errorState: ErrorStates;
   crossChainTransferId: string;
   styles: string;
+  retry: () => void;
 }
 
 const ErrorScreen: FC<ErrorStateProps> = ({
@@ -1234,6 +1267,7 @@ const ErrorScreen: FC<ErrorStateProps> = ({
   errorState,
   crossChainTransferId,
   styles,
+  retry,
 }) => {
   const cancelled = error.message.includes('Transfer was cancelled');
   return (
@@ -1302,6 +1336,16 @@ const ErrorScreen: FC<ErrorStateProps> = ({
               }
             >
               Discord
+            </Button>
+          </Grid>
+        </>
+      )}
+
+      {errorState === ERROR_STATES.RETRY && (
+        <>
+          <Grid container direction="row" justifyContent="center">
+            <Button variant="outlined" onClick={retry}>
+              Retry
             </Button>
           </Grid>
         </>
