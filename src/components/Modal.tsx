@@ -20,7 +20,7 @@ import {
   Link,
 } from '@material-ui/core';
 import {
-  Clipboard,
+  Copy,
   Check,
   CheckCircle,
   X,
@@ -1131,7 +1131,7 @@ const EthereumAddress: FC<EthereumAddressProps> = props => {
                     }}
                     edge="end"
                   >
-                    {!copiedDepositAddress ? <Clipboard /> : <Check />}
+                    {!copiedDepositAddress ? <Copy /> : <Check />}
                   </IconButton>
                 </InputAdornment>
               ),
@@ -1247,7 +1247,7 @@ const CompleteState: FC<CompleteStateProps> = ({
         <Grid item xs={12}>
           <Grid container justifyContent="center">
             <Button variant="contained" onClick={onClose}>
-              Close Modal
+              Close
             </Button>
           </Grid>
         </Grid>
