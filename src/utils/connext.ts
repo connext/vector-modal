@@ -18,7 +18,6 @@ import { getOnchainBalance } from './helpers';
 import { iframeSrc } from '../constants';
 
 export const connectNode = async (
-  connextNode: BrowserNode | undefined,
   routerPublicIdentifier: string,
   depositChainId: number,
   withdrawChainId: number,
@@ -29,19 +28,15 @@ export const connectNode = async (
   let browserNode: BrowserNode;
 
   try {
-    if (connextNode) {
-      browserNode = connextNode;
-    } else {
-      browserNode = new BrowserNode({
-        routerPublicIdentifier,
-        iframeSrc,
-        supportedChains: [depositChainId, withdrawChainId],
-        chainProviders: {
-          [depositChainId]: depositChainProvider,
-          [withdrawChainId]: withdrawChainProvider,
-        },
-      });
-    }
+    browserNode = new BrowserNode({
+      routerPublicIdentifier,
+      iframeSrc,
+      supportedChains: [depositChainId, withdrawChainId],
+      chainProviders: {
+        [depositChainId]: depositChainProvider,
+        [withdrawChainId]: withdrawChainProvider,
+      },
+    });
     await browserNode.init();
   } catch (e) {
     console.error(e);
@@ -52,7 +47,7 @@ export const connectNode = async (
   const configRes = await browserNode.getConfig();
   if (!configRes[0]) throw new Error(`Error getConfig: node connection failed`);
 
-  console.log('GET CONFIG: ', configRes[0]);
+  console.log('browser node config: ', configRes[0]);
 
   return browserNode;
 };
