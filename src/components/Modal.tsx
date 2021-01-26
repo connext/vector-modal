@@ -845,7 +845,7 @@ const ConnextModal: FC<ConnextModalProps> = ({
                   paddingBottom: '16px',
                 }}
               >
-                <Alert severity="error">
+                <Alert severity="warning">
                   Do not use this component in Incognito Mode{' '}
                 </Alert>
               </Grid>
