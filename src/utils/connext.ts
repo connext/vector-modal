@@ -11,7 +11,12 @@ import {
   TransferNames,
   WithdrawalReconciledPayload,
 } from '@connext/vector-types';
-import { createlockHash, getBalanceForAssetId } from '@connext/vector-utils';
+import {
+  calculateExchangeAmount,
+  createlockHash,
+  getBalanceForAssetId,
+  inverse,
+} from '@connext/vector-utils';
 import { providers, Contract, BigNumber, constants, utils } from 'ethers';
 import { Evt } from 'evt';
 import { getOnchainBalance } from './helpers';
@@ -398,7 +403,7 @@ export const verifyRouterSupportsTransfer = async (
   ) {
     throw new Error(`Router does not support chains`);
   }
-  // @ts-ignore
+  let invertRate = false;
   const swap = allowedSwaps.find(s => {
     const noninverted =
       s.fromAssetId.toLowerCase() === fromAssetId.toLowerCase() &&
@@ -410,6 +415,7 @@ export const verifyRouterSupportsTransfer = async (
       s.toChainId === fromChainId &&
       s.fromAssetId.toLowerCase() === toAssetId.toLowerCase() &&
       s.fromChainId === toChainId;
+    invertRate = invertRate ? invertRate : !!inverted;
     return noninverted || inverted;
   });
   if (!swap) {
@@ -440,7 +446,11 @@ export const verifyRouterSupportsTransfer = async (
   const routerOffchain = BigNumber.from(
     getBalanceForAssetId(withdrawChannel, toAssetId, 'alice')
   );
-  if (routerOffchain.gte(transferAmount)) {
+  const swappedAmount = calculateExchangeAmount(
+    transferAmount,
+    invertRate ? inverse(swap.hardcodedRate) : swap.hardcodedRate
+  );
+  if (routerOffchain.gte(swappedAmount)) {
     return;
   }
 
