@@ -282,9 +282,11 @@ export const cancelHangingToTransfers = async (
   const hangingResolutions = (await Promise.all(
     toCancel.map(async transferToCancel => {
       try {
-        console.log(
-          'Cancelling hanging receiver transfer:',
-          transferToCancel.meta!.routingId
+        console.warn(
+          'Cancelling hanging receiver transfer w/routingId:',
+          transferToCancel.meta!.routingId,
+          'and transferId:',
+          transferToCancel.transferId
         );
         const params: NodeParams.ResolveTransfer = {
           publicIdentifier: withdrawChannel.bobIdentifier,
@@ -386,6 +388,7 @@ export const verifyRouterSupportsTransfer = async (
     routerIdentifier: withdrawChannel.aliceIdentifier,
   });
   if (config.isError) {
+    console.error('Router config error:', config.getError()?.toJson());
     throw new Error('Router config unavailable');
   }
   const { supportedChains, allowedSwaps } = config.getValue();
