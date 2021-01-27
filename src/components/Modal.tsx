@@ -142,9 +142,7 @@ const ConnextModal: FC<ConnextModalProps> = ({
   const [transferState, setTransferState] = useState<TransferStates>(
     TRANSFER_STATES.LOADING
   );
-  const [errorState, setErrorState] = useState<ErrorStates>(
-    ERROR_STATES.REFRESH
-  );
+  const [errorState, setErrorState] = useState<ErrorStates>(ERROR_STATES.RETRY);
   const [activeMessage, setActiveMessage] = useState(0);
   const [activeHeaderMessage, setActiveHeaderMessage] = useState(0);
 
@@ -178,7 +176,7 @@ const ConnextModal: FC<ConnextModalProps> = ({
       console.error(message, e);
     }
 
-    setErrorState(ERROR_STATES.REFRESH);
+    setErrorState(ERROR_STATES.RETRY);
     if (pErrorState) {
       setErrorState(pErrorState);
     }
@@ -458,7 +456,7 @@ const ConnextModal: FC<ConnextModalProps> = ({
   const stateReset = () => {
     setIniting(true);
     setTransferState(TRANSFER_STATES.LOADING);
-    setErrorState(ERROR_STATES.REFRESH);
+    setErrorState(ERROR_STATES.RETRY);
     setIsError(false);
     setError(undefined);
     setDepositAddress(undefined);
