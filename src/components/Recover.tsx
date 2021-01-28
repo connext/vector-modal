@@ -13,8 +13,8 @@ import { makeStyles } from '@material-ui/core/styles';
 import { BigNumber, constants } from 'ethers';
 import { FullChannelState } from '@connext/vector-types';
 import { getBalanceForAssetId } from '@connext/vector-utils';
-import { connext } from '../service';
 import { getExplorerLinkForTx } from '../utils';
+import { BrowserNode } from '@connext/vector-browser-node';
 
 const useRecoverStyles = makeStyles(theme => ({
   wrapper: {
@@ -34,10 +34,11 @@ const useRecoverStyles = makeStyles(theme => ({
   addressField: { paddingBottom: '1rem' },
 }));
 
-const Recover: FC<{ depositAddress?: string; depositChainId: number }> = ({
-  depositAddress,
-  depositChainId,
-}) => {
+const Recover: FC<{
+  depositAddress?: string;
+  depositChainId: number;
+  node: BrowserNode;
+}> = ({ depositAddress, depositChainId, node }) => {
   const classes = useRecoverStyles();
   const [recoverTokenAddress, setRecoverTokenAddress] = useState(
     constants.AddressZero
@@ -57,7 +58,7 @@ const Recover: FC<{ depositAddress?: string; depositChainId: number }> = ({
   >('Initial');
 
   const recover = async (assetId: string, withdrawalAddress: string) => {
-    const deposit = await connext.connextClient!.reconcileDeposit({
+    const deposit = await node.reconcileDeposit({
       assetId,
       channelAddress: depositAddress!,
     });
@@ -67,7 +68,7 @@ const Recover: FC<{ depositAddress?: string; depositChainId: number }> = ({
       throw deposit.getError();
     }
 
-    const updatedChannel = await connext.connextClient!.getStateChannel({
+    const updatedChannel = await node.getStateChannel({
       channelAddress: depositAddress!,
     });
     if (updatedChannel.isError || !updatedChannel.getValue()) {
@@ -92,7 +93,7 @@ const Recover: FC<{ depositAddress?: string; depositChainId: number }> = ({
       `Found ${endingBalanceBn.toString()} of ${assetId}, attempting withdrawal`
     );
 
-    const withdrawRes = await connext.connextClient!.withdraw({
+    const withdrawRes = await node.withdraw({
       amount: endingBalance,
       assetId,
       channelAddress: depositAddress!,

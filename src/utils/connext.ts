@@ -11,14 +11,18 @@ import {
   TransferNames,
   WithdrawalReconciledPayload,
 } from '@connext/vector-types';
-import { createlockHash, getBalanceForAssetId } from '@connext/vector-utils';
+import {
+  calculateExchangeAmount,
+  createlockHash,
+  getBalanceForAssetId,
+  inverse,
+} from '@connext/vector-utils';
 import { providers, Contract, BigNumber, constants, utils } from 'ethers';
 import { Evt } from 'evt';
 import { getOnchainBalance } from './helpers';
 import { iframeSrc } from '../constants';
 
 export const connectNode = async (
-  connextNode: BrowserNode | undefined,
   routerPublicIdentifier: string,
   depositChainId: number,
   withdrawChainId: number,
@@ -29,19 +33,15 @@ export const connectNode = async (
   let browserNode: BrowserNode;
 
   try {
-    if (connextNode) {
-      browserNode = connextNode;
-    } else {
-      browserNode = new BrowserNode({
-        routerPublicIdentifier,
-        iframeSrc,
-        supportedChains: [depositChainId, withdrawChainId],
-        chainProviders: {
-          [depositChainId]: depositChainProvider,
-          [withdrawChainId]: withdrawChainProvider,
-        },
-      });
-    }
+    browserNode = new BrowserNode({
+      routerPublicIdentifier,
+      iframeSrc,
+      supportedChains: [depositChainId, withdrawChainId],
+      chainProviders: {
+        [depositChainId]: depositChainProvider,
+        [withdrawChainId]: withdrawChainProvider,
+      },
+    });
     await browserNode.init();
   } catch (e) {
     console.error(e);
@@ -52,7 +52,7 @@ export const connectNode = async (
   const configRes = await browserNode.getConfig();
   if (!configRes[0]) throw new Error(`Error getConfig: node connection failed`);
 
-  console.log('GET CONFIG: ', configRes[0]);
+  console.log('browser node config: ', configRes[0]);
 
   return browserNode;
 };
@@ -287,9 +287,11 @@ export const cancelHangingToTransfers = async (
   const hangingResolutions = (await Promise.all(
     toCancel.map(async transferToCancel => {
       try {
-        console.log(
-          'Cancelling hanging receiver transfer:',
-          transferToCancel.meta!.routingId
+        console.warn(
+          'Cancelling hanging receiver transfer w/routingId:',
+          transferToCancel.meta!.routingId,
+          'and transferId:',
+          transferToCancel.transferId
         );
         const params: NodeParams.ResolveTransfer = {
           publicIdentifier: withdrawChannel.bobIdentifier,
@@ -391,6 +393,7 @@ export const verifyRouterSupportsTransfer = async (
     routerIdentifier: withdrawChannel.aliceIdentifier,
   });
   if (config.isError) {
+    console.error('Router config error:', config.getError()?.toJson());
     throw new Error('Router config unavailable');
   }
   const { supportedChains, allowedSwaps } = config.getValue();
@@ -400,7 +403,7 @@ export const verifyRouterSupportsTransfer = async (
   ) {
     throw new Error(`Router does not support chains`);
   }
-  // @ts-ignore
+  let invertRate = false;
   const swap = allowedSwaps.find(s => {
     const noninverted =
       s.fromAssetId.toLowerCase() === fromAssetId.toLowerCase() &&
@@ -412,6 +415,7 @@ export const verifyRouterSupportsTransfer = async (
       s.toChainId === fromChainId &&
       s.fromAssetId.toLowerCase() === toAssetId.toLowerCase() &&
       s.fromChainId === toChainId;
+    invertRate = invertRate ? invertRate : !!inverted;
     return noninverted || inverted;
   });
   if (!swap) {
@@ -442,7 +446,11 @@ export const verifyRouterSupportsTransfer = async (
   const routerOffchain = BigNumber.from(
     getBalanceForAssetId(withdrawChannel, toAssetId, 'alice')
   );
-  if (routerOffchain.gte(transferAmount)) {
+  const swappedAmount = calculateExchangeAmount(
+    transferAmount,
+    invertRate ? inverse(swap.hardcodedRate) : swap.hardcodedRate
+  );
+  if (routerOffchain.gte(swappedAmount)) {
     return;
   }
 
