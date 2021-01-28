@@ -86,7 +86,6 @@ export type ConnextModalProps = {
     depositChannelAddress: string;
     withdrawChannelAddress: string;
   }) => any;
-  connextNode?: BrowserNode;
   transferAmount?: string;
 };
 
@@ -102,7 +101,6 @@ const ConnextModal: FC<ConnextModalProps> = ({
   withdrawalAddress,
   onClose,
   onReady,
-  connextNode,
   transferAmount,
 }) => {
   const depositAssetId = utils.getAddress(_depositAssetId);
@@ -156,7 +154,7 @@ const ConnextModal: FC<ConnextModalProps> = ({
     _setActiveCrossChainTransferId(data);
   };
 
-  const [node, setNode] = useState<BrowserNode | undefined>(connextNode);
+  const [node, setNode] = useState<BrowserNode | undefined>();
 
   const activeStep = activePhase(transferState);
 
@@ -701,7 +699,7 @@ const ConnextModal: FC<ConnextModalProps> = ({
     try {
       // browser node object
       _node =
-        connextNode ??
+        node ??
         (await connectNode(
           routerPublicIdentifier,
           depositChainId,
