@@ -32,7 +32,7 @@ import {
 // @ts-ignore
 import QRCode from 'qrcode.react';
 import { FeedbackFish } from '@feedback-fish/react';
-import { BigNumber, constants, utils } from 'ethers';
+import { BigNumber, constants, utils, providers } from 'ethers';
 import { EngineEvents, FullChannelState } from '@connext/vector-types';
 import { getBalanceForAssetId, getRandomBytes32 } from '@connext/vector-utils';
 import {
@@ -49,7 +49,6 @@ import {
 import {
   getExplorerLinkForTx,
   activePhase,
-  hydrateProviders,
   getExplorerLinkForAsset,
   getTotalDepositsBob,
   reconcileDeposit,
@@ -74,10 +73,8 @@ import Recover from './Recover';
 export type ConnextModalProps = {
   showModal: boolean;
   routerPublicIdentifier: string;
-  depositChainId: number;
   depositChainProvider: string;
   depositAssetId: string;
-  withdrawChainId: number;
   withdrawChainProvider: string;
   withdrawAssetId: string;
   withdrawalAddress: string;
@@ -92,10 +89,8 @@ export type ConnextModalProps = {
 const ConnextModal: FC<ConnextModalProps> = ({
   showModal,
   routerPublicIdentifier,
-  depositChainId,
   depositChainProvider,
   depositAssetId: _depositAssetId,
-  withdrawChainId,
   withdrawChainProvider,
   withdrawAssetId: _withdrawAssetId,
   withdrawalAddress,
@@ -107,12 +102,12 @@ const ConnextModal: FC<ConnextModalProps> = ({
   const withdrawAssetId = utils.getAddress(_withdrawAssetId);
   const classes = useStyles();
   const [depositAddress, setDepositAddress] = useState<string>();
-  const [depositChainName, setDepositChainName] = useState<string>(
-    depositChainId.toString()
-  );
-  const [withdrawChainName, setWithdrawChainName] = useState<string>(
-    withdrawChainId.toString()
-  );
+
+  const [depositChainId, setDepositChainId] = useState<number>();
+  const [withdrawChainId, setWithdrawChainId] = useState<number>();
+
+  const [depositChainName, setDepositChainName] = useState<string>();
+  const [withdrawChainName, setWithdrawChainName] = useState<string>();
   const [withdrawAssetDecimals, setWithdrawAssetDecimals] = useState(18);
   const [sentAmount, setSentAmount] = useState<string>('0');
 
@@ -158,10 +153,10 @@ const ConnextModal: FC<ConnextModalProps> = ({
 
   const activeStep = activePhase(transferState);
 
-  const _ethProviders = hydrateProviders(
-    depositChainId,
-    depositChainProvider,
-    withdrawChainId,
+  const depositRpcProvider = new providers.JsonRpcProvider(
+    depositChainProvider
+  );
+  const withdrawRpcProvider = new providers.JsonRpcProvider(
     withdrawChainProvider
   );
 
@@ -221,6 +216,8 @@ const ConnextModal: FC<ConnextModalProps> = ({
   };
 
   const transfer = async (
+    _depositChainId: number,
+    _withdrawChainId: number,
     _depositAddress: string,
     transferAmount: BigNumber,
     evts: EvtContainer,
@@ -249,13 +246,13 @@ const ConnextModal: FC<ConnextModalProps> = ({
     const preImage = getRandomBytes32();
     try {
       console.log(
-        `Calling createFromAssetTransfer ${depositChainId} ${depositAssetId} ${withdrawChainId} ${withdrawAssetId} ${crossChainTransferId}`
+        `Calling createFromAssetTransfer ${_depositChainId} ${depositAssetId} ${_withdrawChainId} ${withdrawAssetId} ${crossChainTransferId}`
       );
       const transferDeets = await createFromAssetTransfer(
         _node,
-        depositChainId,
+        _depositChainId,
         depositAssetId,
-        withdrawChainId,
+        _withdrawChainId,
         withdrawAssetId,
         routerPublicIdentifier,
         crossChainTransferId,
@@ -334,7 +331,7 @@ const ConnextModal: FC<ConnextModalProps> = ({
     try {
       await resolveToAssetTransfer(
         _node,
-        withdrawChainId,
+        _withdrawChainId,
         preImage,
         crossChainTransferId,
         routerPublicIdentifier
@@ -354,10 +351,10 @@ const ConnextModal: FC<ConnextModalProps> = ({
       );
     }
 
-    await withdraw(_node);
+    await withdraw(_withdrawChainId, _node);
   };
 
-  const withdraw = async (_node: BrowserNode) => {
+  const withdraw = async (_withdrawChainId: number, _node: BrowserNode) => {
     setTransferState(TRANSFER_STATES.WITHDRAWING);
 
     // now go to withdrawal screen
@@ -365,7 +362,7 @@ const ConnextModal: FC<ConnextModalProps> = ({
     try {
       result = await withdrawToAsset(
         _node,
-        withdrawChainId,
+        _withdrawChainId,
         withdrawAssetId,
         withdrawalAddress,
         routerPublicIdentifier
@@ -384,7 +381,7 @@ const ConnextModal: FC<ConnextModalProps> = ({
     setActiveHeaderMessage(2);
 
     // check tx receipt for withdrawal tx
-    _ethProviders[withdrawChainId]
+    withdrawRpcProvider
       .waitForTransaction(result.withdrawalTx)
       .then(receipt => {
         if (receipt.status === 0) {
@@ -402,6 +399,8 @@ const ConnextModal: FC<ConnextModalProps> = ({
   };
 
   const depositListenerAndTransfer = async (
+    _depositChainId: number,
+    _withdrawChainId: number,
     _depositAddress: string,
     evts: EvtContainer,
     _node: BrowserNode
@@ -411,14 +410,14 @@ const ConnextModal: FC<ConnextModalProps> = ({
       initialDeposits = await getTotalDepositsBob(
         _depositAddress,
         depositAssetId,
-        _ethProviders[depositChainId]
+        depositRpcProvider
       );
     } catch (e) {
       handleError(e, 'Error getting total deposits');
       return;
     }
     console.log(
-      `Starting balance on ${depositChainId} for ${_depositAddress} of asset ${depositAssetId}: ${initialDeposits.toString()}`
+      `Starting balance on ${_depositChainId} for ${_depositAddress} of asset ${depositAssetId}: ${initialDeposits.toString()}`
     );
 
     let depositListener = setInterval(async () => {
@@ -427,14 +426,14 @@ const ConnextModal: FC<ConnextModalProps> = ({
         updatedDeposits = await getTotalDepositsBob(
           _depositAddress,
           depositAssetId,
-          _ethProviders[depositChainId]
+          depositRpcProvider
         );
       } catch (e) {
         console.warn(`Error fetching balance: ${e.message}`);
         return;
       }
       console.log(
-        `Updated balance on ${depositChainId} for ${_depositAddress} of asset ${depositAssetId}: ${updatedDeposits.toString()}`
+        `Updated balance on ${_depositChainId} for ${_depositAddress} of asset ${depositAssetId}: ${updatedDeposits.toString()}`
       );
 
       if (updatedDeposits.lt(initialDeposits)) {
@@ -445,7 +444,14 @@ const ConnextModal: FC<ConnextModalProps> = ({
         clearInterval(depositListener!);
         const transferAmount = updatedDeposits.sub(initialDeposits);
         initialDeposits = updatedDeposits;
-        await transfer(_depositAddress, transferAmount, evts, _node);
+        await transfer(
+          _depositChainId,
+          _withdrawChainId,
+          _depositAddress,
+          transferAmount,
+          evts,
+          _node
+        );
       }
     }, 5_000);
     setListener(depositListener);
@@ -471,13 +477,73 @@ const ConnextModal: FC<ConnextModalProps> = ({
     onClose();
   };
 
-  const modalInit = async (_node: BrowserNode) => {
+  // TODO: when do you call modalInit without calling init
+  const init = async () => {
+    if (!showModal) {
+      return;
+    }
+
     stateReset();
+
+    let _depositChainId: number;
+    let _withdrawChainId: number;
+    try {
+      const _depositNetwork = await depositRpcProvider.getNetwork();
+      const _withdrawNetwork = await withdrawRpcProvider.getNetwork();
+      console.log(_depositNetwork, _withdrawNetwork);
+
+      _depositChainId = _depositNetwork.chainId;
+      _withdrawChainId = _withdrawNetwork.chainId;
+    } catch (e) {
+      console.log(e);
+      handleError(e, 'Error getting chain Id from provider');
+      return;
+    }
+
+    setDepositChainId(_depositChainId);
+    setWithdrawChainId(_withdrawChainId);
+
+    const _depositChainName = await getChainInfo(_depositChainId);
+    setDepositChainName(_depositChainName);
+    const _withdrawChainName = await getChainInfo(_withdrawChainId);
+    setWithdrawChainName(_withdrawChainName);
+
+    let _node: BrowserNode;
+    try {
+      // browser node object
+      _node =
+        node ??
+        (await connectNode(
+          routerPublicIdentifier,
+          _depositChainId,
+          _withdrawChainId,
+          depositChainProvider,
+          withdrawChainProvider
+        ));
+      setNode(_node);
+    } catch (e) {
+      if (e.message.includes('localStorage not available in this window')) {
+        alert(
+          'Please disable shields or ad blockers and try again. Connext requires cross-site cookies to store your channel states.'
+        );
+      }
+      if (e.message.includes("Failed to read the 'localStorage'")) {
+        alert(
+          'Please disable shields or ad blockers or allow third party cookies in your browser and try again. Connext requires cross-site cookies to store your channel states.'
+        );
+      }
+
+      handleError(e, 'Error initalizing Browser Node');
+      return;
+    }
+
+    console.log('INITIALIZED BROWSER NODE');
+
     // get decimals for withdrawal asset
     const decimals = await getWithdrawAssetDecimals(
-      withdrawChainId,
+      _withdrawChainId,
       withdrawAssetId,
-      _ethProviders[withdrawChainId]
+      withdrawRpcProvider
     );
     setWithdrawAssetDecimals(decimals);
 
@@ -490,7 +556,7 @@ const ConnextModal: FC<ConnextModalProps> = ({
       depositChannel = await getChannelForChain(
         _node,
         routerPublicIdentifier,
-        depositChainId
+        _depositChainId
       );
     } catch (e) {
       handleError(e, 'Could not get sender channel');
@@ -504,7 +570,7 @@ const ConnextModal: FC<ConnextModalProps> = ({
       withdrawChannel = await getChannelForChain(
         _node,
         routerPublicIdentifier,
-        withdrawChainId
+        _withdrawChainId
       );
     } catch (e) {
       handleError(e, 'Could not get receiver channel');
@@ -523,11 +589,11 @@ const ConnextModal: FC<ConnextModalProps> = ({
     try {
       await verifyRouterSupportsTransfer(
         _node,
-        depositChainId,
+        _depositChainId,
         depositAssetId,
-        withdrawChainId,
+        _withdrawChainId,
         withdrawAssetId,
-        _ethProviders[withdrawChainId],
+        withdrawRpcProvider,
         routerPublicIdentifier,
         transferAmount
       );
@@ -542,8 +608,8 @@ const ConnextModal: FC<ConnextModalProps> = ({
       const hangingResolutions = await cancelHangingToTransfers(
         _node,
         evts[EngineEvents.CONDITIONAL_TRANSFER_CREATED],
-        depositChainId,
-        withdrawChainId,
+        _depositChainId,
+        _withdrawChainId,
         withdrawAssetId,
         routerPublicIdentifier
       );
@@ -628,7 +694,7 @@ const ConnextModal: FC<ConnextModalProps> = ({
       depositChannel = await getChannelForChain(
         _node,
         routerPublicIdentifier,
-        depositChainId
+        _depositChainId
       );
     } catch (e) {
       handleError(e, 'Could not get sender channel');
@@ -656,19 +722,33 @@ const ConnextModal: FC<ConnextModalProps> = ({
       console.warn(
         'Balance exists in both channels, transferring first, then withdrawing'
       );
-      await transfer(_depositAddress, offChainDepositAssetBalance, evts, _node);
+      await transfer(
+        _depositChainId,
+        _withdrawChainId,
+        _depositAddress,
+        offChainDepositAssetBalance,
+        evts,
+        _node
+      );
       return;
     }
     // if offChainDepositAssetBalance > 0
     if (offChainDepositAssetBalance.gt(0)) {
       // then start transfer
-      await transfer(_depositAddress, offChainDepositAssetBalance, evts, _node);
+      await transfer(
+        _depositChainId,
+        _withdrawChainId,
+        _depositAddress,
+        offChainDepositAssetBalance,
+        evts,
+        _node
+      );
     }
 
     // if offchainWithdrawBalance > 0
     else if (offChainWithdrawAssetBalance.gt(0)) {
       // then go to withdraw screen with transfer amount == balance
-      await withdraw(_node);
+      await withdraw(_withdrawChainId, _node);
     }
 
     // if both are zero, register listener and display
@@ -677,55 +757,16 @@ const ConnextModal: FC<ConnextModalProps> = ({
       // sets up deposit screen
       setTransferState(TRANSFER_STATES.INITIAL);
       console.log(`Starting block listener`);
-      await depositListenerAndTransfer(_depositAddress, evts, _node);
+      await depositListenerAndTransfer(
+        _depositChainId,
+        _withdrawChainId,
+        _depositAddress,
+        evts,
+        _node
+      );
     }
 
     setIniting(false);
-  };
-
-  // TODO: when do you call modalInit without calling init
-  const init = async () => {
-    if (!showModal) {
-      return;
-    }
-
-    stateReset();
-    const _depositChainName = await getChainInfo(depositChainId);
-    setDepositChainName(_depositChainName);
-    const _withdrawChainName = await getChainInfo(withdrawChainId);
-    setWithdrawChainName(_withdrawChainName);
-
-    let _node: BrowserNode;
-    try {
-      // browser node object
-      _node =
-        node ??
-        (await connectNode(
-          routerPublicIdentifier,
-          depositChainId,
-          withdrawChainId,
-          depositChainProvider,
-          withdrawChainProvider
-        ));
-      setNode(_node);
-    } catch (e) {
-      if (e.message.includes('localStorage not available in this window')) {
-        alert(
-          'Please disable shields or ad blockers and try again. Connext requires cross-site cookies to store your channel states.'
-        );
-      }
-      if (e.message.includes("Failed to read the 'localStorage'")) {
-        alert(
-          'Please disable shields or ad blockers or allow third party cookies in your browser and try again. Connext requires cross-site cookies to store your channel states.'
-        );
-      }
-
-      handleError(e, 'Error initalizing Browser Node');
-      return;
-    }
-
-    console.log('INITIALIZED BROWSER NODE');
-    await modalInit(_node);
   };
 
   useEffect(() => {
@@ -747,11 +788,14 @@ const ConnextModal: FC<ConnextModalProps> = ({
               <Typography variant="h6">
                 Send{' '}
                 <Link
-                  href={getExplorerLinkForAsset(depositChainId, depositAssetId)}
+                  href={getExplorerLinkForAsset(
+                    depositChainId!,
+                    depositAssetId
+                  )}
                   target="_blank"
                   onClick={preventDefault}
                 >
-                  {getAssetName(depositAssetId, depositChainId)}
+                  {getAssetName(depositAssetId, depositChainId!)}
                 </Link>
               </Typography>
             </>
@@ -763,11 +807,14 @@ const ConnextModal: FC<ConnextModalProps> = ({
               <Typography variant="h6">
                 Sending{' '}
                 <Link
-                  href={getExplorerLinkForAsset(depositChainId, depositAssetId)}
+                  href={getExplorerLinkForAsset(
+                    depositChainId!,
+                    depositAssetId
+                  )}
                   target="_blank"
                   onClick={preventDefault}
                 >
-                  {getAssetName(depositAssetId, depositChainId)}
+                  {getAssetName(depositAssetId, depositChainId!)}
                 </Link>
               </Typography>
             </>
@@ -807,11 +854,13 @@ const ConnextModal: FC<ConnextModalProps> = ({
                 message={message(activeMessage)}
                 initializing={initing}
               />
-              <NetworkBar
-                depositChainName={depositChainName}
-                withdrawChainName={withdrawChainName}
-                styles={classes.networkBar}
-              />
+              {depositChainName && withdrawChainName && (
+                <NetworkBar
+                  depositChainName={depositChainName}
+                  withdrawChainName={withdrawChainName}
+                  styles={classes.networkBar}
+                />
+              )}
               <Grid container>
                 <Grid item xs={12}>
                   <TextField
@@ -857,10 +906,11 @@ const ConnextModal: FC<ConnextModalProps> = ({
                 />
               </Grid>
               <EthereumAddress
-                depositChainName={depositChainName}
+                depositChainName={depositChainName!}
                 depositAddress={depositAddress!}
                 styles={classes.ethereumAddress}
               />
+
               <Footer styles={classes.footer} />
             </>
           );
@@ -890,7 +940,7 @@ const ConnextModal: FC<ConnextModalProps> = ({
                   <Typography variant="body1" align="center">
                     Transferring{' '}
                     {utils.formatUnits(amount, withdrawAssetDecimals)}{' '}
-                    {getAssetName(depositAssetId, depositChainId)} to{' '}
+                    {getAssetName(depositAssetId, depositChainId!)} to{' '}
                     {withdrawChainName}...
                   </Typography>
                 </Grid>
@@ -910,7 +960,7 @@ const ConnextModal: FC<ConnextModalProps> = ({
                   <Typography variant="body1" align="center">
                     Withdrawing{' '}
                     {utils.formatUnits(amount, withdrawAssetDecimals)}{' '}
-                    {getAssetName(withdrawAssetId, withdrawChainId)} to{' '}
+                    {getAssetName(withdrawAssetId, withdrawChainId!)} to{' '}
                     {withdrawChainName}...
                   </Typography>
                 </Grid>
@@ -928,10 +978,10 @@ const ConnextModal: FC<ConnextModalProps> = ({
               <Grid container className={classes.status}>
                 <Grid item xs={12}>
                   <CompleteState
-                    withdrawChainName={withdrawChainName}
+                    withdrawChainName={withdrawChainName!}
                     withdrawTx={withdrawTx!}
                     sentAmount={sentAmount!}
-                    withdrawChainId={withdrawChainId}
+                    withdrawChainId={withdrawChainId!}
                     withdrawAssetId={withdrawAssetId}
                     withdrawAssetDecimals={withdrawAssetDecimals}
                     withdrawalAddress={withdrawalAddress}
@@ -1054,7 +1104,7 @@ const ConnextModal: FC<ConnextModalProps> = ({
               <Recover
                 node={node!}
                 depositAddress={depositAddress}
-                depositChainId={depositChainId}
+                depositChainId={depositChainId!}
               />
               <Footer styles={classes.footer} />
             </>
