@@ -158,6 +158,9 @@ const ConnextModal: FC<ConnextModalProps> = ({
 
   const activeStep = activePhase(transferState);
 
+  const preventDefault = (event: React.SyntheticEvent) =>
+    event.preventDefault();
+
   const _ethProviders = hydrateProviders(
     depositChainId,
     depositChainProvider,
@@ -733,8 +736,6 @@ const ConnextModal: FC<ConnextModalProps> = ({
   }, [showModal]);
 
   const headerMessage = (activeHeader: number) => {
-    const preventDefault = (event: React.SyntheticEvent) =>
-      event.preventDefault();
     if (isError) {
       return <Typography variant="h6">Error!</Typography>;
     } else if (screen === 'Recover') {
@@ -855,6 +856,30 @@ const ConnextModal: FC<ConnextModalProps> = ({
                   size={250}
                   includeMargin={true}
                 />
+              </Grid>
+              <Grid
+                container
+                justifyContent="center"
+                style={{
+                  paddingBottom: '16px',
+                }}
+              >
+                <Alert severity="info">
+                  <Typography variant="body1">
+                    Send{' '}
+                    <Link
+                      href={getExplorerLinkForAsset(
+                        depositChainId,
+                        depositAssetId
+                      )}
+                      target="_blank"
+                      onClick={preventDefault}
+                    >
+                      {getAssetName(depositAssetId, depositChainId)}
+                    </Link>{' '}
+                    to the address below
+                  </Typography>
+                </Alert>
               </Grid>
               <EthereumAddress
                 depositChainName={depositChainName}
