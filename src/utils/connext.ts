@@ -397,6 +397,8 @@ export const verifyRouterSupportsTransfer = async (
     throw new Error('Router config unavailable');
   }
   const { supportedChains, allowedSwaps } = config.getValue();
+  console.log('Router supportedChains: ', supportedChains);
+  console.log('Router allowedSwaps: ', allowedSwaps);
   if (
     !supportedChains.includes(fromChainId) ||
     !supportedChains.includes(toChainId)
@@ -404,6 +406,10 @@ export const verifyRouterSupportsTransfer = async (
     throw new Error(`Router does not support chains`);
   }
   let invertRate = false;
+  console.log('fromAssetId.toLowerCase(): ', fromAssetId.toLowerCase());
+  console.log('toAssetId.toLowerCase(): ', toAssetId.toLowerCase());
+  console.log('fromChainId: ', fromChainId);
+  console.log('toChainId: ', toChainId);
   const swap = allowedSwaps.find(s => {
     const noninverted =
       s.fromAssetId.toLowerCase() === fromAssetId.toLowerCase() &&
