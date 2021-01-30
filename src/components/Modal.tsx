@@ -81,9 +81,11 @@ import Recover from './Recover';
 export type ConnextModalProps = {
   showModal: boolean;
   routerPublicIdentifier: string;
+  depositChainId?: number;
   depositChainProvider: string;
   depositAssetId: string;
   withdrawChainProvider: string;
+  withdrawChainId?: number;
   withdrawAssetId: string;
   withdrawalAddress: string;
   onClose: () => void;
@@ -100,8 +102,10 @@ const ConnextModal: FC<ConnextModalProps> = ({
   routerPublicIdentifier,
   depositChainProvider,
   depositAssetId: _depositAssetId,
+  depositChainId: _depositChainId,
   withdrawChainProvider,
   withdrawAssetId: _withdrawAssetId,
+  withdrawChainId: _withdrawChainId,
   withdrawalAddress,
   onClose,
   onReady,
@@ -379,21 +383,26 @@ const ConnextModal: FC<ConnextModalProps> = ({
 
   const handleInjectedProviderTransferAmountEntry = (input: string) => {
     try {
-      utils.parseEther(input.toString().trim());
-      setTransferAmount(input);
+      console.log('input: ', input);
+      console.log('input.trim(): ', input.trim());
+      const transferAmountBn = utils.parseEther(input.trim());
+      console.log('transferAmountBn: ', transferAmountBn);
+      setTransferAmount(transferAmountBn.toString());
+      setAmountError(undefined);
     } catch (e) {
       setAmountError('Invalid amount');
       return;
     }
   };
 
-  const injectedProviderDeposit = async () => {
-    const amount = utils.parseEther(transferAmount ?? '0');
+  const injectedProviderDeposit = async (_transferAmount: string) => {
+    console.log('_transferAmount: ', _transferAmount);
     if (!injectedProvider) {
       handleError(new Error('Missing injected provider'));
       return;
     }
-    if (amount.isZero()) {
+    const transferAmountBn = BigNumber.from(_transferAmount);
+    if (transferAmountBn.isZero()) {
       handleError(new Error('Deposit amount cannot be 0'));
       return;
     }
@@ -403,22 +412,11 @@ const ConnextModal: FC<ConnextModalProps> = ({
       !withdrawChainId ||
       !depositAddress ||
       !withdrawRpcProvider ||
-      !transferAmount ||
       !node ||
       !evts
     ) {
       // TODO: handle this better
       handleError(new Error('Missing react state fields'));
-      return;
-    }
-
-    try {
-      const network = await injectedProvider.getNetwork();
-      if (depositChainId !== network.chainId) {
-        throw new Error('Please connect to the correct network');
-      }
-    } catch (e) {
-      handleError(e, 'Failed to get chainId from injected provider');
       return;
     }
 
@@ -428,11 +426,11 @@ const ConnextModal: FC<ConnextModalProps> = ({
       depositAssetId === constants.AddressZero
         ? signer.sendTransaction({
             to: depositAddress,
-            value: amount,
+            value: transferAmountBn,
           })
         : await new Contract(depositAssetId, ERC20Abi, signer).transfer(
             depositAddress,
-            amount
+            transferAmountBn
           );
     console.log('depositTx', depositTx.hash);
     const receipt = await depositTx.wait();
@@ -443,7 +441,7 @@ const ConnextModal: FC<ConnextModalProps> = ({
       withdrawChainId,
       depositAddress,
       withdrawRpcProvider,
-      amount,
+      transferAmountBn,
       evts,
       node
     );
@@ -587,42 +585,69 @@ const ConnextModal: FC<ConnextModalProps> = ({
 
     stateReset();
 
-    let _depositChainId: number;
-    let _withdrawChainId: number;
-    let _depositRpcProvider: providers.JsonRpcProvider;
-    let _withdrawRpcProvider: providers.JsonRpcProvider;
-    try {
-      _withdrawChainId = await getChainId(withdrawChainProvider);
-      _depositChainId = await getChainId(depositChainProvider);
-      _depositRpcProvider = new providers.JsonRpcProvider(
-        depositChainProvider,
-        _depositChainId
-      );
-      _withdrawRpcProvider = new providers.JsonRpcProvider(
-        withdrawChainProvider,
-        _withdrawChainId
-      );
-      console.log(
-        'deposit chain:',
-        _depositChainId,
-        'withdraw chain:',
-        _withdrawChainId
-      );
-    } catch (e) {
-      console.log(e);
-      handleError(e, 'Error getting chain Id from provider');
-      return;
-    }
+    const _depositRpcProvider = new providers.JsonRpcProvider(
+      depositChainProvider,
+      _depositChainId
+    );
 
+    if (_depositChainId) {
+      setDepositChainId(_depositChainId);
+    } else {
+      try {
+        _depositChainId = await getChainId(depositChainProvider);
+        console.log('deposit chain:', _depositChainId);
+      } catch (e) {
+        console.log(e);
+        handleError(e, 'Error getting chain Id from provider');
+        return;
+      }
+    }
+    // setDepositRpcProvider(_depositRpcProvider);
     setDepositChainId(_depositChainId);
+
+    const _withdrawRpcProvider = new providers.JsonRpcProvider(
+      withdrawChainProvider,
+      _withdrawChainId
+    );
+
+    if (_withdrawChainId) {
+      setWithdrawChainId(_withdrawChainId);
+    } else {
+      try {
+        _withdrawChainId = await getChainId(withdrawChainProvider);
+        // const _depositRpcProvider = new providers.JsonRpcProvider(
+        //   depositChainProvider,
+        //   _depositChainId
+        // );
+        console.log('withdraw chain:', _withdrawChainId);
+        // setDepositRpcProvider(_depositRpcProvider);
+      } catch (e) {
+        console.log(e);
+        handleError(e, 'Error getting chain Id from provider');
+        return;
+      }
+    }
     setWithdrawChainId(_withdrawChainId);
     setWithdrawRpcProvider(_withdrawRpcProvider);
-    // setDepositRpcProvider(_depositRpcProvider);
 
     const _depositChainName = await getChainInfo(_depositChainId);
     setDepositChainName(_depositChainName);
     const _withdrawChainName = await getChainInfo(_withdrawChainId);
     setWithdrawChainName(_withdrawChainName);
+
+    if (injectedProvider) {
+      try {
+        const network = await injectedProvider.getNetwork();
+        if (_depositChainId !== network.chainId) {
+          throw new Error(
+            `Please connect your wallet to the ${_depositChainName} network`
+          );
+        }
+      } catch (e) {
+        handleError(e, 'Failed to get chainId from wallet provider');
+        return;
+      }
+    }
 
     let _node: BrowserNode;
     try {
@@ -875,12 +900,13 @@ const ConnextModal: FC<ConnextModalProps> = ({
     else {
       // sets up deposit screen
       setTransferState(TRANSFER_STATES.INITIAL);
-      console.log(`Starting block listener`);
       if (injectedProvider) {
+        console.log(`Using injected provider, not listener.`);
         // using metamask, will be button-driven
         setIniting(false);
         return;
       }
+      console.log(`Starting block listener`);
       // display QR
       await depositListenerAndTransfer(
         _depositChainId,
@@ -1034,11 +1060,15 @@ const ConnextModal: FC<ConnextModalProps> = ({
                       }
                     />
                   </Grid>
-                  <Grid item xs={12}>
+                  <Grid item>
                     <Button
                       variant="outlined"
                       className={classes.success}
-                      onClick={() => injectedProviderDeposit()}
+                      onClick={() =>
+                        transferAmount &&
+                        injectedProviderDeposit(transferAmount)
+                      }
+                      disabled={!!amountError}
                     >
                       Swap
                     </Button>
