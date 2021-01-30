@@ -1075,7 +1075,7 @@ const ConnextModal: FC<ConnextModalProps> = ({
                   </Grid>
                 </Grid>
               ) : (
-                <div>
+                <>
                   <Grid
                     id="qrcode"
                     container
@@ -1119,7 +1119,7 @@ const ConnextModal: FC<ConnextModalProps> = ({
                     depositAddress={depositAddress!}
                     styles={classes.ethereumAddress}
                   />
-                </div>
+                </>
               )}
 
               <Footer styles={classes.footer} />
