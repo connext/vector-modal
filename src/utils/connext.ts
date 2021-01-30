@@ -15,7 +15,6 @@ import {
   calculateExchangeAmount,
   createlockHash,
   getBalanceForAssetId,
-  inverse,
 } from '@connext/vector-utils';
 import { providers, Contract, BigNumber, constants, utils } from 'ethers';
 import { Evt } from 'evt';
@@ -380,7 +379,7 @@ export const verifyRouterSupportsTransfer = async (
   ethProvider: providers.BaseProvider, // For `to` chain
   routerPublicIdentifier: string,
   transferAmount?: string
-): Promise<void> => {
+): Promise<any> => {
   const withdrawChannel = await getChannelForChain(
     node,
     routerPublicIdentifier,
@@ -405,7 +404,7 @@ export const verifyRouterSupportsTransfer = async (
   ) {
     throw new Error(`Router does not support chains`);
   }
-  let invertRate = false;
+  // let invertRate = false;
   console.log('fromAssetId.toLowerCase(): ', fromAssetId.toLowerCase());
   console.log('toAssetId.toLowerCase(): ', toAssetId.toLowerCase());
   console.log('fromChainId: ', fromChainId);
@@ -416,13 +415,14 @@ export const verifyRouterSupportsTransfer = async (
       s.fromChainId === fromChainId &&
       s.toAssetId.toLowerCase() === toAssetId.toLowerCase() &&
       s.toChainId === toChainId;
-    const inverted =
-      s.toAssetId.toLowerCase() === fromAssetId.toLowerCase() &&
-      s.toChainId === fromChainId &&
-      s.fromAssetId.toLowerCase() === toAssetId.toLowerCase() &&
-      s.fromChainId === toChainId;
-    invertRate = invertRate ? invertRate : !!inverted;
-    return noninverted || inverted;
+    // TODO: why are we using inverted swaps? we define each swap separately
+    // const inverted =
+    //   s.toAssetId.toLowerCase() === fromAssetId.toLowerCase() &&
+    //   s.toChainId === fromChainId &&
+    //   s.fromAssetId.toLowerCase() === toAssetId.toLowerCase() &&
+    //   s.fromChainId === toChainId;
+    // invertRate = invertRate ? invertRate : !!inverted;
+    return noninverted;
   });
   if (!swap) {
     throw new Error('Swap is not supported by router');
@@ -440,10 +440,27 @@ export const verifyRouterSupportsTransfer = async (
   }
 
   // if there is a transfer amount supplied, verify collateral
-  if (!transferAmount) {
-    return;
+  if (transferAmount) {
+    await verifyRouterCapacityForTransfer(
+      ethProvider,
+      toAssetId,
+      withdrawChannel,
+      transferAmount,
+      swap
+    );
   }
 
+  return swap;
+};
+
+export const verifyRouterCapacityForTransfer = async (
+  ethProvider: providers.BaseProvider,
+  toAssetId: string,
+  withdrawChannel: FullChannelState,
+  transferAmount: string,
+  swap: any
+) => {
+  console.log(`verifyRouterCapacityForTransfer for ${transferAmount}`);
   const routerOnchain = await getOnchainBalance(
     ethProvider,
     toAssetId,
@@ -454,19 +471,30 @@ export const verifyRouterSupportsTransfer = async (
   );
   const swappedAmount = calculateExchangeAmount(
     transferAmount,
-    invertRate ? inverse(swap.hardcodedRate) : swap.hardcodedRate
+    swap.hardcodedRate
   );
+  console.log('transferAmount: ', transferAmount);
+  console.log('swappedAmount: ', swappedAmount);
+  console.log('routerOnchain: ', routerOnchain);
+  console.log('routerOffchain: ', routerOffchain);
   if (routerOffchain.gte(swappedAmount)) {
     return;
   }
 
-  const collateralCushion = utils.parseEther('1');
-  const min = routerOnchain.add(routerOffchain).add(collateralCushion);
-  if (min.lt(transferAmount)) {
-    throw new Error('Router has insufficient collateral');
-  }
+  // TODO: dont think we need this. what about 6 decimals?
+  // const collateralCushion = utils.parseEther('1');
 
-  return;
+  const routerBalanceFull = routerOnchain.add(routerOffchain);
+  console.log('routerBalanceFull: ', routerBalanceFull);
+  console.log(
+    'routerBalanceFull.lt(swappedAmount): ',
+    routerBalanceFull.lt(swappedAmount)
+  );
+  if (routerBalanceFull.lt(swappedAmount)) {
+    throw new Error(
+      'Router has insufficient collateral, please try again later.'
+    );
+  }
 };
 
 export type EvtContainer = {

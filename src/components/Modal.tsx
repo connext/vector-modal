@@ -73,6 +73,7 @@ import {
   getChainInfo,
   getWithdrawAssetDecimals,
   connectNode,
+  verifyRouterCapacityForTransfer,
 } from '../utils';
 import Loading from './Loading';
 import Options from './Options';
@@ -133,6 +134,12 @@ const ConnextModal: FC<ConnextModalProps> = ({
   const [withdrawRpcProvider, setWithdrawRpcProvider] = useState<
     providers.JsonRpcProvider
   >();
+  const [withdrawChannel, _setWithdrawChannel] = useState<FullChannelState>();
+  const withdrawChannelRef = React.useRef(withdrawChannel);
+  const setWithdrawChannel = (data: FullChannelState) => {
+    withdrawChannelRef.current = data;
+    _setWithdrawChannel(data);
+  };
   const [evts, setEvts] = useState<EvtContainer>();
 
   const [depositChainName, setDepositChainName] = useState<string>();
@@ -180,6 +187,13 @@ const ConnextModal: FC<ConnextModalProps> = ({
   };
 
   const [node, setNode] = useState<BrowserNode | undefined>();
+
+  const [swap, _setSwap] = useState();
+  const swapRef = React.useRef(swap);
+  const setSwap = (data: any) => {
+    swapRef.current = data;
+    _setSwap(data);
+  };
 
   const activeStep = activePhase(transferState);
 
@@ -248,7 +262,8 @@ const ConnextModal: FC<ConnextModalProps> = ({
     _withdrawRpcProvider: providers.JsonRpcProvider,
     transferAmount: BigNumber,
     _evts: EvtContainer,
-    _node: BrowserNode
+    _node: BrowserNode,
+    verifyRouterCapacity: boolean
   ) => {
     setActiveHeaderMessage(1);
     const crossChainTransferId = getRandomBytes32();
@@ -262,6 +277,17 @@ const ConnextModal: FC<ConnextModalProps> = ({
         `Calling reconcileDeposit with ${_depositAddress} and ${depositAssetId}`
       );
       await reconcileDeposit(_node, _depositAddress, depositAssetId);
+
+      if (verifyRouterCapacity) {
+        console.log('withdrawChannel: ', withdrawChannelRef.current);
+        await verifyRouterCapacityForTransfer(
+          _withdrawRpcProvider,
+          withdrawAssetId,
+          withdrawChannelRef.current!,
+          transferAmount.toString(),
+          swapRef.current
+        );
+      }
     } catch (e) {
       handleError(e, 'Error in reconcileDeposit', ERROR_STATES.RETRY);
       return;
@@ -383,11 +409,8 @@ const ConnextModal: FC<ConnextModalProps> = ({
 
   const handleInjectedProviderTransferAmountEntry = (input: string) => {
     try {
-      console.log('input: ', input);
-      console.log('input.trim(): ', input.trim());
-      const transferAmountBn = utils.parseEther(input.trim());
-      console.log('transferAmountBn: ', transferAmountBn);
-      setTransferAmount(transferAmountBn.toString());
+      utils.parseEther(input.trim()); // make sure it can parse
+      setTransferAmount(input.trim());
       setAmountError(undefined);
     } catch (e) {
       setAmountError('Invalid amount');
@@ -395,15 +418,11 @@ const ConnextModal: FC<ConnextModalProps> = ({
     }
   };
 
-  const injectedProviderDeposit = async (_transferAmount: string) => {
-    console.log('_transferAmount: ', _transferAmount);
+  const injectedProviderDeposit = async (
+    uiTransferAmountFormattedUnits: string
+  ) => {
     if (!injectedProvider) {
       handleError(new Error('Missing injected provider'));
-      return;
-    }
-    const transferAmountBn = BigNumber.from(_transferAmount);
-    if (transferAmountBn.isZero()) {
-      handleError(new Error('Deposit amount cannot be 0'));
       return;
     }
 
@@ -421,20 +440,44 @@ const ConnextModal: FC<ConnextModalProps> = ({
     }
 
     // deposit + reconcile
-    const signer = injectedProvider.getSigner();
-    const depositTx =
-      depositAssetId === constants.AddressZero
-        ? signer.sendTransaction({
-            to: depositAddress,
-            value: transferAmountBn,
-          })
-        : await new Contract(depositAssetId, ERC20Abi, signer).transfer(
-            depositAddress,
-            transferAmountBn
-          );
-    console.log('depositTx', depositTx.hash);
-    const receipt = await depositTx.wait();
-    console.log('deposit mined:', receipt.transactionHash);
+    let transferAmountBn;
+    try {
+      transferAmountBn = BigNumber.from(
+        utils.parseEther(uiTransferAmountFormattedUnits)
+      );
+      await verifyRouterCapacityForTransfer(
+        withdrawRpcProvider,
+        withdrawAssetId,
+        withdrawChannelRef.current!,
+        transferAmountBn.toString(),
+        swapRef.current
+      );
+      console.log(
+        `Transferring ${transferAmountBn.toString()} through injected provider`
+      );
+      if (transferAmountBn.isZero()) {
+        handleError(new Error('Deposit amount cannot be 0'));
+        return;
+      }
+
+      const signer = injectedProvider.getSigner();
+      const depositTx =
+        depositAssetId === constants.AddressZero
+          ? signer.sendTransaction({
+              to: depositAddress,
+              value: transferAmountBn,
+            })
+          : await new Contract(depositAssetId, ERC20Abi, signer).transfer(
+              depositAddress,
+              transferAmountBn
+            );
+      console.log('depositTx', depositTx.hash);
+      const receipt = await depositTx.wait();
+      console.log('deposit mined:', receipt.transactionHash);
+    } catch (e) {
+      handleError(e, 'Error in injected provider deposit: ');
+      return;
+    }
 
     await transfer(
       depositChainId,
@@ -443,7 +486,8 @@ const ConnextModal: FC<ConnextModalProps> = ({
       withdrawRpcProvider,
       transferAmountBn,
       evts,
-      node
+      node,
+      false
     );
   };
 
@@ -550,7 +594,8 @@ const ConnextModal: FC<ConnextModalProps> = ({
           _withdrawRpcProvider,
           transferAmount,
           _evts,
-          _node
+          _node,
+          true
         );
       }
     }, 5_000);
@@ -707,13 +752,15 @@ const ConnextModal: FC<ConnextModalProps> = ({
     const _depositAddress = depositChannel!.channelAddress;
     setDepositAddress(_depositAddress);
 
-    let withdrawChannel: FullChannelState;
+    let _withdrawChannel: FullChannelState;
     try {
-      withdrawChannel = await getChannelForChain(
+      _withdrawChannel = await getChannelForChain(
         _node,
         routerPublicIdentifier,
         _withdrawChainId
       );
+      console.log('SETTING _withdrawChannel: ', _withdrawChannel);
+      setWithdrawChannel(_withdrawChannel);
     } catch (e) {
       handleError(e, 'Could not get receiver channel');
       return;
@@ -723,13 +770,13 @@ const ConnextModal: FC<ConnextModalProps> = ({
     if (onReady) {
       onReady({
         depositChannelAddress: depositChannel.channelAddress,
-        withdrawChannelAddress: withdrawChannel.channelAddress,
+        withdrawChannelAddress: _withdrawChannel.channelAddress,
       });
     }
 
     // validate router before proceeding
     try {
-      await verifyRouterSupportsTransfer(
+      const swap = await verifyRouterSupportsTransfer(
         _node,
         _depositChainId,
         depositAssetId,
@@ -739,6 +786,7 @@ const ConnextModal: FC<ConnextModalProps> = ({
         routerPublicIdentifier,
         transferAmount
       );
+      setSwap(swap);
     } catch (e) {
       handleError(e, 'Error in verifyRouterSupportsTransfer');
       return;
@@ -766,7 +814,7 @@ const ConnextModal: FC<ConnextModalProps> = ({
         channelAddress: depositChannel.channelAddress,
       }),
       _node.getActiveTransfers({
-        channelAddress: withdrawChannel.channelAddress,
+        channelAddress: _withdrawChannel.channelAddress,
       }),
     ]);
     const depositHashlock = depositActive
@@ -798,7 +846,7 @@ const ConnextModal: FC<ConnextModalProps> = ({
       console.warn('Cancelling transfer thats not active');
       await cancelTransfer(
         _depositAddress,
-        withdrawChannel.channelAddress,
+        _withdrawChannel.channelAddress,
         data.transfer.transferId,
         data.transfer.meta.crossChainTransferId,
         _evts!,
@@ -851,10 +899,10 @@ const ConnextModal: FC<ConnextModalProps> = ({
     );
 
     const offChainWithdrawAssetBalance = BigNumber.from(
-      getBalanceForAssetId(withdrawChannel, withdrawAssetId, 'bob')
+      getBalanceForAssetId(_withdrawChannel, withdrawAssetId, 'bob')
     );
     console.log(
-      `Offchain balance for ${withdrawChannel.channelAddress} of asset ${withdrawAssetId}: ${offChainWithdrawAssetBalance}`
+      `Offchain balance for ${_withdrawChannel.channelAddress} of asset ${withdrawAssetId}: ${offChainWithdrawAssetBalance}`
     );
 
     if (
@@ -871,7 +919,8 @@ const ConnextModal: FC<ConnextModalProps> = ({
         _withdrawRpcProvider,
         offChainDepositAssetBalance,
         _evts,
-        _node
+        _node,
+        true
       );
       return;
     }
@@ -885,7 +934,8 @@ const ConnextModal: FC<ConnextModalProps> = ({
         _withdrawRpcProvider,
         offChainDepositAssetBalance,
         _evts,
-        _node
+        _node,
+        true
       );
     }
 
