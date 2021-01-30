@@ -58,6 +58,7 @@
   },
   "dependencies": {
     "@connext/vector-browser-node": "0.1.10",
+    "@connext/vector-contracts": "0.1.10",
     "@connext/vector-types": "0.1.10",
     "@connext/vector-utils": "0.1.10",
     "@emotion/react": "^11.1.4",
