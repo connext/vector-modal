@@ -38,8 +38,14 @@ export const hydrateProviders = (
   [chainId: number]: providers.BaseProvider;
 } => {
   return {
-    [depositChainId]: new providers.JsonRpcProvider(depositProviderUrl),
-    [withdrawChainId]: new providers.JsonRpcProvider(withdrawProviderUrl),
+    [depositChainId]: new providers.JsonRpcProvider(
+      depositProviderUrl,
+      depositChainId
+    ),
+    [withdrawChainId]: new providers.JsonRpcProvider(
+      withdrawProviderUrl,
+      withdrawChainId
+    ),
   };
 };
 
@@ -86,12 +92,12 @@ export const getChainInfo = async (chainId: number) => {
   }
 };
 
-export const getWithdrawAssetDecimals = async (withdrawChainId: number, withdrawAssetId: string, ethProvider: providers.BaseProvider) => {
-  const token = new Contract(
-    withdrawAssetId,
-    ERC20Abi,
-    ethProvider
-  );
+export const getWithdrawAssetDecimals = async (
+  withdrawChainId: number,
+  withdrawAssetId: string,
+  ethProvider: providers.BaseProvider
+) => {
+  const token = new Contract(withdrawAssetId, ERC20Abi, ethProvider);
 
   if (withdrawAssetId !== constants.AddressZero) {
     try {

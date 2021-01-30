@@ -34,7 +34,11 @@ import QRCode from 'qrcode.react';
 import { FeedbackFish } from '@feedback-fish/react';
 import { BigNumber, constants, utils, providers } from 'ethers';
 import { EngineEvents, FullChannelState } from '@connext/vector-types';
-import { getBalanceForAssetId, getRandomBytes32 } from '@connext/vector-utils';
+import {
+  getBalanceForAssetId,
+  getRandomBytes32,
+  getChainId,
+} from '@connext/vector-utils';
 import {
   getAssetName,
   TRANSFER_STATES,
@@ -153,16 +157,8 @@ const ConnextModal: FC<ConnextModalProps> = ({
 
   const activeStep = activePhase(transferState);
 
-    
   const preventDefault = (event: React.SyntheticEvent) =>
     event.preventDefault();
-
-  const depositRpcProvider = new providers.JsonRpcProvider(
-    depositChainProvider
-  );
-  const withdrawRpcProvider = new providers.JsonRpcProvider(
-    withdrawChainProvider
-  );
 
   const handleError = (
     e: Error | undefined,
@@ -223,6 +219,7 @@ const ConnextModal: FC<ConnextModalProps> = ({
     _depositChainId: number,
     _withdrawChainId: number,
     _depositAddress: string,
+    withdrawRpcProvider: providers.JsonRpcProvider,
     transferAmount: BigNumber,
     evts: EvtContainer,
     _node: BrowserNode
@@ -355,10 +352,14 @@ const ConnextModal: FC<ConnextModalProps> = ({
       );
     }
 
-    await withdraw(_withdrawChainId, _node);
+    await withdraw(_withdrawChainId, withdrawRpcProvider, _node);
   };
 
-  const withdraw = async (_withdrawChainId: number, _node: BrowserNode) => {
+  const withdraw = async (
+    _withdrawChainId: number,
+    withdrawRpcProvider: providers.JsonRpcProvider,
+    _node: BrowserNode
+  ) => {
     setTransferState(TRANSFER_STATES.WITHDRAWING);
 
     // now go to withdrawal screen
@@ -406,6 +407,8 @@ const ConnextModal: FC<ConnextModalProps> = ({
     _depositChainId: number,
     _withdrawChainId: number,
     _depositAddress: string,
+    depositRpcProvider: providers.JsonRpcProvider,
+    withdrawRpcProvider: providers.JsonRpcProvider,
     evts: EvtContainer,
     _node: BrowserNode
   ) => {
@@ -452,6 +455,7 @@ const ConnextModal: FC<ConnextModalProps> = ({
           _depositChainId,
           _withdrawChainId,
           _depositAddress,
+          withdrawRpcProvider,
           transferAmount,
           evts,
           _node
@@ -491,13 +495,21 @@ const ConnextModal: FC<ConnextModalProps> = ({
 
     let _depositChainId: number;
     let _withdrawChainId: number;
+    let depositRpcProvider: providers.JsonRpcProvider;
+    let withdrawRpcProvider: providers.JsonRpcProvider;
     try {
-      const _depositNetwork = await depositRpcProvider.getNetwork();
-      const _withdrawNetwork = await withdrawRpcProvider.getNetwork();
-      console.log(_depositNetwork, _withdrawNetwork);
-
-      _depositChainId = _depositNetwork.chainId;
-      _withdrawChainId = _withdrawNetwork.chainId;
+      _withdrawChainId = await getChainId(withdrawChainProvider);
+      _depositChainId = await getChainId(depositChainProvider);
+      depositRpcProvider = new providers.JsonRpcProvider(depositChainProvider);
+      withdrawRpcProvider = new providers.JsonRpcProvider(
+        withdrawChainProvider
+      );
+      console.log(
+        'deposit chain:',
+        _withdrawChainId,
+        'withdraw chain:',
+        _depositChainId
+      );
     } catch (e) {
       console.log(e);
       handleError(e, 'Error getting chain Id from provider');
@@ -730,6 +742,7 @@ const ConnextModal: FC<ConnextModalProps> = ({
         _depositChainId,
         _withdrawChainId,
         _depositAddress,
+        withdrawRpcProvider,
         offChainDepositAssetBalance,
         evts,
         _node
@@ -743,6 +756,7 @@ const ConnextModal: FC<ConnextModalProps> = ({
         _depositChainId,
         _withdrawChainId,
         _depositAddress,
+        withdrawRpcProvider,
         offChainDepositAssetBalance,
         evts,
         _node
@@ -752,7 +766,7 @@ const ConnextModal: FC<ConnextModalProps> = ({
     // if offchainWithdrawBalance > 0
     else if (offChainWithdrawAssetBalance.gt(0)) {
       // then go to withdraw screen with transfer amount == balance
-      await withdraw(_withdrawChainId, _node);
+      await withdraw(_withdrawChainId, withdrawRpcProvider, _node);
     }
 
     // if both are zero, register listener and display
@@ -765,6 +779,8 @@ const ConnextModal: FC<ConnextModalProps> = ({
         _depositChainId,
         _withdrawChainId,
         _depositAddress,
+        depositRpcProvider,
+        withdrawRpcProvider,
         evts,
         _node
       );
@@ -919,13 +935,13 @@ const ConnextModal: FC<ConnextModalProps> = ({
                     Send{' '}
                     <Link
                       href={getExplorerLinkForAsset(
-                        depositChainId,
+                        depositChainId!,
                         depositAssetId
                       )}
                       target="_blank"
                       onClick={preventDefault}
                     >
-                      {getAssetName(depositAssetId, depositChainId)}
+                      {getAssetName(depositAssetId, depositChainId!)}
                     </Link>{' '}
                     to the address below
                   </Typography>
