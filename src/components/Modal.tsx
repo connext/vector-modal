@@ -471,6 +471,11 @@ const ConnextModal: FC<ConnextModalProps> = ({
               depositAddress,
               transferAmountBn
             );
+
+      setActiveHeaderMessage(1);
+      setTransferState(TRANSFER_STATES.DEPOSITING);
+      setIsError(false);
+      setAmount(transferAmountBn);
       console.log('depositTx', depositTx.hash);
       const receipt = await depositTx.wait();
       console.log('deposit mined:', receipt.transactionHash);
