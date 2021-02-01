@@ -197,9 +197,6 @@ const ConnextModal: FC<ConnextModalProps> = ({
 
   const activeStep = activePhase(transferState);
 
-  const preventDefault = (event: React.SyntheticEvent) =>
-    event.preventDefault();
-
   const handleError = (
     e: Error | undefined,
     message?: string,
@@ -999,7 +996,7 @@ const ConnextModal: FC<ConnextModalProps> = ({
                     depositAssetId
                   )}
                   target="_blank"
-                  onClick={preventDefault}
+                  rel="noopener"
                 >
                   {getAssetName(depositAssetId, depositChainId!)}
                 </Link>
@@ -1018,7 +1015,7 @@ const ConnextModal: FC<ConnextModalProps> = ({
                     depositAssetId
                   )}
                   target="_blank"
-                  onClick={preventDefault}
+                  rel="noopener"
                 >
                   {getAssetName(depositAssetId, depositChainId!)}
                 </Link>
@@ -1161,7 +1158,7 @@ const ConnextModal: FC<ConnextModalProps> = ({
                             depositAssetId
                           )}
                           target="_blank"
-                          onClick={preventDefault}
+                          rel="noopener"
                         >
                           {getAssetName(depositAssetId, depositChainId!)}
                         </Link>{' '}
@@ -1387,8 +1384,7 @@ interface FooterProps {
 
 const Footer: FC<FooterProps> = props => {
   const { styles } = props;
-  const preventDefault = (event: React.SyntheticEvent) =>
-    event.preventDefault();
+
   return (
     <Grid
       id="Footer"
@@ -1398,11 +1394,7 @@ const Footer: FC<FooterProps> = props => {
       justifyContent="center"
     >
       <Typography variant="overline">
-        <Link
-          href="https://connext.network"
-          target="_blank"
-          onClick={preventDefault}
-        >
+        <Link href="https://connext.network" target="_blank" rel="noopener">
           Powered By Connext
         </Link>
       </Typography>
@@ -1511,8 +1503,6 @@ const CompleteState: FC<CompleteStateProps> = ({
   styleSuccess,
   onClose,
 }) => {
-  const preventDefault = (event: React.SyntheticEvent) =>
-    event.preventDefault();
   return (
     <>
       <Grid container className={styles} alignItems="center" direction="column">
@@ -1523,7 +1513,7 @@ const CompleteState: FC<CompleteStateProps> = ({
           <Link
             href={getExplorerLinkForAsset(withdrawChainId, withdrawAssetId)}
             target="_blank"
-            onClick={preventDefault}
+            rel="noopener"
           >
             {getAssetName(withdrawAssetId, withdrawChainId)}!
           </Link>
