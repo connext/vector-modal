@@ -10,6 +10,7 @@ import {
   NodeResponses,
   TransferNames,
   WithdrawalReconciledPayload,
+  jsonifyError,
 } from '@connext/vector-types';
 import {
   calculateExchangeAmount,
@@ -43,8 +44,31 @@ export const connectNode = async (
     });
     await browserNode.init();
   } catch (e) {
-    console.error(e);
-    throw new Error(`connecting to iframe: ${e}`);
+    console.error(jsonifyError(e));
+
+    if (e.context.validationError.includes('Channel is already setup')) {
+      // restore state for depositChainId
+      const restoreDepositChannelState = await browserNode.restoreState({
+        counterpartyIdentifier: routerPublicIdentifier,
+        chainId: depositChainId,
+      });
+
+      if (restoreDepositChannelState.isError) {
+        throw restoreDepositChannelState.getError();
+      }
+
+      // restore state for withdrawChainId
+      const restoreWithdrawChannelState = await browserNode.restoreState({
+        counterpartyIdentifier: routerPublicIdentifier,
+        chainId: depositChainId,
+      });
+
+      if (restoreWithdrawChannelState.isError) {
+        throw restoreWithdrawChannelState.getError();
+      }
+    } else {
+      throw new Error(`connecting to iframe: ${e}`);
+    }
   }
   console.log('connection success');
 
