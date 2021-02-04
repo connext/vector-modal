@@ -907,25 +907,6 @@ const ConnextModal: FC<ConnextModalProps> = ({
       `Offchain balance for ${_withdrawChannel.channelAddress} of asset ${withdrawAssetId}: ${offChainWithdrawAssetBalance}`
     );
 
-    if (
-      offChainDepositAssetBalance.gt(0) &&
-      offChainWithdrawAssetBalance.gt(0)
-    ) {
-      console.warn(
-        'Balance exists in both channels, transferring first, then withdrawing'
-      );
-      await transfer(
-        _depositChainId,
-        _withdrawChainId,
-        _depositAddress,
-        _withdrawRpcProvider,
-        offChainDepositAssetBalance,
-        _evts,
-        _node,
-        true
-      );
-      return;
-    }
     // if offChainDepositAssetBalance > 0
     if (offChainDepositAssetBalance.gt(0)) {
       // then start transfer
@@ -943,11 +924,9 @@ const ConnextModal: FC<ConnextModalProps> = ({
       // if offchainWithdrawBalance > 0
       // then go to withdraw screen with transfer amount == balance
       await withdraw(_withdrawChainId, _withdrawRpcProvider, _node);
-    }
-
-    // if both are zero, register listener and display
-    // QR code
-    else {
+    } else {
+      // if both are zero, register listener and display
+      // QR code
       // sets up deposit screen
       setTransferState(TRANSFER_STATES.INITIAL);
       if (injectedProvider) {
