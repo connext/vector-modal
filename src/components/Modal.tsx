@@ -214,6 +214,7 @@ const ConnextModal: FC<ConnextModalProps> = ({
     setIsError(true);
     setIniting(false);
     setPreImage(undefined);
+    setTransferAmount(_transferAmount);
   };
 
   const cancelTransfer = async (
@@ -519,6 +520,7 @@ const ConnextModal: FC<ConnextModalProps> = ({
     setWithdrawTx(result.withdrawalTx);
     setSentAmount(result.withdrawalAmount ?? '0');
     setTransferState(TRANSFER_STATES.COMPLETE);
+    setTransferAmount(_transferAmount);
 
     setIsError(false);
     setActiveHeaderMessage(2);
