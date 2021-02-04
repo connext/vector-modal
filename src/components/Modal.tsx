@@ -939,10 +939,8 @@ const ConnextModal: FC<ConnextModalProps> = ({
         _node,
         true
       );
-    }
-
-    // if offchainWithdrawBalance > 0
-    else if (offChainWithdrawAssetBalance.gt(0)) {
+    } else if (offChainWithdrawAssetBalance.gt(0)) {
+      // if offchainWithdrawBalance > 0
       // then go to withdraw screen with transfer amount == balance
       await withdraw(_withdrawChainId, _withdrawRpcProvider, _node);
     }
