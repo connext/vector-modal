@@ -30,45 +30,73 @@ export const connectNode = async (
   withdrawChainProvider: string
 ): Promise<BrowserNode> => {
   console.log('Connect Node');
-  let browserNode: BrowserNode;
+  const browserNode = new BrowserNode({
+    routerPublicIdentifier,
+    iframeSrc,
+    supportedChains: [depositChainId, withdrawChainId],
+    chainProviders: {
+      [depositChainId]: depositChainProvider,
+      [withdrawChainId]: withdrawChainProvider,
+    },
+  });
 
+  let error: any | undefined = undefined;
   try {
-    browserNode = new BrowserNode({
-      routerPublicIdentifier,
-      iframeSrc,
-      supportedChains: [depositChainId, withdrawChainId],
-      chainProviders: {
-        [depositChainId]: depositChainProvider,
-        [withdrawChainId]: withdrawChainProvider,
-      },
-    });
     await browserNode.init();
   } catch (e) {
-    console.error(jsonifyError(e));
+    console.error('Error connecting to iframe:', jsonifyError(e));
+    error = e;
+  }
+  const shouldAttemptRestore = (error?.context?.validationError ?? '').includes(
+    'Channel is already setup'
+  );
+  if (error && !shouldAttemptRestore) {
+    throw new Error(`connecting to iframe: ${error}`);
+  }
 
-    if (e.context.validationError.includes('Channel is already setup')) {
-      // restore state for depositChainId
+  if (error && shouldAttemptRestore) {
+    console.warn('Attempting restore from router');
+    // restore state for depositChainId
+    const [deposit, withdraw] = await Promise.all([
+      browserNode.getStateChannelByParticipants({
+        counterparty: routerPublicIdentifier,
+        chainId: depositChainId,
+      }),
+      browserNode.getStateChannelByParticipants({
+        counterparty: routerPublicIdentifier,
+        chainId: withdrawChainId,
+      }),
+    ]);
+    if (deposit.isError || withdraw.isError) {
+      console.error('Error fetching deposit channel', deposit.getError());
+      console.error('Error fetching withdraw channel', withdraw.getError());
+      throw new Error('Could not retrieve channels');
+    }
+    if (!deposit.getValue()) {
       const restoreDepositChannelState = await browserNode.restoreState({
         counterpartyIdentifier: routerPublicIdentifier,
         chainId: depositChainId,
       });
-
       if (restoreDepositChannelState.isError) {
+        console.error('Could not restore deposit state');
         throw restoreDepositChannelState.getError();
       }
+    }
 
+    if (!withdraw.getValue()) {
       // restore state for withdrawChainId
       const restoreWithdrawChannelState = await browserNode.restoreState({
         counterpartyIdentifier: routerPublicIdentifier,
-        chainId: depositChainId,
+        chainId: withdrawChainId,
       });
 
       if (restoreWithdrawChannelState.isError) {
+        console.error('Could not restore withdraw state');
         throw restoreWithdrawChannelState.getError();
       }
-    } else {
-      throw new Error(`connecting to iframe: ${e}`);
     }
+    console.warn('Restore complete, re-initing');
+    await browserNode.init();
   }
   console.log('connection success');
 
