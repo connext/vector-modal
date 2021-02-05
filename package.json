@@ -49,6 +49,7 @@
     "@size-limit/preset-small-lib": "^4.9.1",
     "@types/react": "^17.0.0",
     "@types/react-dom": "^17.0.0",
+    "@types/styled-components": "^5.1.7",
     "react": "^17.0.1",
     "react-dom": "^17.0.1",
     "size-limit": "^4.9.1",
@@ -68,6 +69,7 @@
     "ethers": "^5.0.24",
     "evt": "1.9.12",
     "qrcode.react": "^1.0.1",
-    "react-feather": "^2.0.9"
+    "react-feather": "^2.0.9",
+    "styled-components": "^5.2.1"
   }
 }
