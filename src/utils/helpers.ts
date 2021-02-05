@@ -1,6 +1,6 @@
 import { providers, BigNumber, constants, Contract, utils } from 'ethers';
 import { ERC20Abi } from '@connext/vector-types';
-import { TransferStates, CHAIN_INFO_URL } from '../constants';
+import { TransferStates, CHAIN_INFO_URL, NETWORK_NAME } from '../constants';
 import { delay } from '@connext/vector-utils';
 
 export const activePhase = (phase: TransferStates): number => {
@@ -80,44 +80,43 @@ export const retryWithDelay = async <T = any>(
 };
 
 export const getChainInfo = async (chainId: number) => {
-  try {
-    const chainInfo: any[] = await utils.fetchJson(CHAIN_INFO_URL);
-    const chain = chainInfo.find(info => info.chainId === chainId);
-    if (chain) {
-      return chain.name;
+  if (NETWORK_NAME[chainId]) {
+    console.log(NETWORK_NAME[chainId]);
+    return NETWORK_NAME[chainId];
+  } else {
+    try {
+      const chainInfo: any[] = await utils.fetchJson(CHAIN_INFO_URL);
+      const chain = chainInfo.find(info => info.chainId === chainId);
+      if (chain) {
+        return chain.name;
+      }
+    } catch (e) {
+      console.warn(`Could not fetch chain info from ${CHAIN_INFO_URL}`);
+      return;
     }
-  } catch (e) {
-    console.warn(`Could not fetch chain info from ${CHAIN_INFO_URL}`);
-    return;
   }
 };
 
-export const getWithdrawAssetDecimals = async (
-  withdrawChainId: number,
-  withdrawAssetId: string,
+export const getAssetDecimals = async (
+  chainId: number,
+  assetId: string,
   ethProvider: providers.BaseProvider
 ) => {
-  const token = new Contract(withdrawAssetId, ERC20Abi, ethProvider);
-
-  if (withdrawAssetId !== constants.AddressZero) {
+  if (assetId !== constants.AddressZero) {
     try {
+      const token = new Contract(assetId, ERC20Abi, ethProvider);
       const supply = await token.totalSupply();
       console.log('supply: ', supply);
       const decimals = await token.decimals();
-      console.log(
-        `Detected token decimals for withdrawChainId ${withdrawChainId}: `,
-        decimals
-      );
+      console.log(`Detected token decimals for chainId ${chainId}: `, decimals);
       return decimals;
     } catch (e) {
       console.error(
-        `Error detecting decimals, unsafely falling back to 18 decimals for withdrawChainId ${withdrawChainId}: `,
+        `Error detecting decimals, unsafely falling back to 18 decimals for chainId ${chainId}: `,
         e
       );
     }
   } else {
-    console.log(
-      `Using native asset 18 decimals for withdrawChainId ${withdrawChainId}`
-    );
+    console.log(`Using native asset 18 decimals for chainId ${chainId}`);
   }
 };
