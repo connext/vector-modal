@@ -485,7 +485,6 @@ const ConnextModal: FC<ConnextModalProps> = ({
       setAmount(transferAmountBn);
       console.log('depositTx', depositTx.hash);
       const receipt = await depositTx.wait();
-      setTransferState(TRANSFER_STATES.DEPOSITING);
       console.log('deposit mined:', receipt.transactionHash);
     } catch (e) {
       handleError(e, 'Error in injected provider deposit: ');
