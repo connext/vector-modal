@@ -414,14 +414,13 @@ const ConnextModal: FC<ConnextModalProps> = ({
       setTransferAmount(input.trim());
       setAmountError(undefined);
       const transferAmountBn = BigNumber.from(utils.parseEther(input.trim())); // make sure it can parse
+      const userBalanceBn = BigNumber.from(utils.parseEther(userBalance));
+      
       if (transferAmountBn.isZero()) {
         setAmountError('Transfer amount cannot be 0');
       }
-      if (parseFloat(userBalance)) {
-        const userBalanceBn = BigNumber.from(utils.parseEther(userBalance));
-        if (transferAmountBn.gt(userBalanceBn)) {
-          setAmountError('Transfer amount exceeds user balance');
-        }
+      if (transferAmountBn.gt(userBalanceBn)) {
+        setAmountError('Transfer amount exceeds user balance');
       }
     } catch (e) {
       setAmountError('Invalid amount');
