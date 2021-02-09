@@ -81,7 +81,6 @@ export const retryWithDelay = async <T = any>(
 
 export const getChainInfo = async (chainId: number) => {
   if (NETWORK_NAME[chainId]) {
-    console.log(NETWORK_NAME[chainId]);
     return NETWORK_NAME[chainId];
   } else {
     try {
