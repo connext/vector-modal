@@ -286,7 +286,7 @@ const ConnextModal: FC<ConnextModalProps> = ({
           _withdrawRpcProvider,
           withdrawAssetId,
           withdrawChannelRef.current!,
-          transferAmount.toString(),
+          transferAmount,
           swapRef.current
         );
       }
@@ -459,7 +459,7 @@ const ConnextModal: FC<ConnextModalProps> = ({
         withdrawRpcProvider,
         withdrawAssetId,
         withdrawChannelRef.current!,
-        transferAmountBn.toString(),
+        transferAmountBn,
         swapRef.current
       );
       console.log(
@@ -751,6 +751,7 @@ const ConnextModal: FC<ConnextModalProps> = ({
         routerPublicIdentifier,
         _depositChainId
       );
+      console.log('SETTING DepositChannel: ', depositChannel);
     } catch (e) {
       handleError(e, 'Could not get sender channel');
       return;
@@ -781,6 +782,10 @@ const ConnextModal: FC<ConnextModalProps> = ({
     }
 
     // validate router before proceeding
+    let transferAmountBn: BigNumber = BigNumber.from(0) ;
+    if(_transferAmount)
+    transferAmountBn = BigNumber.from(utils.parseEther(_transferAmount));
+
     try {
       const swap = await verifyRouterSupportsTransfer(
         _node,
@@ -790,7 +795,7 @@ const ConnextModal: FC<ConnextModalProps> = ({
         withdrawAssetId,
         _withdrawRpcProvider,
         routerPublicIdentifier,
-        _transferAmount
+        transferAmountBn
       );
       setSwap(swap);
     } catch (e) {

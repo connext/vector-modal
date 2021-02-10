@@ -430,7 +430,7 @@ export const verifyRouterSupportsTransfer = async (
   _toAssetId: string,
   ethProvider: providers.BaseProvider, // For `to` chain
   routerPublicIdentifier: string,
-  transferAmount?: string
+  transferAmount?: BigNumber
 ): Promise<any> => {
   const withdrawChannel = await getChannelForChain(
     node,
@@ -509,7 +509,7 @@ export const verifyRouterCapacityForTransfer = async (
   ethProvider: providers.BaseProvider,
   toAssetId: string,
   withdrawChannel: FullChannelState,
-  transferAmount: string,
+  transferAmount: BigNumber,
   swap: any
 ) => {
   console.log(`verifyRouterCapacityForTransfer for ${transferAmount}`);
@@ -522,7 +522,7 @@ export const verifyRouterCapacityForTransfer = async (
     getBalanceForAssetId(withdrawChannel, toAssetId, 'alice')
   );
   const swappedAmount = calculateExchangeAmount(
-    transferAmount,
+    transferAmount.toString(),
     swap.hardcodedRate
   );
   console.log('transferAmount: ', transferAmount);
@@ -532,7 +532,6 @@ export const verifyRouterCapacityForTransfer = async (
   if (routerOffchain.gte(swappedAmount)) {
     return;
   }
-
   // TODO: dont think we need this. what about 6 decimals?
   // const collateralCushion = utils.parseEther('1');
 
