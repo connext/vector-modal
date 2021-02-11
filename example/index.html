@@ -10,5 +10,26 @@
   <body>
     <div id="root"></div>
     <script src="./index.tsx"></script>
+
+    <section>
+      <h2>With WebModal</h2>
+      <p class="wc">
+        <web-modal transferAmount="10"></web-modal>
+      </p>
+    </section>
+
+    <section>
+      <h2>With count attribute</h2>
+      <pre>
+&lt;react-counter count=&quot;10&quot;&gt;&lt;/react-counter&gt;</pre
+      >
+      <p class="wc">
+        <react-counter count="10"></react-counter>
+      </p>
+      <p class="info">
+        The element is initialized with <strong>count</strong> set to 10. You
+        can still change it manually by setting property in developer tools.
+      </p>
+    </section>
   </body>
 </html>
