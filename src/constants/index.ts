@@ -1,4 +1,3 @@
-import { constants } from 'ethers';
 import { theme, useStyles } from './style';
 
 export const CHAIN_INFO_URL = 'https://chainid.network/chains.json';
@@ -22,7 +21,7 @@ export const NETWORK_NAME: {
   80001: 'Matic Testnet Mumbai',
 };
 
-const ASSET_CHAIN_NAME_MAPPING: {
+export const ASSET_CHAIN_NAME_MAPPING: {
   [chainId: number]: { [assetId: string]: string };
 } = {
   1: {
@@ -46,15 +45,6 @@ const ASSET_CHAIN_NAME_MAPPING: {
   },
 };
 
-export const getAssetName = (assetId: string, chainId: number): string => {
-  if (assetId === constants.AddressZero) {
-    return 'ETH';
-  }
-  return ASSET_CHAIN_NAME_MAPPING[chainId]
-    ? ASSET_CHAIN_NAME_MAPPING[chainId][assetId] ?? 'Token'
-    : 'Token';
-};
-
 export const TRANSFER_STATES = {
   LOADING: 'LOADING',
   INITIAL: 'INITIAL',
@@ -65,6 +55,19 @@ export const TRANSFER_STATES = {
   ERROR: 'ERROR',
 } as const;
 export type TransferStates = keyof typeof TRANSFER_STATES;
+
+export const SCREEN_STATES = {
+  LOGIN: 'LOGIN',
+  LOADING: 'LOADING',
+  EMAIL: 'EMAIL',
+  INITIAL: 'INITIAL',
+  DEPOSITING: 'DEPOSITING',
+  TRANSFERRING: 'TRANSFERRING',
+  WITHDRAWING: 'WITHDRAWING',
+  COMPLETE: 'COMPLETE',
+  ERROR: 'ERROR',
+} as const;
+export type ScreenStates = keyof typeof SCREEN_STATES;
 
 export const ERROR_STATES = {
   REFRESH: 'REFRESH',

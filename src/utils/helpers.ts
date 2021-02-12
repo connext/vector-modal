@@ -1,6 +1,11 @@
 import { providers, BigNumber, constants, Contract, utils } from 'ethers';
 import { ERC20Abi } from '@connext/vector-types';
-import { TransferStates, CHAIN_INFO_URL, NETWORK_NAME } from '../constants';
+import {
+  TransferStates,
+  CHAIN_INFO_URL,
+  NETWORK_NAME,
+  ASSET_CHAIN_NAME_MAPPING,
+} from '../constants';
 import { delay } from '@connext/vector-utils';
 
 export const activePhase = (phase: TransferStates): number => {
@@ -47,6 +52,15 @@ export const hydrateProviders = (
       withdrawChainId
     ),
   };
+};
+
+export const getAssetName = (assetId: string, chainId: number): string => {
+  if (assetId === constants.AddressZero) {
+    return 'ETH';
+  }
+  return ASSET_CHAIN_NAME_MAPPING[chainId]
+    ? ASSET_CHAIN_NAME_MAPPING[chainId][assetId] ?? 'Token'
+    : 'Token';
 };
 
 export const getOnchainBalance = async (
