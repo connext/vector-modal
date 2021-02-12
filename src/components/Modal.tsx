@@ -44,7 +44,6 @@ import {
   getChainId,
 } from '@connext/vector-utils';
 import {
-  getAssetName,
   TRANSFER_STATES,
   TransferStates,
   ERROR_STATES,
@@ -55,7 +54,7 @@ import {
   useStyles,
 } from '../constants';
 import {
-  getExplorerLinkForTx,
+  getAssetName,
   activePhase,
   getExplorerLinkForAsset,
   getTotalDepositsBob,
@@ -80,6 +79,8 @@ import Loading from './Loading';
 import { Input as NumericalInput } from './NumericalInput';
 import Options from './Options';
 import Recover from './Recover';
+import ErrorScreen from './ErrorScreen';
+import SuccessScreen from './SuccessScreen';
 
 export type ConnextModalProps = {
   showModal: boolean;
@@ -415,7 +416,7 @@ const ConnextModal: FC<ConnextModalProps> = ({
       setAmountError(undefined);
       const transferAmountBn = BigNumber.from(utils.parseEther(input.trim())); // make sure it can parse
       const userBalanceBn = BigNumber.from(utils.parseEther(userBalance));
-      
+
       if (transferAmountBn.isZero()) {
         setAmountError('Transfer amount cannot be 0');
       }
@@ -782,9 +783,9 @@ const ConnextModal: FC<ConnextModalProps> = ({
     }
 
     // validate router before proceeding
-    let transferAmountBn: BigNumber = BigNumber.from(0) ;
-    if(_transferAmount)
-    transferAmountBn = BigNumber.from(utils.parseEther(_transferAmount));
+    let transferAmountBn: BigNumber = BigNumber.from(0);
+    if (_transferAmount)
+      transferAmountBn = BigNumber.from(utils.parseEther(_transferAmount));
 
     try {
       const swap = await verifyRouterSupportsTransfer(
@@ -1308,7 +1309,7 @@ const ConnextModal: FC<ConnextModalProps> = ({
             <>
               <Grid container className={classes.status}>
                 <Grid item xs={12}>
-                  <CompleteState
+                  <SuccessScreen
                     withdrawChainName={withdrawChainName!}
                     withdrawTx={withdrawTx!}
                     sentAmount={sentAmount!}
@@ -1548,184 +1549,6 @@ const NetworkBar: FC<NetworkBarProps> = ({
           <Chip color="secondary" label={withdrawChainName} />
         </Grid>
       </Grid>
-    </>
-  );
-};
-
-export interface CompleteStateProps {
-  withdrawTx: string;
-  withdrawChainName: string;
-  withdrawAssetId: string;
-  withdrawChainId: number;
-  withdrawAssetDecimals: number;
-  withdrawalAddress: string;
-  sentAmount: string;
-  styles: string;
-  styleSuccess: string;
-  onClose: () => void;
-}
-
-const CompleteState: FC<CompleteStateProps> = ({
-  withdrawTx,
-  withdrawChainName,
-  sentAmount,
-  withdrawAssetId,
-  withdrawChainId,
-  withdrawAssetDecimals,
-  withdrawalAddress,
-  styles,
-  styleSuccess,
-  onClose,
-}) => {
-  return (
-    <>
-      <Grid container className={styles} alignItems="center" direction="column">
-        <CheckCircle className={styleSuccess} fontSize="large" />
-        <Typography gutterBottom variant="h6">
-          Successfully sent{' '}
-          {utils.formatUnits(sentAmount, withdrawAssetDecimals)}{' '}
-          <Link
-            href={getExplorerLinkForAsset(withdrawChainId, withdrawAssetId)}
-            target="_blank"
-            rel="noopener"
-          >
-            {getAssetName(withdrawAssetId, withdrawChainId)}!
-          </Link>
-        </Typography>
-      </Grid>
-
-      <Grid container spacing={4}>
-        <Grid item xs={12}>
-          <TextField
-            label={`Receiver Address on ${withdrawChainName}`}
-            defaultValue={withdrawalAddress}
-            InputProps={{
-              readOnly: true,
-            }}
-            fullWidth
-            size="medium"
-          />
-        </Grid>
-        <Grid item xs={12}>
-          <Grid container justifyContent="center">
-            <Button
-              variant="outlined"
-              className={styleSuccess}
-              href={getExplorerLinkForTx(withdrawChainId, withdrawTx)}
-              target="_blank"
-            >
-              Transaction Receipt
-            </Button>
-          </Grid>
-        </Grid>
-        <Grid item xs={12}>
-          <Grid container justifyContent="center">
-            <Button variant="contained" onClick={onClose}>
-              Close
-            </Button>
-          </Grid>
-        </Grid>
-      </Grid>
-    </>
-  );
-};
-
-export interface ErrorStateProps {
-  error: Error;
-  errorState: ErrorStates;
-  crossChainTransferId: string;
-  styles: string;
-  retry: () => void;
-}
-
-const ErrorScreen: FC<ErrorStateProps> = ({
-  error,
-  errorState,
-  crossChainTransferId,
-  styles,
-  retry,
-}) => {
-  const cancelled = error.message.includes('Transfer was cancelled');
-  return (
-    <>
-      <Grid container className={styles} alignItems="center" direction="column">
-        <AlertCircle fontSize="large" color={cancelled ? `primary` : `error`} />
-        <Typography
-          gutterBottom
-          variant="caption"
-          color={cancelled ? `primary` : `error`}
-        >
-          {cancelled ? 'Alert' : 'Error'}
-        </Typography>
-
-        <Typography
-          gutterBottom
-          variant="caption"
-          color={cancelled ? `primary` : `error`}
-          align="center"
-        >
-          {cancelled
-            ? `The transfer could not complete, likely because of a communication issue. Funds are preserved in the state channel. Refreshing usually works in this scenario.`
-            : `${
-                crossChainTransferId !== constants.HashZero
-                  ? `${crossChainTransferId.substring(0, 10)}... - `
-                  : ''
-              }${error.message}`}
-        </Typography>
-      </Grid>
-
-      {errorState === ERROR_STATES.REFRESH && (
-        <Grid container direction="row" justifyContent="center">
-          <Button
-            variant="outlined"
-            onClick={() => {
-              window.location.reload();
-            }}
-          >
-            Refresh
-          </Button>
-        </Grid>
-      )}
-
-      {errorState === ERROR_STATES.CONTACT_INFO && (
-        <>
-          <Typography
-            gutterBottom
-            variant="caption"
-            color="primary"
-            align="center"
-          >
-            Uh oh, looks like you got an unexpected error. Please try to
-            refresh, or if that doesn't work, contact us on Discord for more
-            support
-          </Typography>
-
-          <Grid container direction="row" justifyContent="center">
-            <Button
-              variant="outlined"
-              id="link"
-              onClick={() =>
-                window.open(
-                  'https://discord.com/channels/454734546869551114',
-                  '_blank'
-                )
-              }
-            >
-              Discord
-            </Button>
-          </Grid>
-        </>
-      )}
-
-      {errorState === ERROR_STATES.RETRY && (
-        <>
-          <Grid container direction="row" justifyContent="center">
-            <Button variant="outlined" onClick={retry}>
-              Retry
-            </Button>
-          </Grid>
-        </>
-      )}
     </>
   );
 };
