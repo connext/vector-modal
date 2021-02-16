@@ -114,22 +114,20 @@ export const getAssetDecimals = async (
   chainId: number,
   assetId: string,
   ethProvider: providers.BaseProvider
-) => {
-  if (assetId !== constants.AddressZero) {
-    try {
-      const token = new Contract(assetId, ERC20Abi, ethProvider);
-      const supply = await token.totalSupply();
-      console.log('supply: ', supply);
-      const decimals = await token.decimals();
-      console.log(`Detected token decimals for chainId ${chainId}: `, decimals);
-      return decimals;
-    } catch (e) {
-      console.error(
-        `Error detecting decimals, unsafely falling back to 18 decimals for chainId ${chainId}: `,
-        e
-      );
-    }
-  } else {
-    console.log(`Using native asset 18 decimals for chainId ${chainId}`);
+): Promise<number> => {
+  if (assetId === constants.AddressZero) {
+    return 18;
+  }
+  const token = new Contract(assetId, ERC20Abi, ethProvider);
+  try {
+    const decimals: number = await token.decimals();
+    console.log(`Detected token decimals for chainId ${chainId}: `, decimals);
+    return decimals;
+  } catch (e) {
+    console.error(
+      `Error detecting decimals, unsafely falling back to 18 decimals for chainId ${chainId}: `,
+      e
+    );
+    return 18;
   }
 };
