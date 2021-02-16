@@ -7,7 +7,6 @@ import {
   Button,
   extendTheme,
 } from '@chakra-ui/react';
-import Login from './Login';
 import Email from './Email';
 
 const theme = extendTheme({
@@ -110,16 +109,6 @@ const theme = extendTheme({
     },
   },
 });
-
-const headerMessage = {
-  1: 'sign in to your wallet',
-  2: 'enter your email',
-};
-
-const headerSubMessage = {
-  1: ' Read our blog to learn more about these options.',
-  2: 'Or visit gmail.com to learn more about email.',
-};
 
 const Main: FC = () => {
   const { isOpen, onOpen, onClose } = useDisclosure();
