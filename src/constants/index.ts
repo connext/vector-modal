@@ -19,6 +19,7 @@ export const NETWORK_NAME: {
   5: 'Ethereum Testnet Görli',
   42: 'Ethereum Testnet Kovan',
   80001: 'Matic Testnet Mumbai',
+  79377087078960: "Arbitrum Kovan Testnet 3"
 };
 
 export const ASSET_CHAIN_NAME_MAPPING: {

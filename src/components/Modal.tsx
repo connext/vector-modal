@@ -99,6 +99,9 @@ export type ConnextModalProps = {
   }) => any;
   transferAmount?: string;
   injectedProvider?: any;
+  onDepositTxCreated?: (txHash: string)=> void;
+  onWithdrawalTxCreated?: (txHash: string)=> void;
+
 };
 
 const ConnextModal: FC<ConnextModalProps> = ({
@@ -115,6 +118,8 @@ const ConnextModal: FC<ConnextModalProps> = ({
   onReady,
   transferAmount: _transferAmount,
   injectedProvider: _injectedProvider,
+  onDepositTxCreated,
+  onWithdrawalTxCreated
 }) => {
   const depositAssetId = utils.getAddress(_depositAssetId);
   const withdrawAssetId = utils.getAddress(_withdrawAssetId);
@@ -409,7 +414,7 @@ const ConnextModal: FC<ConnextModalProps> = ({
       );
     }
 
-    await withdraw(_withdrawChainId, _withdrawRpcProvider, _node);
+    await withdraw(_withdrawChainId, _withdrawRpcProvider, _node, onWithdrawalTxCreated);
   };
 
   const handleInjectedProviderTransferAmountEntry = (
@@ -448,7 +453,8 @@ const ConnextModal: FC<ConnextModalProps> = ({
     _depositAddress: string,
     _withdrawRpcProvider: providers.JsonRpcProvider,
     _node: BrowserNode,
-    _evts: EvtContainer
+    _evts: EvtContainer,
+    _onDepositTxCreated?: (txHash:string)=> void
   ) => {
     if (!injectedProvider) {
       handleError(new Error('Missing injected provider'));
@@ -499,6 +505,9 @@ const ConnextModal: FC<ConnextModalProps> = ({
       setIsError(false);
       setAmount(transferAmountBn);
       console.log('depositTx', depositTx.hash);
+      if(_onDepositTxCreated){
+        _onDepositTxCreated(depositTx.hash)
+      }
       const receipt = await depositTx.wait();
       console.log('deposit mined:', receipt.transactionHash);
     } catch (e) {
@@ -521,7 +530,8 @@ const ConnextModal: FC<ConnextModalProps> = ({
   const withdraw = async (
     _withdrawChainId: number,
     _withdrawRpcProvider: providers.JsonRpcProvider,
-    _node: BrowserNode
+    _node: BrowserNode,
+    _onWithdrawalTxCreated?: (txHash: string)=> void
   ) => {
     setTransferState(TRANSFER_STATES.WITHDRAWING);
 
@@ -542,6 +552,9 @@ const ConnextModal: FC<ConnextModalProps> = ({
     // display tx hash through explorer -> handles by the event.
     console.log('crossChainTransfer: ', result);
     setWithdrawTx(result.withdrawalTx);
+    if(_onWithdrawalTxCreated){
+      _onWithdrawalTxCreated(result.withdrawalTx)
+    }
     setSentAmount(result.withdrawalAmount ?? '0');
     setTransferState(TRANSFER_STATES.COMPLETE);
 
@@ -962,7 +975,7 @@ const ConnextModal: FC<ConnextModalProps> = ({
     // if offchainWithdrawBalance > 0
     else if (offChainWithdrawAssetBalance.gt(0)) {
       // then go to withdraw screen with transfer amount == balance
-      await withdraw(_withdrawChainId, _withdrawRpcProvider, _node);
+      await withdraw(_withdrawChainId, _withdrawRpcProvider, _node, onWithdrawalTxCreated);
     }
 
     // if both are zero, register listener and display
@@ -998,7 +1011,8 @@ const ConnextModal: FC<ConnextModalProps> = ({
           _depositAddress,
           _withdrawRpcProvider,
           _node,
-          _evts
+          _evts,
+          onDepositTxCreated
         );
         return;
       }
@@ -1240,7 +1254,8 @@ const ConnextModal: FC<ConnextModalProps> = ({
                           depositAddress!,
                           withdrawRpcProvider!,
                           node!,
-                          evts!
+                          evts!,
+                          onDepositTxCreated
                         )
                       }
                     >

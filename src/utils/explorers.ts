@@ -23,6 +23,9 @@ export const getExplorerLink = (chainId: number): string | undefined => {
     case 152709604825713: {
       return `https://explorer.offchainlabs.com/#`;
     }
+    case 79377087078960: {
+      return `https://explorer.offchainlabs.com/#`;
+    }
   }
   return undefined;
 };
