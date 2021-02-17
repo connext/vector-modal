@@ -8,6 +8,7 @@ import {
   extendTheme,
 } from '@chakra-ui/react';
 import Email from './Email';
+import Transfer from './Transfer';
 
 const theme = extendTheme({
   styles: {
@@ -84,7 +85,6 @@ const theme = extendTheme({
       sizes: {
         sm: {
           fontSize: '12px',
-          padding: '16px',
         },
         md: {
           fontSize: '16px',
@@ -130,7 +130,8 @@ const Main: FC = () => {
         >
           <ModalOverlay />
           {/* <Login /> */}
-          <Email />
+          {/* <Email /> */}
+          <Transfer />
         </Modal>
       </ChakraProvider>
     </>
