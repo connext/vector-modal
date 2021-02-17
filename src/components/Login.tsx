@@ -10,6 +10,9 @@ import {
   Stack,
   Link,
 } from '@chakra-ui/react';
+
+const placeholder = require('../assets/placeholder.svg') as string;
+
 const Login: FC = () => {
   return (
     <>
@@ -21,8 +24,11 @@ const Login: FC = () => {
           boxSizing: 'border-box',
           borderRadius: '15px',
           padding: '1rem',
-          backgroundImage: 'url(../assets/placeholder.svg)',
-          backgroundPosition: 'right 20px bottom 10px',
+          backgroundImage: `url(${placeholder})`,
+          backgroundRepeat: 'no-repeat',
+          backgroundSize: '10rem',
+          backgroundPositionY: 'bottom',
+          backgroundPositionX: 'left',
         }}
       >
         <ModalHeader>
