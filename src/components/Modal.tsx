@@ -99,6 +99,7 @@ export type ConnextModalProps = {
   }) => any;
   transferAmount?: string;
   injectedProvider?: any;
+  onDepositTxCreated?: (txHash: string)=> void;
 };
 
 const ConnextModal: FC<ConnextModalProps> = ({
@@ -115,6 +116,7 @@ const ConnextModal: FC<ConnextModalProps> = ({
   onReady,
   transferAmount: _transferAmount,
   injectedProvider: _injectedProvider,
+  onDepositTxCreated
 }) => {
   const depositAssetId = utils.getAddress(_depositAssetId);
   const withdrawAssetId = utils.getAddress(_withdrawAssetId);
@@ -448,7 +450,8 @@ const ConnextModal: FC<ConnextModalProps> = ({
     _depositAddress: string,
     _withdrawRpcProvider: providers.JsonRpcProvider,
     _node: BrowserNode,
-    _evts: EvtContainer
+    _evts: EvtContainer,
+    _onDepositTxCreated?: (txHash:string)=> void
   ) => {
     if (!injectedProvider) {
       handleError(new Error('Missing injected provider'));
@@ -499,6 +502,9 @@ const ConnextModal: FC<ConnextModalProps> = ({
       setIsError(false);
       setAmount(transferAmountBn);
       console.log('depositTx', depositTx.hash);
+      if(_onDepositTxCreated){
+        _onDepositTxCreated(depositTx.hash)
+      }
       const receipt = await depositTx.wait();
       console.log('deposit mined:', receipt.transactionHash);
     } catch (e) {
@@ -998,7 +1004,8 @@ const ConnextModal: FC<ConnextModalProps> = ({
           _depositAddress,
           _withdrawRpcProvider,
           _node,
-          _evts
+          _evts,
+          onDepositTxCreated
         );
         return;
       }
@@ -1240,7 +1247,8 @@ const ConnextModal: FC<ConnextModalProps> = ({
                           depositAddress!,
                           withdrawRpcProvider!,
                           node!,
-                          evts!
+                          evts!,
+                          onDepositTxCreated
                         )
                       }
                     >
