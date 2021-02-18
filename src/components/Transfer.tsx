@@ -4,7 +4,7 @@ import {
   ModalHeader,
   ModalFooter,
   ModalBody,
-  ModalCloseButton,
+  IconButton,
   Button,
   Text,
   Stack,
@@ -12,7 +12,10 @@ import {
   NumberInputField,
   Box,
   Divider,
+  Input,
 } from '@chakra-ui/react';
+import { MoreVertical } from 'react-feather';
+import { ArrowBackIcon } from '@chakra-ui/icons';
 
 import { useFormik } from 'formik';
 const arrow = require('../assets/network_arrow.svg') as string;
@@ -29,22 +32,35 @@ const Transfer: FC = () => {
     <>
       <ModalContent
         id="modalContent"
-        style={{
-          background: '#F5F5F5',
-          border: '2px solid #4D4D4D',
-          boxSizing: 'border-box',
-          borderRadius: '15px',
-          padding: '1rem',
-          backgroundImage: `url(${graphic})`,
-          backgroundRepeat: 'no-repeat',
-        }}
+        bg="#F5F5F5"
+        border="2px solid #4D4D4D"
+        boxSizing="border-box"
+        borderRadius="15px"
+        padding="0.5rem"
+        backgroundImage={`url(${graphic})`}
+        backgroundRepeat="no-repeat"
       >
         <ModalHeader>
-          <Text fontSize="2xl" casing="uppercase">
-            Send Amount
-          </Text>
+          <Box w="100%" display="flex" flexDirection="row">
+            <Text fontSize="2xl" casing="uppercase" flex="auto">
+              Send Amount
+            </Text>
+            <IconButton
+              aria-label="back"
+              border="none"
+              bg="transparent"
+              icon={<ArrowBackIcon boxSize={6} />}
+            />
+            <IconButton
+              aria-label="back"
+              border="none"
+              bg="transparent"
+              icon={<MoreVertical />}
+            />
+          </Box>
         </ModalHeader>
-        <ModalCloseButton />
+        {/* <ModalCloseButton /> */}
+
         <ModalBody>
           <Stack direction="column" spacing={7}>
             <form onSubmit={formik.handleSubmit}>
@@ -159,20 +175,21 @@ const Transfer: FC = () => {
                   alignItems="center"
                   borderRadius="15px"
                 >
-                  <NumberInput size="lg" flex="auto">
-                    <NumberInputField
-                      id="address"
-                      name="address"
-                      placeholder="0x000"
-                      inputMode="search"
-                      title="Receiver Address"
-                      // styling
-                      boxShadow="none!important"
-                      border="none"
-                      // misc
-                      isReadOnly
-                    />
-                  </NumberInput>
+                  <Input
+                    id="address"
+                    name="address"
+                    placeholder="0x000"
+                    inputMode="search"
+                    title="Receiver Address"
+                    // styling
+                    boxShadow="none!important"
+                    border="none"
+                    size="lg"
+                    flex="auto"
+                    // misc
+                    default="0x000"
+                    isReadOnly={true}
+                  />
                 </Box>
               </Box>
             </Stack>
