@@ -5,6 +5,16 @@ import {
   createMuiTheme,
 } from '@material-ui/core/styles';
 import { purple, blue, green } from '@material-ui/core/colors';
+import CSS from 'csstype';
+
+export const styleModalContent: CSS.Properties = {
+  background: '#F5F5F5',
+  border: '2px solid #4D4D4D',
+  boxSizing: 'border-box',
+  borderRadius: '15px',
+  padding: '0.5rem',
+  backgroundRepeat: 'no-repeat',
+};
 
 export const theme = createMuiTheme({
   palette: {
