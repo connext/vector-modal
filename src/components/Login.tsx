@@ -1,50 +1,29 @@
 import React, { FC } from 'react';
 import {
   ModalContent,
-  ModalHeader,
-  ModalFooter,
   ModalBody,
-  ModalCloseButton,
   Button,
   Text,
   Stack,
   Link,
 } from '@chakra-ui/react';
-
-const placeholder = require('../assets/placeholder.svg') as string;
+import { styleModalContent, placeholder } from '../constants';
+import { Header, Footer } from './static';
 
 const Login: FC = () => {
   return (
     <>
       <ModalContent
-        id="modalContent"
-        style={{
-          background: '#F5F5F5',
-          border: '2px solid #4D4D4D',
-          boxSizing: 'border-box',
-          borderRadius: '15px',
-          padding: '1rem',
-          backgroundImage: `url(${placeholder})`,
-          backgroundRepeat: 'no-repeat',
-          backgroundSize: '10rem',
-          backgroundPositionY: 'bottom',
-          backgroundPositionX: 'left',
-        }}
+        style={styleModalContent}
+        backgroundImage={`url(${placeholder})`}
+        backgroundSize="10rem"
+        backgroundPosition="left bottom"
       >
-        <ModalHeader>
-          <Text fontSize="2xl" casing="uppercase">
-            sign in to your wallet
-          </Text>
-
-          <Text fontSize="md">
-            Read{' '}
-            <Link href="#" isExternal>
-              our blog
-            </Link>{' '}
-            to learn more about these options.
-          </Text>
-        </ModalHeader>
-        <ModalCloseButton />
+        <Header
+          title="sign in to your wallet"
+          subTitle={<SubTitle />}
+          closeButton={true}
+        />
         <ModalBody>
           <Stack direction="column" spacing={5}>
             <Button size="lg">Metamask / Web3</Button>
@@ -53,19 +32,21 @@ const Login: FC = () => {
           </Stack>
         </ModalBody>
 
-        <ModalFooter justifyContent="center">
-          <Text
-            fontSize="xs"
-            casing="uppercase"
-            align="center"
-            fontStyle="normal"
-            fontWeight="bold"
-          >
-            Powered by Connext
-          </Text>
-        </ModalFooter>
+        <Footer />
       </ModalContent>
     </>
+  );
+};
+
+const SubTitle: FC = () => {
+  return (
+    <Text fontSize="md">
+      Read{' '}
+      <Link href="#" isExternal>
+        our blog
+      </Link>{' '}
+      to learn more about these options.
+    </Text>
   );
 };
 
