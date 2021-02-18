@@ -1,10 +1,7 @@
 import React, { FC } from 'react';
 import {
   ModalContent,
-  ModalHeader,
-  ModalFooter,
   ModalBody,
-  ModalCloseButton,
   Button,
   Text,
   Stack,
@@ -16,9 +13,9 @@ import {
   InputRightElement,
 } from '@chakra-ui/react';
 import { useFormik } from 'formik';
-
+import { styleModalContent } from '../constants';
 import { EmailIcon, CheckIcon } from '@chakra-ui/icons';
-
+import { Header, Footer } from './static';
 const placeholder = require('../assets/placeholder.svg') as string;
 
 const Email: FC = () => {
@@ -32,29 +29,21 @@ const Email: FC = () => {
     <>
       <ModalContent
         id="modalContent"
-        style={{
-          background: '#F5F5F5',
-          border: '2px solid #4D4D4D',
-          boxSizing: 'border-box',
-          borderRadius: '15px',
-          padding: '1rem',
-          backgroundImage: `url(${placeholder})`,
-          backgroundRepeat: 'no-repeat',
-          backgroundSize: '8rem',
-          backgroundPositionY: 'bottom',
-          backgroundPositionX: 'left',
-        }}
+        style={styleModalContent}
+        backgroundImage={`url(${placeholder})`}
+        backgroundSize="8rem"
+        backgroundPositionX="left bottom"
       >
-        <ModalHeader>
-          <Text fontSize="2xl" casing="uppercase">
-            enter your email
-          </Text>
+        <Header
+          title="enter your email"
+          subTitle={
+            <Text fontSize="md">
+              Or visit gmail.com to learn more about email.
+            </Text>
+          }
+          backButton={true}
+        />
 
-          <Text fontSize="md">
-            Or visit gmail.com to learn more about email.
-          </Text>
-        </ModalHeader>
-        <ModalCloseButton />
         <ModalBody>
           <form onSubmit={formik.handleSubmit}>
             <Stack direction="column" spacing={5}>
@@ -83,17 +72,7 @@ const Email: FC = () => {
           </form>
         </ModalBody>
 
-        <ModalFooter justifyContent="center">
-          <Text
-            fontSize="xs"
-            casing="uppercase"
-            align="center"
-            fontStyle="normal"
-            fontWeight="bold"
-          >
-            Powered by Connext
-          </Text>
-        </ModalFooter>
+        <Footer />
       </ModalContent>
     </>
   );
