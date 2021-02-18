@@ -1,5 +1,5 @@
-import { theme, useStyles } from './style';
-
+export * from './style';
+export * from './image';
 export const CHAIN_INFO_URL = 'https://chainid.network/chains.json';
 
 const PROD_IFRAME_WALLET = 'https://wallet.connext.network';
@@ -96,5 +96,3 @@ export const message = (activeMessage: number) => {
       return 'Connecting to Network...';
   }
 };
-
-export { theme, useStyles };
