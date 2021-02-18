@@ -7,8 +7,8 @@ import {
   Stack,
   Link,
 } from '@chakra-ui/react';
-import { styleModalContent, placeholder } from '../constants';
-import { Header, Footer } from './static';
+import { styleModalContent, placeholder } from '../../constants';
+import { Header, Footer } from '../static';
 
 const Login: FC = () => {
   return (

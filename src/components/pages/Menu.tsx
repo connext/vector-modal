@@ -1,7 +1,7 @@
 import React, { FC } from 'react';
 import { ModalContent, ModalBody, Button, Stack } from '@chakra-ui/react';
-import { Header, Footer } from './static';
-import { styleModalContent, graphic } from '../constants';
+import { Header, Footer } from '../static';
+import { styleModalContent, graphic } from '../../constants';
 
 const Menu: FC = () => {
   return (

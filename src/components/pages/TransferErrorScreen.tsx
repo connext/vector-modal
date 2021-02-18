@@ -1,7 +1,7 @@
 import React, { FC } from 'react';
 import { ModalContent, ModalBody, Button, Text, Stack } from '@chakra-ui/react';
-import { Header, Footer, NetworkBar } from './static';
-import { styleModalContent, graphic } from '../constants';
+import { Header, Footer, NetworkBar } from '../static';
+import { styleModalContent, graphic } from '../../constants';
 
 const TransferErrorScreen: FC = () => {
   return (

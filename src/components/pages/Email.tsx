@@ -13,9 +13,9 @@ import {
   InputRightElement,
 } from '@chakra-ui/react';
 import { useFormik } from 'formik';
-import { styleModalContent } from '../constants';
+import { styleModalContent } from '../../constants';
 import { EmailIcon, CheckIcon } from '@chakra-ui/icons';
-import { Header, Footer } from './static';
+import { Header, Footer } from '../static';
 const placeholder = require('../assets/placeholder.svg') as string;
 
 const Email: FC = () => {

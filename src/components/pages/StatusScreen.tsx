@@ -1,7 +1,7 @@
 import React, { FC } from 'react';
 import { ModalContent, ModalBody, Text, Stack, Box } from '@chakra-ui/react';
-import { Header, Footer, NetworkBar } from './static';
-import { styleModalContent, lightGraphic } from '../constants';
+import { Header, Footer, NetworkBar } from '../static';
+import { styleModalContent, lightGraphic } from '../../constants';
 
 const StatusScreen: FC = () => {
   return (

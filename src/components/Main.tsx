@@ -7,9 +7,15 @@ import {
   Button,
   extendTheme,
 } from '@chakra-ui/react';
-import Email from './Email';
-import Transfer from './Transfer';
-
+import {
+  Login,
+  Email,
+  Transfer,
+  TransferAddress,
+  Menu,
+  StatusScreen,
+  TransferErrorScreen,
+} from './pages';
 const theme = extendTheme({
   styles: {
     global: {
@@ -131,7 +137,11 @@ const Main: FC = () => {
           <ModalOverlay />
           {/* <Login /> */}
           {/* <Email /> */}
-          <Transfer />
+          {/* <Transfer /> */}
+          {/* <TransferAddress /> */}
+          {/* <Menu /> */}
+          {/* <StatusScreen /> */}
+          <TransferErrorScreen />
         </Modal>
       </ChakraProvider>
     </>

@@ -7,8 +7,8 @@ import {
   Box,
   Input,
 } from '@chakra-ui/react';
-import { Header, Footer, NetworkBar } from './static';
-import { styleModalContent, darkGraphic } from '../constants';
+import { Header, Footer, NetworkBar } from '../static';
+import { styleModalContent, darkGraphic } from '../../constants';
 // @ts-ignore
 import QRCode from 'qrcode.react';
 
