@@ -16,6 +16,8 @@ describe('it', () => {
         withdrawalAddress={constants.AddressZero}
         onClose={() => false}
         routerPublicIdentifier="vector7tbbTxQp8ppEQUgPsbGiTrVdapLdU5dH7zTbVuXRf1M4CEBU9Q"
+        depositChainProvider="http://localhost:8545"
+        withdrawChainProvider="http://localhost:8546"
       />,
       div
     );
