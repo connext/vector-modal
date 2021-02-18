@@ -132,6 +132,8 @@ const ConnextModal: FC<ConnextModalProps> = ({
   const [transferAmountWei, setTransferAmountWei] = useState<
     string | undefined
   >(_transferAmount);
+
+  const initialTransferAmmount = _transferAmount
   const [transferAmountUi, setTransferAmountUi] = useState<string>();
   const [depositAddress, setDepositAddress] = useState<string>();
 
@@ -983,7 +985,7 @@ const ConnextModal: FC<ConnextModalProps> = ({
     else {
       // sets up deposit screen
       const initialState =
-        !!injectedProvider && !!transferAmountWei && transferAmountWei !== '0'
+        !!injectedProvider && !!initialTransferAmmount && initialTransferAmmount !== '0'
           ? TRANSFER_STATES.DEPOSITING
           : TRANSFER_STATES.INITIAL;
       setTransferState(initialState);
@@ -997,7 +999,7 @@ const ConnextModal: FC<ConnextModalProps> = ({
           _depositRpcProvider
         );
         const err = handleInjectedProviderTransferAmountEntry(
-          utils.formatUnits(transferAmountWei!, _depositAssetDecimals),
+          utils.formatUnits(initialTransferAmmount!, _depositAssetDecimals),
           _userBalance
         );
         if (err) {
@@ -1005,7 +1007,7 @@ const ConnextModal: FC<ConnextModalProps> = ({
           return;
         }
         await injectedProviderDeposit(
-          transferAmountWei!,
+          initialTransferAmmount!,
           _depositChainId,
           _withdrawChainId,
           _depositAddress,
