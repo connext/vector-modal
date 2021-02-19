@@ -14,9 +14,9 @@ export const theme = extendTheme({
   styles: {
     global: {
       fonts: {
-        // body: 'system-ui, sans-serif',
-        heading: '"Cooper Hewitt", serif',
-        // mono: 'Menlo, monospace',
+        body: 'Roboto Mono, system-ui, sans-serif',
+        heading: 'Cooper Hewitt, serif',
+        mono: 'Menlo, monospace',
       },
       // styles for the `body`
       body: {
