@@ -3,7 +3,7 @@ import 'regenerator-runtime/runtime';
 import * as React from 'react';
 import * as ReactDOM from 'react-dom';
 
-import { ConnextModal, Main, NewModal, useDisclosure } from '../src';
+import { ConnextModal, useDisclosure } from '../src';
 
 (window as any).ethereum.enable();
 
@@ -14,7 +14,7 @@ function App() {
   return (
     <>
       <button onClick={onOpen}>Open Modal</button>
-      <NewModal
+      <ConnextModal
         showModal={isOpen}
         onClose={onClose}
         onReady={params => console.log('MODAL IS READY =======>', params)}
@@ -33,9 +33,6 @@ function App() {
         // withdrawAssetId={'0x9FBDa871d559710256a2502A2517b794B482Db40'}
         // withdrawChainProvider="http://localhost:8546"
       />
-
-      {/* <p>New Modal</p>
-      <Main showModal={isOpen} onClose={onClose} /> */}
     </>
   );
 }
