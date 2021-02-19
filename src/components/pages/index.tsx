@@ -1,17 +1,23 @@
 import Email from './Email';
 import Login from './Login';
-import Transfer from './Transfer';
+import Loading from './Loading';
 import Menu from './Menu';
-import StatusScreen from './StatusScreen';
+import Transfer from './Transfer';
+import Status from './Status';
+import Success from './Success';
 import TransferAddress from './TransferAddress';
-import TransferErrorScreen from './TransferErrorScreen';
+import ErrorTransfer from './ErrorTransfer';
+import ErrorSetup from './ErrorSetup';
 
 export {
   Email,
   Login,
+  Loading,
   Menu,
   Transfer,
+  Success,
   TransferAddress,
-  TransferErrorScreen,
-  StatusScreen,
+  ErrorTransfer,
+  ErrorSetup,
+  Status,
 };
