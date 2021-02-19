@@ -18,11 +18,11 @@ import {
 } from '@connext/vector-types';
 import { getBalanceForAssetId, getRandomBytes32 } from '@connext/vector-utils';
 import {
+  theme,
   TRANSFER_STATES,
   ERROR_STATES,
   SCREEN_STATES,
   CHAIN_DETAIL,
-  useStyles,
   ScreenStates,
   ErrorStates,
 } from '../constants';
