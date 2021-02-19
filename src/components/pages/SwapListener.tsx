@@ -10,7 +10,7 @@ import {
   InputRightElement,
   IconButton,
 } from '@chakra-ui/react';
-import { CopyIcon, CheckIcon } from '@chakra-ui/icons';
+import { Copy, Check } from 'react-feather';
 import { Header, Footer, NetworkBar } from '../static';
 import { CHAIN_DETAIL, styleModalContent, darkGraphic } from '../../constants';
 // @ts-ignore
@@ -32,13 +32,16 @@ const SwapListener: FC<SwapListenerProps> = props => {
     receiverChainInfo,
     receiverAddress,
   } = props;
+
   return (
     <>
       <ModalContent
         id="modalContent"
-        style={styleModalContent}
-        backgroundImage={`url(${darkGraphic})`}
-        backgroundPosition="right top"
+        style={{
+          ...styleModalContent,
+          backgroundPosition: 'right top',
+          backgroundImage: `url(${darkGraphic})`,
+        }}
       >
         <Header
           title="Ready for transfer"
@@ -46,8 +49,8 @@ const SwapListener: FC<SwapListenerProps> = props => {
           moreButton={true}
         />
         <ModalBody>
-          <Stack direction="column" spacing={7}>
-            <Stack direction="column" spacing={2}>
+          <Stack direction="column" spacing={5}>
+            <Stack direction="column" spacing={3}>
               <Box>
                 <Stack direction="row" spacing={8}>
                   <Stack direction="column" spacing={2}>
@@ -67,47 +70,45 @@ const SwapListener: FC<SwapListenerProps> = props => {
                   </Box>
                 </Stack>
               </Box>
-              <Box display="flex" flexDirection="column">
-                <Box
-                  bg="#DEDEDE"
-                  w="100%"
-                  display="flex"
-                  flexDirection="row"
-                  alignItems="center"
-                  borderRadius="15px"
-                >
-                  <InputGroup>
-                    <Input
-                      id="address"
-                      name="address"
-                      value={senderChannelAddress}
-                      inputMode="search"
-                      title="Deposit Address"
-                      // styling
-                      boxShadow="none!important"
+
+              <InputGroup
+                size="md"
+                bg="#DEDEDE"
+                alignItems="center"
+                borderRadius="15px"
+              >
+                <Input
+                  id="address"
+                  name="address"
+                  value={senderChannelAddress}
+                  inputMode="search"
+                  title="Deposit Address"
+                  // styling
+                  boxShadow="none!important"
+                  border="none"
+                  flex="auto"
+                  // misc
+                  isReadOnly={true}
+                />
+                <InputRightElement
+                  children={
+                    <IconButton
+                      aria-label="Clipboard"
+                      onClick={() => {
+                        console.log(`Copying: ${senderChannelAddress}`);
+                        navigator.clipboard.writeText(senderChannelAddress);
+                        setCopiedAddress(true);
+                        setTimeout(() => setCopiedAddress(false), 5000);
+                      }}
+                      icon={!copiedAddress ? <Copy /> : <Check />}
+                      // style
+                      size="sm"
                       border="none"
-                      size="lg"
-                      flex="auto"
-                      // misc
-                      isReadOnly={true}
+                      background="transparent"
                     />
-                    <InputRightElement
-                      children={
-                        <IconButton
-                          aria-label="Clipboard"
-                          onClick={() => {
-                            console.log(`Copying: ${senderChannelAddress}`);
-                            navigator.clipboard.writeText(senderChannelAddress);
-                            setCopiedAddress(true);
-                            setTimeout(() => setCopiedAddress(false), 5000);
-                          }}
-                          icon={!copiedAddress ? <CopyIcon /> : <CheckIcon />}
-                        />
-                      }
-                    />
-                  </InputGroup>
-                </Box>
-              </Box>
+                  }
+                />
+              </InputGroup>
             </Stack>
 
             <NetworkBar
