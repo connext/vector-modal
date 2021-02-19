@@ -4,8 +4,7 @@ import Loading from './Loading';
 import Menu from './Menu';
 import Status from './Status';
 import Success from './Success';
-import ErrorTransfer from './ErrorTransfer';
-import ErrorSetup from './ErrorSetup';
+import ErrorScreen from './ErrorScreen';
 import Swap from './Swap';
 import SwapListener from './SwapListener';
 
@@ -17,7 +16,6 @@ export {
   Swap,
   Success,
   SwapListener,
-  ErrorTransfer,
-  ErrorSetup,
+  ErrorScreen,
   Status,
 };
