@@ -1,5 +1,13 @@
 import React, { FC } from 'react';
-import { Stack, Text, Box, Divider, Input, Link } from '@chakra-ui/react';
+import {
+  Stack,
+  Text,
+  Box,
+  Divider,
+  Input,
+  Link,
+  InputGroup,
+} from '@chakra-ui/react';
 import { arrow, CHAIN_DETAIL } from '../../constants';
 import { getExplorerLinkForAsset } from '../../utils';
 
@@ -36,20 +44,20 @@ const NetworkBar: FC<NetworkBarProps> = props => {
           </Box>
           <img src={arrow} />
           <Box>
-            <Text fontSize="xs" casing="uppercase">
+            <Text fontSize="xs" casing="uppercase" >
               {receiverChainInfo.name}
             </Text>{' '}
-            <Text fontSize="xs" casing="uppercase">
-              <Link
-                href={getExplorerLinkForAsset(
-                  receiverChainInfo.chainId,
-                  receiverChainInfo.assetId
-                )}
-                isExternal
-              >
+            <Link
+              href={getExplorerLinkForAsset(
+                receiverChainInfo.chainId,
+                receiverChainInfo.assetId
+              )}
+              isExternal
+            >
+              <Text fontSize="xs" casing="uppercase" color="#2964C5">
                 {receiverChainInfo.assetName}
-              </Link>
-            </Text>
+              </Text>
+            </Link>
           </Box>
         </Box>
 
@@ -58,11 +66,9 @@ const NetworkBar: FC<NetworkBarProps> = props => {
             <Text fontSize="xs" casing="uppercase">
               Receiver Address
             </Text>
-            <Box
+            <InputGroup
+              size="md"
               bg="#DEDEDE"
-              w="100%"
-              display="flex"
-              flexDirection="row"
               alignItems="center"
               borderRadius="15px"
             >
@@ -71,16 +77,15 @@ const NetworkBar: FC<NetworkBarProps> = props => {
                 name="address"
                 value={receiverAddress}
                 inputMode="search"
-                title="Receiver Address"
+                title="receiver Address"
                 // styling
                 boxShadow="none!important"
                 border="none"
-                size="lg"
                 flex="auto"
                 // misc
                 isReadOnly={true}
               />
-            </Box>
+            </InputGroup>
           </Box>
         )}
       </Stack>
