@@ -26,9 +26,11 @@ const Success: FC<SuccessProps> = props => {
     <>
       <ModalContent
         id="modalContent"
-        style={styleModalContent}
-        backgroundImage={`url(${lightGraphic})`}
-        backgroundPosition="right top"
+        style={{
+          ...styleModalContent,
+          backgroundImage: `url(${lightGraphic})`,
+          backgroundPosition: 'right top',
+        }}
       >
         <Header
           title="Success"
