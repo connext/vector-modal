@@ -1,9 +1,16 @@
 import React, { FC } from 'react';
 import { ModalContent, ModalBody, Stack } from '@chakra-ui/react';
 import { Header, Footer, NetworkBar, InputForm } from '../static';
-import { styleModalContent, graphic } from '../../constants';
+import { styleModalContent, graphic, CHAIN_DETAIL } from '../../constants';
 
-const Transfer: FC = () => {
+export interface TransferProps {
+  senderChainInfo: CHAIN_DETAIL;
+  receiverChainInfo: CHAIN_DETAIL;
+  receiverAddress: string;
+}
+
+const Swap: FC<TransferProps> = props => {
+  const { senderChainInfo, receiverChainInfo, receiverAddress } = props;
   return (
     <>
       <ModalContent
@@ -17,11 +24,9 @@ const Transfer: FC = () => {
             <InputForm />
 
             <NetworkBar
-              fromNetwork="Ethereum Mainnet"
-              fromNetworkAsset="USDC"
-              toNetwork="Matic Mainnet"
-              toNetworkAsset="USDC"
-              receiverAddress="0x000abc"
+              senderChainInfo={senderChainInfo}
+              receiverChainInfo={receiverChainInfo}
+              receiverAddress={receiverAddress}
             />
           </Stack>
         </ModalBody>
@@ -32,4 +37,4 @@ const Transfer: FC = () => {
   );
 };
 
-export default Transfer;
+export default Swap;
