@@ -10,10 +10,12 @@ import {
 } from '@chakra-ui/react';
 import { MoreVertical } from 'react-feather';
 import { ArrowBackIcon, WarningTwoIcon } from '@chakra-ui/icons';
+import { success } from '../../constants';
 interface HeaderProps {
   title: string;
   subTitle?: React.ReactNode;
   warningIcon?: boolean;
+  successIcon?: boolean;
   closeButton?: boolean;
   backButton?: boolean;
   moreButton?: boolean;
@@ -25,6 +27,7 @@ const Header: FC<HeaderProps> = props => {
     title,
     subTitle,
     warningIcon,
+    successIcon,
     closeButton,
     backButton,
     moreButton,
@@ -36,6 +39,7 @@ const Header: FC<HeaderProps> = props => {
         <Box w="100%" display="flex" flexDirection="row">
           <Stack direction="row" spacing={3} alignItems="center" flex="auto">
             {warningIcon && <WarningTwoIcon />}
+            {successIcon && <img src={success} />}
             {spinner && (
               <Spinner
                 thickness="3px"
