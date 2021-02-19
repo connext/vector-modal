@@ -1,21 +1,15 @@
 import React, { FC } from 'react';
-import { Stack, Text, Box, Divider, Input } from '@chakra-ui/react';
-import { arrow } from '../../constants';
+import { Stack, Text, Box, Divider, Input, Link } from '@chakra-ui/react';
+import { arrow, CHAIN_DETAIL } from '../../constants';
+import { getExplorerLinkForAsset } from '../../utils';
+
 interface NetworkBarProps {
-  fromNetwork: string;
-  fromNetworkAsset: string;
-  toNetwork: string;
-  toNetworkAsset: string;
+  senderChainInfo: CHAIN_DETAIL;
+  receiverChainInfo: CHAIN_DETAIL;
   receiverAddress?: string;
 }
 const NetworkBar: FC<NetworkBarProps> = props => {
-  const {
-    fromNetwork,
-    fromNetworkAsset,
-    toNetwork,
-    toNetworkAsset,
-    receiverAddress,
-  } = props;
+  const { senderChainInfo, receiverChainInfo, receiverAddress } = props;
   return (
     <>
       <Divider
@@ -26,19 +20,35 @@ const NetworkBar: FC<NetworkBarProps> = props => {
         <Box display="flex" justifyContent="space-between">
           <Box>
             <Text fontSize="xs" casing="uppercase">
-              {fromNetwork}
+              {senderChainInfo.name}
             </Text>
             <Text fontSize="xs" casing="uppercase">
-              {fromNetworkAsset}
+              <Link
+                href={getExplorerLinkForAsset(
+                  senderChainInfo.chainId,
+                  senderChainInfo.assetId
+                )}
+                isExternal
+              >
+                {senderChainInfo.assetName}
+              </Link>
             </Text>
           </Box>
           <img src={arrow} />
           <Box>
             <Text fontSize="xs" casing="uppercase">
-              {toNetwork}
+              {receiverChainInfo.name}
             </Text>{' '}
             <Text fontSize="xs" casing="uppercase">
-              {toNetworkAsset}
+              <Link
+                href={getExplorerLinkForAsset(
+                  receiverChainInfo.chainId,
+                  receiverChainInfo.assetId
+                )}
+                isExternal
+              >
+                {receiverChainInfo.assetName}
+              </Link>
             </Text>
           </Box>
         </Box>
