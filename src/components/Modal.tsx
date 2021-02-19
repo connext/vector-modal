@@ -227,6 +227,7 @@ const ConnextModal: FC<ConnextModalProps> = ({
     }
     setError(e);
     setIsError(true);
+    setTransferState(TRANSFER_STATES.ERROR)
     setIniting(false);
     setPreImage(undefined);
   };
