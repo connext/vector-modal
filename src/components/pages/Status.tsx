@@ -23,9 +23,11 @@ const Status: FC<StatusProps> = props => {
     <>
       <ModalContent
         id="modalContent"
-        style={styleModalContent}
-        backgroundImage={`url(${lightGraphic})`}
-        backgroundPosition="right top"
+        style={{
+          ...styleModalContent,
+          backgroundImage: `url(${lightGraphic})`,
+          backgroundPosition: 'right top',
+        }}
       >
         <Header title={title} spinner={true} backButton={true} />
         <ModalBody>

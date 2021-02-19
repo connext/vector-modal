@@ -8,8 +8,10 @@ const Menu: FC = () => {
     <>
       <ModalContent
         id="modalContent"
-        style={styleModalContent}
-        backgroundImage={`url(${graphic})`}
+        style={{
+          ...styleModalContent,
+          backgroundImage: `url(${graphic})`,
+        }}
       >
         <Header title="Menu" backButton={true} />
 

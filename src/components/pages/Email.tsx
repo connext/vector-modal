@@ -28,10 +28,12 @@ const Email: FC = () => {
     <>
       <ModalContent
         id="modalContent"
-        style={styleModalContent}
-        backgroundImage={`url(${placeholder})`}
-        backgroundSize="8rem"
-        backgroundPositionX="left bottom"
+        style={{
+          ...styleModalContent,
+          backgroundImage: `url(${placeholder})`,
+          backgroundSize: '8rem',
+          backgroundPositionX: 'left bottom',
+        }}
       >
         <Header
           title="enter your email"

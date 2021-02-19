@@ -14,10 +14,12 @@ const Login: FC = () => {
   return (
     <>
       <ModalContent
-        style={styleModalContent}
-        backgroundImage={`url(${placeholder})`}
-        backgroundSize="10rem"
-        backgroundPosition="left bottom"
+        style={{
+          ...styleModalContent,
+          backgroundImage: `url(${placeholder})`,
+          backgroundSize: '10rem',
+          backgroundPosition: 'left bottom',
+        }}
       >
         <Header
           title="sign in to your wallet"
