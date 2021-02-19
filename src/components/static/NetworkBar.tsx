@@ -69,7 +69,7 @@ const NetworkBar: FC<NetworkBarProps> = props => {
               <Input
                 id="address"
                 name="address"
-                placeholder={receiverAddress}
+                value={receiverAddress}
                 inputMode="search"
                 title="Receiver Address"
                 // styling
