@@ -26,7 +26,7 @@ import {
   reconcileDeposit,
   createEvtContainer,
   EvtContainer,
-  verifyRouterSupportsTransfer,
+  verifyRouterSupports,
   cancelHangingToTransfers,
   getChannelForChain,
   createFromAssetTransfer,
@@ -50,6 +50,7 @@ import {
   ErrorScreen,
   Success,
 } from './pages';
+import { Fonts } from './static';
 
 export { useDisclosure };
 
@@ -99,8 +100,8 @@ const ConnextModal: FC<ConnextModalProps> = ({
     ? new providers.Web3Provider(_injectedProvider)
     : undefined;
 
-  const [transferAmountUi, setTransferAmountUi] = useState<string>(
-    _transferAmount ?? '0'
+  const [transferAmountUi, setTransferAmountUi] = useState<string | undefined>(
+    _transferAmount
   );
   const [depositAddress, setDepositAddress] = useState<string>();
 
@@ -160,6 +161,8 @@ const ConnextModal: FC<ConnextModalProps> = ({
 
   const [title, setTitle] = useState<string>();
   const [message, setMessage] = useState<string>();
+  const [isLoad, setIsLoad] = useState<Boolean>(false);
+  const [showTimer, setShowTimer] = useState<Boolean>(false);
 
   const handleError = (
     state: ErrorStates,
@@ -398,22 +401,28 @@ const ConnextModal: FC<ConnextModalProps> = ({
     );
   };
 
-  const handleSwapCheck = (input: string): string | undefined => {
+  const handleSwapCheck = (_input: string | undefined): string | undefined => {
     let err: string | undefined = undefined;
+    setAmountError(undefined);
+    if (!_input) {
+      setTransferAmountUi(undefined);
+      return;
+    }
     try {
-      setTransferAmountUi(input.trim());
-      setAmountError(undefined);
+      const input = _input.trim();
+      setTransferAmountUi(input);
+
       const transferAmountBn = BigNumber.from(
-        utils.parseUnits(input.trim(), senderChain!.assetDecimals)
+        utils.parseUnits(input, senderChain?.assetDecimals!)
       );
 
       if (transferAmountBn.isZero()) {
         err = 'Transfer amount cannot be 0';
       }
-
+      console.log(5);
       if (userBalance) {
         const userBalanceBn = BigNumber.from(
-          utils.parseUnits(userBalance, senderChain!.assetDecimals)
+          utils.parseUnits(userBalance, senderChain?.assetDecimals!)
         );
         if (transferAmountBn.gt(userBalanceBn)) {
           err = 'Transfer amount exceeds user balance';
@@ -432,22 +441,17 @@ const ConnextModal: FC<ConnextModalProps> = ({
       setAmountError(res);
       return;
     }
+    setIsLoad(true);
 
-    if (!injectedProvider) {
-      handleError(
-        ERROR_STATES.ERROR_TRANSFER,
-        new Error('Missing injected provider')
-      );
-      return;
-    }
     const _depositChainId: number = senderChain?.chainId!;
     const _withdrawChainId: number = receiverChain?.chainId!;
-    const _withdrawRpcProvider: providers.JsonRpcProvider = receiverChain?.rpcProvider!;
     const _depositAddress: string = depositAddress!;
+    const _depositRpcProvider: providers.JsonRpcProvider = senderChain?.rpcProvider!;
+    const _withdrawRpcProvider: providers.JsonRpcProvider = receiverChain?.rpcProvider!;
     const _node: BrowserNode = node!;
     const _evts: EvtContainer = evts!;
     const _transferAmount: BigNumber = BigNumber.from(
-      utils.parseUnits(transferAmountUi, senderChain?.assetDecimals!)
+      utils.parseUnits(transferAmountUi!, senderChain?.assetDecimals!)
     );
 
     if (
@@ -466,58 +470,73 @@ const ConnextModal: FC<ConnextModalProps> = ({
       return;
     }
 
-    // deposit + reconcile
-    const transferAmountBn = _transferAmount;
-    try {
-      await verifyRouterCapacityForTransfer(
+    if (!injectedProvider) {
+      console.log(`Starting block listener`);
+      // display QR
+      setIsLoad(false);
+      await depositListenerAndTransfer(
+        _depositChainId,
+        _withdrawChainId,
+        _depositAddress,
+        _depositRpcProvider,
         _withdrawRpcProvider,
-        withdrawAssetId,
-        withdrawChannelRef.current!,
-        transferAmountBn,
-        swapRef.current
+        _evts,
+        _node
       );
-      console.log(
-        `Transferring ${transferAmountBn.toString()} through injected provider`
-      );
+    } else {
+      // deposit + reconcile
+      const transferAmountBn = _transferAmount;
+      try {
+        await verifyRouterCapacityForTransfer(
+          _withdrawRpcProvider,
+          withdrawAssetId,
+          withdrawChannelRef.current!,
+          transferAmountBn,
+          swapRef.current
+        );
+        console.log(
+          `Transferring ${transferAmountBn.toString()} through injected provider`
+        );
 
-      const signer = injectedProvider.getSigner();
-      const depositTx =
-        depositAssetId === constants.AddressZero
-          ? await signer.sendTransaction({
-              to: _depositAddress,
-              value: transferAmountBn,
-            })
-          : await new Contract(depositAssetId, ERC20Abi, signer).transfer(
-              _depositAddress,
-              transferAmountBn
-            );
+        const signer = injectedProvider.getSigner();
+        const depositTx =
+          depositAssetId === constants.AddressZero
+            ? await signer.sendTransaction({
+                to: _depositAddress,
+                value: transferAmountBn,
+              })
+            : await new Contract(depositAssetId, ERC20Abi, signer).transfer(
+                _depositAddress,
+                transferAmountBn
+              );
 
-      setAmount(transferAmountBn);
-      console.log('depositTx', depositTx.hash);
-      if (onDepositTxCreated) {
-        onDepositTxCreated(depositTx.hash);
+        setAmount(transferAmountBn);
+        console.log('depositTx', depositTx.hash);
+        if (onDepositTxCreated) {
+          onDepositTxCreated(depositTx.hash);
+        }
+        const receipt = await depositTx.wait();
+        console.log('deposit mined:', receipt.transactionHash);
+      } catch (e) {
+        handleError(
+          ERROR_STATES.ERROR_TRANSFER,
+          e,
+          'Error in injected provider deposit: '
+        );
+        return;
       }
-      const receipt = await depositTx.wait();
-      console.log('deposit mined:', receipt.transactionHash);
-    } catch (e) {
-      handleError(
-        ERROR_STATES.ERROR_TRANSFER,
-        e,
-        'Error in injected provider deposit: '
+      setIsLoad(false);
+      await transfer(
+        _depositChainId,
+        _withdrawChainId,
+        _depositAddress,
+        _withdrawRpcProvider,
+        transferAmountBn,
+        _evts,
+        _node,
+        false
       );
-      return;
     }
-
-    await transfer(
-      _depositChainId,
-      _withdrawChainId,
-      _depositAddress,
-      _withdrawRpcProvider,
-      transferAmountBn,
-      _evts,
-      _node,
-      false
-    );
   };
 
   const withdraw = async (
@@ -586,6 +605,7 @@ const ConnextModal: FC<ConnextModalProps> = ({
     _node: BrowserNode
   ) => {
     setScreenState(SCREEN_STATES.LISTENER);
+    setShowTimer(true);
     let initialDeposits: BigNumber;
     try {
       initialDeposits = await getTotalDepositsBob(
@@ -627,6 +647,7 @@ const ConnextModal: FC<ConnextModalProps> = ({
 
       if (updatedDeposits.gt(initialDeposits)) {
         clearInterval(depositListener!);
+        setShowTimer(false);
         const transferAmount = updatedDeposits.sub(initialDeposits);
         initialDeposits = updatedDeposits;
         await transfer(
@@ -646,7 +667,8 @@ const ConnextModal: FC<ConnextModalProps> = ({
 
   const stateReset = () => {
     setScreenState(SCREEN_STATES.LOADING);
-    setTransferAmountUi(_transferAmount ?? '0');
+    setIsLoad(false);
+    setTransferAmountUi(_transferAmount);
     setUserBalance(undefined);
     setError(undefined);
     setDepositAddress(undefined);
@@ -657,12 +679,11 @@ const ConnextModal: FC<ConnextModalProps> = ({
 
   const handleClose = () => {
     clearInterval(listener!);
+    setShowTimer(false);
     onClose();
   };
 
   const setup = async () => {
-    console.log();
-
     let senderChainInfo: CHAIN_DETAIL;
     try {
       senderChainInfo = await getChain(
@@ -786,23 +807,19 @@ const ConnextModal: FC<ConnextModalProps> = ({
       });
     }
 
-    // validate router before proceeding
-    const transferAmountBn = BigNumber.from(_transferAmount ?? 0);
-
     try {
-      const swap = await verifyRouterSupportsTransfer(
+      const swap = await verifyRouterSupports(
         _node,
         senderChainInfo.chainId,
         senderChainInfo.assetId,
         receiverChainInfo.chainId,
         receiverChainInfo.assetId,
         receiverChainInfo.rpcProvider,
-        routerPublicIdentifier,
-        transferAmountBn
+        routerPublicIdentifier
       );
       setSwap(swap);
     } catch (e) {
-      const message = 'Error in verifyRouterSupportsTransfer';
+      const message = 'Error in verifyRouterSupports';
       console.log(e, message);
       handleError(ERROR_STATES.ERROR_SETUP, e, message);
       return;
@@ -973,20 +990,8 @@ const ConnextModal: FC<ConnextModalProps> = ({
           senderChainInfo
         );
         setUserBalance(_userBalance);
-        setScreenState(SCREEN_STATES.SWAP);
-        return;
       }
-      console.log(`Starting block listener`);
-      // display QR
-      await depositListenerAndTransfer(
-        senderChainInfo.chainId,
-        receiverChainInfo.chainId,
-        _depositAddress,
-        senderChainInfo.rpcProvider,
-        receiverChainInfo.rpcProvider,
-        _evts,
-        _node
-      );
+      setScreenState(SCREEN_STATES.SWAP);
     }
   };
 
@@ -1004,112 +1009,7 @@ const ConnextModal: FC<ConnextModalProps> = ({
     init();
   }, [showModal]);
 
-  // function getScreen(step: number) {
-  //   switch (step) {
-  //     // DEPOSIT SCREEN
-  //     case -1:
-  //       return (
-  //         <>
-  //           <Grid
-  //             container
-  //             justifyContent="center"
-  //             style={{
-  //               paddingBottom: '16px',
-  //             }}
-  //           >
-  //             <Alert severity="warning">
-  //               Do not use this component in Incognito Mode{' '}
-  //             </Alert>
-  //           </Grid>
-  //           {!!injectedProvider && (
-  //             <>
-  //               <Grid
-  //                 container
-  //                 justifyContent="center"
-  //                 alignContent="center"
-  //                 style={{ marginBottom: '16px', width: '80%' }}
-  //               >
-  //                 <Grid item xs={12}>
-  //                   <Typography
-  //                     variant="subtitle1"
-  //                     style={{
-  //                       fontSize: '14px',
-  //                     }}
-  //                     align="right"
-  //                   >
-  //                     Balance: {userBalance}{' '}
-  //                     {getAssetName(depositAssetId, depositChainId!)}
-  //                   </Typography>
-  //                 </Grid>
-  //                 <NumericalInput
-  //                   label="amount"
-  //                   name="amount"
-  //                   aria-describedby="amount"
-  //                   className="token-amount-input"
-  //                   value={transferAmountUi ?? '0'}
-  //                   onUserInput={val => {
-  //                     handleInjectedProviderTransferAmountEntry(
-  //                       val,
-  //                       userBalance!
-  //                     );
-  //                   }}
-  //                 />
-  //                 <Grid item xs={12}>
-  //                   <Typography
-  //                     variant="subtitle1"
-  //                     style={{
-  //                       fontSize: '11px',
-  //                     }}
-  //                     color={!!amountError ? `error` : `primary`}
-  //                     align="left"
-  //                   >
-  //                     {!!amountError ? amountError : `From ${depositChainName}`}
-  //                   </Typography>
-  //                 </Grid>
-  //               </Grid>
-
-  //               <Grid
-  //                 container
-  //                 justifyContent="center"
-  //                 alignContent="center"
-  //                 style={{ marginBottom: '16px' }}
-  //               >
-  //                 <Button
-  //                   variant="outlined"
-  //                   disabled={!!amountError || !transferAmountWei}
-  //                   style={{
-  //                     width: '80%',
-  //                     // color: '#212121',
-  //                     // borderColor: '#212121',
-  //                   }}
-  //                   onClick={() =>
-  //                     transferAmountWei &&
-  //                     injectedProviderDeposit(
-  //                       transferAmountWei,
-  //                       depositChainId!,
-  //                       withdrawChainId!,
-  //                       depositAddress!,
-  //                       withdrawRpcProvider!,
-  //                       node!,
-  //                       evts!,
-  //                       onDepositTxCreated
-  //                     )
-  //                   }
-  //                 >
-  //                   Swap
-  //                 </Button>
-  //               </Grid>
-  //             </>
-  //           )}
-  //         </>
-  //       );
-  //     default:
-  //       return 'Unknown step';
-  //   }
-  // }
-
   const activeScreen = (state: ScreenStates) => {
-    console.log('activeScreen:', state);
     switch (state) {
       case SCREEN_STATES.LOGIN:
         return <Login />;
@@ -1139,6 +1039,7 @@ const ConnextModal: FC<ConnextModalProps> = ({
           <Swap
             onUserInput={handleSwapCheck}
             swapRequest={handleSwapRequest}
+            isLoad={isLoad}
             userBalance={userBalance}
             amountError={amountError}
             senderChainInfo={senderChain!}
@@ -1151,6 +1052,7 @@ const ConnextModal: FC<ConnextModalProps> = ({
       case SCREEN_STATES.LISTENER:
         return (
           <SwapListener
+            showTimer={showTimer}
             senderChannelAddress={depositAddress!}
             senderChainInfo={senderChain!}
             receiverChainInfo={receiverChain!}
@@ -1188,6 +1090,7 @@ const ConnextModal: FC<ConnextModalProps> = ({
   return (
     <>
       <ChakraProvider theme={theme}>
+        <Fonts />
         <Modal
           id="modal"
           closeOnOverlayClick={false}
