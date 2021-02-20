@@ -1,4 +1,4 @@
-import React, { FC, useEffect, useState } from 'react';
+import React, { FC, useEffect } from 'react';
 import {
   ModalContent,
   ModalBody,
@@ -15,12 +15,13 @@ import { styleModalContent, graphic, CHAIN_DETAIL } from '../../constants';
 export interface TransferProps {
   onUserInput: (input: string) => void;
   swapRequest: () => void;
+  isLoad: Boolean;
   senderChainInfo: CHAIN_DETAIL;
   receiverChainInfo: CHAIN_DETAIL;
   receiverAddress: string;
+  transferAmount: string | undefined;
   amountError?: string;
   userBalance?: string;
-  transferAmount?: string;
 }
 
 export function escapeRegExp(string: string): string {
@@ -30,8 +31,6 @@ export function escapeRegExp(string: string): string {
 const inputRegex = RegExp(`^\\d*(?:\\\\[.])?\\d*$`); // match escaped "." characters via in a non-capturing group
 
 const Swap: FC<TransferProps> = props => {
-  const [isload, setIsLoad] = useState<Boolean>(false);
-
   const {
     amountError,
     userBalance,
@@ -39,6 +38,7 @@ const Swap: FC<TransferProps> = props => {
     receiverChainInfo,
     receiverAddress,
     transferAmount,
+    isLoad,
     onUserInput,
     swapRequest,
   } = props;
@@ -51,13 +51,14 @@ const Swap: FC<TransferProps> = props => {
 
   const handleSubmit = () => {
     if (transferAmount) {
-      setIsLoad(true);
       swapRequest();
     }
   };
 
   useEffect(() => {
-    setIsLoad(false);
+    if (transferAmount) {
+      enforcer(transferAmount);
+    }
   });
 
   return (
@@ -75,7 +76,13 @@ const Swap: FC<TransferProps> = props => {
             <Stack direction="column" spacing={5}>
               <Box>
                 {userBalance && (
-                  <Text fontSize="xs" casing="uppercase" textAlign="end">
+                  <Text
+                    fontSize="xs"
+                    casing="uppercase"
+                    textAlign="end"
+                    fontFamily="Roboto Mono"
+                    color="#757575"
+                  >
                     Balance: {userBalance}
                   </Text>
                 )}
@@ -97,6 +104,7 @@ const Swap: FC<TransferProps> = props => {
                         enforcer(event.target.value.replace(/,/g, '.'));
                       }}
                       // styling
+                      fontFamily="Roboto Mono"
                       boxShadow="none!important"
                       border="none"
                       // universal input options
@@ -107,7 +115,7 @@ const Swap: FC<TransferProps> = props => {
                       // text-specific options
                       type="text"
                       pattern="^[0-9]*[.,]?[0-9]*$"
-                      value={transferAmount ?? '0'}
+                      value={transferAmount}
                       minLength={1}
                       maxLength={79}
                       spellCheck="false"
@@ -118,6 +126,7 @@ const Swap: FC<TransferProps> = props => {
                     <Button
                       size="sm"
                       bg="#DEDEDE"
+                      color="#737373"
                       borderRadius="5px"
                       border="none"
                       marginRight="10px"
@@ -132,7 +141,7 @@ const Swap: FC<TransferProps> = props => {
                 </Box>
                 <Text
                   fontSize="xs"
-                  casing="uppercase"
+                  casing="capitalize"
                   color={!!amountError ? 'crimson' : 'green.[500]'}
                 >
                   {!!amountError ? amountError : `From ${senderChainInfo.name}`}
@@ -141,20 +150,42 @@ const Swap: FC<TransferProps> = props => {
 
               <Stack direction="column" spacing={2}>
                 <Box display="flex">
-                  <Text fontSize="xs" casing="uppercase" flex="auto">
+                  <Text
+                    fontSize="xs"
+                    casing="capitalize"
+                    flex="auto"
+                    color="#666666"
+                  >
                     Estimated Fees:
                   </Text>
-                  <Text fontSize="xs" casing="uppercase">
-                    0.0
+                  <Text
+                    fontSize="xs"
+                    casing="capitalize"
+                    fontFamily="Roboto Mono"
+                    color="#666666"
+                  >
+                    0.0 {senderChainInfo.assetName}
                   </Text>
                 </Box>
 
                 <Box display="flex">
-                  <Text fontSize="xs" casing="uppercase" flex="auto">
+                  <Text
+                    fontSize="14px"
+                    casing="capitalize"
+                    flex="auto"
+                    color="#666666"
+                    fontWeight="700"
+                  >
                     You will receive:
                   </Text>
-                  <Text fontSize="xs" casing="uppercase">
-                    0.0
+                  <Text
+                    fontSize="14px"
+                    casing="capitalize"
+                    color="#666666"
+                    fontFamily="Roboto Mono"
+                    fontWeight="700"
+                  >
+                    0.0 {senderChainInfo.assetName}
                   </Text>
                 </Box>
               </Stack>
@@ -162,12 +193,12 @@ const Swap: FC<TransferProps> = props => {
               <Button
                 size="lg"
                 type="submit"
-                isLoading={isload ? true : false}
+                isLoading={isLoad ? true : false}
                 loadingText="Waiting For Transaction"
-                isDisabled={!!amountError ? true : false}
+                isDisabled={!!amountError || !transferAmount ? true : false}
                 onClick={handleSubmit}
               >
-                Swap
+                {userBalance ? 'Swap' : 'Show me QR!'}
               </Button>
             </Stack>
 
