@@ -10,7 +10,12 @@ const Footer: FC = () => {
           casing="uppercase"
           align="center"
           fontStyle="normal"
-          fontWeight="bold"
+          fontWeight="700"
+          style={{
+            lineHeight: '14px',
+            letterSpacing: '0.2em',
+            color: '#999999',
+          }}
         >
           Powered by Connext
         </Text>
