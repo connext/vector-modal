@@ -27,10 +27,29 @@ const NetworkBar: FC<NetworkBarProps> = props => {
       <Stack direction="column" spacing={5}>
         <Box display="flex" justifyContent="space-between">
           <Box>
-            <Text fontSize="xs" casing="uppercase">
+            <Text
+              fontSize="xs"
+              casing="uppercase"
+              fontFamily="Cooper Hewitt"
+              fontWeight="700"
+              style={{
+                lineHeight: '18px',
+                letterSpacing: '0.05em',
+                color: '#26B1D6',
+              }}
+            >
               {senderChainInfo.name}
             </Text>
-            <Text fontSize="xs" casing="uppercase">
+            <Text
+              fontSize="xl"
+              casing="uppercase"
+              fontFamily="Cooper Hewitt"
+              fontWeight="700"
+              style={{
+                lineHeight: '30px',
+                letterSpacing: '0.05em',
+              }}
+            >
               <Link
                 href={getExplorerLinkForAsset(
                   senderChainInfo.chainId,
@@ -44,7 +63,17 @@ const NetworkBar: FC<NetworkBarProps> = props => {
           </Box>
           <img src={arrow} />
           <Box>
-            <Text fontSize="xs" casing="uppercase" >
+            <Text
+              fontSize="xs"
+              casing="uppercase"
+              fontFamily="Cooper Hewitt"
+              fontWeight="700"
+              style={{
+                lineHeight: '18px',
+                letterSpacing: '0.05em',
+                color: '#2964C5',
+              }}
+            >
               {receiverChainInfo.name}
             </Text>{' '}
             <Link
@@ -54,7 +83,16 @@ const NetworkBar: FC<NetworkBarProps> = props => {
               )}
               isExternal
             >
-              <Text fontSize="xs" casing="uppercase" color="#2964C5">
+              <Text
+                fontSize="xl"
+                casing="uppercase"
+                fontFamily="Cooper Hewitt"
+                fontWeight="700"
+                style={{
+                  lineHeight: '30px',
+                  letterSpacing: '0.05em',
+                }}
+              >
                 {receiverChainInfo.assetName}
               </Text>
             </Link>
@@ -63,7 +101,7 @@ const NetworkBar: FC<NetworkBarProps> = props => {
 
         {receiverAddress && (
           <Box display="flex" flexDirection="column">
-            <Text fontSize="xs" casing="uppercase">
+            <Text fontSize="xs" casing="capitalize" color="#666666">
               Receiver Address
             </Text>
             <InputGroup
@@ -79,6 +117,9 @@ const NetworkBar: FC<NetworkBarProps> = props => {
                 inputMode="search"
                 title="receiver Address"
                 // styling
+                fontFamily="Roboto Mono"
+                fontSize="13px"
+                fontWeight="700"
                 boxShadow="none!important"
                 border="none"
                 flex="auto"
