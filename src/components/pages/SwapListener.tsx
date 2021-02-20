@@ -1,4 +1,4 @@
-import React, { FC, useState } from 'react';
+import React, { FC, useState, useEffect } from 'react';
 import {
   ModalContent,
   ModalBody,
@@ -9,6 +9,7 @@ import {
   InputGroup,
   InputRightElement,
   IconButton,
+  Spinner,
 } from '@chakra-ui/react';
 import { Copy, Check } from 'react-feather';
 import { Header, Footer, NetworkBar } from '../static';
@@ -17,6 +18,7 @@ import { CHAIN_DETAIL, styleModalContent, darkGraphic } from '../../constants';
 import QRCode from 'qrcode.react';
 
 interface SwapListenerProps {
+  showTimer: Boolean;
   senderChannelAddress: string;
   senderChainInfo: CHAIN_DETAIL;
   receiverChainInfo: CHAIN_DETAIL;
@@ -24,14 +26,63 @@ interface SwapListenerProps {
 }
 
 const SwapListener: FC<SwapListenerProps> = props => {
-  const [copiedAddress, setCopiedAddress] = useState<boolean>(false);
-
   const {
+    showTimer,
     senderChannelAddress,
     senderChainInfo,
     receiverChainInfo,
     receiverAddress,
   } = props;
+  const [copiedAddress, setCopiedAddress] = useState<boolean>(false);
+  const [running, setRunning] = useState<Boolean>(false);
+  const [currentTimeSec, setCurrentTimeSec] = useState<number>(0);
+  const [currentTimeMin, setCurrentTimeMin] = useState<number>(0);
+  const [watchInterval, setWatchInterval] = useState<NodeJS.Timeout>();
+
+  const formatTime = (val: number) => {
+    let value = val.toString();
+    if (value.length < 2) {
+      value = '0' + value;
+    }
+
+    return value;
+  };
+
+  function reset() {
+    setCurrentTimeSec(0);
+    setCurrentTimeMin(0);
+  }
+
+  function handleStart() {
+    if (!running) {
+      setRunning(true);
+      let watch = setInterval(() => {
+        setCurrentTimeSec(prevSec => {
+          if (prevSec >= 60) {
+            console.log('min entry');
+            setCurrentTimeMin(prevMin => prevMin + 1);
+            return 0;
+          }
+          return prevSec + 1;
+        });
+      }, 1000);
+      setWatchInterval(watch);
+    }
+  }
+
+  function handleStop() {
+    setRunning(false);
+    clearInterval(watchInterval!);
+  }
+
+  useEffect(() => {
+    if (showTimer) {
+      handleStart();
+    } else {
+      handleStop();
+      reset();
+    }
+  }, [showTimer]);
 
   return (
     <>
@@ -53,13 +104,35 @@ const SwapListener: FC<SwapListenerProps> = props => {
             <Stack direction="column" spacing={3}>
               <Box>
                 <Stack direction="row" spacing={8}>
-                  <Stack direction="column" spacing={2}>
-                    <Text fontSize="xs" casing="uppercase">
-                      {`Send ${senderChainInfo.assetName} on ${senderChainInfo.name} to the QR or address below.`}
+                  <Stack direction="column" spacing={3}>
+                    <Text fontSize="14px" fontWeight="500">
+                      Send{' '}
+                      <span style={{ color: '#2964C5' }}>
+                        {senderChainInfo.assetName}
+                      </span>{' '}
+                      on{' '}
+                      <span style={{ color: '#2964C5' }}>
+                        {senderChainInfo.name}
+                      </span>{' '}
+                      to the QR or address below.
                     </Text>
-                    <Text fontSize="xs" casing="uppercase">
-                      Awaiting your transfer...
-                    </Text>
+                    <Box>
+                      <Text fontSize="14px" casing="capitalize">
+                        Awaiting your transfer...
+                      </Text>
+                      <Stack direction="row" spacing={3} alignItems="center">
+                        <Spinner
+                          thickness="3px"
+                          speed="0.65s"
+                          color="blue.500"
+                          size="lg"
+                        />
+                        <Text fontFamily="Roboto Mono">
+                          {formatTime(currentTimeMin)}:
+                          {formatTime(currentTimeSec)}
+                        </Text>
+                      </Stack>
+                    </Box>
                   </Stack>
                   <Box bg="white" borderRadius="15px">
                     <QRCode
