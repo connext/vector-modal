@@ -11,26 +11,10 @@ export const styleModalContent: CSS.Properties = {
 };
 
 export const theme = extendTheme({
-  styles: {
-    global: {
-      fonts: {
-        body: 'Roboto Mono, system-ui, sans-serif',
-        heading: 'Cooper Hewitt, serif',
-        mono: 'Menlo, monospace',
-      },
-      // styles for the `body`
-      body: {
-        // bg: 'gray.400',
-        // color: 'white',
-      },
-      // styles for the `a`
-      a: {
-        color: 'teal.500',
-        _hover: {
-          textDecoration: 'underline',
-        },
-      },
-    },
+  fonts: {
+    heading: 'Cooper Hewitt',
+    body: 'Roboto',
+    mono: 'Roboto Mono',
   },
   colors: {
     brand: {
@@ -40,6 +24,22 @@ export const theme = extendTheme({
     },
   },
   components: {
+    Input: {
+      baseStyle: {
+        fontStyle: 'normal',
+        fontWeight: 'normal',
+        fontFamily: 'Roboto Mono',
+        textTransform: 'capitalize',
+      },
+      sizes: {
+        sm: {
+          fontSize: '12px',
+        },
+        md: {
+          fontSize: '16px',
+        },
+      },
+    },
     Button: {
       baseStyle: {
         fontStyle: 'normal',
