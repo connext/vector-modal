@@ -37,7 +37,7 @@ const Status: FC<StatusProps> = props => {
                 <Text fontSize="s" casing="capitalize">
                   {message}
                 </Text>
-                <Text fontSize="xs" casing="capitalize">
+                <Text fontSize="s" casing="capitalize" color="#666666">
                   Do not close or refresh.
                 </Text>
               </Box>
