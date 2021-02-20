@@ -48,7 +48,14 @@ const Header: FC<HeaderProps> = props => {
                 size="lg"
               />
             )}
-            <Text fontSize="2xl" casing="uppercase" flex="auto">
+            <Text
+              fontSize="2xl"
+              casing="uppercase"
+              flex="auto"
+              fontFamily="Cooper Hewitt"
+              fontWeight="700"
+              lineHeight="30px"
+            >
               {title}
             </Text>
           </Stack>
