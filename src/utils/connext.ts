@@ -27,7 +27,8 @@ export const connectNode = async (
   depositChainId: number,
   withdrawChainId: number,
   depositChainProvider: string,
-  withdrawChainProvider: string
+  withdrawChainProvider: string,
+  loginProvider: providers.Web3Provider,
 ): Promise<BrowserNode> => {
   console.log('Connect Node');
   const browserNode = new BrowserNode({
