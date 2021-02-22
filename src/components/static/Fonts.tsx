@@ -1,15 +1,14 @@
 import React from 'react';
 import { Global } from '@emotion/react';
-
-import Roboto700 from '../../assets/fonts/roboto/Roboto-Bold.ttf';
-import Roboto500 from '../../assets/fonts/roboto/Roboto-Medium.ttf';
-import Roboto400 from '../../assets/fonts/roboto/Roboto-Regular.ttf';
-
-import RobotoMono400 from '../../assets/fonts/roboto_mono/RobotoMono-Regular.ttf';
-
-import CooperHewitt700 from '../../assets/fonts/cooper-hewitt/CooperHewitt-Semibold.otf';
-import CooperHewitt500 from '../../assets/fonts/cooper-hewitt/CooperHewitt-Medium.otf';
-import CooperHewitt400 from '../../assets/fonts/cooper-hewitt/CooperHewitt-Book.otf';
+import {
+  Roboto700,
+  Roboto500,
+  Roboto400,
+  RobotoMono400,
+  CooperHewitt700,
+  CooperHewitt500,
+  CooperHewitt400,
+} from '../../fonts';
 
 export const Fonts = () => (
   <Global
