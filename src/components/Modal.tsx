@@ -404,14 +404,13 @@ const ConnextModal: FC<ConnextModalProps> = ({
   const handleSwapCheck = (_input: string | undefined): string | undefined => {
     let err: string | undefined = undefined;
     setAmountError(undefined);
-    if (!_input) {
+    const input = _input ? _input.trim() : undefined;
+    if (!input) {
       setTransferAmountUi(undefined);
       return;
     }
     try {
-      const input = _input.trim();
       setTransferAmountUi(input);
-
       const transferAmountBn = BigNumber.from(
         utils.parseUnits(input, senderChain?.assetDecimals!)
       );
@@ -419,7 +418,6 @@ const ConnextModal: FC<ConnextModalProps> = ({
       if (transferAmountBn.isZero()) {
         err = 'Transfer amount cannot be 0';
       }
-      console.log(5);
       if (userBalance) {
         const userBalanceBn = BigNumber.from(
           utils.parseUnits(userBalance, senderChain?.assetDecimals!)
@@ -510,7 +508,6 @@ const ConnextModal: FC<ConnextModalProps> = ({
                 transferAmountBn
               );
 
-        setAmount(transferAmountBn);
         console.log('depositTx', depositTx.hash);
         if (onDepositTxCreated) {
           onDepositTxCreated(depositTx.hash);
@@ -518,6 +515,14 @@ const ConnextModal: FC<ConnextModalProps> = ({
         const receipt = await depositTx.wait();
         console.log('deposit mined:', receipt.transactionHash);
       } catch (e) {
+        setIsLoad(false);
+        if (
+          e.message.includes(
+            'MetaMask Tx Signature: User denied transaction signature'
+          )
+        ) {
+          return;
+        }
         handleError(
           ERROR_STATES.ERROR_TRANSFER,
           e,
@@ -1012,7 +1017,7 @@ const ConnextModal: FC<ConnextModalProps> = ({
   const activeScreen = (state: ScreenStates) => {
     switch (state) {
       case SCREEN_STATES.LOGIN:
-        return <Login />;
+        return <Login onClose={handleClose} />;
 
       case SCREEN_STATES.EMAIL:
         return <Email />;
@@ -1068,6 +1073,7 @@ const ConnextModal: FC<ConnextModalProps> = ({
             senderChainInfo={senderChain!}
             receiverChainInfo={receiverChain!}
             receiverAddress={withdrawalAddress}
+            onClose={handleClose}
           />
         );
 
