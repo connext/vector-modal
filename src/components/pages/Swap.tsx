@@ -6,8 +6,8 @@ import {
   Text,
   Stack,
   Box,
-  InputGroup,
-  Input,
+  NumberInputField,
+  NumberInput,
 } from '@chakra-ui/react';
 import { Header, Footer, NetworkBar } from '../static';
 import { styleModalContent, graphic, CHAIN_DETAIL } from '../../constants';
@@ -74,18 +74,30 @@ const Swap: FC<TransferProps> = props => {
         <ModalBody>
           <Stack direction="column" spacing={7}>
             <Stack direction="column" spacing={5}>
-              <Box>
-                {userBalance && (
+              <Stack direction="column" spacing={1}>
+                <Box display="flex">
                   <Text
+                    flex="auto"
                     fontSize="xs"
-                    casing="uppercase"
-                    textAlign="end"
-                    fontFamily="Roboto Mono"
-                    color="#757575"
+                    casing="capitalize"
+                    color={!!amountError ? 'crimson' : 'green.[500]'}
                   >
-                    Balance: {userBalance}
+                    {!!amountError
+                      ? amountError
+                      : `From ${senderChainInfo.name}`}
                   </Text>
-                )}
+                  {userBalance && (
+                    <Text
+                      fontSize="xs"
+                      casing="uppercase"
+                      textAlign="end"
+                      fontFamily="Roboto Mono"
+                      color="#757575"
+                    >
+                      Bal: {userBalance} {senderChainInfo.assetName}
+                    </Text>
+                  )}
+                </Box>
                 <Box
                   bg="white"
                   w="100%"
@@ -94,33 +106,26 @@ const Swap: FC<TransferProps> = props => {
                   alignItems="center"
                   borderRadius="15px"
                 >
-                  <InputGroup size="lg" flex="auto">
-                    <Input
-                      label="amount"
-                      name="amount"
-                      aria-describedby="amount"
-                      onChange={event => {
-                        // replace commas with periods, because uniswap exclusively uses period as the decimal separator
-                        enforcer(event.target.value.replace(/,/g, '.'));
-                      }}
+                  <NumberInput
+                    size="lg"
+                    flex="auto"
+                    title="Token Amount"
+                    aria-describedby="amount"
+                    // universal input options
+                    inputMode="decimal"
+                    value={transferAmount}
+                  >
+                    <NumberInputField
                       // styling
                       fontFamily="Roboto Mono"
                       boxShadow="none!important"
                       border="none"
-                      // universal input options
-                      inputMode="decimal"
-                      title="Token Amount"
-                      autoComplete="off"
-                      autoCorrect="off"
-                      // text-specific options
-                      type="text"
-                      pattern="^[0-9]*[.,]?[0-9]*$"
-                      value={transferAmount}
-                      minLength={1}
-                      maxLength={79}
-                      spellCheck="false"
+                      onChange={event => {
+                        // replace commas with periods, because uniswap exclusively uses period as the decimal separator
+                        enforcer(event.target.value.replace(/,/g, '.'));
+                      }}
                     />
-                  </InputGroup>
+                  </NumberInput>
 
                   {userBalance && (
                     <Button
@@ -139,14 +144,7 @@ const Swap: FC<TransferProps> = props => {
                     </Button>
                   )}
                 </Box>
-                <Text
-                  fontSize="xs"
-                  casing="capitalize"
-                  color={!!amountError ? 'crimson' : 'green.[500]'}
-                >
-                  {!!amountError ? amountError : `From ${senderChainInfo.name}`}
-                </Text>
-              </Box>
+              </Stack>
 
               <Stack direction="column" spacing={2}>
                 <Box display="flex">
