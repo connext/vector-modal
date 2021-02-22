@@ -3,45 +3,12 @@ import 'regenerator-runtime/runtime';
 import * as React from 'react';
 import * as ReactDOM from 'react-dom';
 import { Magic } from 'magic-sdk';
-import { ethers } from 'ethers';
+import { constants, ethers } from 'ethers';
 
 // Test key defaults to "rinkeby", live key defaults to "mainnet"
 
 import { ConnextModal } from '../';
 
-const originalMessage = {
-  types: {
-    EIP712Domain: [
-      {
-        name: 'name',
-        type: 'string',
-      },
-      {
-        name: 'version',
-        type: 'string',
-      },
-      {
-        name: 'verifyingContract',
-        type: 'address',
-      },
-    ],
-    Greeting: [
-      {
-        name: 'contents',
-        type: 'string',
-      },
-    ],
-  },
-  primaryType: 'Greeting',
-  domain: {
-    name: 'Vector',
-    version: '1',
-    verifyingContract: '0xE0cef4417a772512E6C95cEf366403839b0D6D6D',
-  },
-  message: {
-    contents: 'Welcome to Connext. Please confirm signature to sign in!',
-  },
-};
 const method = 'eth_signTypedData_v4';
 
 function App() {

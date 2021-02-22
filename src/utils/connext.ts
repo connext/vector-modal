@@ -1,4 +1,9 @@
-import { BrowserNode } from '@connext/vector-browser-node';
+import {
+  BrowserNode,
+  EIP712Domain,
+  EIP712Types,
+  EIP712Value,
+} from '@connext/vector-browser-node';
 import { ChannelMastercopy } from '@connext/vector-contracts';
 import {
   ConditionalTransferCreatedPayload,
@@ -28,7 +33,7 @@ export const connectNode = async (
   withdrawChainId: number,
   depositChainProvider: string,
   withdrawChainProvider: string,
-  loginProvider: providers.Web3Provider,
+  loginProvider?: providers.Web3Provider
 ): Promise<BrowserNode> => {
   console.log('Connect Node');
   const browserNode = new BrowserNode({
@@ -42,17 +47,28 @@ export const connectNode = async (
   });
 
   let error: any | undefined = undefined;
+  let sig: string | undefined;
+  let signer: providers.JsonRpcSigner | undefined;
+  let signerAddress: string | undefined;
+
+  if (!!loginProvider) {
+    signer = loginProvider.getSigner();
+    signerAddress = await signer.getAddress();
+    sig = await loginProvider
+      .getSigner()
+      ._signTypedData(EIP712Domain, EIP712Types, EIP712Value);
+  }
   try {
-    await browserNode.init();
+    await browserNode.init({ sig, signer: signerAddress });
   } catch (e) {
-    console.error('Error connecting to iframe:', jsonifyError(e));
+    console.error('Error initializing Browser Node:', jsonifyError(e));
     error = e;
   }
   const shouldAttemptRestore = (error?.context?.validationError ?? '').includes(
     'Channel is already setup'
   );
   if (error && !shouldAttemptRestore) {
-    throw new Error(`connecting to iframe: ${error}`);
+    throw new Error(`Error initializing browser node: ${error}`);
   }
 
   if (error && shouldAttemptRestore) {
