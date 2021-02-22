@@ -29,7 +29,7 @@ const Status: FC<StatusProps> = props => {
           backgroundPosition: 'right top',
         }}
       >
-        <Header title={title} spinner={true} backButton={true} />
+        <Header title={title} spinner={true} moreButton={true} />
         <ModalBody>
           <Stack direction="column" spacing={7}>
             <Stack direction="column" spacing={2}>
