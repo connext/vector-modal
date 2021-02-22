@@ -19,6 +19,7 @@ export interface SuccessProps {
   senderChainInfo: CHAIN_DETAIL;
   receiverChainInfo: CHAIN_DETAIL;
   receiverAddress: string;
+  onClose: () => void;
 }
 
 const Success: FC<SuccessProps> = props => {
@@ -28,6 +29,7 @@ const Success: FC<SuccessProps> = props => {
     senderChainInfo,
     receiverChainInfo,
     receiverAddress,
+    onClose,
   } = props;
   return (
     <>
@@ -43,7 +45,7 @@ const Success: FC<SuccessProps> = props => {
           title="Success"
           successIcon={true}
           moreButton={true}
-          closeButton={true}
+          onClose={onClose}
         />
         <ModalBody>
           <Stack direction="column" spacing={7}>
