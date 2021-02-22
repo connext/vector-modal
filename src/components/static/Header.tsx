@@ -1,22 +1,21 @@
 import React, { FC } from 'react';
 import {
   ModalHeader,
-  ModalCloseButton,
   IconButton,
   Spinner,
   Stack,
   Text,
   Box,
 } from '@chakra-ui/react';
-import { MoreVertical } from 'react-feather';
+import { MoreVertical, X } from 'react-feather';
 import { ArrowBackIcon, WarningTwoIcon } from '@chakra-ui/icons';
 import { success } from '../../constants';
 interface HeaderProps {
   title: string;
+  onClose?: () => void;
   subTitle?: React.ReactNode;
   warningIcon?: boolean;
   successIcon?: boolean;
-  closeButton?: boolean;
   backButton?: boolean;
   moreButton?: boolean;
   spinner?: boolean;
@@ -28,10 +27,10 @@ const Header: FC<HeaderProps> = props => {
     subTitle,
     warningIcon,
     successIcon,
-    closeButton,
     backButton,
     moreButton,
     spinner,
+    onClose,
   } = props;
   return (
     <>
@@ -76,7 +75,15 @@ const Header: FC<HeaderProps> = props => {
             />
           )}
 
-          {closeButton && <ModalCloseButton />}
+          {onClose && (
+            <IconButton
+              aria-label="back"
+              border="none"
+              bg="transparent"
+              onClick={onClose}
+              icon={<X />}
+            />
+          )}
         </Box>
         {subTitle && <Box>{subTitle}</Box>}
       </ModalHeader>
