@@ -10,7 +10,12 @@ import {
 import { styleModalContent, placeholder } from '../../constants';
 import { Header, Footer } from '../static';
 
-const Login: FC = () => {
+interface LoginProps {
+  onClose: () => void;
+}
+
+const Login: FC<LoginProps> = props => {
+  const { onClose } = props;
   return (
     <>
       <ModalContent
@@ -24,7 +29,7 @@ const Login: FC = () => {
         <Header
           title="sign in to your wallet"
           subTitle={<SubTitle />}
-          closeButton={true}
+          onClose={onClose}
         />
         <ModalBody>
           <Stack direction="column" spacing={5}>

@@ -17,7 +17,9 @@ import { styleModalContent, placeholder } from '../../constants';
 import { EmailIcon, CheckIcon } from '@chakra-ui/icons';
 import { Header, Footer } from '../static';
 
-const Email: FC = () => {
+interface EmailProps {}
+const Email: FC<EmailProps> = props => {
+  // const { onClose } = props;
   const formik = useFormik({
     initialValues: { email: '' },
     onSubmit: values => {
