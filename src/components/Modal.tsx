@@ -50,6 +50,7 @@ import {
   ErrorScreen,
   Success,
 } from './pages';
+import Recover from './Recover';
 import { Fonts, Options } from './static';
 
 export { useDisclosure };
@@ -104,12 +105,7 @@ const ConnextModal: FC<ConnextModalProps> = ({
   const loginProvider: undefined | providers.Web3Provider = !!_loginProvider
     ? new providers.Web3Provider(_loginProvider)
     : undefined;
-  const classes = useStyles();
-  const [transferAmountWei, setTransferAmountWei] = useState<
-    string | undefined
-  >(_transferAmount);
 
-  const initialTransferAmmount = _transferAmount;
   const [transferAmountUi, setTransferAmountUi] = useState<string | undefined>(
     _transferAmount
   );
@@ -177,17 +173,6 @@ const ConnextModal: FC<ConnextModalProps> = ({
   const [message, setMessage] = useState<string>();
   const [isLoad, setIsLoad] = useState<Boolean>(false);
   const [showTimer, setShowTimer] = useState<Boolean>(false);
-
-  // setErrorState(ERROR_STATES.RETRY);
-  //     if (pErrorState) {
-  //       setErrorState(pErrorState);
-  //     }
-  //     setError(e);
-  //     setIsError(true);
-  //     setTransferState(TRANSFER_STATES.ERROR);
-  //     setIniting(false);
-  //     setPreImage(undefined);
-  //   };
 
   const cancelTransfer = async (
     depositChannelAddress: string,
@@ -779,7 +764,8 @@ const ConnextModal: FC<ConnextModalProps> = ({
           senderChainInfo.chainId,
           receiverChainInfo.chainId,
           senderChainInfo.chainProvider,
-          receiverChainInfo.chainProvider
+          receiverChainInfo.chainProvider,
+          loginProvider
         ));
       setNode(_node);
     } catch (e) {
@@ -1080,7 +1066,13 @@ const ConnextModal: FC<ConnextModalProps> = ({
   }, [showModal]);
 
   const handleOptions = () => {
-    return <Options state={screenState} onClose={handleClose} />;
+    return (
+      <Options
+        state={screenState}
+        onClose={handleClose}
+        handleRecoveryButton={handleRecoveryButton}
+      />
+    );
   };
 
   const handleBack = () => {
@@ -1124,6 +1116,19 @@ const ConnextModal: FC<ConnextModalProps> = ({
     );
   };
 
+  const handleRecoveryButton = () => {
+    console.log('click on recovery button', screenState);
+    switch (screenState) {
+      case SCREEN_STATES.RECOVERY:
+        handleScreen({ state: SCREEN_STATES.SWAP });
+        return;
+
+      default:
+        handleScreen({ state: SCREEN_STATES.RECOVERY });
+        return;
+    }
+  };
+
   const handleScreen = (params: {
     state: ScreenStates;
     error?: Error | undefined;
@@ -1145,6 +1150,10 @@ const ConnextModal: FC<ConnextModalProps> = ({
         break;
 
       case SCREEN_STATES.SWAP:
+        break;
+
+      case SCREEN_STATES.RECOVERY:
+        console.log('click');
         break;
 
       case SCREEN_STATES.LISTENER:
@@ -1204,6 +1213,19 @@ const ConnextModal: FC<ConnextModalProps> = ({
             transferAmount={transferAmountUi}
             options={handleOptions}
             handleBack={handleBack}
+          />
+        );
+
+      case SCREEN_STATES.RECOVERY:
+        console.log('return recovery');
+        return (
+          <Recover
+            senderChainInfo={senderChain!}
+            node={node!}
+            depositAddress={depositAddress!}
+            handleOptions={handleOptions}
+            handleBack={handleBack}
+            handleCloseButton={handleCloseButton}
           />
         );
 
