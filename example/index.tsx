@@ -42,8 +42,9 @@ function App() {
     } else if (loginType === 'magic') {
       await magic.auth.loginWithMagicLink({ email: 'rksethuram9@gmail.com' });
       const provider = new providers.Web3Provider(loginProvider as any);
-      const accounts = await provider.send('eth_requestAccounts', []);
-      console.log('accounts: ', accounts);
+      const signer = provider.getSigner();
+      const address = await signer.getAddress();
+      console.log('address: ', address);
     }
   };
 
