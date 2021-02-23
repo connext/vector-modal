@@ -1,5 +1,6 @@
-import { theme, useStyles } from './style';
-
+export * from './style';
+export * from './image';
+export * from './types';
 export const CHAIN_INFO_URL = 'https://chainid.network/chains.json';
 
 const PROD_IFRAME_WALLET = 'https://wallet.connext.network';
@@ -19,7 +20,7 @@ export const NETWORK_NAME: {
   5: 'Ethereum Testnet Görli',
   42: 'Ethereum Testnet Kovan',
   80001: 'Matic Testnet Mumbai',
-  79377087078960: "Arbitrum Kovan Testnet 3"
+  79377087078960: 'Arbitrum Kovan Testnet 3',
 };
 
 export const ASSET_CHAIN_NAME_MAPPING: {
@@ -57,26 +58,6 @@ export const TRANSFER_STATES = {
 } as const;
 export type TransferStates = keyof typeof TRANSFER_STATES;
 
-export const SCREEN_STATES = {
-  LOGIN: 'LOGIN',
-  LOADING: 'LOADING',
-  EMAIL: 'EMAIL',
-  INITIAL: 'INITIAL',
-  DEPOSITING: 'DEPOSITING',
-  TRANSFERRING: 'TRANSFERRING',
-  WITHDRAWING: 'WITHDRAWING',
-  COMPLETE: 'COMPLETE',
-  ERROR: 'ERROR',
-} as const;
-export type ScreenStates = keyof typeof SCREEN_STATES;
-
-export const ERROR_STATES = {
-  REFRESH: 'REFRESH',
-  CONTACT_INFO: 'CONTACT_INFO',
-  RETRY: 'RETRY',
-} as const;
-export type ErrorStates = keyof typeof ERROR_STATES;
-
 export type Screens = 'Recover' | 'Home';
 
 export const message = (activeMessage: number) => {
@@ -97,5 +78,3 @@ export const message = (activeMessage: number) => {
       return 'Connecting to Network...';
   }
 };
-
-export { theme, useStyles };

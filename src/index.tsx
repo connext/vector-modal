@@ -1,4 +1,3 @@
-import ConnextModal from './components/Modal';
-import Main from './components/Main';
+import ConnextModal, { useDisclosure } from './components/Modal';
 
-export { ConnextModal, Main };
+export { ConnextModal, useDisclosure };

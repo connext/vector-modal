@@ -7,7 +7,7 @@ import { providers } from 'ethers';
 
 // Test key defaults to "rinkeby", live key defaults to "mainnet"
 
-import { ConnextModal } from '../';
+import { ConnextModal, useDisclosure } from '../src';
 
 type LoginType = 'none' | 'metamask' | 'magic';
 const magic = new Magic('pk_test_D646A81EA4676AB2', {

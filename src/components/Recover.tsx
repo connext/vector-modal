@@ -1,45 +1,46 @@
 import React, { FC, useState } from 'react';
 import {
-  Grid,
+  ModalContent,
+  ModalBody,
   Button,
-  Typography,
-  TextField,
-  CircularProgress,
-} from '@material-ui/core';
-
-import { CheckCircle, AlertCircle } from 'react-feather';
-import { makeStyles } from '@material-ui/core/styles';
-
+  Text,
+  Stack,
+  Box,
+  InputGroup,
+  Input,
+} from '@chakra-ui/react';
 import { BigNumber, constants } from 'ethers';
 import { FullChannelState } from '@connext/vector-types';
 import { getBalanceForAssetId } from '@connext/vector-utils';
-import { getExplorerLinkForTx } from '../utils';
 import { BrowserNode } from '@connext/vector-browser-node';
+import { Header, Footer } from './static';
+import { Success, ErrorScreen } from './pages';
+import {
+  styleModalContent,
+  graphic,
+  CHAIN_DETAIL,
+  ERROR_STATES,
+} from '../constants';
 
-const useRecoverStyles = makeStyles(theme => ({
-  wrapper: {
-    margin: theme.spacing(1),
-    position: 'relative',
-  },
-  buttonProgress: {
-    position: 'absolute',
-    top: '50%',
-    left: '50%',
-    marginTop: -12,
-    marginLeft: -12,
-  },
-  root: { padding: '1rem' },
-  helpText: { padding: '1rem' },
-  assetField: { paddingBottom: '1rem' },
-  addressField: { paddingBottom: '1rem' },
-}));
-
-const Recover: FC<{
-  depositAddress?: string;
-  depositChainId: number;
+export interface RecoveryProps {
+  handleBack: () => void;
+  handleCloseButton: () => void;
+  handleOptions: () => void;
+  senderChainInfo: CHAIN_DETAIL;
   node: BrowserNode;
-}> = ({ depositAddress, depositChainId, node }) => {
-  const classes = useRecoverStyles();
+  depositAddress?: string;
+}
+
+const Recover: FC<RecoveryProps> = props => {
+  const {
+    handleBack,
+    handleCloseButton,
+    handleOptions,
+    depositAddress,
+    senderChainInfo,
+    node,
+  } = props;
+
   const [recoverTokenAddress, setRecoverTokenAddress] = useState(
     constants.AddressZero
   );
@@ -52,7 +53,8 @@ const Recover: FC<{
     setRecoverWithdrawalAddressError,
   ] = useState(false);
   const [withdrawalTxHash, setWithdrawalTxHash] = useState(constants.HashZero);
-  const [errorMessage, setErrorMessage] = useState('Unknown error');
+  const [amount, setAmount] = useState<string>();
+  const [error, setError] = useState<Error>();
   const [status, setStatus] = useState<
     'Initial' | 'Loading' | 'Success' | 'Error'
   >('Initial');
@@ -64,7 +66,7 @@ const Recover: FC<{
     });
     if (deposit.isError) {
       setStatus('Error');
-      setErrorMessage(deposit.getError()!.message);
+      setError(deposit.getError());
       throw deposit.getError();
     }
 
@@ -73,9 +75,7 @@ const Recover: FC<{
     });
     if (updatedChannel.isError || !updatedChannel.getValue()) {
       setStatus('Error');
-      setErrorMessage(
-        updatedChannel.getError()?.message ?? 'Channel not found'
-      );
+      setError(updatedChannel.getError() ?? new Error('Channel not found'));
       throw updatedChannel.getError() ?? new Error('Channel not found');
     }
     const endingBalance = getBalanceForAssetId(
@@ -83,11 +83,13 @@ const Recover: FC<{
       recoverTokenAddress,
       'bob'
     );
+    setAmount(endingBalance);
 
     const endingBalanceBn = BigNumber.from(endingBalance);
     if (endingBalanceBn.isZero()) {
       setStatus('Error');
-      setErrorMessage('No balance found to recover');
+      setError(new Error('No balance found to recover'));
+      return;
     }
     console.log(
       `Found ${endingBalanceBn.toString()} of ${assetId}, attempting withdrawal`
@@ -114,142 +116,184 @@ const Recover: FC<{
   };
 
   return (
-    <Grid className={classes.root}>
-      <Grid container spacing={4}>
-        <Grid item xs={12}>
-          <Typography variant="h6" align="center">
-            Recover lost funds
-          </Typography>
-          <Typography
-            variant="body2"
-            align="center"
-            className={classes.helpText}
-          >
-            Uh oh! Did you send the wrong asset to the deposit address? Fill out
-            the details below and we will attempt to recover your assets from
-            the state channels!
-          </Typography>
-        </Grid>
-      </Grid>
-      <Grid container spacing={4}>
-        <Grid item xs={12} className={classes.assetField}>
-          <TextField
-            disabled={status === 'Loading'}
-            label="Token Address (0x000... for ETH)"
-            value={recoverTokenAddress}
-            error={recoverTokenAddressError}
-            helperText={
-              recoverTokenAddressError && 'Must be an Ethereum address'
-            }
-            onChange={event => {
-              setRecoverTokenAddress(event.target.value);
-              setRecoverTokenAddressError(!isValidAddress(event.target.value));
-            }}
-            fullWidth
-            size="small"
+    <>
+      {['Initial', 'Loading'].includes(status as any) && (
+        <ModalContent
+          id="modalContent"
+          style={{
+            ...styleModalContent,
+            backgroundImage: `url(${graphic})`,
+          }}
+        >
+          <Header
+            title="Recover lost funds"
+            handleBack={handleBack}
+            options={handleOptions}
           />
-        </Grid>
-        <Grid item xs={12} className={classes.addressField}>
-          <TextField
-            disabled={status === 'Loading'}
-            label="Withdrawal Address"
-            value={recoverWithdrawalAddress}
-            error={recoverWithdrawalAddressError}
-            helperText={
-              recoverWithdrawalAddressError && 'Must be an Ethereum address'
-            }
-            onChange={event => {
-              setRecoverWithdrawalAddress(event.target.value);
-              setRecoverWithdrawalAddressError(
-                !isValidAddress(event.target.value)
-              );
-            }}
-            fullWidth
-            size="small"
-          />
-        </Grid>
-      </Grid>
-      {status !== 'Success' && (
-        <Grid container justifyContent="center" spacing={4}>
-          <Grid item xs={4}>
-            <div className={classes.wrapper}>
-              <Button
-                variant="contained"
-                color="primary"
-                fullWidth
-                disabled={
-                  status === 'Loading' ||
-                  recoverWithdrawalAddressError ||
-                  recoverTokenAddressError ||
-                  !recoverTokenAddress ||
-                  !recoverWithdrawalAddress
-                }
-                onClick={() =>
-                  recover(recoverTokenAddress, recoverWithdrawalAddress)
-                }
-              >
-                Recover
-              </Button>
-              {status === 'Loading' && (
-                <CircularProgress
-                  size={24}
-                  className={classes.buttonProgress}
-                />
-              )}
-            </div>
-          </Grid>
-        </Grid>
+          <ModalBody>
+            <Stack direction="column" spacing={5}>
+              <Text fontSize="s">
+                Uh oh! Send the wrong asset to the deposit address? Fill out the
+                details below to attempt recovery of your assets from the state
+                channels.
+              </Text>
+              <Box>
+                <Stack direction="column" spacing={5}>
+                  <Box>
+                    <Box display="flex">
+                      <Text
+                        fontSize="14px"
+                        casing="capitalize"
+                        flex="auto"
+                        color="#666666"
+                        fontWeight="700"
+                      >
+                        Token Address
+                      </Text>
+                      <Text
+                        fontSize="sm"
+                        casing="capitalize"
+                        color="crimson"
+                        fontFamily="Roboto Mono"
+                        fontWeight="700"
+                      >
+                        {recoverTokenAddressError &&
+                          'Must be an Ethereum address'}
+                      </Text>
+                    </Box>
+                    <Box
+                      bg="white"
+                      w="100%"
+                      display="flex"
+                      flexDirection="row"
+                      alignItems="center"
+                      borderRadius="15px"
+                    >
+                      <InputGroup>
+                        <Input
+                          id="tokenAddress"
+                          name="Token Address"
+                          type="search"
+                          size="lg"
+                          placeholder="0x..."
+                          // styling
+                          fontFamily="Roboto Mono"
+                          boxShadow="none!important"
+                          border="none"
+                          value={recoverTokenAddress}
+                          onChange={event => {
+                            setRecoverTokenAddress(event.target.value);
+                            setRecoverTokenAddressError(
+                              !isValidAddress(event.target.value)
+                            );
+                          }}
+                        />
+                      </InputGroup>
+                    </Box>
+                  </Box>
+
+                  <Box>
+                    <Box display="flex">
+                      <Text
+                        fontSize="14px"
+                        casing="capitalize"
+                        flex="auto"
+                        color="#666666"
+                        fontWeight="700"
+                      >
+                        Withdrawal Address
+                      </Text>
+                      <Text
+                        fontSize="sm"
+                        casing="capitalize"
+                        color="crimson"
+                        fontFamily="Roboto Mono"
+                        fontWeight="700"
+                      >
+                        {recoverWithdrawalAddressError &&
+                          'Must be an Ethereum address'}
+                      </Text>
+                    </Box>
+                    <Box
+                      bg="white"
+                      w="100%"
+                      display="flex"
+                      flexDirection="row"
+                      alignItems="center"
+                      borderRadius="15px"
+                    >
+                      <InputGroup>
+                        <Input
+                          id="withdrawalAddress"
+                          name="Withdrawal Address"
+                          type="search"
+                          size="lg"
+                          // styling
+                          fontFamily="Roboto Mono"
+                          boxShadow="none!important"
+                          border="none"
+                          placeholder="0x..."
+                          onChange={event => {
+                            setRecoverWithdrawalAddress(event.target.value);
+                            setRecoverWithdrawalAddressError(
+                              !isValidAddress(event.target.value)
+                            );
+                          }}
+                          value={recoverWithdrawalAddress}
+                        />
+                      </InputGroup>
+                    </Box>
+                  </Box>
+
+                  <Button
+                    size="lg"
+                    type="submit"
+                    disabled={
+                      recoverWithdrawalAddressError ||
+                      recoverTokenAddressError ||
+                      !recoverTokenAddress ||
+                      !recoverWithdrawalAddress
+                        ? true
+                        : false
+                    }
+                    isLoading={status === 'Loading' ? true : false}
+                    loadingText="Recovering"
+                    onClick={() =>
+                      recover(recoverTokenAddress, recoverWithdrawalAddress)
+                    }
+                  >
+                    Recover
+                  </Button>
+                </Stack>
+              </Box>
+            </Stack>
+          </ModalBody>
+
+          <Footer />
+        </ModalContent>
       )}
       {status === 'Success' && (
-        <>
-          <Grid container alignItems="center" direction="column">
-            <CheckCircle color="secondary" fontSize="large" />
-            <Typography gutterBottom variant="h6">
-              Success
-            </Typography>
-
-            <Typography
-              gutterBottom
-              variant="body1"
-              color="secondary"
-              align="center"
-            >
-              Successfully withdrew funds
-            </Typography>
-          </Grid>
-
-          <Grid container direction="row" justifyContent="center">
-            <Button
-              variant="outlined"
-              color="primary"
-              href={getExplorerLinkForTx(depositChainId, withdrawalTxHash)}
-              target="_blank"
-            >
-              View Withdrawal Tx
-            </Button>
-          </Grid>
-        </>
+        <Success
+          amount={amount!}
+          transactionId={withdrawalTxHash!}
+          receiverChainInfo={senderChainInfo}
+          receiverAddress={recoverWithdrawalAddress}
+          onClose={handleCloseButton}
+          options={handleOptions}
+        />
       )}
       {status === 'Error' && (
-        <>
-          <Grid container alignItems="center" direction="column">
-            <AlertCircle fontSize="large" color="error" />
-            <Typography gutterBottom variant="caption" color="error">
-              Error
-            </Typography>
-
-            <Typography
-              gutterBottom
-              variant="caption"
-              color="error"
-              align="center"
-            >
-              {errorMessage}
-            </Typography>
-          </Grid>
-        </>
+        <ErrorScreen
+          error={error ?? new Error('unknown')}
+          state={ERROR_STATES.ERROR_TRANSFER}
+          crossChainTransferId={constants.HashZero}
+          receiverChainInfo={senderChainInfo}
+          receiverAddress={recoverWithdrawalAddress}
+          options={handleOptions}
+          handleBack={handleBack}
+        />
       )}
-    </Grid>
+    </>
   );
 };
 

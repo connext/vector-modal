@@ -1,9 +1,13 @@
 import { providers, BigNumber, constants, Contract, utils } from 'ethers';
 import { ERC20Abi } from '@connext/vector-types';
 import {
+  getChainInfo,
+  getChainId,
+  getAssetDecimals,
+} from '@connext/vector-utils';
+import {
   TransferStates,
-  CHAIN_INFO_URL,
-  NETWORK_NAME,
+  CHAIN_DETAIL,
   ASSET_CHAIN_NAME_MAPPING,
 } from '../constants';
 import { delay } from '@connext/vector-utils';
@@ -93,41 +97,63 @@ export const retryWithDelay = async <T = any>(
   throw error;
 };
 
-export const getChainInfo = async (chainId: number) => {
-  if (NETWORK_NAME[chainId]) {
-    return NETWORK_NAME[chainId];
-  } else {
+export const getChain = async (
+  _chainId: number | undefined,
+  chainProvider: string,
+  _assetId: string
+) => {
+  // Sender Chain Info
+  const assetId = utils.getAddress(_assetId);
+  let chainId = _chainId;
+  if (!chainId) {
     try {
-      const chainInfo: any[] = await utils.fetchJson(CHAIN_INFO_URL);
-      const chain = chainInfo.find(info => info.chainId === chainId);
-      if (chain) {
-        return chain.name;
-      }
+      chainId = await getChainId(chainProvider);
+      console.log('chain:', chainId);
     } catch (e) {
-      console.warn(`Could not fetch chain info from ${CHAIN_INFO_URL}`);
-      return;
+      throw new Error(
+        `Error getting chain Id from provider ${chainProvider}: ${e}`
+      );
     }
   }
+
+  const rpcProvider = new providers.JsonRpcProvider(chainProvider, chainId);
+
+  // get decimals for deposit asset
+  const assetDecimals = await getAssetDecimals(assetId, rpcProvider);
+
+  const chain = await getChainInfo(chainId);
+  const chainName = chain.name;
+  const assetName = chain.assetId[assetId]
+    ? chain.assetId[assetId] ?? 'Token'
+    : 'Token';
+
+  const chainInfo: CHAIN_DETAIL = {
+    name: chainName,
+    chainId: chainId,
+    chainProvider: chainProvider,
+    rpcProvider: rpcProvider,
+    assetName: assetName,
+    assetId: assetId,
+    assetDecimals: assetDecimals,
+  };
+
+  return chainInfo;
 };
 
-export const getAssetDecimals = async (
-  chainId: number,
-  assetId: string,
-  ethProvider: providers.BaseProvider
-): Promise<number> => {
-  if (assetId === constants.AddressZero) {
-    return 18;
-  }
-  const token = new Contract(assetId, ERC20Abi, ethProvider);
-  try {
-    const decimals: number = await token.decimals();
-    console.log(`Detected token decimals for chainId ${chainId}: `, decimals);
-    return decimals;
-  } catch (e) {
-    console.error(
-      `Error detecting decimals, unsafely falling back to 18 decimals for chainId ${chainId}: `,
-      e
-    );
-    return 18;
-  }
+export const getUserBalance = async (
+  injectedProvider: providers.Web3Provider,
+  senderChainInfo: CHAIN_DETAIL
+): Promise<string> => {
+  const userAddress = await injectedProvider!.getSigner().getAddress();
+  console.log('injected signer address', userAddress);
+
+  const balance = await getOnchainBalance(
+    injectedProvider,
+    senderChainInfo.assetId,
+    userAddress
+  );
+
+  const userBalance = utils.formatUnits(balance, senderChainInfo.assetDecimals);
+
+  return userBalance;
 };

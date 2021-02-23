@@ -436,15 +436,14 @@ export const withdrawToAsset = async (
 };
 
 // return strings, does not need to be retried
-export const verifyRouterSupportsTransfer = async (
+export const verifyRouterSupports = async (
   node: BrowserNode,
   fromChainId: number,
   _fromAssetId: string,
   toChainId: number,
   _toAssetId: string,
   ethProvider: providers.BaseProvider, // For `to` chain
-  routerPublicIdentifier: string,
-  transferAmount?: BigNumber
+  routerPublicIdentifier: string
 ): Promise<any> => {
   const withdrawChannel = await getChannelForChain(
     node,
@@ -504,18 +503,6 @@ export const verifyRouterSupportsTransfer = async (
   if (routerGasBudget.lt(minGas)) {
     throw new Error('Router has insufficient gas funds');
   }
-
-  // if there is a transfer amount supplied, verify collateral
-  if (transferAmount) {
-    await verifyRouterCapacityForTransfer(
-      ethProvider,
-      toAssetId,
-      withdrawChannel,
-      transferAmount,
-      swap
-    );
-  }
-
   return swap;
 };
 
