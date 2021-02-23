@@ -6,21 +6,17 @@ import {
   MenuItem,
   IconButton,
 } from '@chakra-ui/react';
-import {
-  ExternalLinkIcon,
-  RepeatIcon,
-  CloseIcon,
-  HamburgerIcon,
-} from '@chakra-ui/icons';
+import { ExternalLinkIcon, CloseIcon, HamburgerIcon } from '@chakra-ui/icons';
 import { ScreenStates, SCREEN_STATES } from '../../constants';
 
 interface OptionsProps {
   state: ScreenStates;
   onClose: () => void;
+  handleRecoveryButton: () => void;
 }
 
 const Options: FC<OptionsProps> = props => {
-  const { state, onClose } = props;
+  const { state, onClose, handleRecoveryButton } = props;
   return (
     <>
       <Menu>
@@ -32,7 +28,11 @@ const Options: FC<OptionsProps> = props => {
           icon={<HamburgerIcon />}
         />
         <MenuList>
-          <MenuItem icon={<RepeatIcon />}>Recovery</MenuItem>
+          <MenuItem onClick={handleRecoveryButton}>
+            {' '}
+            {state == SCREEN_STATES.RECOVERY ? 'Home' : 'Recovery'}{' '}
+          </MenuItem>
+
           <MenuItem
             icon={<ExternalLinkIcon />}
             onClick={() =>
