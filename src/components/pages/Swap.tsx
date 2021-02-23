@@ -1,4 +1,4 @@
-import React, { FC, useEffect } from 'react';
+import React, { FC, useEffect, useState } from 'react';
 import {
   ModalContent,
   ModalBody,
@@ -11,6 +11,7 @@ import {
 } from '@chakra-ui/react';
 import { Header, Footer, NetworkBar } from '../static';
 import { styleModalContent, graphic, CHAIN_DETAIL } from '../../constants';
+import { BigNumber } from 'ethers';
 
 export interface TransferProps {
   onUserInput: (input: string) => void;
@@ -22,6 +23,13 @@ export interface TransferProps {
   receiverChainInfo: CHAIN_DETAIL;
   receiverAddress: string;
   transferAmount: string | undefined;
+  getFeeQuote: (
+    amount: string,
+    assetId: string,
+    chainId: number,
+    recipientChainId: number,
+    recipientAssetId: string
+  ) => Promise<any>;
   amountError?: string;
   userBalance?: string;
 }
@@ -45,7 +53,10 @@ const Swap: FC<TransferProps> = props => {
     swapRequest,
     options,
     handleBack,
+    getFeeQuote,
   } = props;
+
+  const [feeQuote, setFeeQuote] = useState<any>();
 
   const enforcer = (nextUserInput: string) => {
     if (nextUserInput === '' || inputRegex.test(escapeRegExp(nextUserInput))) {
@@ -60,9 +71,20 @@ const Swap: FC<TransferProps> = props => {
   };
 
   useEffect(() => {
-    if (transferAmount) {
-      enforcer(transferAmount);
-    }
+    const effect = async () => {
+      if (transferAmount) {
+        enforcer(transferAmount);
+        const fee = await getFeeQuote(
+          transferAmount,
+          senderChainInfo.assetId,
+          senderChainInfo.chainId,
+          receiverChainInfo.chainId,
+          receiverChainInfo.assetId
+        );
+        setFeeQuote(fee);
+      }
+    };
+    effect();
   });
 
   return (
@@ -166,7 +188,7 @@ const Swap: FC<TransferProps> = props => {
                     fontFamily="Roboto Mono"
                     color="#666666"
                   >
-                    0.0 {senderChainInfo.assetName}
+                    {feeQuote.fee} {senderChainInfo.assetName}
                   </Text>
                 </Box>
 
@@ -187,7 +209,10 @@ const Swap: FC<TransferProps> = props => {
                     fontFamily="Roboto Mono"
                     fontWeight="700"
                   >
-                    0.0 {senderChainInfo.assetName}
+                    {BigNumber.from(transferAmount)
+                      .sub(feeQuote)
+                      .toString()}{' '}
+                    {senderChainInfo.assetName}
                   </Text>
                 </Box>
               </Stack>

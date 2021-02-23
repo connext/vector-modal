@@ -39,6 +39,7 @@ import {
   connectNode,
   verifyRouterCapacityForTransfer,
   getUserBalance,
+  getFeeQuote,
 } from '../utils';
 import {
   Email,
@@ -1065,6 +1066,25 @@ const ConnextModal: FC<ConnextModalProps> = ({
     init();
   }, [showModal]);
 
+  const _getFeeQuote = async (
+    amount: string,
+    assetId: string,
+    chainId: number,
+    recipientChainId: number,
+    recipientAssetId: string
+  ): Promise<any> => {
+    const quote = await getFeeQuote(
+      routerPublicIdentifier,
+      amount,
+      assetId,
+      chainId,
+      node!.publicIdentifier,
+      recipientChainId,
+      recipientAssetId
+    );
+    return quote;
+  };
+
   const handleOptions = () => {
     return (
       <Options
@@ -1202,6 +1222,7 @@ const ConnextModal: FC<ConnextModalProps> = ({
       case SCREEN_STATES.SWAP:
         return (
           <Swap
+            getFeeQuote={_getFeeQuote}
             onUserInput={handleSwapCheck}
             swapRequest={handleSwapRequest}
             isLoad={isLoad}
