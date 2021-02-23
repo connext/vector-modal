@@ -41,7 +41,7 @@ function App() {
       console.log('accounts: ', accounts);
     } else if (loginType === 'magic') {
       await magic.auth.loginWithMagicLink({ email: 'rksethuram9@gmail.com' });
-      const provider = new providers.Web3Provider(magic.rpcProvider as any);
+      const provider = new providers.Web3Provider(loginProvider as any);
       const accounts = await provider.send('eth_requestAccounts', []);
       console.log('accounts: ', accounts);
     }
