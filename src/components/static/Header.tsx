@@ -1,23 +1,15 @@
 import React, { FC } from 'react';
-import {
-  ModalHeader,
-  IconButton,
-  Spinner,
-  Stack,
-  Text,
-  Box,
-} from '@chakra-ui/react';
-import { MoreVertical, X } from 'react-feather';
-import { ArrowBackIcon, WarningTwoIcon } from '@chakra-ui/icons';
+import { ModalHeader, Spinner, Stack, Text, Box } from '@chakra-ui/react';
+import { WarningTwoIcon } from '@chakra-ui/icons';
 import { success } from '../../constants';
 interface HeaderProps {
   title: string;
   onClose?: () => void;
+  options?: () => void;
+  handleBack?: () => void;
   subTitle?: React.ReactNode;
   warningIcon?: boolean;
   successIcon?: boolean;
-  backButton?: boolean;
-  moreButton?: boolean;
   spinner?: boolean;
 }
 
@@ -27,10 +19,10 @@ const Header: FC<HeaderProps> = props => {
     subTitle,
     warningIcon,
     successIcon,
-    backButton,
-    moreButton,
     spinner,
     onClose,
+    options,
+    handleBack,
   } = props;
   return (
     <>
@@ -58,32 +50,9 @@ const Header: FC<HeaderProps> = props => {
               {title}
             </Text>
           </Stack>
-          {backButton && (
-            <IconButton
-              aria-label="back"
-              border="none"
-              bg="transparent"
-              icon={<ArrowBackIcon boxSize={6} />}
-            />
-          )}
-          {moreButton && (
-            <IconButton
-              aria-label="back"
-              border="none"
-              bg="transparent"
-              icon={<MoreVertical />}
-            />
-          )}
-
-          {onClose && (
-            <IconButton
-              aria-label="back"
-              border="none"
-              bg="transparent"
-              onClick={onClose}
-              icon={<X />}
-            />
-          )}
+          {handleBack && handleBack()}
+          {options && options()}
+          {onClose && onClose()}
         </Box>
         {subTitle && <Box>{subTitle}</Box>}
       </ModalHeader>
