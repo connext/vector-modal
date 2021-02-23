@@ -10,17 +10,13 @@ import {
   Link,
 } from '@chakra-ui/react';
 import { Header, Footer, NetworkBar } from '../static';
-import {
-  styleModalContent,
-  lightGraphic,
-  CHAIN_DETAIL,
-} from '../../constants';
+import { styleModalContent, lightGraphic, CHAIN_DETAIL } from '../../constants';
 import { getExplorerLinkForTx } from '../../utils';
 
 export interface SuccessProps {
   amount: string;
   transactionId: string;
-  senderChainInfo: CHAIN_DETAIL;
+  senderChainInfo?: CHAIN_DETAIL;
   receiverChainInfo: CHAIN_DETAIL;
   receiverAddress: string;
   onClose: () => void;
@@ -97,11 +93,13 @@ const Success: FC<SuccessProps> = props => {
               </Stack>
             </Box>
 
-            <NetworkBar
-              senderChainInfo={senderChainInfo}
-              receiverChainInfo={receiverChainInfo}
-              receiverAddress={receiverAddress}
-            />
+            {senderChainInfo && receiverChainInfo && (
+              <NetworkBar
+                senderChainInfo={senderChainInfo}
+                receiverChainInfo={receiverChainInfo}
+                receiverAddress={receiverAddress}
+              />
+            )}
           </Stack>
         </ModalBody>
         <Footer />
