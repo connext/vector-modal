@@ -108,7 +108,7 @@ export const getChain = async (
   if (!chainId) {
     try {
       chainId = await getChainId(chainProvider);
-      console.log('sender chain:', chainId);
+      console.log('chain:', chainId);
     } catch (e) {
       throw new Error(
         `Error getting chain Id from provider ${chainProvider}: ${e}`
