@@ -71,6 +71,7 @@ export type ConnextModalProps = {
   }) => any;
   transferAmount?: string;
   injectedProvider?: any;
+  loginProvider?: any;
   onDepositTxCreated?: (txHash: string) => void;
   onWithdrawalTxCreated?: (txHash: string) => void;
 };
@@ -89,6 +90,7 @@ const ConnextModal: FC<ConnextModalProps> = ({
   onReady,
   transferAmount: _transferAmount,
   injectedProvider: _injectedProvider,
+  loginProvider: _loginProvider,
   onDepositTxCreated,
   onWithdrawalTxCreated,
 }) => {
@@ -99,7 +101,15 @@ const ConnextModal: FC<ConnextModalProps> = ({
     | providers.Web3Provider = !!_injectedProvider
     ? new providers.Web3Provider(_injectedProvider)
     : undefined;
+  const loginProvider: undefined | providers.Web3Provider = !!_loginProvider
+    ? new providers.Web3Provider(_loginProvider)
+    : undefined;
+  const classes = useStyles();
+  const [transferAmountWei, setTransferAmountWei] = useState<
+    string | undefined
+  >(_transferAmount);
 
+  const initialTransferAmmount = _transferAmount;
   const [transferAmountUi, setTransferAmountUi] = useState<string | undefined>(
     _transferAmount
   );
@@ -167,6 +177,17 @@ const ConnextModal: FC<ConnextModalProps> = ({
   const [message, setMessage] = useState<string>();
   const [isLoad, setIsLoad] = useState<Boolean>(false);
   const [showTimer, setShowTimer] = useState<Boolean>(false);
+
+  // setErrorState(ERROR_STATES.RETRY);
+  //     if (pErrorState) {
+  //       setErrorState(pErrorState);
+  //     }
+  //     setError(e);
+  //     setIsError(true);
+  //     setTransferState(TRANSFER_STATES.ERROR);
+  //     setIniting(false);
+  //     setPreImage(undefined);
+  //   };
 
   const cancelTransfer = async (
     depositChannelAddress: string,
