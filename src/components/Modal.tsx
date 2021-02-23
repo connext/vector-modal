@@ -5,7 +5,9 @@ import {
   Modal,
   ModalOverlay,
   useDisclosure,
+  IconButton,
 } from '@chakra-ui/react';
+import { ArrowBackIcon, CloseIcon } from '@chakra-ui/icons';
 import {
   EngineEvents,
   ERC20Abi,
@@ -19,7 +21,6 @@ import {
   SCREEN_STATES,
   CHAIN_DETAIL,
   ScreenStates,
-  ErrorStates,
 } from '../constants';
 import {
   getTotalDepositsBob,
@@ -43,14 +44,13 @@ import {
   Email,
   Login,
   Loading,
-  Menu,
   Swap,
   SwapListener,
   Status,
   ErrorScreen,
   Success,
 } from './pages';
-import { Fonts } from './static';
+import { Fonts, Options } from './static';
 
 export { useDisclosure };
 
@@ -159,27 +159,14 @@ const ConnextModal: FC<ConnextModalProps> = ({
     SCREEN_STATES.LOADING
   );
 
+  const [lastScreenState, setLastScreenState] = useState<
+    ScreenStates | undefined
+  >();
+
   const [title, setTitle] = useState<string>();
   const [message, setMessage] = useState<string>();
   const [isLoad, setIsLoad] = useState<Boolean>(false);
   const [showTimer, setShowTimer] = useState<Boolean>(false);
-
-  const handleError = (
-    state: ErrorStates,
-    e: Error | undefined,
-    message?: string
-  ) => {
-    console.log(message);
-    setError(e);
-    setPreImage(undefined);
-    setScreenState(state);
-  };
-
-  const handleStatus = (title: string, message: string) => {
-    setTitle(title);
-    setMessage(message);
-    setScreenState(SCREEN_STATES.STATUS);
-  };
 
   const cancelTransfer = async (
     depositChannelAddress: string,
@@ -190,10 +177,10 @@ const ConnextModal: FC<ConnextModalProps> = ({
     _node: BrowserNode
   ) => {
     // show a better screen here, loading UI
-    handleError(
-      ERROR_STATES.ERROR_TRANSFER,
-      new Error('Cancelling transfer...')
-    );
+    handleScreen({
+      state: ERROR_STATES.ERROR_TRANSFER,
+      error: new Error('Cancelling transfer...'),
+    });
 
     const senderResolution = _evts.CONDITIONAL_TRANSFER_RESOLVED.pipe(
       data =>
@@ -209,25 +196,25 @@ const ConnextModal: FC<ConnextModalProps> = ({
     try {
       await cancelToAssetTransfer(_node, withdrawChannelAddress, transferId);
     } catch (e) {
-      handleError(
-        ERROR_STATES.ERROR_TRANSFER,
-        e,
-        'Error in cancelToAssetTransfer'
-      );
+      handleScreen({
+        state: ERROR_STATES.ERROR_TRANSFER,
+        error: e,
+        message: 'Error in cancelToAssetTransfer',
+      });
     }
 
     try {
       await Promise.all([senderResolution, receiverResolution]);
-      handleError(
-        ERROR_STATES.ERROR_TRANSFER,
-        new Error('Transfer was cancelled')
-      );
+      handleScreen({
+        state: ERROR_STATES.ERROR_TRANSFER,
+        error: new Error('Transfer was cancelled'),
+      });
     } catch (e) {
-      handleError(
-        ERROR_STATES.ERROR_TRANSFER,
-        e,
-        'Error waiting for sender and receiver cancellations'
-      );
+      handleScreen({
+        state: ERROR_STATES.ERROR_TRANSFER,
+        error: e,
+        message: 'Error waiting for sender and receiver cancellations',
+      });
     }
   };
 
@@ -244,10 +231,11 @@ const ConnextModal: FC<ConnextModalProps> = ({
     const crossChainTransferId = getRandomBytes32();
     setActiveCrossChainTransferId(crossChainTransferId);
 
-    handleStatus(
-      'deposit detected',
-      'Detected balance on chain, transferring into state channel'
-    );
+    handleScreen({
+      state: SCREEN_STATES.STATUS,
+      title: 'deposit detected',
+      message: 'Detected balance on chain, transferring into state channel',
+    });
     setAmount(transferAmount);
 
     try {
@@ -267,15 +255,22 @@ const ConnextModal: FC<ConnextModalProps> = ({
         );
       }
     } catch (e) {
-      handleError(ERROR_STATES.ERROR_TRANSFER, e, 'Error in reconcileDeposit');
+      handleScreen({
+        state: ERROR_STATES.ERROR_TRANSFER,
+        error: e,
+        message: 'Error in reconcileDeposit',
+      });
+
       return;
     }
     // call createFromAssetTransfer
 
-    handleStatus(
-      'transferring',
-      'Transferring funds between chains. This step can take some time if the chain is congested'
-    );
+    handleScreen({
+      state: SCREEN_STATES.STATUS,
+      title: 'transferring',
+      message:
+        'Transferring funds between chains. This step can take some time if the chain is congested',
+    });
 
     const preImage = getRandomBytes32();
     try {
@@ -294,11 +289,12 @@ const ConnextModal: FC<ConnextModalProps> = ({
       );
       console.log('createFromAssetTransfer transferDeets: ', transferDeets);
     } catch (e) {
-      handleError(
-        ERROR_STATES.ERROR_TRANSFER,
-        e,
-        'Error in createFromAssetTransfer: '
-      );
+      handleScreen({
+        state: ERROR_STATES.ERROR_TRANSFER,
+        error: e,
+        message: 'Error in createFromAssetTransfer:',
+      });
+
       return;
     }
     setPreImage(preImage);
@@ -341,19 +337,20 @@ const ConnextModal: FC<ConnextModalProps> = ({
         )[0] === constants.HashZero
       ) {
         console.error('Transfer was cancelled');
-        handleError(
-          ERROR_STATES.ERROR_TRANSFER,
-          new Error('Transfer was cancelled'),
-          undefined
-        );
+        handleScreen({
+          state: ERROR_STATES.ERROR_TRANSFER,
+          error: new Error('Transfer was cancelled'),
+        });
         return;
       }
     } catch (e) {
-      handleError(
-        ERROR_STATES.ERROR_TRANSFER,
-        e,
-        'Did not receive transfer after 500 seconds, please try again later or attempt recovery'
-      );
+      handleScreen({
+        state: ERROR_STATES.ERROR_TRANSFER,
+        error: e,
+        message:
+          'Did not receive transfer after 500 seconds, please try again later or attempt recovery',
+      });
+
       return;
     }
 
@@ -375,11 +372,12 @@ const ConnextModal: FC<ConnextModalProps> = ({
         routerPublicIdentifier
       );
     } catch (e) {
-      handleError(
-        ERROR_STATES.ERROR_TRANSFER,
-        e,
-        'Error in resolveToAssetTransfer: '
-      );
+      handleScreen({
+        state: ERROR_STATES.ERROR_TRANSFER,
+        error: e,
+        message: 'Error in resolveToAssetTransfer:',
+      });
+
       return;
     }
     setPreImage(undefined);
@@ -461,10 +459,10 @@ const ConnextModal: FC<ConnextModalProps> = ({
       !_evts
     ) {
       // TODO: handle this better
-      handleError(
-        ERROR_STATES.ERROR_TRANSFER,
-        new Error('Missing input fields')
-      );
+      handleScreen({
+        state: ERROR_STATES.ERROR_TRANSFER,
+        error: new Error('Missing input fields'),
+      });
       return;
     }
 
@@ -523,11 +521,11 @@ const ConnextModal: FC<ConnextModalProps> = ({
         ) {
           return;
         }
-        handleError(
-          ERROR_STATES.ERROR_TRANSFER,
-          e,
-          'Error in injected provider deposit: '
-        );
+        handleScreen({
+          state: ERROR_STATES.ERROR_TRANSFER,
+          error: e,
+          message: 'Error in injected provider deposit: ',
+        });
         return;
       }
       setIsLoad(false);
@@ -550,10 +548,12 @@ const ConnextModal: FC<ConnextModalProps> = ({
     _node: BrowserNode,
     _onWithdrawalTxCreated?: (txHash: string) => void
   ) => {
-    handleStatus(
-      'withdrawing',
-      'withdrawing funds. This step can take some time if the chain is congested'
-    );
+    handleScreen({
+      state: SCREEN_STATES.STATUS,
+      title: 'withdrawing',
+      message:
+        'withdrawing funds. This step can take some time if the chain is congested',
+    });
 
     // now go to withdrawal screen
     let result;
@@ -566,11 +566,11 @@ const ConnextModal: FC<ConnextModalProps> = ({
         routerPublicIdentifier
       );
     } catch (e) {
-      handleError(
-        ERROR_STATES.ERROR_TRANSFER,
-        e,
-        'Error in crossChainTransfer'
-      );
+      handleScreen({
+        state: ERROR_STATES.ERROR_TRANSFER,
+        error: e,
+        message: 'Error in crossChainTransfer',
+      });
       return;
     }
     // display tx hash through explorer -> handles by the event.
@@ -580,7 +580,7 @@ const ConnextModal: FC<ConnextModalProps> = ({
       _onWithdrawalTxCreated(result.withdrawalTx);
     }
 
-    setScreenState(SCREEN_STATES.SUCCESS);
+    handleScreen({ state: SCREEN_STATES.SUCCESS });
 
     // check tx receipt for withdrawal tx
     _withdrawRpcProvider
@@ -590,11 +590,10 @@ const ConnextModal: FC<ConnextModalProps> = ({
           // tx reverted
           // TODO: go to contact screen
           console.error('Transaction reverted onchain', receipt);
-          handleError(
-            ERROR_STATES.ERROR_TRANSFER,
-            new Error('Withdrawal transaction reverted'),
-            undefined
-          );
+          handleScreen({
+            state: ERROR_STATES.ERROR_TRANSFER,
+            error: new Error('Withdrawal transaction reverted'),
+          });
           return;
         }
       });
@@ -609,7 +608,7 @@ const ConnextModal: FC<ConnextModalProps> = ({
     _evts: EvtContainer,
     _node: BrowserNode
   ) => {
-    setScreenState(SCREEN_STATES.LISTENER);
+    handleScreen({ state: SCREEN_STATES.LISTENER });
     setShowTimer(true);
     let initialDeposits: BigNumber;
     try {
@@ -619,11 +618,12 @@ const ConnextModal: FC<ConnextModalProps> = ({
         _depositRpcProvider
       );
     } catch (e) {
-      handleError(
-        ERROR_STATES.ERROR_TRANSFER,
-        e,
-        'Error getting total deposits'
-      );
+      handleScreen({
+        state: ERROR_STATES.ERROR_TRANSFER,
+        error: e,
+        message: 'Error getting total deposits',
+      });
+
       return;
     }
     console.log(
@@ -671,7 +671,7 @@ const ConnextModal: FC<ConnextModalProps> = ({
   };
 
   const stateReset = () => {
-    setScreenState(SCREEN_STATES.LOADING);
+    handleScreen({ state: SCREEN_STATES.LOADING });
     setIsLoad(false);
     setTransferAmountUi(_transferAmount);
     setUserBalance(undefined);
@@ -700,7 +700,12 @@ const ConnextModal: FC<ConnextModalProps> = ({
     } catch (e) {
       const message = 'Failed to fetch sender chain info';
       console.log(e, message);
-      handleError(ERROR_STATES.ERROR_SETUP, e, message);
+      handleScreen({
+        state: ERROR_STATES.ERROR_SETUP,
+        error: e,
+        message: message,
+      });
+
       return;
     }
 
@@ -715,7 +720,11 @@ const ConnextModal: FC<ConnextModalProps> = ({
     } catch (e) {
       const message = 'Failed to fetch receiver chain info';
       console.log(e, message);
-      handleError(ERROR_STATES.ERROR_SETUP, e, message);
+      handleScreen({
+        state: ERROR_STATES.ERROR_SETUP,
+        error: e,
+        message: message,
+      });
       return;
     }
 
@@ -730,7 +739,11 @@ const ConnextModal: FC<ConnextModalProps> = ({
       } catch (e) {
         const message = 'Failed to get chainId from wallet provider';
         console.log(e, message);
-        handleError(ERROR_STATES.ERROR_SETUP, e, message);
+        handleScreen({
+          state: ERROR_STATES.ERROR_SETUP,
+          error: e,
+          message: message,
+        });
         return;
       }
     }
@@ -761,7 +774,11 @@ const ConnextModal: FC<ConnextModalProps> = ({
       }
       const message = 'Error initalizing Browser Node';
       console.log(e, message);
-      handleError(ERROR_STATES.ERROR_SETUP, e, message);
+      handleScreen({
+        state: ERROR_STATES.ERROR_SETUP,
+        error: e,
+        message: message,
+      });
       return;
     }
 
@@ -782,7 +799,11 @@ const ConnextModal: FC<ConnextModalProps> = ({
     } catch (e) {
       const message = 'Could not get sender channel';
       console.log(e, message);
-      handleError(ERROR_STATES.ERROR_SETUP, e, message);
+      handleScreen({
+        state: ERROR_STATES.ERROR_SETUP,
+        error: e,
+        message: message,
+      });
       return;
     }
     const _depositAddress = depositChannel!.channelAddress;
@@ -800,7 +821,11 @@ const ConnextModal: FC<ConnextModalProps> = ({
     } catch (e) {
       const message = 'Could not get receiver channel';
       console.log(e, message);
-      handleError(ERROR_STATES.ERROR_SETUP, e, message);
+      handleScreen({
+        state: ERROR_STATES.ERROR_SETUP,
+        error: e,
+        message: message,
+      });
       return;
     }
 
@@ -826,7 +851,11 @@ const ConnextModal: FC<ConnextModalProps> = ({
     } catch (e) {
       const message = 'Error in verifyRouterSupports';
       console.log(e, message);
-      handleError(ERROR_STATES.ERROR_SETUP, e, message);
+      handleScreen({
+        state: ERROR_STATES.ERROR_SETUP,
+        error: e,
+        message: message,
+      });
       return;
     }
 
@@ -844,7 +873,11 @@ const ConnextModal: FC<ConnextModalProps> = ({
     } catch (e) {
       const message = 'Error in cancelHangingToTransfers';
       console.log(e, message);
-      handleError(ERROR_STATES.ERROR_SETUP, e, message);
+      handleScreen({
+        state: ERROR_STATES.ERROR_SETUP,
+        error: e,
+        message: message,
+      });
       return;
     }
 
@@ -904,7 +937,11 @@ const ConnextModal: FC<ConnextModalProps> = ({
     } catch (e) {
       const message = 'Error in waitForSenderCancels';
       console.log(e, message);
-      handleError(ERROR_STATES.ERROR_SETUP, e, message);
+      handleScreen({
+        state: ERROR_STATES.ERROR_SETUP,
+        error: e,
+        message: message,
+      });
       return;
     }
 
@@ -917,7 +954,11 @@ const ConnextModal: FC<ConnextModalProps> = ({
     } catch (e) {
       const message = 'Error in reconcileDeposit';
       console.log(e, message);
-      handleError(ERROR_STATES.ERROR_SETUP, e, message);
+      handleScreen({
+        state: ERROR_STATES.ERROR_SETUP,
+        error: e,
+        message: message,
+      });
       return;
     }
 
@@ -931,7 +972,11 @@ const ConnextModal: FC<ConnextModalProps> = ({
     } catch (e) {
       const message = 'Could not get sender channel';
       console.log(e, message);
-      handleError(ERROR_STATES.ERROR_SETUP, e, message);
+      handleScreen({
+        state: ERROR_STATES.ERROR_SETUP,
+        error: e,
+        message: message,
+      });
       return;
     }
 
@@ -996,7 +1041,7 @@ const ConnextModal: FC<ConnextModalProps> = ({
         );
         setUserBalance(_userBalance);
       }
-      setScreenState(SCREEN_STATES.SWAP);
+      handleScreen({ state: SCREEN_STATES.SWAP });
     }
   };
 
@@ -1006,7 +1051,6 @@ const ConnextModal: FC<ConnextModalProps> = ({
     }
 
     stateReset();
-    setScreenState(SCREEN_STATES.LOADING);
     setup();
   };
 
@@ -1014,16 +1058,104 @@ const ConnextModal: FC<ConnextModalProps> = ({
     init();
   }, [showModal]);
 
+  const handleOptions = () => {
+    return <Options state={screenState} onClose={handleClose} />;
+  };
+
+  const handleBack = () => {
+    return (
+      <IconButton
+        aria-label="back"
+        border="none"
+        bg="transparent"
+        isDisabled={
+          [
+            SCREEN_STATES.LOADING,
+            SCREEN_STATES.STATUS,
+            SCREEN_STATES.ERROR_SETUP,
+            SCREEN_STATES.ERROR_TRANSFER,
+          ].includes(lastScreenState as any)
+            ? true
+            : false
+        }
+        onClick={handleBack}
+        icon={<ArrowBackIcon boxSize={6} />}
+      />
+    );
+  };
+
+  const handleCloseButton = () => {
+    return (
+      <IconButton
+        aria-label="back"
+        border="none"
+        bg="transparent"
+        isDisabled={
+          [SCREEN_STATES.LOADING, SCREEN_STATES.STATUS].includes(
+            screenState as any
+          )
+            ? true
+            : false
+        }
+        onClick={onClose}
+        icon={<CloseIcon />}
+      />
+    );
+  };
+
+  const handleScreen = (params: {
+    state: ScreenStates;
+    error?: Error | undefined;
+    title?: string;
+    message?: string;
+  }) => {
+    const { state, error, title, message } = params;
+    switch (state) {
+      case SCREEN_STATES.LOGIN:
+        break;
+      case SCREEN_STATES.SUCCESS:
+        break;
+
+      case SCREEN_STATES.EMAIL:
+        break;
+
+      case SCREEN_STATES.LOADING:
+        setMessage('Setting up channels...');
+        break;
+
+      case SCREEN_STATES.SWAP:
+        break;
+
+      case SCREEN_STATES.LISTENER:
+        break;
+
+      case SCREEN_STATES.STATUS:
+        setTitle(title);
+        setMessage(message);
+        break;
+
+      case SCREEN_STATES.ERROR_SETUP:
+      case SCREEN_STATES.ERROR_TRANSFER:
+        console.log(message);
+        setError(error);
+        setPreImage(undefined);
+        break;
+    }
+    setLastScreenState(screenState);
+    setScreenState(state);
+    return;
+  };
+
   const activeScreen = (state: ScreenStates) => {
     switch (state) {
       case SCREEN_STATES.LOGIN:
-        return <Login onClose={handleClose} />;
+        return <Login onClose={handleCloseButton} />;
 
       case SCREEN_STATES.EMAIL:
-        return <Email />;
+        return <Email handleBack={handleBack} />;
 
       case SCREEN_STATES.LOADING:
-        return <Loading message="Setting up channels..." />;
+        return <Loading message={message!} />;
 
       case SCREEN_STATES.STATUS:
         return (
@@ -1033,11 +1165,9 @@ const ConnextModal: FC<ConnextModalProps> = ({
             senderChainInfo={senderChain!}
             receiverChainInfo={receiverChain!}
             receiverAddress={withdrawalAddress}
+            options={handleOptions}
           />
         );
-
-      case SCREEN_STATES.MENU:
-        return <Menu />;
 
       case SCREEN_STATES.SWAP:
         return (
@@ -1051,6 +1181,8 @@ const ConnextModal: FC<ConnextModalProps> = ({
             receiverChainInfo={receiverChain!}
             receiverAddress={withdrawalAddress}
             transferAmount={transferAmountUi}
+            options={handleOptions}
+            handleBack={handleBack}
           />
         );
 
@@ -1062,6 +1194,8 @@ const ConnextModal: FC<ConnextModalProps> = ({
             senderChainInfo={senderChain!}
             receiverChainInfo={receiverChain!}
             receiverAddress={withdrawalAddress}
+            options={handleOptions}
+            handleBack={handleBack}
           />
         );
 
@@ -1073,7 +1207,8 @@ const ConnextModal: FC<ConnextModalProps> = ({
             senderChainInfo={senderChain!}
             receiverChainInfo={receiverChain!}
             receiverAddress={withdrawalAddress}
-            onClose={handleClose}
+            onClose={handleCloseButton}
+            options={handleOptions}
           />
         );
 
@@ -1088,6 +1223,8 @@ const ConnextModal: FC<ConnextModalProps> = ({
             senderChainInfo={senderChain!}
             receiverChainInfo={receiverChain!}
             receiverAddress={withdrawalAddress}
+            options={handleOptions}
+            handleBack={handleBack}
           />
         );
     }
