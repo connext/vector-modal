@@ -17,9 +17,11 @@ import { styleModalContent, placeholder } from '../../constants';
 import { EmailIcon, CheckIcon } from '@chakra-ui/icons';
 import { Header, Footer } from '../static';
 
-interface EmailProps {}
+interface EmailProps {
+  handleBack: () => void;
+}
 const Email: FC<EmailProps> = props => {
-  // const { onClose } = props;
+  const { handleBack } = props;
   const formik = useFormik({
     initialValues: { email: '' },
     onSubmit: values => {
@@ -44,7 +46,7 @@ const Email: FC<EmailProps> = props => {
               Or visit gmail.com to learn more about email.
             </Text>
           }
-          backButton={true}
+          handleBack={handleBack}
         />
 
         <ModalBody>

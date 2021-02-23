@@ -15,6 +15,8 @@ import { styleModalContent, graphic, CHAIN_DETAIL } from '../../constants';
 export interface TransferProps {
   onUserInput: (input: string) => void;
   swapRequest: () => void;
+  options: () => void;
+  handleBack: () => void;
   isLoad: Boolean;
   senderChainInfo: CHAIN_DETAIL;
   receiverChainInfo: CHAIN_DETAIL;
@@ -41,6 +43,8 @@ const Swap: FC<TransferProps> = props => {
     isLoad,
     onUserInput,
     swapRequest,
+    options,
+    handleBack,
   } = props;
 
   const enforcer = (nextUserInput: string) => {
@@ -70,7 +74,7 @@ const Swap: FC<TransferProps> = props => {
           backgroundImage: `url(${graphic})`,
         }}
       >
-        <Header title="Send Amount" backButton={true} moreButton={true} />
+        <Header title="Send Amount" handleBack={handleBack} options={options} />
         <ModalBody>
           <Stack direction="column" spacing={7}>
             <Stack direction="column" spacing={5}>

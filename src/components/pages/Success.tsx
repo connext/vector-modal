@@ -10,7 +10,11 @@ import {
   Link,
 } from '@chakra-ui/react';
 import { Header, Footer, NetworkBar } from '../static';
-import { styleModalContent, lightGraphic, CHAIN_DETAIL } from '../../constants';
+import {
+  styleModalContent,
+  lightGraphic,
+  CHAIN_DETAIL,
+} from '../../constants';
 import { getExplorerLinkForTx } from '../../utils';
 
 export interface SuccessProps {
@@ -20,6 +24,7 @@ export interface SuccessProps {
   receiverChainInfo: CHAIN_DETAIL;
   receiverAddress: string;
   onClose: () => void;
+  options: () => void;
 }
 
 const Success: FC<SuccessProps> = props => {
@@ -30,6 +35,7 @@ const Success: FC<SuccessProps> = props => {
     receiverChainInfo,
     receiverAddress,
     onClose,
+    options,
   } = props;
   return (
     <>
@@ -44,7 +50,7 @@ const Success: FC<SuccessProps> = props => {
         <Header
           title="Success"
           successIcon={true}
-          moreButton={true}
+          options={options}
           onClose={onClose}
         />
         <ModalBody>

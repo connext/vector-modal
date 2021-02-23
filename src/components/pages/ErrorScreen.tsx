@@ -12,19 +12,21 @@ import {
   styleModalContent,
   graphic,
   CHAIN_DETAIL,
-  ErrorStates,
   ERROR_STATES,
+  ErrorStates,
 } from '../../constants';
 import { constants } from 'ethers';
 
 export interface ErrorProps {
   error: Error;
   retry: () => void;
+  options: () => void;
+  handleBack: () => void;
   crossChainTransferId: string;
-  state: ErrorStates;
   senderChainInfo: CHAIN_DETAIL;
   receiverChainInfo: CHAIN_DETAIL;
   receiverAddress: string;
+  state: ErrorStates;
 }
 
 const Error: FC<ErrorProps> = props => {
@@ -32,6 +34,8 @@ const Error: FC<ErrorProps> = props => {
     error,
     crossChainTransferId,
     retry,
+    options,
+    handleBack,
     state,
     senderChainInfo,
     receiverChainInfo,
@@ -49,8 +53,8 @@ const Error: FC<ErrorProps> = props => {
         <Header
           title="Setup error"
           warningIcon={true}
-          backButton={true}
-          moreButton={true}
+          handleBack={handleBack}
+          options={options}
         />
 
         <ModalBody>

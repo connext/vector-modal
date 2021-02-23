@@ -19,6 +19,8 @@ import QRCode from 'qrcode.react';
 
 interface SwapListenerProps {
   showTimer: Boolean;
+  options: () => void;
+  handleBack: () => void;
   senderChannelAddress: string;
   senderChainInfo: CHAIN_DETAIL;
   receiverChainInfo: CHAIN_DETAIL;
@@ -32,6 +34,8 @@ const SwapListener: FC<SwapListenerProps> = props => {
     senderChainInfo,
     receiverChainInfo,
     receiverAddress,
+    options,
+    handleBack,
   } = props;
   const [copiedAddress, setCopiedAddress] = useState<boolean>(false);
   const [running, setRunning] = useState<Boolean>(false);
@@ -96,8 +100,8 @@ const SwapListener: FC<SwapListenerProps> = props => {
       >
         <Header
           title="Ready for transfer"
-          backButton={true}
-          moreButton={true}
+          handleBack={handleBack}
+          options={options}
         />
         <ModalBody>
           <Stack direction="column" spacing={5}>

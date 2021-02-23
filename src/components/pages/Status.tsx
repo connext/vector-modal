@@ -9,6 +9,7 @@ export interface StatusProps {
   senderChainInfo: CHAIN_DETAIL;
   receiverChainInfo: CHAIN_DETAIL;
   receiverAddress: string;
+  options: () => void;
 }
 
 const Status: FC<StatusProps> = props => {
@@ -18,6 +19,7 @@ const Status: FC<StatusProps> = props => {
     senderChainInfo,
     receiverChainInfo,
     receiverAddress,
+    options,
   } = props;
   return (
     <>
@@ -29,7 +31,7 @@ const Status: FC<StatusProps> = props => {
           backgroundPosition: 'right top',
         }}
       >
-        <Header title={title} spinner={true} moreButton={true} />
+        <Header title={title} spinner={true} options={options} />
         <ModalBody>
           <Stack direction="column" spacing={7}>
             <Stack direction="column" spacing={2}>
