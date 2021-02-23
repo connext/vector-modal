@@ -1,9 +1,4 @@
-import {
-  BrowserNode,
-  EIP712Domain,
-  EIP712Types,
-  EIP712Value,
-} from '@connext/vector-browser-node';
+import { BrowserNode, NonEIP712Message } from '@connext/vector-browser-node';
 import { ChannelMastercopy } from '@connext/vector-contracts';
 import {
   ConditionalTransferCreatedPayload,
@@ -47,19 +42,21 @@ export const connectNode = async (
   });
 
   let error: any | undefined = undefined;
-  let sig: string | undefined;
+  let signature: string | undefined;
   let signer: providers.JsonRpcSigner | undefined;
   let signerAddress: string | undefined;
 
+  console.log('loginProvider: ', loginProvider);
   if (!!loginProvider) {
+    console.log('Using login provider to log in');
     signer = loginProvider.getSigner();
+    console.log('signer: ', signer);
     signerAddress = await signer.getAddress();
-    sig = await loginProvider
-      .getSigner()
-      ._signTypedData(EIP712Domain, EIP712Types, EIP712Value);
+    console.log('Login provider signerAddress: ', signerAddress);
+    signature = await loginProvider.getSigner().signMessage(NonEIP712Message);
   }
   try {
-    await browserNode.init({ sig, signer: signerAddress });
+    await browserNode.init({ signature, signer: signerAddress });
   } catch (e) {
     console.error('Error initializing Browser Node:', jsonifyError(e));
     error = e;

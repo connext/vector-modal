@@ -3,63 +3,81 @@ import 'regenerator-runtime/runtime';
 import * as React from 'react';
 import * as ReactDOM from 'react-dom';
 import { Magic } from 'magic-sdk';
-import { constants, ethers } from 'ethers';
+import { providers } from 'ethers';
 
 // Test key defaults to "rinkeby", live key defaults to "mainnet"
 
 import { ConnextModal } from '../';
 
-const method = 'eth_signTypedData_v4';
+type LoginType = 'none' | 'metamask' | 'magic';
+
+const magic = new Magic('pk_test_D646A81EA4676AB2', {
+  network: 'rinkeby', // Supports "rinkeby", "ropsten", "kovan"
+});
 
 function App() {
   const [showModal, setShowModal] = React.useState(false);
+  const [loginProvider, _setLoginProvider] = React.useState<
+    providers.Web3Provider
+  >();
+  const [loginType, setLoginType] = React.useState<LoginType>('none');
 
-  const loginWithMagicLink = async () => {
-    const magic = new Magic('pk_test_D646A81EA4676AB2', {
-      network: 'rinkeby', // Supports "rinkeby", "ropsten", "kovan"
-    });
-    const provider = new ethers.providers.Web3Provider(
-      magic.rpcProvider as any
-    );
-    await magic.auth.loginWithMagicLink({ email: 'rksethuram9@gmail.com' });
-    const signer = provider.getSigner();
-
-    const fromAddress = await signer.getAddress();
-    console.log('fromAddress: ', fromAddress);
-    const params = [fromAddress, originalMessage];
-
-    const signedMessage = await signer.provider.send(method, params);
-    console.log('signedMessage: ', signedMessage);
+  const setLoginProvider = async (loginType: LoginType) => {
+    let provider: providers.Web3Provider | undefined;
+    if (loginType === 'metamask') {
+      if (!(window as any).ethereum) {
+        throw new Error('Web3 not available');
+      }
+      await (window as any).ethereum.enable();
+      provider = new providers.Web3Provider((window as any).ethereum);
+      console.log('provider: ', provider);
+    } else if (loginType === 'magic') {
+      provider = new providers.Web3Provider(magic.rpcProvider as any);
+    }
+    _setLoginProvider(provider);
   };
 
-  const loginWithMetamask = async () => {
-    if ((window as any).ethereum) {
-      await (window as any).ethereum.enable;
+  const handleLoginProvider = async () => {
+    if (loginType === 'metamask') {
+      const accounts = await loginProvider!.send('eth_requestAccounts', []);
+      console.log('accounts: ', accounts);
+    } else if (loginType === 'magic') {
+      await magic.auth.loginWithMagicLink({ email: 'rksethuram9@gmail.com' });
     }
-
-    const provider = new ethers.providers.Web3Provider(
-      (window as any).ethereum
-    );
-    const signer = provider.getSigner();
-
-    const fromAddress = await signer.getAddress();
-    console.log('fromAddress: ', fromAddress);
-    const params = [fromAddress, JSON.stringify(originalMessage)];
-
-    const signedMessage = await signer.provider.send(method, params);
-    console.log('signedMessage: ', signedMessage);
   };
 
   return (
     <>
-      <button onClick={loginWithMagicLink}>Login with Magic Link</button>
-      <button onClick={loginWithMetamask}>Login with Metamask</button>
-      <button onClick={() => setShowModal(true)}>Show Modal</button>
+      <div
+        onChange={async event => {
+          console.log('event: ', event.target);
+          setLoginType((event.target as any).value);
+          await setLoginProvider((event.target as any).value);
+        }}
+      >
+        <input type="radio" value="metamask" name="loginType" /> Metamask
+        <input type="radio" value="magic" name="loginType" /> Magic
+        <input type="radio" value="none" name="loginType" defaultChecked /> None
+      </div>
+      <button
+        onClick={async () => {
+          try {
+            await handleLoginProvider();
+          } catch (e) {
+            console.error('Error logging in: ', e);
+            return;
+          }
+          setShowModal(true);
+        }}
+      >
+        Show Modal
+      </button>
       <ConnextModal
         showModal={showModal}
         onClose={() => setShowModal(false)}
         onReady={params => console.log('MODAL IS READY =======>', params)}
         withdrawalAddress={'0x75e4DD0587663Fce5B2D9aF7fbED3AC54342d3dB'}
+        loginProvider={loginProvider}
         // injectedProvider={(window as any).ethereum}
         // prod config
         routerPublicIdentifier="vector7tbbTxQp8ppEQUgPsbGiTrVdapLdU5dH7zTbVuXRf1M4CEBU9Q"
