@@ -10,7 +10,6 @@ import { providers } from 'ethers';
 import { ConnextModal } from '../';
 
 type LoginType = 'none' | 'metamask' | 'magic';
-
 const magic = new Magic('pk_test_D646A81EA4676AB2', {
   network: 'rinkeby', // Supports "rinkeby", "ropsten", "kovan"
 });
@@ -28,21 +27,23 @@ function App() {
       if (!(window as any).ethereum) {
         throw new Error('Web3 not available');
       }
-      await (window as any).ethereum.enable();
-      provider = new providers.Web3Provider((window as any).ethereum);
-      console.log('provider: ', provider);
+      provider = (window as any).ethereum;
     } else if (loginType === 'magic') {
-      provider = new providers.Web3Provider(magic.rpcProvider as any);
+      provider = magic.rpcProvider as any;
     }
     _setLoginProvider(provider);
   };
 
   const handleLoginProvider = async () => {
     if (loginType === 'metamask') {
-      const accounts = await loginProvider!.send('eth_requestAccounts', []);
+      const provider = new providers.Web3Provider(loginProvider as any);
+      const accounts = await provider.send('eth_requestAccounts', []);
       console.log('accounts: ', accounts);
     } else if (loginType === 'magic') {
       await magic.auth.loginWithMagicLink({ email: 'rksethuram9@gmail.com' });
+      const provider = new providers.Web3Provider(magic.rpcProvider as any);
+      const accounts = await provider.send('eth_requestAccounts', []);
+      console.log('accounts: ', accounts);
     }
   };
 
