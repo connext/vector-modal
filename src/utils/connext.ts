@@ -620,5 +620,14 @@ export const getFeeQuote = async (
 ): Promise<{
   fee: string;
 }> => {
+  console.log(
+    routerIdentifier,
+    amount,
+    assetId,
+    chainId,
+    recipient,
+    recipientChainId,
+    recipientAssetId
+  );
   return { fee: '0' };
 };
