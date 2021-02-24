@@ -1085,8 +1085,7 @@ const ConnextModal: FC<ConnextModalProps> = ({
           [
             SCREEN_STATES.LOADING,
             SCREEN_STATES.STATUS,
-            SCREEN_STATES.ERROR_SETUP,
-            SCREEN_STATES.ERROR_TRANSFER,
+            Object.values(ERROR_STATES),
           ].includes(lastScreenState as any) || !lastScreenState
             ? true
             : false
