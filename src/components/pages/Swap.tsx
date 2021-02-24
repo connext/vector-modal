@@ -11,10 +11,15 @@ import {
 } from '@chakra-ui/react';
 import { Header, Footer, NetworkBar } from '../static';
 import { styleModalContent, graphic, CHAIN_DETAIL } from '../../constants';
-import { BigNumber } from 'ethers';
+import { BigNumber, utils } from 'ethers';
 
 export interface TransferProps {
-  onUserInput: (input: string) => void;
+  onUserInput: (
+    _input: string | undefined
+  ) => Promise<{
+    isError: boolean | undefined;
+    result: string | undefined;
+  }>;
   swapRequest: () => void;
   options: () => void;
   handleBack: () => void;
@@ -23,13 +28,6 @@ export interface TransferProps {
   receiverChainInfo: CHAIN_DETAIL;
   receiverAddress: string;
   transferAmount: string | undefined;
-  getFeeQuote: (
-    amount: string,
-    assetId: string,
-    chainId: number,
-    recipientChainId: number,
-    recipientAssetId: string
-  ) => Promise<any>;
   amountError?: string;
   userBalance?: string;
 }
@@ -53,14 +51,21 @@ const Swap: FC<TransferProps> = props => {
     swapRequest,
     options,
     handleBack,
-    getFeeQuote,
   } = props;
 
-  const [feeQuote, setFeeQuote] = useState<any>();
+  const [feeQuote, setFeeQuote] = useState<string | undefined>('———');
+  const [quoteAmount, setQuoteAmount] = useState<string | undefined>('———');
 
-  const enforcer = (nextUserInput: string) => {
+  const enforcer = async (nextUserInput: string) => {
     if (nextUserInput === '' || inputRegex.test(escapeRegExp(nextUserInput))) {
-      onUserInput(nextUserInput);
+      const res = await onUserInput(nextUserInput);
+      if (res.isError) {
+        setFeeQuote('———');
+        setQuoteAmount('———');
+        return;
+      }
+      setFeeQuote(res.result.quoteFee);
+      setQuoteAmount(res.result.quoteAmount);
     }
   };
 
@@ -74,14 +79,6 @@ const Swap: FC<TransferProps> = props => {
     const effect = async () => {
       if (transferAmount) {
         enforcer(transferAmount);
-        const fee = await getFeeQuote(
-          transferAmount,
-          senderChainInfo.assetId,
-          senderChainInfo.chainId,
-          receiverChainInfo.chainId,
-          receiverChainInfo.assetId
-        );
-        setFeeQuote(fee);
       }
     };
     effect();
@@ -188,7 +185,7 @@ const Swap: FC<TransferProps> = props => {
                     fontFamily="Roboto Mono"
                     color="#666666"
                   >
-                    {feeQuote.fee} {senderChainInfo.assetName}
+                    {feeQuote} {senderChainInfo.assetName}
                   </Text>
                 </Box>
 
@@ -209,10 +206,7 @@ const Swap: FC<TransferProps> = props => {
                     fontFamily="Roboto Mono"
                     fontWeight="700"
                   >
-                    {BigNumber.from(transferAmount)
-                      .sub(feeQuote)
-                      .toString()}{' '}
-                    {senderChainInfo.assetName}
+                    {quoteAmount} {senderChainInfo.assetName}
                   </Text>
                 </Box>
               </Stack>
