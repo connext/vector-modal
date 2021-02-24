@@ -11,7 +11,7 @@ import {
   IconButton,
   Spinner,
 } from '@chakra-ui/react';
-import { Copy, Check } from 'react-feather';
+import { CopyIcon, CheckCircleIcon } from '@chakra-ui/icons';
 import { Header, Footer, NetworkBar } from '../static';
 import { CHAIN_DETAIL, styleModalContent, darkGraphic } from '../../constants';
 // @ts-ignore
@@ -177,7 +177,7 @@ const SwapListener: FC<SwapListenerProps> = props => {
                         setCopiedAddress(true);
                         setTimeout(() => setCopiedAddress(false), 5000);
                       }}
-                      icon={!copiedAddress ? <Copy /> : <Check />}
+                      icon={!copiedAddress ? <CopyIcon /> : <CheckCircleIcon />}
                       // style
                       size="sm"
                       border="none"
