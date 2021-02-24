@@ -11,14 +11,17 @@ import {
 } from '@chakra-ui/react';
 import { Header, Footer, NetworkBar } from '../static';
 import { styleModalContent, graphic, CHAIN_DETAIL } from '../../constants';
-import { BigNumber, utils } from 'ethers';
 
 export interface TransferProps {
   onUserInput: (
     _input: string | undefined
   ) => Promise<{
-    isError: boolean | undefined;
-    result: string | undefined;
+    isError: boolean;
+    result: {
+      quoteFee: string | undefined;
+      quoteAmount: string | undefined;
+      error: string | undefined;
+    };
   }>;
   swapRequest: () => void;
   options: () => void;
