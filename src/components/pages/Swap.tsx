@@ -16,7 +16,6 @@ export interface TransferProps {
   onUserInput: (input: string) => void;
   swapRequest: () => void;
   options: () => void;
-  handleBack: () => void;
   isLoad: Boolean;
   senderChainInfo: CHAIN_DETAIL;
   receiverChainInfo: CHAIN_DETAIL;
@@ -44,7 +43,6 @@ const Swap: FC<TransferProps> = props => {
     onUserInput,
     swapRequest,
     options,
-    handleBack,
   } = props;
 
   const enforcer = (nextUserInput: string) => {
@@ -74,7 +72,7 @@ const Swap: FC<TransferProps> = props => {
           backgroundImage: `url(${graphic})`,
         }}
       >
-        <Header title="Send Amount" handleBack={handleBack} options={options} />
+        <Header title="Send Amount" options={options} />
         <ModalBody>
           <Stack direction="column" spacing={7}>
             <Stack direction="column" spacing={5}>

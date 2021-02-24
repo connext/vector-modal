@@ -1212,7 +1212,6 @@ const ConnextModal: FC<ConnextModalProps> = ({
             receiverAddress={withdrawalAddress}
             transferAmount={transferAmountUi}
             options={handleOptions}
-            handleBack={handleBack}
           />
         );
 
