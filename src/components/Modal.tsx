@@ -1335,6 +1335,7 @@ const ConnextModal: FC<ConnextModalProps> = ({
         <Modal
           id="modal"
           closeOnOverlayClick={false}
+          closeOnEsc={false}
           isOpen={showModal}
           size="md"
           onClose={handleClose}
