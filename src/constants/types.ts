@@ -17,8 +17,6 @@ export const ERROR_STATES = {
 export type ErrorStates = keyof typeof ERROR_STATES;
 
 export const SCREEN_STATES = {
-  LOGIN: 'LOGIN',
-  EMAIL: 'EMAIL',
   LOADING: 'LOADING',
   SWAP: 'SWAP',
   RECOVERY: 'RECOVERY',
