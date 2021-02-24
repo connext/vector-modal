@@ -39,6 +39,7 @@ import {
   connectNode,
   verifyRouterCapacityForTransfer,
   getUserBalance,
+  getFeeQuote,
 } from '../utils';
 import {
   Email,
@@ -405,13 +406,49 @@ const ConnextModal: FC<ConnextModalProps> = ({
     );
   };
 
-  const handleSwapCheck = (_input: string | undefined): string | undefined => {
+  const handleSwapfeeQuote = async (
+    input: string
+  ): Promise<{
+    fee: string;
+  }> => {
+    const quote = await getFeeQuote(
+      routerPublicIdentifier,
+      input,
+      senderChain?.assetId!,
+      senderChain?.chainId!,
+      node!.publicIdentifier,
+      receiverChain?.chainId!,
+      receiverChain?.assetId!
+    );
+    return quote;
+  };
+
+  const handleSwapCheck = async (
+    _input: string | undefined
+  ): Promise<{
+    isError: boolean;
+    result: {
+      quoteFee: string | undefined;
+      quoteAmount: string | undefined;
+      error: string | undefined;
+    };
+  }> => {
     let err: string | undefined = undefined;
-    setAmountError(undefined);
+    let quote_fee: string | undefined = undefined;
+    let quote_amount: string | undefined = undefined;
     const input = _input ? _input.trim() : undefined;
+
+    setAmountError(undefined);
     if (!input) {
       setTransferAmountUi(undefined);
-      return;
+      return {
+        isError: true,
+        result: {
+          quoteFee: undefined,
+          quoteAmount: undefined,
+          error: undefined,
+        },
+      };
     }
     try {
       setTransferAmountUi(input);
@@ -430,17 +467,43 @@ const ConnextModal: FC<ConnextModalProps> = ({
           err = 'Transfer amount exceeds user balance';
         }
       }
+      const res = await handleSwapfeeQuote(input);
+      quote_fee = res.fee;
+
+      const feeBn = BigNumber.from(
+        utils.parseUnits(quote_fee, senderChain?.assetDecimals!)
+      );
+
+      const quoteAmountBn = transferAmountBn.sub(feeBn);
+
+      quote_amount = utils.formatUnits(
+        quoteAmountBn,
+        senderChain?.assetDecimals!
+      );
+
+      if (quoteAmountBn.lt(0)) {
+        err = 'Transfer amount is less than quote fees';
+      }
     } catch (e) {
       err = 'Invalid amount';
     }
+
     setAmountError(err);
-    return err;
+    const is_error: boolean = err ? true : false;
+    return {
+      isError: is_error,
+      result: {
+        quoteFee: quote_fee,
+        quoteAmount: quote_amount,
+        error: err,
+      },
+    };
   };
 
   const handleSwapRequest = async () => {
-    const res = handleSwapCheck(transferAmountUi);
-    if (amountError) {
-      setAmountError(res);
+    const res = await handleSwapCheck(transferAmountUi);
+    if (res.isError) {
+      setAmountError(res.result.error);
       return;
     }
     setIsLoad(true);

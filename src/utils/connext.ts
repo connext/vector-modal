@@ -608,3 +608,17 @@ export const getChannelForChain = async (
   }
   return channel as FullChannelState;
 };
+
+export const getFeeQuote = async (
+  routerIdentifier: string,
+  amount: string,
+  assetId: string,
+  chainId: number,
+  recipient: string,
+  recipientChainId: number,
+  recipientAssetId: string
+): Promise<{
+  fee: string;
+}> => {
+  return { fee: '0' };
+};

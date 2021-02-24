@@ -1,4 +1,4 @@
-import React, { FC, useEffect } from 'react';
+import React, { FC, useEffect, useState } from 'react';
 import {
   ModalContent,
   ModalBody,
@@ -11,9 +11,15 @@ import {
 } from '@chakra-ui/react';
 import { Header, Footer, NetworkBar } from '../static';
 import { styleModalContent, graphic, CHAIN_DETAIL } from '../../constants';
+import { BigNumber, utils } from 'ethers';
 
 export interface TransferProps {
-  onUserInput: (input: string) => void;
+  onUserInput: (
+    _input: string | undefined
+  ) => Promise<{
+    isError: boolean | undefined;
+    result: string | undefined;
+  }>;
   swapRequest: () => void;
   options: () => void;
   isLoad: Boolean;
@@ -45,9 +51,19 @@ const Swap: FC<TransferProps> = props => {
     options,
   } = props;
 
-  const enforcer = (nextUserInput: string) => {
+  const [feeQuote, setFeeQuote] = useState<string | undefined>('———');
+  const [quoteAmount, setQuoteAmount] = useState<string | undefined>('———');
+
+  const enforcer = async (nextUserInput: string) => {
     if (nextUserInput === '' || inputRegex.test(escapeRegExp(nextUserInput))) {
-      onUserInput(nextUserInput);
+      const res = await onUserInput(nextUserInput);
+      if (res.isError) {
+        setFeeQuote('———');
+        setQuoteAmount('———');
+        return;
+      }
+      setFeeQuote(res.result.quoteFee);
+      setQuoteAmount(res.result.quoteAmount);
     }
   };
 
@@ -58,9 +74,12 @@ const Swap: FC<TransferProps> = props => {
   };
 
   useEffect(() => {
-    if (transferAmount) {
-      enforcer(transferAmount);
-    }
+    const effect = async () => {
+      if (transferAmount) {
+        enforcer(transferAmount);
+      }
+    };
+    effect();
   });
 
   return (
@@ -164,7 +183,7 @@ const Swap: FC<TransferProps> = props => {
                     fontFamily="Roboto Mono"
                     color="#666666"
                   >
-                    0.0 {senderChainInfo.assetName}
+                    {feeQuote} {senderChainInfo.assetName}
                   </Text>
                 </Box>
 
@@ -185,7 +204,7 @@ const Swap: FC<TransferProps> = props => {
                     fontFamily="Roboto Mono"
                     fontWeight="700"
                   >
-                    0.0 {senderChainInfo.assetName}
+                    {quoteAmount} {senderChainInfo.assetName}
                   </Text>
                 </Box>
               </Stack>
