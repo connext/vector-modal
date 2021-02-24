@@ -15,12 +15,8 @@ import { getBalanceForAssetId } from '@connext/vector-utils';
 import { BrowserNode } from '@connext/vector-browser-node';
 import { Header, Footer } from './static';
 import { Success, ErrorScreen } from './pages';
-import {
-  styleModalContent,
-  graphic,
-  CHAIN_DETAIL,
-  ERROR_STATES,
-} from '../constants';
+import { styleModalContent, CHAIN_DETAIL, ERROR_STATES } from '../constants';
+import { graphic } from '../public';
 
 export interface RecoveryProps {
   handleBack: () => void;
