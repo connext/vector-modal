@@ -5,38 +5,8 @@ import {
   getChainId,
   getAssetDecimals,
 } from '@connext/vector-utils';
-import {
-  TransferStates,
-  CHAIN_DETAIL,
-  ASSET_CHAIN_NAME_MAPPING,
-} from '../constants';
+import { CHAIN_DETAIL } from '../constants';
 import { delay } from '@connext/vector-utils';
-
-export const activePhase = (phase: TransferStates): number => {
-  switch (phase) {
-    case 'LOADING': {
-      return -2;
-    }
-    case 'INITIAL': {
-      return -1;
-    }
-    case 'DEPOSITING': {
-      return 0;
-    }
-    case 'TRANSFERRING': {
-      return 1;
-    }
-    case 'WITHDRAWING': {
-      return 2;
-    }
-    case 'COMPLETE': {
-      return 3;
-    }
-    case 'ERROR': {
-      return 4;
-    }
-  }
-};
 
 export const hydrateProviders = (
   depositChainId: number,
@@ -56,15 +26,6 @@ export const hydrateProviders = (
       withdrawChainId
     ),
   };
-};
-
-export const getAssetName = (assetId: string, chainId: number): string => {
-  if (assetId === constants.AddressZero) {
-    return 'ETH';
-  }
-  return ASSET_CHAIN_NAME_MAPPING[chainId]
-    ? ASSET_CHAIN_NAME_MAPPING[chainId][assetId] ?? 'Token'
-    : 'Token';
 };
 
 export const getOnchainBalance = async (
