@@ -4,4 +4,5 @@ export const success = require('./success.svg');
 export const graphic = require('./graphic.svg');
 export const darkGraphic = require('./dark_graphic.svg');
 export const lightGraphic = require('./light_graphic.svg');
+// @ts-ignore
 export const loadingGif = require('./loading.gif');
