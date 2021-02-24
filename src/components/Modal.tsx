@@ -105,9 +105,9 @@ const ConnextModal: FC<ConnextModalProps> = ({
     ? new providers.Web3Provider(_loginProvider)
     : undefined;
 
-  const [transferAmountUi, setTransferAmountUi] = useState<string | undefined>(
-    _transferAmount
-  );
+  const [transferAmountUi, setTransferAmountUi] = useState<
+    string | undefined
+  >();
   const [depositAddress, setDepositAddress] = useState<string>();
 
   const [withdrawChannel, _setWithdrawChannel] = useState<FullChannelState>();
@@ -765,6 +765,13 @@ const ConnextModal: FC<ConnextModalProps> = ({
         depositAssetId
       );
       setSenderChain(senderChainInfo);
+      if (_transferAmount) {
+        const _normalized = utils.formatUnits(
+          _transferAmount,
+          senderChainInfo.assetDecimals
+        );
+        setTransferAmountUi(_normalized);
+      }
     } catch (e) {
       const message = 'Failed to fetch sender chain info';
       console.log(e, message);
