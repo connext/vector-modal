@@ -1087,11 +1087,14 @@ const ConnextModal: FC<ConnextModalProps> = ({
             SCREEN_STATES.STATUS,
             SCREEN_STATES.ERROR_SETUP,
             SCREEN_STATES.ERROR_TRANSFER,
-          ].includes(lastScreenState as any)
+          ].includes(lastScreenState as any) || !lastScreenState
             ? true
             : false
         }
-        onClick={handleBack}
+        onClick={() => {
+          clearInterval(listener!);
+          handleScreen({ state: lastScreenState });
+        }}
         icon={<ArrowBackIcon boxSize={6} />}
       />
     );
@@ -1171,8 +1174,10 @@ const ConnextModal: FC<ConnextModalProps> = ({
         setPreImage(undefined);
         break;
     }
-    setLastScreenState(screenState);
-    setScreenState(state);
+    setScreenState((prevState: ScreenStates) => {
+      setLastScreenState(prevState);
+      return state;
+    });
     return;
   };
 
