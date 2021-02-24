@@ -1269,6 +1269,7 @@ const ConnextModal: FC<ConnextModalProps> = ({
             senderChainInfo={senderChain!}
             receiverChainInfo={receiverChain!}
             receiverAddress={withdrawalAddress}
+            handleRecoveryButton={handleRecoveryButton}
             options={handleOptions}
             handleBack={handleBack}
           />

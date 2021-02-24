@@ -20,6 +20,7 @@ import { constants } from 'ethers';
 export interface ErrorProps {
   error: Error;
   retry?: () => void;
+  handleRecoveryButton?: () => void;
   options: () => void;
   handleBack: () => void;
   crossChainTransferId: string;
@@ -36,6 +37,7 @@ const Error: FC<ErrorProps> = props => {
     retry,
     options,
     handleBack,
+    handleRecoveryButton,
     state,
     senderChainInfo,
     receiverChainInfo,
@@ -96,7 +98,9 @@ const Error: FC<ErrorProps> = props => {
                 )}
 
                 {state === ERROR_STATES.ERROR_TRANSFER && (
-                  <Button size="lg">Recover Funds</Button>
+                  <Button size="lg" onClick={handleRecoveryButton}>
+                    Recover Funds
+                  </Button>
                 )}
               </Stack>
             </Stack>
