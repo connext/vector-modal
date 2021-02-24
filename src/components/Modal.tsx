@@ -42,8 +42,6 @@ import {
   getFeeQuote,
 } from '../utils';
 import {
-  Email,
-  Login,
   Loading,
   Swap,
   SwapListener,
@@ -1145,17 +1143,18 @@ const ConnextModal: FC<ConnextModalProps> = ({
         border="none"
         bg="transparent"
         isDisabled={
+          !lastScreenState ||
           [
             SCREEN_STATES.LOADING,
             SCREEN_STATES.STATUS,
             Object.values(ERROR_STATES),
-          ].includes(lastScreenState as any) || !lastScreenState
+          ].includes(lastScreenState as any)
             ? true
             : false
         }
         onClick={() => {
           clearInterval(listener!);
-          handleScreen({ state: lastScreenState });
+          handleScreen({ state: lastScreenState! });
         }}
         icon={<ArrowBackIcon boxSize={6} />}
       />
@@ -1202,19 +1201,14 @@ const ConnextModal: FC<ConnextModalProps> = ({
   }) => {
     const { state, error, title, message } = params;
     switch (state) {
-      case SCREEN_STATES.LOGIN:
-        break;
-      case SCREEN_STATES.SUCCESS:
-        break;
-
-      case SCREEN_STATES.EMAIL:
-        break;
-
       case SCREEN_STATES.LOADING:
         setMessage('Setting up channels...');
         break;
 
       case SCREEN_STATES.SWAP:
+        break;
+
+      case SCREEN_STATES.SUCCESS:
         break;
 
       case SCREEN_STATES.RECOVERY:
@@ -1245,12 +1239,6 @@ const ConnextModal: FC<ConnextModalProps> = ({
 
   const activeScreen = (state: ScreenStates) => {
     switch (state) {
-      case SCREEN_STATES.LOGIN:
-        return <Login onClose={handleCloseButton} />;
-
-      case SCREEN_STATES.EMAIL:
-        return <Email handleBack={handleBack} />;
-
       case SCREEN_STATES.LOADING:
         return <Loading message={message!} />;
 
