@@ -480,13 +480,6 @@ export const verifyRouterSupports = async (
       s.fromChainId === fromChainId &&
       s.toAssetId.toLowerCase() === toAssetId.toLowerCase() &&
       s.toChainId === toChainId;
-    // TODO: why are we using inverted swaps? we define each swap separately
-    // const inverted =
-    //   s.toAssetId.toLowerCase() === fromAssetId.toLowerCase() &&
-    //   s.toChainId === fromChainId &&
-    //   s.fromAssetId.toLowerCase() === toAssetId.toLowerCase() &&
-    //   s.fromChainId === toChainId;
-    // invertRate = invertRate ? invertRate : !!inverted;
     return noninverted;
   });
   if (!swap) {

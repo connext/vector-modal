@@ -16,14 +16,14 @@ import { graphic } from '../../public';
 export interface TransferProps {
   onUserInput: (
     _input: string | undefined
-  ) => Promise<{
+  ) => {
     isError: boolean;
     result: {
       quoteFee: string | undefined;
       quoteAmount: string | undefined;
       error: string | undefined;
     };
-  }>;
+  };
   swapRequest: () => void;
   options: () => void;
   isLoad: Boolean;
@@ -58,9 +58,9 @@ const Swap: FC<TransferProps> = props => {
   const [feeQuote, setFeeQuote] = useState<string | undefined>('———');
   const [quoteAmount, setQuoteAmount] = useState<string | undefined>('———');
 
-  const enforcer = async (nextUserInput: string) => {
+  const enforcer = (nextUserInput: string) => {
     if (nextUserInput === '' || inputRegex.test(escapeRegExp(nextUserInput))) {
-      const res = await onUserInput(nextUserInput);
+      const res = onUserInput(nextUserInput);
       if (res.isError) {
         setFeeQuote('———');
         setQuoteAmount('———');

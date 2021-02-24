@@ -39,7 +39,7 @@ import {
   connectNode,
   verifyRouterCapacityForTransfer,
   getUserBalance,
-  getFeeQuote,
+  // getFeeQuote,
 } from '../utils';
 import {
   Loading,
@@ -404,33 +404,33 @@ const ConnextModal: FC<ConnextModalProps> = ({
     );
   };
 
-  const handleSwapfeeQuote = async (
-    input: string
-  ): Promise<{
-    fee: string;
-  }> => {
-    const quote = await getFeeQuote(
-      routerPublicIdentifier,
-      input,
-      senderChain?.assetId!,
-      senderChain?.chainId!,
-      node!.publicIdentifier,
-      receiverChain?.chainId!,
-      receiverChain?.assetId!
-    );
-    return quote;
-  };
+  // const handleSwapfeeQuote = async (
+  //   input: string
+  // ): Promise<{
+  //   fee: string;
+  // }> => {
+  //   const quote = await getFeeQuote(
+  //     routerPublicIdentifier,
+  //     input,
+  //     senderChain?.assetId!,
+  //     senderChain?.chainId!,
+  //     node!.publicIdentifier,
+  //     receiverChain?.chainId!,
+  //     receiverChain?.assetId!
+  //   );
+  //   return quote;
+  // };
 
-  const handleSwapCheck = async (
+  const handleSwapCheck = (
     _input: string | undefined
-  ): Promise<{
+  ): {
     isError: boolean;
     result: {
       quoteFee: string | undefined;
       quoteAmount: string | undefined;
       error: string | undefined;
     };
-  }> => {
+  } => {
     let err: string | undefined = undefined;
     let quote_fee: string | undefined = undefined;
     let quote_amount: string | undefined = undefined;
@@ -465,7 +465,8 @@ const ConnextModal: FC<ConnextModalProps> = ({
           err = 'Transfer amount exceeds user balance';
         }
       }
-      const res = await handleSwapfeeQuote(input);
+      // const res = await handleSwapfeeQuote(input);
+      const res = { fee: '0' };
       quote_fee = res.fee;
 
       const feeBn = BigNumber.from(
