@@ -10,7 +10,8 @@ import {
   NumberInput,
 } from '@chakra-ui/react';
 import { Header, Footer, NetworkBar } from '../static';
-import { styleModalContent, graphic, CHAIN_DETAIL } from '../../constants';
+import { styleModalContent, CHAIN_DETAIL } from '../../constants';
+import { graphic } from '../../public';
 
 export interface TransferProps {
   onUserInput: (

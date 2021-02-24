@@ -1,7 +1,8 @@
 import React, { FC } from 'react';
 import CSS from 'csstype';
 import { ModalContent, ModalBody, Text, Stack, Box } from '@chakra-ui/react';
-import { styleModalContent, loadingGif } from '../../constants';
+import { styleModalContent } from '../../constants';
+import { loadingGif } from '../../public';
 import { Footer } from '../static';
 
 interface LoadingProps {

@@ -8,7 +8,7 @@ import {
   CooperHewitt700,
   CooperHewitt500,
   CooperHewitt400,
-} from '../../fonts';
+} from '../../public/fonts';
 
 export const Fonts = () => (
   <Global

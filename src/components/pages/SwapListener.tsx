@@ -13,7 +13,8 @@ import {
 } from '@chakra-ui/react';
 import { CopyIcon, CheckCircleIcon } from '@chakra-ui/icons';
 import { Header, Footer, NetworkBar } from '../static';
-import { CHAIN_DETAIL, styleModalContent, darkGraphic } from '../../constants';
+import { CHAIN_DETAIL, styleModalContent } from '../../constants';
+import { darkGraphic } from '../../public';
 // @ts-ignore
 import QRCode from 'qrcode.react';
 
