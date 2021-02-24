@@ -1,7 +1,7 @@
 import React, { FC } from 'react';
 import { ModalHeader, Spinner, Stack, Text, Box } from '@chakra-ui/react';
 import { WarningTwoIcon } from '@chakra-ui/icons';
-import { success } from '../../constants';
+import { success } from '../../public';
 interface HeaderProps {
   title: string;
   onClose?: () => void;

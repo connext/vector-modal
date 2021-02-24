@@ -10,11 +10,11 @@ import {
 import { Header, Footer, NetworkBar } from '../static';
 import {
   styleModalContent,
-  graphic,
   CHAIN_DETAIL,
   ERROR_STATES,
   ErrorStates,
 } from '../../constants';
+import { graphic } from '../../public';
 import { constants } from 'ethers';
 
 export interface ErrorProps {

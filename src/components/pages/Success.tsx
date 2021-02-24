@@ -10,7 +10,8 @@ import {
   Link,
 } from '@chakra-ui/react';
 import { Header, Footer, NetworkBar } from '../static';
-import { styleModalContent, lightGraphic, CHAIN_DETAIL } from '../../constants';
+import { styleModalContent, CHAIN_DETAIL } from '../../constants';
+import { lightGraphic } from '../../public';
 import { getExplorerLinkForTx } from '../../utils';
 
 export interface SuccessProps {

@@ -1,7 +1,8 @@
 import React, { FC } from 'react';
 import { ModalContent, ModalBody, Text, Stack, Box } from '@chakra-ui/react';
 import { Header, Footer, NetworkBar } from '../static';
-import { styleModalContent, lightGraphic, CHAIN_DETAIL } from '../../constants';
+import { styleModalContent, CHAIN_DETAIL } from '../../constants';
+import { lightGraphic } from '../../public';
 
 export interface StatusProps {
   title: string;

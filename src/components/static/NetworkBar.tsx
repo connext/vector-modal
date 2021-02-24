@@ -8,7 +8,8 @@ import {
   Link,
   InputGroup,
 } from '@chakra-ui/react';
-import { arrow, CHAIN_DETAIL } from '../../constants';
+import { CHAIN_DETAIL } from '../../constants';
+import { arrow } from '../../public';
 import { getExplorerLinkForAsset } from '../../utils';
 
 interface NetworkBarProps {
