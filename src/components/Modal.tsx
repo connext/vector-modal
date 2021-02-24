@@ -1338,7 +1338,7 @@ const ConnextModal: FC<ConnextModalProps> = ({
 
   return (
     <>
-      <ChakraProvider theme={theme}>
+      <ChakraProvider resetCSS={false} theme={theme}>
         <Fonts />
         <Modal
           id="modal"
