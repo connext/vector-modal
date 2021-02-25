@@ -27,6 +27,7 @@ export interface TransferProps {
   swapRequest: () => void;
   options: () => void;
   isLoad: Boolean;
+  inputReadOnly: Boolean;
   senderChainInfo: CHAIN_DETAIL;
   receiverChainInfo: CHAIN_DETAIL;
   receiverAddress: string;
@@ -50,6 +51,7 @@ const Swap: FC<TransferProps> = props => {
     receiverAddress,
     transferAmount,
     isLoad,
+    inputReadOnly,
     onUserInput,
     swapRequest,
     options,
@@ -139,6 +141,7 @@ const Swap: FC<TransferProps> = props => {
                     // universal input options
                     inputMode="decimal"
                     value={transferAmount}
+                    isReadOnly={inputReadOnly ? true : false}
                   >
                     <NumberInputField
                       // styling
@@ -161,6 +164,7 @@ const Swap: FC<TransferProps> = props => {
                       border="none"
                       marginRight="10px"
                       height="1.5rem"
+                      isDisabled={inputReadOnly ? true : false}
                       onClick={() => {
                         enforcer(userBalance);
                       }}

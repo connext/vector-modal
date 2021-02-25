@@ -173,6 +173,9 @@ const ConnextModal: FC<ConnextModalProps> = ({
   const [isLoad, setIsLoad] = useState<Boolean>(false);
   const [showTimer, setShowTimer] = useState<Boolean>(false);
 
+  // temp
+  const [inputReadOnly, setInputReadOnly] = useState<boolean>(false);
+
   const cancelTransfer = async (
     depositChannelAddress: string,
     withdrawChannelAddress: string,
@@ -740,6 +743,7 @@ const ConnextModal: FC<ConnextModalProps> = ({
 
   const stateReset = () => {
     handleScreen({ state: SCREEN_STATES.LOADING });
+    setInputReadOnly(false);
     setIsLoad(false);
     setTransferAmountUi(_transferAmount);
     setUserBalance(undefined);
@@ -765,13 +769,6 @@ const ConnextModal: FC<ConnextModalProps> = ({
         depositAssetId
       );
       setSenderChain(senderChainInfo);
-      if (_transferAmount) {
-        const _normalized = utils.formatUnits(
-          _transferAmount,
-          senderChainInfo.assetDecimals
-        );
-        setTransferAmountUi(_normalized);
-      }
     } catch (e) {
       const message = 'Failed to fetch sender chain info';
       console.log(e, message);
@@ -803,9 +800,31 @@ const ConnextModal: FC<ConnextModalProps> = ({
       return;
     }
 
+    if (_transferAmount) {
+      try {
+        const _normalized = utils.formatUnits(
+          _transferAmount,
+          senderChainInfo.assetDecimals
+        );
+        setInputReadOnly(true);
+        setTransferAmountUi(_normalized);
+      } catch (e) {
+        const message = 'Error with transferAmount param';
+        console.log(e, message);
+        handleScreen({
+          state: ERROR_STATES.ERROR_SETUP,
+          error: e,
+          message: message,
+        });
+        return;
+      }
+    }
+
     if (injectedProvider) {
       try {
+        console.log('1');
         const network = await injectedProvider.getNetwork();
+        console.log('2');
         if (senderChainInfo.chainId !== network.chainId) {
           throw new Error(
             `Please connect your wallet to the ${senderChainInfo.name} : ${senderChainInfo.chainId} network`
@@ -1268,6 +1287,7 @@ const ConnextModal: FC<ConnextModalProps> = ({
             onUserInput={handleSwapCheck}
             swapRequest={handleSwapRequest}
             isLoad={isLoad}
+            inputReadOnly={inputReadOnly}
             userBalance={userBalance}
             amountError={amountError}
             senderChainInfo={senderChain!}
