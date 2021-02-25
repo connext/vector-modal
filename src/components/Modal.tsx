@@ -96,11 +96,11 @@ const ConnextModal: FC<ConnextModalProps> = ({
 }) => {
   const depositAssetId = utils.getAddress(_depositAssetId);
   const withdrawAssetId = utils.getAddress(_withdrawAssetId);
-  const injectedProvider:
-    | undefined
-    | providers.Web3Provider = !!_injectedProvider
-    ? new providers.Web3Provider(_injectedProvider)
-    : undefined;
+
+  const [webProvider, setWebProvider] = useState<
+    undefined | providers.Web3Provider
+  >();
+
   const loginProvider: undefined | providers.Web3Provider = !!_loginProvider
     ? new providers.Web3Provider(_loginProvider)
     : undefined;
@@ -537,7 +537,7 @@ const ConnextModal: FC<ConnextModalProps> = ({
       return;
     }
 
-    if (!injectedProvider) {
+    if (!webProvider) {
       console.log(`Starting block listener`);
       // display QR
       setIsLoad(false);
@@ -565,7 +565,7 @@ const ConnextModal: FC<ConnextModalProps> = ({
           `Transferring ${transferAmountBn.toString()} through injected provider`
         );
 
-        const signer = injectedProvider.getSigner();
+        const signer = webProvider.getSigner();
         const depositTx =
           depositAssetId === constants.AddressZero
             ? await signer.sendTransaction({
@@ -743,6 +743,7 @@ const ConnextModal: FC<ConnextModalProps> = ({
 
   const stateReset = () => {
     handleScreen({ state: SCREEN_STATES.LOADING });
+    setWebProvider(undefined);
     setInputReadOnly(false);
     setIsLoad(false);
     setTransferAmountUi(_transferAmount);
@@ -761,6 +762,14 @@ const ConnextModal: FC<ConnextModalProps> = ({
   };
 
   const setup = async () => {
+    const injectedProvider:
+      | undefined
+      | providers.Web3Provider = !!_injectedProvider
+      ? new providers.Web3Provider(_injectedProvider)
+      : undefined;
+
+    setWebProvider(injectedProvider);
+
     let senderChainInfo: CHAIN_DETAIL;
     try {
       senderChainInfo = await getChain(
@@ -822,9 +831,7 @@ const ConnextModal: FC<ConnextModalProps> = ({
 
     if (injectedProvider) {
       try {
-        console.log('1');
         const network = await injectedProvider.getNetwork();
-        console.log('2');
         if (senderChainInfo.chainId !== network.chainId) {
           throw new Error(
             `Please connect your wallet to the ${senderChainInfo.name} : ${senderChainInfo.chainId} network`
