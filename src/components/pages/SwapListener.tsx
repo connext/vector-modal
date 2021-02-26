@@ -64,7 +64,6 @@ const SwapListener: FC<SwapListenerProps> = props => {
       let watch = setInterval(() => {
         setCurrentTimeSec(prevSec => {
           if (prevSec >= 60) {
-            console.log('min entry');
             setCurrentTimeMin(prevMin => prevMin + 1);
             return 0;
           }
@@ -93,6 +92,7 @@ const SwapListener: FC<SwapListenerProps> = props => {
     <>
       <ModalContent
         id="modalContent"
+        className="global-style"
         style={{
           ...styleModalContent,
           backgroundPosition: 'right top',
@@ -109,8 +109,8 @@ const SwapListener: FC<SwapListenerProps> = props => {
             <Stack direction="column" spacing={3}>
               <Box>
                 <Stack direction="row" spacing={8}>
-                  <Stack direction="column" spacing={3}>
-                    <Text fontSize="14px" fontWeight="500">
+                  <Stack direction="column" spacing={4}>
+                    <Text fontSize="1rem" fontWeight="500">
                       Send{' '}
                       <span style={{ color: '#2964C5' }}>
                         {senderChainInfo.assetName}
@@ -121,11 +121,11 @@ const SwapListener: FC<SwapListenerProps> = props => {
                       </span>{' '}
                       to the QR or address below.
                     </Text>
-                    <Box>
-                      <Text fontSize="14px" casing="capitalize">
+                    <Stack direction="column" spacing={3}>
+                      <Text fontSize="1rem" casing="capitalize">
                         Awaiting your transfer...
                       </Text>
-                      <Stack direction="row" spacing={3} alignItems="center">
+                      <Stack direction="row" spacing={4} alignItems="center">
                         <Spinner
                           thickness="3px"
                           speed="0.65s"
@@ -137,7 +137,7 @@ const SwapListener: FC<SwapListenerProps> = props => {
                           {formatTime(currentTimeSec)}
                         </Text>
                       </Stack>
-                    </Box>
+                    </Stack>
                   </Stack>
                   <Box bg="white" borderRadius="15px">
                     <QRCode
@@ -150,20 +150,21 @@ const SwapListener: FC<SwapListenerProps> = props => {
               </Box>
 
               <InputGroup
-                size="md"
+                size="lg"
                 bg="#DEDEDE"
                 alignItems="center"
                 borderRadius="15px"
+                fontFamily="Roboto Mono"
               >
                 <Input
-                  id="address"
+                  id="depositAddress"
                   name="address"
                   value={senderChannelAddress}
                   inputMode="search"
                   title="Deposit Address"
                   // styling
-                  boxShadow="none!important"
                   border="none"
+                  fontSize="14px"
                   flex="auto"
                   // misc
                   isReadOnly={true}
@@ -181,6 +182,7 @@ const SwapListener: FC<SwapListenerProps> = props => {
                       icon={!copiedAddress ? <CopyIcon /> : <CheckCircleIcon />}
                       // style
                       size="sm"
+                      fontSize="20px"
                       border="none"
                       background="transparent"
                     />
