@@ -140,7 +140,7 @@ const Swap: FC<TransferProps> = props => {
                     title="Token Amount"
                     aria-describedby="amount"
                     //styling
-
+                    fontFamily="Roboto Mono"
                     fontStyle="normal"
                     lineHeight="20px"
                     fontSize="1rem"
@@ -152,7 +152,6 @@ const Swap: FC<TransferProps> = props => {
                   >
                     <NumberInputField
                       // styling
-
                       boxShadow="none!important"
                       border="none"
                       onChange={event => {
@@ -232,7 +231,6 @@ const Swap: FC<TransferProps> = props => {
                 loadingText="Waiting For Transaction"
                 isDisabled={!!amountError || !transferAmount ? true : false}
                 onClick={handleSubmit}
-                //styling
               >
                 {userBalance ? 'Swap' : 'Show me QR!'}
               </Button>
