@@ -115,6 +115,7 @@ const Recover: FC<RecoveryProps> = props => {
     <>
       {['Initial', 'Loading'].includes(status as any) && (
         <ModalContent
+          className="global-style"
           id="modalContent"
           style={{
             ...styleModalContent,
@@ -128,7 +129,7 @@ const Recover: FC<RecoveryProps> = props => {
           />
           <ModalBody>
             <Stack direction="column" spacing={5}>
-              <Text fontSize="s">
+              <Text fontSize="s" lineHeight="24px">
                 Uh oh! Send the wrong asset to the deposit address? Fill out the
                 details below to attempt recovery of your assets from the state
                 channels.
@@ -164,6 +165,7 @@ const Recover: FC<RecoveryProps> = props => {
                       flexDirection="row"
                       alignItems="center"
                       borderRadius="15px"
+                      fontFamily="Roboto Mono"
                     >
                       <InputGroup>
                         <Input
@@ -173,7 +175,6 @@ const Recover: FC<RecoveryProps> = props => {
                           size="lg"
                           placeholder="0x..."
                           // styling
-                          fontFamily="Roboto Mono"
                           boxShadow="none!important"
                           border="none"
                           value={recoverTokenAddress}
@@ -217,6 +218,7 @@ const Recover: FC<RecoveryProps> = props => {
                       flexDirection="row"
                       alignItems="center"
                       borderRadius="15px"
+                      fontFamily="Roboto Mono"
                     >
                       <InputGroup>
                         <Input
@@ -225,7 +227,6 @@ const Recover: FC<RecoveryProps> = props => {
                           type="search"
                           size="lg"
                           // styling
-                          fontFamily="Roboto Mono"
                           boxShadow="none!important"
                           border="none"
                           placeholder="0x..."
