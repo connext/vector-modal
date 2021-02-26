@@ -40,6 +40,14 @@ export const theme = extendTheme({
         },
       },
     },
+    Text: {
+      baseStyle: {
+        fontStyle: 'normal',
+        fontWeight: 'normal',
+        fontFamily: 'Roboto',
+        textTransform: 'capitalize',
+      },
+    },
     Button: {
       baseStyle: {
         fontStyle: 'normal',
@@ -52,39 +60,6 @@ export const theme = extendTheme({
         sm: {
           fontSize: '12px',
           padding: '16px',
-        },
-        md: {
-          fontSize: '16px',
-          padding: '24px',
-        },
-      },
-      // Two variants: outline and solid
-      variants: {
-        outline: {
-          border: '1.5px solid',
-          boxSizing: 'border-box',
-          borderRadius: '15px',
-          borderColor: '#7B7B7B',
-          background: 'white',
-        },
-      },
-      // The default size and variant values
-      defaultProps: {
-        size: 'md',
-        variant: 'outline',
-      },
-    },
-    FormControl: {
-      baseStyle: {
-        fontStyle: 'normal',
-        fontWeight: 'normal',
-        fontFamily: 'Roboto',
-        textTransform: 'capitalize',
-      },
-      // Two sizes: sm and md
-      sizes: {
-        sm: {
-          fontSize: '12px',
         },
         md: {
           fontSize: '16px',
