@@ -101,15 +101,24 @@ const NetworkBar: FC<NetworkBarProps> = props => {
         </Box>
 
         {receiverAddress && (
-          <Box display="flex" flexDirection="column">
-            <Text fontSize="xs" casing="capitalize" color="#666666">
+          <Stack direction="column" spacing={1}>
+            <Text
+              fontWeight="400"
+              fontSize="12px"
+              casing="capitalize"
+              color="#666666"
+            >
               Receiver Address
             </Text>
             <InputGroup
               size="md"
               bg="#DEDEDE"
               alignItems="center"
-              borderRadius="15px"
+              borderRadius="5px"
+              fontFamily="Roboto Mono"
+              fontStyle="normal"
+              lineHeight="20px"
+              fontWeight="500"
             >
               <Input
                 id="address"
@@ -118,17 +127,14 @@ const NetworkBar: FC<NetworkBarProps> = props => {
                 inputMode="search"
                 title="receiver Address"
                 // styling
-                fontFamily="Roboto Mono"
                 fontSize="13px"
-                fontWeight="700"
-                boxShadow="none!important"
                 border="none"
                 flex="auto"
                 // misc
                 isReadOnly={true}
               />
             </InputGroup>
-          </Box>
+          </Stack>
         )}
       </Stack>
     </>
