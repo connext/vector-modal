@@ -56,7 +56,8 @@
     "ethers": "5.0.21",
     "evt": "1.9.12",
     "framer-motion": "^3.6.7",
-    "qrcode.react": "^1.0.1"
+    "qrcode.react": "^1.0.1",
+    "stylis-plugin-extra-scope": "^0.3.0"
   },
   "devDependencies": {
     "@rollup/plugin-image": "^2.0.6",
