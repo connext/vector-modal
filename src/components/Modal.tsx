@@ -1,7 +1,6 @@
 import { BrowserNode } from '@connext/vector-browser-node';
 import React, { FC, useEffect, useState } from 'react';
 import {
-  ChakraProvider,
   Modal,
   ModalOverlay,
   useDisclosure,
@@ -16,7 +15,6 @@ import {
 import { getBalanceForAssetId, getRandomBytes32 } from '@connext/vector-utils';
 import { BigNumber, constants, utils, providers, Contract } from 'ethers';
 import {
-  theme,
   ERROR_STATES,
   SCREEN_STATES,
   CHAIN_DETAIL,
@@ -50,7 +48,7 @@ import {
   Success,
 } from './pages';
 import Recover from './Recover';
-import { Fonts, Options } from './static';
+import { Options, ThemeWrapper } from './static';
 
 export { useDisclosure };
 
@@ -1181,7 +1179,7 @@ const ConnextModal: FC<ConnextModalProps> = ({
           [
             SCREEN_STATES.LOADING,
             SCREEN_STATES.STATUS,
-            Object.values(ERROR_STATES),
+            ...Object.values(ERROR_STATES),
           ].includes(lastScreenState as any)
             ? true
             : false
@@ -1198,7 +1196,7 @@ const ConnextModal: FC<ConnextModalProps> = ({
   const handleCloseButton = () => {
     return (
       <IconButton
-        aria-label="back"
+        aria-label="close"
         border="none"
         bg="transparent"
         isDisabled={
@@ -1209,7 +1207,7 @@ const ConnextModal: FC<ConnextModalProps> = ({
             : false
         }
         onClick={onClose}
-        icon={<CloseIcon />}
+        icon={<CloseIcon boxSize={6} />}
       />
     );
   };
@@ -1365,8 +1363,7 @@ const ConnextModal: FC<ConnextModalProps> = ({
 
   return (
     <>
-      <ChakraProvider resetCSS={false} theme={theme}>
-        <Fonts />
+      <ThemeWrapper>
         <Modal
           id="modal"
           closeOnOverlayClick={false}
@@ -1381,7 +1378,7 @@ const ConnextModal: FC<ConnextModalProps> = ({
 
           {activeScreen(screenState)}
         </Modal>
-      </ChakraProvider>
+      </ThemeWrapper>
     </>
   );
 };
