@@ -7,7 +7,7 @@ import {
   IconButton,
 } from '@chakra-ui/react';
 import { ExternalLinkIcon, CloseIcon, HamburgerIcon } from '@chakra-ui/icons';
-import { ScreenStates, SCREEN_STATES } from '../../constants';
+import { ScreenStates, SCREEN_STATES, ERROR_STATES } from '../../constants';
 
 interface OptionsProps {
   state: ScreenStates;
@@ -25,15 +25,30 @@ const Options: FC<OptionsProps> = props => {
           aria-label="Options"
           border="none"
           bg="transparent"
-          icon={<HamburgerIcon />}
+          icon={<HamburgerIcon boxSize={6} />}
         />
-        <MenuList>
-          <MenuItem onClick={handleRecoveryButton}>
+        <MenuList border="none">
+          <MenuItem
+            fontSize="20px"
+            background="transparent"
+            onClick={handleRecoveryButton}
+            isDisabled={
+              [
+                SCREEN_STATES.LOADING,
+                SCREEN_STATES.STATUS,
+                ...Object.values(ERROR_STATES),
+              ].includes(state as any)
+                ? true
+                : false
+            }
+          >
             {' '}
             {state == SCREEN_STATES.RECOVERY ? 'Home' : 'Recovery'}{' '}
           </MenuItem>
 
           <MenuItem
+            fontSize="20px"
+            background="transparent"
             icon={<ExternalLinkIcon />}
             onClick={() =>
               window.open(
@@ -45,6 +60,8 @@ const Options: FC<OptionsProps> = props => {
             Support
           </MenuItem>
           <MenuItem
+            fontSize="20px"
+            background="transparent"
             icon={<CloseIcon />}
             isDisabled={
               [SCREEN_STATES.LOADING, SCREEN_STATES.STATUS].includes(
