@@ -20,6 +20,7 @@ function App() {
     providers.Web3Provider
   >();
   const [loginType, setLoginType] = React.useState<LoginType>('none');
+  const [transferAmount, setTransferAmount] = React.useState<string>();
 
   const setLoginProvider = async (loginType: LoginType) => {
     let provider: providers.Web3Provider | undefined;
@@ -61,6 +62,13 @@ function App() {
         <input type="radio" value="magic" name="loginType" /> Magic
         <input type="radio" value="none" name="loginType" defaultChecked /> None
       </div>
+      <input
+        type="number"
+        defaultChecked
+        onChange={event => setTransferAmount(event.target.value)}
+      />{' '}
+      Transfer Amount
+      <br />
       <button
         onClick={async () => {
           try {
