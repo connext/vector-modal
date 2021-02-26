@@ -91,6 +91,7 @@ const Swap: FC<TransferProps> = props => {
   return (
     <>
       <ModalContent
+        className="global-style"
         id="modalContent"
         style={{
           ...styleModalContent,
@@ -138,6 +139,12 @@ const Swap: FC<TransferProps> = props => {
                     flex="auto"
                     title="Token Amount"
                     aria-describedby="amount"
+                    //styling
+
+                    fontStyle="normal"
+                    lineHeight="20px"
+                    fontSize="1rem"
+                    fontWeight="500"
                     // universal input options
                     inputMode="decimal"
                     value={transferAmount}
@@ -145,7 +152,7 @@ const Swap: FC<TransferProps> = props => {
                   >
                     <NumberInputField
                       // styling
-                      fontFamily="Roboto Mono"
+
                       boxShadow="none!important"
                       border="none"
                       onChange={event => {
@@ -162,6 +169,7 @@ const Swap: FC<TransferProps> = props => {
                       color="#737373"
                       borderRadius="5px"
                       border="none"
+                      casing="uppercase"
                       marginRight="10px"
                       height="1.5rem"
                       isDisabled={inputReadOnly ? true : false}
@@ -224,6 +232,7 @@ const Swap: FC<TransferProps> = props => {
                 loadingText="Waiting For Transaction"
                 isDisabled={!!amountError || !transferAmount ? true : false}
                 onClick={handleSubmit}
+                //styling
               >
                 {userBalance ? 'Swap' : 'Show me QR!'}
               </Button>
