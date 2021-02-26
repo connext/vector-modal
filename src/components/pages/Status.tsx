@@ -1,5 +1,5 @@
 import React, { FC } from 'react';
-import { ModalContent, ModalBody, Text, Stack, Box } from '@chakra-ui/react';
+import { ModalContent, ModalBody, Text, Stack } from '@chakra-ui/react';
 import { Header, Footer, NetworkBar } from '../static';
 import { styleModalContent, CHAIN_DETAIL } from '../../constants';
 import { lightGraphic } from '../../public';
@@ -26,6 +26,7 @@ const Status: FC<StatusProps> = props => {
     <>
       <ModalContent
         id="modalContent"
+        className="global-style"
         style={{
           ...styleModalContent,
           backgroundImage: `url(${lightGraphic})`,
@@ -36,14 +37,16 @@ const Status: FC<StatusProps> = props => {
         <ModalBody>
           <Stack direction="column" spacing={7}>
             <Stack direction="column" spacing={2}>
-              <Box>
-                <Text fontSize="s" casing="capitalize">
-                  {message}
-                </Text>
-                <Text fontSize="s" casing="capitalize" color="#666666">
-                  Do not close or refresh.
-                </Text>
-              </Box>
+              <Text fontSize="16px" casing="capitalize">
+                {message}
+              </Text>
+              <Text
+                fontSize="14px"
+                casing="capitalize"
+                color="#666666"
+              >
+                Do not close or refresh.
+              </Text>
             </Stack>
 
             <NetworkBar
