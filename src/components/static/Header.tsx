@@ -26,13 +26,25 @@ const Header: FC<HeaderProps> = props => {
   } = props;
   return (
     <>
-      <ModalHeader>
-        <Box w="100%" display="flex" flexDirection="row">
-          <Stack direction="row" spacing={3} alignItems="center" flex="auto">
+      <ModalHeader className="global-style">
+        <Box
+          className="global-style"
+          w="100%"
+          display="flex"
+          flexDirection="row"
+        >
+          <Stack
+            className="global-style"
+            direction="row"
+            spacing={3}
+            alignItems="center"
+            flex="auto"
+          >
             {warningIcon && <WarningTwoIcon />}
             {successIcon && <img src={success} />}
             {spinner && (
               <Spinner
+                className="global-style"
                 thickness="3px"
                 speed="0.65s"
                 color="blue.500"
@@ -40,6 +52,7 @@ const Header: FC<HeaderProps> = props => {
               />
             )}
             <Text
+              className="global-style"
               fontSize="2xl"
               casing="uppercase"
               flex="auto"
@@ -54,7 +67,7 @@ const Header: FC<HeaderProps> = props => {
           {options && options()}
           {onClose && onClose()}
         </Box>
-        {subTitle && <Box>{subTitle}</Box>}
+        {subTitle && <Box className="global-style">{subTitle}</Box>}
       </ModalHeader>
     </>
   );
