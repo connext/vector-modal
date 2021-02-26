@@ -2,6 +2,7 @@ import Header from './Header';
 import Footer from './Footer';
 import NetworkBar from './NetworkBar';
 import Options from './Options';
-export * from './Fonts';
+import ThemeWrapper from './ThemeWrapper';
 
-export { Header, Footer, NetworkBar, Options };
+export * from './Fonts';
+export { Header, Footer, NetworkBar, Options, ThemeWrapper };
