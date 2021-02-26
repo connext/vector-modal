@@ -4,5 +4,5 @@ import NetworkBar from './NetworkBar';
 import Options from './Options';
 import ThemeWrapper from './ThemeWrapper';
 
-export * from './Fonts';
+export * from './Style';
 export { Header, Footer, NetworkBar, Options, ThemeWrapper };
