@@ -47,6 +47,7 @@ const Error: FC<ErrorProps> = props => {
     <>
       <ModalContent
         id="modalContent"
+        className="global-style"
         style={{
           ...styleModalContent,
           backgroundImage: `url(${graphic})`,
@@ -65,23 +66,33 @@ const Error: FC<ErrorProps> = props => {
               <Stack direction="column" spacing={3}>
                 <Stack direction="column" spacing={1}>
                   {crossChainTransferId !== constants.HashZero && (
-                    <Text fontSize="sm" noOfLines={4} color="tomato">
+                    <Text
+                      fontFamily="Roboto Mono"
+                      fontSize="s"
+                      noOfLines={4}
+                      color="tomato"
+                    >
                       {crossChainTransferId}
                     </Text>
                   )}
-                  <Text fontSize="sm" noOfLines={4} color="tomato">
+                  <Text
+                    fontSize="s"
+                    noOfLines={4}
+                    color="tomato"
+                    lineHeight="24px"
+                  >
                     {error.message}
                   </Text>
                 </Stack>
-                <Text fontSize="s">
+                <Text fontSize="sm" lineHeight="24px">
                   An error occurred during the transfer. Your funds are
                   preserved in the state channel and the tranfer can be
                   re-attempted.
                 </Text>
-                <Text fontSize="s">
+                <Text fontSize="sm" lineHeight="24px">
                   Support help can be found in the{' '}
                   <Link
-                    color="teal.500"
+                    color="green!important"
                     href="https://discord.com/channels/454734546869551114"
                     isExternal
                   >
