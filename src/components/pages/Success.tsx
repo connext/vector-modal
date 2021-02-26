@@ -38,6 +38,7 @@ const Success: FC<SuccessProps> = props => {
     <>
       <ModalContent
         id="modalContent"
+        className="global-style"
         style={{
           ...styleModalContent,
           backgroundImage: `url(${lightGraphic})`,
@@ -72,7 +73,6 @@ const Success: FC<SuccessProps> = props => {
                       receiverChainInfo.chainId,
                       transactionId
                     )}
-                    textDecorationLine="none"
                     isExternal
                   >
                     <Button
@@ -81,6 +81,8 @@ const Success: FC<SuccessProps> = props => {
                       colorScheme="purple"
                       variant="solid"
                       border="none"
+                      color="white!important"
+                      casing="uppercase!important"
                     >
                       view tx
                     </Button>
