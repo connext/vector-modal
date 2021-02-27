@@ -81,6 +81,7 @@ import Options from './Options';
 import Recover from './Recover';
 import ErrorScreen from './ErrorScreen';
 import SuccessScreen from './SuccessScreen';
+import { debounce } from 'lodash';
 
 export type ConnextModalProps = {
   showModal: boolean;
@@ -134,6 +135,8 @@ const ConnextModal: FC<ConnextModalProps> = ({
 
   const initialTransferAmount = _transferAmount;
   const [transferAmountUi, setTransferAmountUi] = useState<string>();
+  const [transferFeeUi, setTransferFeeUi] = useState<string>('--');
+  const [receivedAmountUi, setReceivedAmountUi] = useState<string>('--');
   const [depositAddress, setDepositAddress] = useState<string>();
 
   const [depositChainId, setDepositChainId] = useState<number>();
@@ -445,6 +448,62 @@ const ConnextModal: FC<ConnextModalProps> = ({
       if (transferAmountBn.gt(userBalanceBn)) {
         err = 'Transfer amount exceeds user balance';
       }
+
+      const asyncFunctionDebounced = debounce(async () => {
+        const getTransferQuoteRes = await node!.getTransferQuote({
+          amount: transferAmountBn.toString(),
+          recipientChainId: withdrawChainId,
+          recipientAssetId: withdrawAssetId,
+          recipient: node!.publicIdentifier,
+          routerIdentifier: routerPublicIdentifier,
+          assetId: depositAssetId,
+          chainId: depositChainId!,
+        });
+        console.log(
+          'getTransferQuote: ',
+          getTransferQuoteRes.isError
+            ? getTransferQuoteRes.getError()
+            : getTransferQuoteRes.getValue()
+        );
+
+        const getWithdrawQuoteRes = await node!.getWithdrawalQuote({
+          amount: transferAmountBn.toString(),
+          channelAddress: withdrawChannelRef.current!.channelAddress,
+          assetId: withdrawAssetId,
+        });
+        console.log(
+          'getWithdrawQuoteRes: ',
+          getWithdrawQuoteRes.isError
+            ? getWithdrawQuoteRes.getError()
+            : getWithdrawQuoteRes.getValue()
+        );
+
+        if (getTransferQuoteRes.isError || getWithdrawQuoteRes.isError) {
+          throw getTransferQuoteRes.getError()! ??
+            getWithdrawQuoteRes.getError()!;
+        }
+
+        const fee = BigNumber.from(getTransferQuoteRes.getValue().fee).add(
+          getWithdrawQuoteRes.getValue().fee
+        );
+        // TODO: account for swap rate on received amount
+        const received = transferAmountBn.sub(fee);
+        if (received.lte(0)) {
+          err = 'Not enough amount to pay fees';
+          setAmountError(err);
+        }
+
+        const receivedUi = utils.formatUnits(received, withdrawAssetDecimals);
+        const feeUi = utils.formatUnits(fee, depositAssetDecimals);
+        console.log('feeUi: ', feeUi);
+        console.log('receivedUi: ', receivedUi);
+        setTransferFeeUi(feeUi);
+        setReceivedAmountUi(receivedUi);
+        console.log(transferFeeUi, receivedAmountUi);
+      }, 1000);
+
+      // this seems to not be perfectly working, im still seeing a few calls
+      asyncFunctionDebounced();
     } catch (e) {
       err = 'Invalid amount';
     }
@@ -1248,6 +1307,30 @@ const ConnextModal: FC<ConnextModalProps> = ({
                         {!!amountError
                           ? amountError
                           : `From ${depositChainName}`}
+                      </Typography>
+                    </Grid>
+
+                    <Grid item xs={12}>
+                      <Typography
+                        variant="subtitle1"
+                        style={{
+                          fontSize: '14px',
+                        }}
+                        align="left"
+                      >
+                        Fee: {transferFeeUi}
+                      </Typography>
+                    </Grid>
+
+                    <Grid item xs={12}>
+                      <Typography
+                        variant="subtitle1"
+                        style={{
+                          fontSize: '20px',
+                        }}
+                        align="left"
+                      >
+                        Total Received: {receivedAmountUi}
                       </Typography>
                     </Grid>
                   </Grid>
