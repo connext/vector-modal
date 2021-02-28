@@ -27,12 +27,13 @@ export const connectNode = async (
   depositChainId: number,
   withdrawChainId: number,
   depositChainProvider: string,
-  withdrawChainProvider: string
+  withdrawChainProvider: string,
+  iframeSrcOverride?: string
 ): Promise<BrowserNode> => {
   console.log('Connect Node');
   const browserNode = new BrowserNode({
     routerPublicIdentifier,
-    iframeSrc,
+    iframeSrc: iframeSrcOverride ?? iframeSrc,
     supportedChains: [depositChainId, withdrawChainId],
     chainProviders: {
       [depositChainId]: depositChainProvider,

@@ -100,6 +100,7 @@ export type ConnextModalProps = {
   }) => any;
   transferAmount?: string;
   injectedProvider?: any;
+  iframeSrcOverride?: string;
   onDepositTxCreated?: (txHash: string) => void;
   onWithdrawalTxCreated?: (txHash: string) => void;
 };
@@ -120,6 +121,7 @@ const ConnextModal: FC<ConnextModalProps> = ({
   injectedProvider: _injectedProvider,
   onDepositTxCreated,
   onWithdrawalTxCreated,
+  iframeSrcOverride,
 }) => {
   const depositAssetId = utils.getAddress(_depositAssetId);
   const withdrawAssetId = utils.getAddress(_withdrawAssetId);
@@ -491,6 +493,8 @@ const ConnextModal: FC<ConnextModalProps> = ({
         if (received.lte(0)) {
           err = 'Not enough amount to pay fees';
           setAmountError(err);
+        } else {
+          setAmountError(undefined);
         }
 
         const receivedUi = utils.formatUnits(received, withdrawAssetDecimals);
@@ -819,7 +823,8 @@ const ConnextModal: FC<ConnextModalProps> = ({
           _depositChainId,
           _withdrawChainId,
           depositChainProvider,
-          withdrawChainProvider
+          withdrawChainProvider,
+          iframeSrcOverride
         ));
       setNode(_node);
     } catch (e) {
