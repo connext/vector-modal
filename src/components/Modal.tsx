@@ -497,7 +497,10 @@ const ConnextModal: FC<ConnextModalProps> = ({
           setAmountError(undefined);
         }
 
-        const receivedUi = utils.formatUnits(received, withdrawAssetDecimals);
+        const receivedUi = utils.formatUnits(
+          received.lt(0) ? 0 : received,
+          withdrawAssetDecimals
+        );
         const feeUi = utils.formatUnits(fee, depositAssetDecimals);
         console.log('feeUi: ', feeUi);
         console.log('receivedUi: ', receivedUi);
