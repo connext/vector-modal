@@ -67,7 +67,6 @@
     "@types/react-dom": "^17.0.0",
     "react": "^16.14.0",
     "react-dom": "^17.0.1",
-    "rollup-plugin-font": "^1.1.1",
     "size-limit": "^4.9.1",
     "tsdx": "^0.14.1",
     "tslib": "^2.0.3",
