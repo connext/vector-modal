@@ -1,0 +1,1 @@
+/// TODO: Adapt Chakra Text component, with some default styles inline.
