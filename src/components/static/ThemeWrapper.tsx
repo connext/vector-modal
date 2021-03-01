@@ -3,8 +3,7 @@ import React, { ReactNode } from 'react';
 import createCache from '@emotion/cache';
 // @ts-ignore
 import createExtraScopePlugin from 'stylis-plugin-extra-scope';
-import { Fonts, GlobalStyle } from './Style';
-import { theme } from '../../constants';
+import { theme, Fonts, GlobalStyle } from './Style';
 
 const CACHE_KEY = 'connext-modal';
 const cache = createCache({
