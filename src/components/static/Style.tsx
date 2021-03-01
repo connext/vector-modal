@@ -67,7 +67,7 @@ export const theme = extendTheme({
           boxSizing: 'border-box',
           borderRadius: '15px',
           borderColor: '#7B7B7B',
-          background: 'white',
+          backgroundColor: 'white',
         },
       },
       // The default size and variant values

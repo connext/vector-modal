@@ -29,7 +29,9 @@ export interface RecoveryProps {
 }
 
 const styleModalContent: CSS.Properties = {
-  background: `url(${graphic}) #F5F5F5 no-repeat`,
+  backgroundImage: `url(${graphic})`,
+  backgroundColor: '#F5F5F5',
+  backgroundRepeat: 'no-repeat',
   border: '2px solid #4D4D4D',
   boxSizing: 'border-box',
   borderRadius: '15px',

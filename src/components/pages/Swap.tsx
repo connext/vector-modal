@@ -37,11 +37,13 @@ export interface TransferProps {
   userBalance?: string;
 }
 const styleModalContent: CSS.Properties = {
-  background: `url(${graphic}) #F5F5F5 no-repeat`,
+  backgroundImage: `url(${graphic})`,
+  backgroundColor: '#F5F5F5',
   border: '2px solid #4D4D4D',
   boxSizing: 'border-box',
   borderRadius: '15px',
   padding: '0.5rem',
+  backgroundRepeat: 'no-repeat',
 };
 
 const Swap: FC<TransferProps> = props => {
