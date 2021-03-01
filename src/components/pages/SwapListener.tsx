@@ -30,14 +30,11 @@ interface SwapListenerProps {
 }
 
 const styleModalContent: CSS.Properties = {
-  backgroundImage: `url(${darkGraphic})`,
-  background: '#F5F5F5',
+  background: `url(${darkGraphic}) #F5F5F5 no-repeat right top`,
   border: '2px solid #4D4D4D',
   boxSizing: 'border-box',
   borderRadius: '15px',
   padding: '0.5rem',
-  backgroundRepeat: 'no-repeat',
-  backgroundPosition: 'right top',
 };
 
 const SwapListener: FC<SwapListenerProps> = props => {

@@ -12,17 +12,16 @@ const styleLoadingCircle: CSS.Properties = {
   height: '96px',
   width: '96px',
   borderRadius: '64px',
-  backgroundColor: '#fcd116',
+  background: '#fcd116',
   overflow: 'hidden',
 };
 
 const styleModalContent: CSS.Properties = {
-  background: '#F5F5F5',
+  background: '#F5F5F5 no-repeat',
   border: '2px solid #4D4D4D',
   boxSizing: 'border-box',
   borderRadius: '15px',
   padding: '0.5rem',
-  backgroundRepeat: 'no-repeat',
 };
 
 const Loading: FC<LoadingProps> = props => {
