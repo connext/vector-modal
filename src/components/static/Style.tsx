@@ -17,13 +17,6 @@ export const theme = extendTheme({
     body: 'Roboto',
     mono: 'Roboto Mono',
   },
-  colors: {
-    brand: {
-      100: '#f7fafc',
-      // ...
-      900: '#1a202c',
-    },
-  },
   components: {
     Input: {
       baseStyle: {

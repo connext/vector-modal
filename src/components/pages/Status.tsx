@@ -15,13 +15,13 @@ export interface StatusProps {
 }
 
 const styleModalContent: CSS.Properties = {
+  backgroundImage: `url(${lightGraphic})`,
   background: '#F5F5F5',
   border: '2px solid #4D4D4D',
   boxSizing: 'border-box',
   borderRadius: '15px',
   padding: '0.5rem',
   backgroundRepeat: 'no-repeat',
-  backgroundImage: `url(${lightGraphic})`,
   backgroundPosition: 'right top',
 };
 
