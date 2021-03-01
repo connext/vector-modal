@@ -32,12 +32,7 @@ const Header: FC<HeaderProps> = props => {
             {warningIcon && <WarningTwoIcon />}
             {successIcon && <img src={success} />}
             {spinner && (
-              <Spinner
-                thickness="3px"
-                speed="0.65s"
-                color="blue.500"
-                size="lg"
-              />
+              <Spinner thickness="3px" speed="0.65s" color="blue" size="lg" />
             )}
             <Text
               fontSize="2xl"

@@ -1,4 +1,5 @@
 import React, { FC, useState, useEffect } from 'react';
+import CSS from 'csstype';
 import {
   ModalContent,
   ModalBody,
@@ -13,7 +14,7 @@ import {
 } from '@chakra-ui/react';
 import { CopyIcon, CheckCircleIcon } from '@chakra-ui/icons';
 import { Header, Footer, NetworkBar } from '../static';
-import { CHAIN_DETAIL, styleModalContent } from '../../constants';
+import { CHAIN_DETAIL } from '../../constants';
 import { darkGraphic } from '../../public';
 // @ts-ignore
 import QRCode from 'qrcode.react';
@@ -27,6 +28,17 @@ interface SwapListenerProps {
   receiverChainInfo: CHAIN_DETAIL;
   receiverAddress: string;
 }
+
+const styleModalContent: CSS.Properties = {
+  background: '#F5F5F5',
+  border: '2px solid #4D4D4D',
+  boxSizing: 'border-box',
+  borderRadius: '15px',
+  padding: '0.5rem',
+  backgroundRepeat: 'no-repeat',
+  backgroundPosition: 'right top',
+  backgroundImage: `url(${darkGraphic})`,
+};
 
 const SwapListener: FC<SwapListenerProps> = props => {
   const {
@@ -90,14 +102,7 @@ const SwapListener: FC<SwapListenerProps> = props => {
 
   return (
     <>
-      <ModalContent
-        id="modalContent"
-        style={{
-          ...styleModalContent,
-          backgroundPosition: 'right top',
-          backgroundImage: `url(${darkGraphic})`,
-        }}
-      >
+      <ModalContent id="modalContent" style={styleModalContent}>
         <Header
           title="Ready for transfer"
           handleBack={handleBack}
@@ -128,7 +133,7 @@ const SwapListener: FC<SwapListenerProps> = props => {
                         <Spinner
                           thickness="3px"
                           speed="0.65s"
-                          color="blue.500"
+                          color="blue"
                           size="lg"
                         />
                         <Text fontFamily="Roboto Mono">

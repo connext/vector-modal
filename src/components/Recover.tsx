@@ -1,4 +1,5 @@
 import React, { FC, useState } from 'react';
+import CSS from 'csstype';
 import {
   ModalContent,
   ModalBody,
@@ -15,7 +16,7 @@ import { getBalanceForAssetId } from '@connext/vector-utils';
 import { BrowserNode } from '@connext/vector-browser-node';
 import { Header, Footer } from './static';
 import { Success, ErrorScreen } from './pages';
-import { styleModalContent, CHAIN_DETAIL, ERROR_STATES } from '../constants';
+import { CHAIN_DETAIL, ERROR_STATES } from '../constants';
 import { graphic } from '../public';
 
 export interface RecoveryProps {
@@ -26,6 +27,16 @@ export interface RecoveryProps {
   node: BrowserNode;
   depositAddress?: string;
 }
+
+const styleModalContent: CSS.Properties = {
+  background: '#F5F5F5',
+  border: '2px solid #4D4D4D',
+  boxSizing: 'border-box',
+  borderRadius: '15px',
+  padding: '0.5rem',
+  backgroundRepeat: 'no-repeat',
+  backgroundImage: `url(${graphic})`,
+};
 
 const Recover: FC<RecoveryProps> = props => {
   const {
@@ -114,13 +125,7 @@ const Recover: FC<RecoveryProps> = props => {
   return (
     <>
       {['Initial', 'Loading'].includes(status as any) && (
-        <ModalContent
-          id="modalContent"
-          style={{
-            ...styleModalContent,
-            backgroundImage: `url(${graphic})`,
-          }}
-        >
+        <ModalContent id="modalContent" style={styleModalContent}>
           <Header
             title="Recover lost funds"
             handleBack={handleBack}

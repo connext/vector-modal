@@ -1,5 +1,6 @@
 import React, { FC } from 'react';
 import { utils } from 'ethers';
+import CSS from 'csstype';
 import {
   ModalContent,
   ModalBody,
@@ -10,7 +11,7 @@ import {
   Link,
 } from '@chakra-ui/react';
 import { Header, Footer, NetworkBar } from '../static';
-import { styleModalContent, CHAIN_DETAIL } from '../../constants';
+import { CHAIN_DETAIL } from '../../constants';
 import { lightGraphic } from '../../public';
 import { getExplorerLinkForTx } from '../../utils';
 
@@ -24,6 +25,17 @@ export interface SuccessProps {
   options: () => void;
 }
 
+const styleModalContent: CSS.Properties = {
+  background: '#F5F5F5',
+  border: '2px solid #4D4D4D',
+  boxSizing: 'border-box',
+  borderRadius: '15px',
+  padding: '0.5rem',
+  backgroundRepeat: 'no-repeat',
+  backgroundImage: `url(${lightGraphic})`,
+  backgroundPosition: 'right top',
+};
+
 const Success: FC<SuccessProps> = props => {
   const {
     amount,
@@ -36,14 +48,7 @@ const Success: FC<SuccessProps> = props => {
   } = props;
   return (
     <>
-      <ModalContent
-        id="modalContent"
-        style={{
-          ...styleModalContent,
-          backgroundImage: `url(${lightGraphic})`,
-          backgroundPosition: 'right top',
-        }}
-      >
+      <ModalContent id="modalContent" style={styleModalContent}>
         <Header
           title="Success"
           successIcon={true}

@@ -1,4 +1,5 @@
 import React, { FC, useEffect, useState } from 'react';
+import CSS from 'csstype';
 import {
   ModalContent,
   ModalBody,
@@ -10,7 +11,7 @@ import {
   NumberInput,
 } from '@chakra-ui/react';
 import { Header, Footer, NetworkBar } from '../static';
-import { styleModalContent, CHAIN_DETAIL } from '../../constants';
+import { CHAIN_DETAIL } from '../../constants';
 import { graphic } from '../../public';
 
 export interface TransferProps {
@@ -35,12 +36,15 @@ export interface TransferProps {
   amountError?: string;
   userBalance?: string;
 }
-
-export function escapeRegExp(string: string): string {
-  return string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'); // $& means the whole matched string
-}
-
-const inputRegex = RegExp(`^\\d*(?:\\\\[.])?\\d*$`); // match escaped "." characters via in a non-capturing group
+const styleModalContent: CSS.Properties = {
+  background: '#F5F5F5',
+  border: '2px solid #4D4D4D',
+  boxSizing: 'border-box',
+  borderRadius: '15px',
+  padding: '0.5rem',
+  backgroundRepeat: 'no-repeat',
+  backgroundImage: `url(${graphic})`,
+};
 
 const Swap: FC<TransferProps> = props => {
   const {
@@ -59,6 +63,12 @@ const Swap: FC<TransferProps> = props => {
 
   const [feeQuote, setFeeQuote] = useState<string | undefined>('———');
   const [quoteAmount, setQuoteAmount] = useState<string | undefined>('———');
+
+  function escapeRegExp(string: string): string {
+    return string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'); // $& means the whole matched string
+  }
+
+  const inputRegex = RegExp(`^\\d*(?:\\\\[.])?\\d*$`); // match escaped "." characters via in a non-capturing group
 
   const enforcer = (nextUserInput: string) => {
     if (nextUserInput === '' || inputRegex.test(escapeRegExp(nextUserInput))) {
@@ -90,13 +100,7 @@ const Swap: FC<TransferProps> = props => {
 
   return (
     <>
-      <ModalContent
-        id="modalContent"
-        style={{
-          ...styleModalContent,
-          backgroundImage: `url(${graphic})`,
-        }}
-      >
+      <ModalContent id="modalContent" style={styleModalContent}>
         <Header title="Send Amount" options={options} />
         <ModalBody>
           <Stack direction="column" spacing={7}>
@@ -107,7 +111,7 @@ const Swap: FC<TransferProps> = props => {
                     flex="auto"
                     fontSize="xs"
                     casing="capitalize"
-                    color={!!amountError ? 'crimson' : 'green.[500]'}
+                    color={!!amountError ? 'crimson' : 'black'}
                   >
                     {!!amountError
                       ? amountError

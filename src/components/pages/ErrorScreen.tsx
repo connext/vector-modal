@@ -7,13 +7,9 @@ import {
   Stack,
   Link,
 } from '@chakra-ui/react';
+import CSS from 'csstype';
 import { Header, Footer, NetworkBar } from '../static';
-import {
-  styleModalContent,
-  CHAIN_DETAIL,
-  ERROR_STATES,
-  ErrorStates,
-} from '../../constants';
+import { CHAIN_DETAIL, ERROR_STATES, ErrorStates } from '../../constants';
 import { graphic } from '../../public';
 import { constants } from 'ethers';
 
@@ -30,6 +26,16 @@ export interface ErrorProps {
   state: ErrorStates;
 }
 
+const styleModalContent: CSS.Properties = {
+  background: '#F5F5F5',
+  border: '2px solid #4D4D4D',
+  boxSizing: 'border-box',
+  borderRadius: '15px',
+  padding: '0.5rem',
+  backgroundRepeat: 'no-repeat',
+  backgroundImage: `url(${graphic})`,
+};
+
 const Error: FC<ErrorProps> = props => {
   const {
     error,
@@ -45,13 +51,7 @@ const Error: FC<ErrorProps> = props => {
   } = props;
   return (
     <>
-      <ModalContent
-        id="modalContent"
-        style={{
-          ...styleModalContent,
-          backgroundImage: `url(${graphic})`,
-        }}
-      >
+      <ModalContent id="modalContent" style={styleModalContent}>
         <Header
           title="Setup error"
           warningIcon={true}
@@ -83,11 +83,13 @@ const Error: FC<ErrorProps> = props => {
                     {error.message}
                   </Text>
                 </Stack>
-                <Text fontSize="sm" lineHeight="24px">
-                  An error occurred during the transfer. Your funds are
-                  preserved in the state channel and the tranfer can be
-                  re-attempted.
-                </Text>
+                {state === ERROR_STATES.ERROR_TRANSFER && (
+                  <Text fontSize="sm" lineHeight="24px">
+                    An error occurred during the transfer. Your funds are
+                    preserved in the state channel and the tranfer can be
+                    re-attempted.
+                  </Text>
+                )}
                 <Text fontSize="sm" lineHeight="24px">
                   Support help can be found in the{' '}
                   <Link

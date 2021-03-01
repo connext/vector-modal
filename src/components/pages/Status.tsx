@@ -1,7 +1,8 @@
 import React, { FC } from 'react';
+import CSS from 'csstype';
 import { ModalContent, ModalBody, Text, Stack } from '@chakra-ui/react';
 import { Header, Footer, NetworkBar } from '../static';
-import { styleModalContent, CHAIN_DETAIL } from '../../constants';
+import { CHAIN_DETAIL } from '../../constants';
 import { lightGraphic } from '../../public';
 
 export interface StatusProps {
@@ -12,6 +13,17 @@ export interface StatusProps {
   receiverAddress: string;
   options: () => void;
 }
+
+const styleModalContent: CSS.Properties = {
+  background: '#F5F5F5',
+  border: '2px solid #4D4D4D',
+  boxSizing: 'border-box',
+  borderRadius: '15px',
+  padding: '0.5rem',
+  backgroundRepeat: 'no-repeat',
+  backgroundImage: `url(${lightGraphic})`,
+  backgroundPosition: 'right top',
+};
 
 const Status: FC<StatusProps> = props => {
   const {
@@ -24,14 +36,7 @@ const Status: FC<StatusProps> = props => {
   } = props;
   return (
     <>
-      <ModalContent
-        id="modalContent"
-        style={{
-          ...styleModalContent,
-          backgroundImage: `url(${lightGraphic})`,
-          backgroundPosition: 'right top',
-        }}
-      >
+      <ModalContent id="modalContent" style={styleModalContent}>
         <Header title={title} spinner={true} options={options} />
         <ModalBody>
           <Stack direction="column" spacing={7}>
