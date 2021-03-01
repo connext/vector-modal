@@ -49,11 +49,14 @@ const Error: FC<ErrorProps> = props => {
     receiverChainInfo,
     receiverAddress,
   } = props;
+
+  const title =
+    state === ERROR_STATES.ERROR_TRANSFER ? 'Trasfer Error' : 'Setup Error';
   return (
     <>
       <ModalContent id="modalContent" style={styleModalContent}>
         <Header
-          title="Setup error"
+          title={title}
           warningIcon={true}
           handleBack={handleBack}
           options={options}
