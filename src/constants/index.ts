@@ -1,4 +1,3 @@
-export * from './style';
 export * from './types';
 
 export const CHAIN_INFO_URL = 'https://chainid.network/chains.json';
