@@ -47,7 +47,6 @@ const Error: FC<ErrorProps> = props => {
     <>
       <ModalContent
         id="modalContent"
-        className="global-style"
         style={{
           ...styleModalContent,
           backgroundImage: `url(${graphic})`,

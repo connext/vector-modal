@@ -92,7 +92,6 @@ const SwapListener: FC<SwapListenerProps> = props => {
     <>
       <ModalContent
         id="modalContent"
-        className="global-style"
         style={{
           ...styleModalContent,
           backgroundPosition: 'right top',

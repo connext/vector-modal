@@ -4,9 +4,8 @@ import { ModalFooter, Text } from '@chakra-ui/react';
 const Footer: FC = () => {
   return (
     <>
-      <ModalFooter className="global-style" justifyContent="center">
+      <ModalFooter justifyContent="center">
         <Text
-          className="global-style"
           fontSize="xs"
           casing="uppercase"
           align="center"

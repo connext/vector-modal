@@ -115,7 +115,6 @@ const Recover: FC<RecoveryProps> = props => {
     <>
       {['Initial', 'Loading'].includes(status as any) && (
         <ModalContent
-          className="global-style"
           id="modalContent"
           style={{
             ...styleModalContent,

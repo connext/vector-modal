@@ -1375,8 +1375,7 @@ const ConnextModal: FC<ConnextModalProps> = ({
           isCentered
         >
           <ModalOverlay />
-
-          {activeScreen(screenState)}
+          <div className="global-style">{activeScreen(screenState)}</div>
         </Modal>
       </ThemeWrapper>
     </>

@@ -22,7 +22,6 @@ const Loading: FC<LoadingProps> = props => {
   return (
     <>
       <ModalContent
-        className="global-style"
         style={{
           ...styleModalContent,
         }}

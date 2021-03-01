@@ -91,7 +91,6 @@ const Swap: FC<TransferProps> = props => {
   return (
     <>
       <ModalContent
-        className="global-style"
         id="modalContent"
         style={{
           ...styleModalContent,

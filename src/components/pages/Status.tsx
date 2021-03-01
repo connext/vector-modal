@@ -26,7 +26,6 @@ const Status: FC<StatusProps> = props => {
     <>
       <ModalContent
         id="modalContent"
-        className="global-style"
         style={{
           ...styleModalContent,
           backgroundImage: `url(${lightGraphic})`,
@@ -40,11 +39,7 @@ const Status: FC<StatusProps> = props => {
               <Text fontSize="16px" casing="capitalize">
                 {message}
               </Text>
-              <Text
-                fontSize="14px"
-                casing="capitalize"
-                color="#666666"
-              >
+              <Text fontSize="14px" casing="capitalize" color="#666666">
                 Do not close or refresh.
               </Text>
             </Stack>

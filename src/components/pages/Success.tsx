@@ -38,7 +38,6 @@ const Success: FC<SuccessProps> = props => {
     <>
       <ModalContent
         id="modalContent"
-        className="global-style"
         style={{
           ...styleModalContent,
           backgroundImage: `url(${lightGraphic})`,
