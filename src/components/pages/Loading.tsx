@@ -1,8 +1,8 @@
 import React, { FC } from 'react';
 import CSS from 'csstype';
-import { ModalContent, ModalBody, Text, Stack, Box } from '@chakra-ui/react';
+import { Stack, Box } from '@chakra-ui/react';
 import { loadingGif } from '../../public';
-import { Footer } from '../static';
+import { Footer, ModalContent, ModalBody, Text } from '../static';
 
 interface LoadingProps {
   message: string;
@@ -39,7 +39,7 @@ const Loading: FC<LoadingProps> = props => {
                 style={{ width: '100%', height: '100%' }}
               />
             </Box>
-            <Text fontSize="xl">{message}</Text>
+            <Text fontSize="1.25rem">{message}</Text>
           </Stack>
         </ModalBody>
 

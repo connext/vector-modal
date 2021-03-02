@@ -1,16 +1,15 @@
 import React, { FC } from 'react';
 import { utils } from 'ethers';
 import CSS from 'csstype';
+import { Stack, Box, Button, Link } from '@chakra-ui/react';
 import {
+  Header,
+  Footer,
+  NetworkBar,
   ModalContent,
   ModalBody,
   Text,
-  Stack,
-  Box,
-  Button,
-  Link,
-} from '@chakra-ui/react';
-import { Header, Footer, NetworkBar } from '../static';
+} from '../static';
 import { CHAIN_DETAIL } from '../../constants';
 import { lightGraphic } from '../../public';
 import { getExplorerLinkForTx } from '../../utils';
@@ -61,13 +60,11 @@ const Success: FC<SuccessProps> = props => {
               <Stack direction="column" spacing={2}>
                 <Stack direction="row" spacing={2}>
                   <Text
-                    fontSize="2xl"
-                    casing="capitalize"
+                    fontSize="1.5rem"
                     fontFamily="Cooper Hewitt"
-                    fontStyle="normal"
                     fontWeight="700"
                     lineHeight="30px"
-                    flex="auto"
+                    // flex="auto"
                   >
                     {utils.formatUnits(amount, receiverChainInfo.assetDecimals)}{' '}
                     {receiverChainInfo.assetName}
@@ -93,7 +90,7 @@ const Success: FC<SuccessProps> = props => {
                   </Link>
                 </Stack>
                 <Box>
-                  <Text fontSize="s" casing="capitalize">
+                  <Text fontSize="1rem">
                     {`Now available on ${receiverChainInfo.name}.`}
                   </Text>
                 </Box>

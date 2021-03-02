@@ -1,16 +1,20 @@
 import React, { FC, useEffect, useState } from 'react';
 import CSS from 'csstype';
 import {
-  ModalContent,
-  ModalBody,
   Button,
-  Text,
   Stack,
   Box,
   NumberInputField,
   NumberInput,
 } from '@chakra-ui/react';
-import { Header, Footer, NetworkBar } from '../static';
+import {
+  Header,
+  Footer,
+  NetworkBar,
+  ModalContent,
+  ModalBody,
+  Text,
+} from '../static';
 import { CHAIN_DETAIL } from '../../constants';
 import { graphic } from '../../public';
 
@@ -108,9 +112,8 @@ const Swap: FC<TransferProps> = props => {
               <Stack direction="column" spacing={1}>
                 <Box display="flex">
                   <Text
-                    flex="auto"
-                    fontSize="xs"
-                    casing="capitalize"
+                    // flex="auto"
+                    fontSize="0.75rem"
                     color={!!amountError ? 'crimson' : 'black'}
                   >
                     {!!amountError
@@ -119,10 +122,10 @@ const Swap: FC<TransferProps> = props => {
                   </Text>
                   {userBalance && (
                     <Text
-                      fontSize="xs"
-                      casing="uppercase"
-                      textAlign="end"
+                      fontSize="0.75rem"
                       fontFamily="Roboto Mono"
+                      textTransform="uppercase"
+                      textAlign="end"
                       color="#757575"
                     >
                       Bal: {userBalance} {senderChainInfo.assetName}
@@ -188,16 +191,14 @@ const Swap: FC<TransferProps> = props => {
               <Stack direction="column" spacing={2}>
                 <Box display="flex">
                   <Text
-                    fontSize="xs"
-                    casing="capitalize"
-                    flex="auto"
+                    fontSize="0.75rem"
+                    // flex="auto"
                     color="#666666"
                   >
                     Estimated Fees:
                   </Text>
                   <Text
-                    fontSize="xs"
-                    casing="capitalize"
+                    fontSize="0.75rem"
                     fontFamily="Roboto Mono"
                     color="#666666"
                   >
@@ -207,17 +208,15 @@ const Swap: FC<TransferProps> = props => {
 
                 <Box display="flex">
                   <Text
-                    fontSize="14px"
-                    casing="capitalize"
-                    flex="auto"
+                    fontSize="0.875rem"
+                    // flex="auto"
                     color="#666666"
                     fontWeight="700"
                   >
                     You will receive:
                   </Text>
                   <Text
-                    fontSize="14px"
-                    casing="capitalize"
+                    fontSize="0.875rem"
                     color="#666666"
                     fontFamily="Roboto Mono"
                     fontWeight="700"

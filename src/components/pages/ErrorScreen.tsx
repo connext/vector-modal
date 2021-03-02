@@ -1,14 +1,15 @@
 import React, { FC } from 'react';
+import { Button, Stack, Link } from '@chakra-ui/react';
+import CSS from 'csstype';
 import {
+  Header,
+  Footer,
+  NetworkBar,
   ModalContent,
   ModalBody,
-  Button,
   Text,
-  Stack,
-  Link,
-} from '@chakra-ui/react';
-import CSS from 'csstype';
-import { Header, Footer, NetworkBar } from '../static';
+} from '../static';
+import styled, { css } from 'styled-components';
 import { CHAIN_DETAIL, ERROR_STATES, ErrorStates } from '../../constants';
 import { graphic } from '../../public';
 import { constants } from 'ethers';
@@ -51,7 +52,7 @@ const Error: FC<ErrorProps> = props => {
   } = props;
 
   const title =
-    state === ERROR_STATES.ERROR_TRANSFER ? 'Trasfer Error' : 'Setup Error';
+    state === ERROR_STATES.ERROR_TRANSFER ? 'Transfer Error' : 'Setup Error';
   return (
     <>
       <ModalContent id="modalContent" style={styleModalContent}>
@@ -70,15 +71,15 @@ const Error: FC<ErrorProps> = props => {
                   {crossChainTransferId !== constants.HashZero && (
                     <Text
                       fontFamily="Roboto Mono"
-                      fontSize="s"
-                      noOfLines={4}
+                      fontSize="1rem"
+                      noOfLines={2}
                       color="tomato"
                     >
                       {crossChainTransferId}
                     </Text>
                   )}
                   <Text
-                    fontSize="s"
+                    fontSize="1rem"
                     noOfLines={4}
                     color="tomato"
                     lineHeight="24px"
@@ -87,13 +88,13 @@ const Error: FC<ErrorProps> = props => {
                   </Text>
                 </Stack>
                 {state === ERROR_STATES.ERROR_TRANSFER && (
-                  <Text fontSize="sm" lineHeight="24px">
+                  <Text fontSize="0.875rem" lineHeight="24px">
                     An error occurred during the transfer. Your funds are
                     preserved in the state channel and the tranfer can be
                     re-attempted.
                   </Text>
                 )}
-                <Text fontSize="sm" lineHeight="24px">
+                <Text fontSize="0.875rem" lineHeight="24px">
                   Support help can be found in the{' '}
                   <Link
                     color="green!important"

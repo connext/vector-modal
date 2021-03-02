@@ -1,7 +1,14 @@
 import React, { FC } from 'react';
 import CSS from 'csstype';
-import { ModalContent, ModalBody, Text, Stack } from '@chakra-ui/react';
-import { Header, Footer, NetworkBar } from '../static';
+import { Stack } from '@chakra-ui/react';
+import {
+  Header,
+  Footer,
+  NetworkBar,
+  ModalContent,
+  ModalBody,
+  Text,
+} from '../static';
 import { CHAIN_DETAIL } from '../../constants';
 import { lightGraphic } from '../../public';
 
@@ -41,10 +48,8 @@ const Status: FC<StatusProps> = props => {
         <ModalBody>
           <Stack direction="column" spacing={7}>
             <Stack direction="column" spacing={2}>
-              <Text fontSize="16px" casing="capitalize">
-                {message}
-              </Text>
-              <Text fontSize="14px" casing="capitalize" color="#666666">
+              <Text fontSize="1rem">{message}</Text>
+              <Text fontSize="14px" color="#666666">
                 Do not close or refresh.
               </Text>
             </Stack>
