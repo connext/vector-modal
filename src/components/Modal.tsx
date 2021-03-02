@@ -131,11 +131,7 @@ const ConnextModal: FC<ConnextModalProps> = ({
     ? new providers.Web3Provider(_injectedProvider)
     : undefined;
   const classes = useStyles();
-  const [transferAmountWei, setTransferAmountWei] = useState<
-    string | undefined
-  >(_transferAmount);
 
-  const initialTransferAmount = _transferAmount;
   const [transferAmountUi, setTransferAmountUi] = useState<string>();
   const [transferFeeUi, setTransferFeeUi] = useState<string>('--');
   const [receivedAmountUi, setReceivedAmountUi] = useState<string>('--');
@@ -143,9 +139,9 @@ const ConnextModal: FC<ConnextModalProps> = ({
 
   const [depositChainId, setDepositChainId] = useState<number>();
   const [withdrawChainId, setWithdrawChainId] = useState<number>();
-  // const [depositRpcProvider, setDepositRpcProvider] = useState<
-  //   providers.JsonRpcProvider
-  // >();
+  const [depositRpcProvider, setDepositRpcProvider] = useState<
+    providers.JsonRpcProvider
+  >();
   const [withdrawRpcProvider, setWithdrawRpcProvider] = useState<
     providers.JsonRpcProvider
   >();
@@ -428,7 +424,7 @@ const ConnextModal: FC<ConnextModalProps> = ({
     );
   };
 
-  const handleInjectedProviderTransferAmountEntry = (
+  const handleSwapCheck = (
     input: string,
     _userBalance: string
   ): string | undefined => {
@@ -439,7 +435,7 @@ const ConnextModal: FC<ConnextModalProps> = ({
       const transferAmountBn = BigNumber.from(
         utils.parseUnits(input.trim(), depositAssetDecimals)
       );
-      setTransferAmountWei(transferAmountBn.toString());
+
       const userBalanceBn = BigNumber.from(
         utils.parseUnits(_userBalance, depositAssetDecimals)
       );
@@ -518,8 +514,7 @@ const ConnextModal: FC<ConnextModalProps> = ({
     return err;
   };
 
-  const injectedProviderDeposit = async (
-    _transferAmount: string,
+  const handleSwapRequest = async (
     _depositChainId: number,
     _withdrawChainId: number,
     _depositAddress: string,
@@ -528,11 +523,10 @@ const ConnextModal: FC<ConnextModalProps> = ({
     _evts: EvtContainer,
     _onDepositTxCreated?: (txHash: string) => void
   ) => {
-    console.log('Attempting provider deposit of', _transferAmount);
-    if (!injectedProvider) {
-      handleError(new Error('Missing injected provider'));
-      return;
-    }
+    console.log('Attempting provider deposit of', transferAmountUi);
+    const _transferAmount: BigNumber = BigNumber.from(
+      utils.parseUnits(transferAmountUi!, depositAssetDecimals!)
+    );
 
     if (
       !_depositChainId ||
@@ -544,6 +538,21 @@ const ConnextModal: FC<ConnextModalProps> = ({
     ) {
       // TODO: handle this better
       handleError(new Error('Missing input fields'));
+      return;
+    }
+
+    if (!injectedProvider) {
+      console.log(`Starting block listener`);
+      // display QR
+      await depositListenerAndTransfer(
+        _depositChainId,
+        _withdrawChainId,
+        _depositAddress,
+        depositRpcProvider!,
+        _withdrawRpcProvider,
+        _evts,
+        _node
+      );
       return;
     }
 
@@ -716,7 +725,6 @@ const ConnextModal: FC<ConnextModalProps> = ({
   };
 
   const stateReset = () => {
-    setTransferAmountWei(_transferAmount);
     setUserBalance('——');
     setIniting(true);
     setTransferState(TRANSFER_STATES.LOADING);
@@ -760,7 +768,7 @@ const ConnextModal: FC<ConnextModalProps> = ({
       _depositChainId
     );
     setDepositChainId(_depositChainId);
-    // setDepositRpcProvider(_depositRpcProvider);
+    setDepositRpcProvider(_depositRpcProvider);
 
     // get decimals for deposit asset
     const _depositAssetDecimals = await getAssetDecimals(
@@ -801,6 +809,20 @@ const ConnextModal: FC<ConnextModalProps> = ({
 
     const _withdrawChainName: string = await getChainInfo(_withdrawChainId);
     setWithdrawChainName(_withdrawChainName);
+
+    if (_transferAmount) {
+      try {
+        const _normalized = utils.formatUnits(
+          _transferAmount,
+          _depositAssetDecimals
+        );
+
+        setTransferAmountUi(_normalized);
+      } catch (e) {
+        handleError(e, 'Error with transferAmount param');
+        return;
+      }
+    }
 
     if (injectedProvider) {
       try {
@@ -1060,50 +1082,10 @@ const ConnextModal: FC<ConnextModalProps> = ({
     // if both are zero, register listener and display
     // QR code
     else {
-      // sets up deposit screen
-      const initialState =
-        !!injectedProvider &&
-        !!initialTransferAmount &&
-        initialTransferAmount !== '0'
-          ? TRANSFER_STATES.DEPOSITING
-          : TRANSFER_STATES.INITIAL;
-      setTransferState(initialState);
-      if (initialState === TRANSFER_STATES.DEPOSITING) {
-        console.log(
-          `Detected deposit amount (${initialTransferAmount}) and transfer provider, jumping to provider deposit`
-        );
-        setIniting(false);
-        // Modal user has provided transfer amount + injected provider
-        // just automatically jump to deposit screen
-        const _userBalance = await getUserBalance(
-          injectedProvider!,
-          _depositChainId,
-          _depositRpcProvider
-        );
-        const err = handleInjectedProviderTransferAmountEntry(
-          utils.formatUnits(initialTransferAmount!, _depositAssetDecimals),
-          _userBalance
-        );
-        if (err) {
-          console.warn('Failed to validate initial amount', err);
-          handleError(new Error(err), err);
-          return;
-        }
-        await injectedProviderDeposit(
-          initialTransferAmount!,
-          _depositChainId,
-          _withdrawChainId,
-          _depositAddress,
-          _withdrawRpcProvider,
-          _node,
-          _evts,
-          onDepositTxCreated
-        );
-        return;
-      }
       if (injectedProvider) {
         console.log(`Using injected provider, not listener.`);
         // using metamask, will be button-driven
+
         setIniting(false);
         await getUserBalance(
           injectedProvider,
@@ -1112,17 +1094,6 @@ const ConnextModal: FC<ConnextModalProps> = ({
         );
         return;
       }
-      console.log(`Starting block listener`);
-      // display QR
-      await depositListenerAndTransfer(
-        _depositChainId,
-        _withdrawChainId,
-        _depositAddress,
-        _depositRpcProvider,
-        _withdrawRpcProvider,
-        _evts,
-        _node
-      );
     }
 
     setIniting(false);
@@ -1297,10 +1268,7 @@ const ConnextModal: FC<ConnextModalProps> = ({
                       className="token-amount-input"
                       value={transferAmountUi ?? '0'}
                       onUserInput={val => {
-                        handleInjectedProviderTransferAmountEntry(
-                          val,
-                          userBalance!
-                        );
+                        handleSwapCheck(val, userBalance!);
                       }}
                     />
                     <Grid item xs={12}>
@@ -1351,16 +1319,14 @@ const ConnextModal: FC<ConnextModalProps> = ({
                   >
                     <Button
                       variant="outlined"
-                      disabled={!!amountError || !transferAmountWei}
+                      disabled={!!amountError || !transferAmountUi}
                       style={{
                         width: '80%',
                         // color: '#212121',
                         // borderColor: '#212121',
                       }}
                       onClick={() =>
-                        transferAmountWei &&
-                        injectedProviderDeposit(
-                          transferAmountWei,
+                        handleSwapRequest(
                           depositChainId!,
                           withdrawChainId!,
                           depositAddress!,
