@@ -746,6 +746,14 @@ const ConnextModal: FC<ConnextModalProps> = ({
       return;
     }
 
+    if (!injectedProvider) {
+      console.error('Injected provider is required for now');
+      handleError(
+        new Error('Needs injected provider'),
+        'Injected provider not detected: '
+      );
+    }
+
     stateReset();
 
     if (!_depositChainId) {
