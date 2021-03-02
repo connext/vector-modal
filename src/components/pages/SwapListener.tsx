@@ -1,9 +1,6 @@
 import React, { FC, useState, useEffect } from 'react';
 import CSS from 'csstype';
 import {
-  ModalContent,
-  ModalBody,
-  Text,
   Stack,
   Box,
   Input,
@@ -13,7 +10,14 @@ import {
   Spinner,
 } from '@chakra-ui/react';
 import { CopyIcon, CheckCircleIcon } from '@chakra-ui/icons';
-import { Header, Footer, NetworkBar } from '../static';
+import {
+  Header,
+  Footer,
+  NetworkBar,
+  ModalContent,
+  ModalBody,
+  Text,
+} from '../static';
 import { CHAIN_DETAIL } from '../../constants';
 import { darkGraphic } from '../../public';
 // @ts-ignore
@@ -126,9 +130,7 @@ const SwapListener: FC<SwapListenerProps> = props => {
                       to the QR or address below.
                     </Text>
                     <Stack direction="column" spacing={3}>
-                      <Text fontSize="1rem" casing="capitalize">
-                        Awaiting your transfer...
-                      </Text>
+                      <Text fontSize="1rem">Awaiting your transfer...</Text>
                       <Stack direction="row" spacing={4} alignItems="center">
                         <Spinner
                           thickness="3px"
