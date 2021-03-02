@@ -430,7 +430,10 @@ const ConnextModal: FC<ConnextModalProps> = ({
 
   const handleInjectedProviderTransferAmountEntry = (
     input: string,
-    _userBalance: string
+    _userBalance: string,
+    _node: BrowserNode,
+    _depositChainId: number,
+    _withdrawChainId: number
   ): string | undefined => {
     let err: string | undefined = undefined;
     try {
@@ -452,14 +455,14 @@ const ConnextModal: FC<ConnextModalProps> = ({
       }
 
       const asyncFunctionDebounced = debounce(async () => {
-        const getTransferQuoteRes = await node!.getTransferQuote({
+        const getTransferQuoteRes = await _node.getTransferQuote({
           amount: transferAmountBn.toString(),
-          recipientChainId: withdrawChainId,
+          recipientChainId: _withdrawChainId,
           recipientAssetId: withdrawAssetId,
-          recipient: node!.publicIdentifier,
+          recipient: _node.publicIdentifier,
           routerIdentifier: routerPublicIdentifier,
           assetId: depositAssetId,
-          chainId: depositChainId!,
+          chainId: _depositChainId,
         });
         console.log(
           'getTransferQuote: ',
@@ -468,7 +471,7 @@ const ConnextModal: FC<ConnextModalProps> = ({
             : getTransferQuoteRes.getValue()
         );
 
-        const getWithdrawQuoteRes = await node!.getWithdrawalQuote({
+        const getWithdrawQuoteRes = await _node.getWithdrawalQuote({
           amount: transferAmountBn.toString(),
           channelAddress: withdrawChannelRef.current!.channelAddress,
           assetId: withdrawAssetId,
@@ -485,6 +488,7 @@ const ConnextModal: FC<ConnextModalProps> = ({
             getWithdrawQuoteRes.getError()!;
         }
 
+        // TODO: this is fully assuming 1:1 swap rates
         const fee = BigNumber.from(getTransferQuoteRes.getValue().fee).add(
           getWithdrawQuoteRes.getValue().fee
         );
@@ -1061,55 +1065,26 @@ const ConnextModal: FC<ConnextModalProps> = ({
     // QR code
     else {
       // sets up deposit screen
-      const initialState =
-        !!injectedProvider &&
-        !!initialTransferAmount &&
-        initialTransferAmount !== '0'
-          ? TRANSFER_STATES.DEPOSITING
-          : TRANSFER_STATES.INITIAL;
+      const initialState = TRANSFER_STATES.INITIAL;
       setTransferState(initialState);
-      if (initialState === TRANSFER_STATES.DEPOSITING) {
-        console.log(
-          `Detected deposit amount (${initialTransferAmount}) and transfer provider, jumping to provider deposit`
-        );
-        setIniting(false);
-        // Modal user has provided transfer amount + injected provider
-        // just automatically jump to deposit screen
-        const _userBalance = await getUserBalance(
-          injectedProvider!,
-          _depositChainId,
-          _depositRpcProvider
-        );
-        const err = handleInjectedProviderTransferAmountEntry(
-          utils.formatUnits(initialTransferAmount!, _depositAssetDecimals),
-          _userBalance
-        );
-        if (err) {
-          console.warn('Failed to validate initial amount', err);
-          handleError(new Error(err), err);
-          return;
-        }
-        await injectedProviderDeposit(
-          initialTransferAmount!,
-          _depositChainId,
-          _withdrawChainId,
-          _depositAddress,
-          _withdrawRpcProvider,
-          _node,
-          _evts,
-          onDepositTxCreated
-        );
-        return;
-      }
       if (injectedProvider) {
         console.log(`Using injected provider, not listener.`);
         // using metamask, will be button-driven
         setIniting(false);
-        await getUserBalance(
+        const bal = await getUserBalance(
           injectedProvider,
           _depositChainId,
           _depositRpcProvider
         );
+        if (initialTransferAmount) {
+          handleInjectedProviderTransferAmountEntry(
+            utils.formatUnits(initialTransferAmount, depositAssetDecimals),
+            bal,
+            _node,
+            _depositChainId,
+            _withdrawChainId
+          );
+        }
         return;
       }
       console.log(`Starting block listener`);
@@ -1296,10 +1271,16 @@ const ConnextModal: FC<ConnextModalProps> = ({
                       aria-describedby="amount"
                       className="token-amount-input"
                       value={transferAmountUi ?? '0'}
+                      disabled={
+                        initialTransferAmount === undefined ? false : true
+                      }
                       onUserInput={val => {
                         handleInjectedProviderTransferAmountEntry(
                           val,
-                          userBalance!
+                          userBalance!,
+                          node!,
+                          depositChainId!,
+                          withdrawChainId!
                         );
                       }}
                     />
