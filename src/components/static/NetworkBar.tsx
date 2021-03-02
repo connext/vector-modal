@@ -1,16 +1,11 @@
 import React, { FC } from 'react';
-import {
-  Stack,
-  Text,
-  Box,
-  Divider,
-  Input,
-  Link,
-  InputGroup,
-} from '@chakra-ui/react';
+import { Input, Link, InputGroup } from '@chakra-ui/react';
+import styled, { css } from 'styled-components';
+
 import { CHAIN_DETAIL } from '../../constants';
 import { arrow } from '../../public';
 import { getExplorerLinkForAsset } from '../../utils';
+import { Stack, Box, Text } from './Theme';
 
 interface NetworkBarProps {
   senderChainInfo: CHAIN_DETAIL;
@@ -21,35 +16,28 @@ const NetworkBar: FC<NetworkBarProps> = props => {
   const { senderChainInfo, receiverChainInfo, receiverAddress } = props;
   return (
     <>
-      <Divider
-        orientation="horizontal"
-        style={{ border: '0.25px solid #666666' }}
-      />
-      <Stack direction="column" spacing={5}>
-        <Box display="flex" justifyContent="space-between">
+      <Divider />
+      <Stack column={true}>
+        <Stack justifyContent="space-between">
           <Box>
             <Text
-              fontSize="xs"
-              casing="uppercase"
+              fontSize="0.75rem"
+              textTransform="uppercase"
               fontFamily="Cooper Hewitt"
               fontWeight="700"
-              style={{
-                lineHeight: '18px',
-                letterSpacing: '0.05em',
-                color: '#26B1D6',
-              }}
+              lineHeight="18px"
+              letterSpacing="0.05em"
+              color="#2964C5"
             >
               {senderChainInfo.name}
             </Text>
             <Text
-              fontSize="xl"
-              casing="uppercase"
+              fontSize="1.25rem"
+              textTransform="uppercase"
               fontFamily="Cooper Hewitt"
               fontWeight="700"
-              style={{
-                lineHeight: '30px',
-                letterSpacing: '0.05em',
-              }}
+              lineHeight="30px"
+              letterSpacing="0.05em"
             >
               <Link
                 href={getExplorerLinkForAsset(
@@ -65,15 +53,13 @@ const NetworkBar: FC<NetworkBarProps> = props => {
           <img src={arrow} />
           <Box>
             <Text
-              fontSize="xs"
-              casing="uppercase"
+              fontSize="0.75rem"
+              textTransform="uppercase"
               fontFamily="Cooper Hewitt"
               fontWeight="700"
-              style={{
-                lineHeight: '18px',
-                letterSpacing: '0.05em',
-                color: '#2964C5',
-              }}
+              lineHeight="18px"
+              letterSpacing="0.05em"
+              color="#2964C5"
             >
               {receiverChainInfo.name}
             </Text>{' '}
@@ -85,27 +71,25 @@ const NetworkBar: FC<NetworkBarProps> = props => {
               isExternal
             >
               <Text
-                fontSize="xl"
-                casing="uppercase"
+                fontSize="1.25rem"
+                textTransform="uppercase"
                 fontFamily="Cooper Hewitt"
                 fontWeight="700"
-                style={{
-                  lineHeight: '30px',
-                  letterSpacing: '0.05em',
-                }}
+                lineHeight="30px"
+                letterSpacing="0.05em"
               >
                 {receiverChainInfo.assetName}
               </Text>
             </Link>
           </Box>
-        </Box>
+        </Stack>
 
         {receiverAddress && (
-          <Stack direction="column" spacing={1}>
+          <Stack column={true} spacing={1}>
             <Text
               fontWeight="400"
               fontSize="12px"
-              casing="capitalize"
+              textTransform="capitalize"
               color="#666666"
             >
               Receiver Address
@@ -142,3 +126,14 @@ const NetworkBar: FC<NetworkBarProps> = props => {
 };
 
 export default NetworkBar;
+
+const Divider = styled.hr`
+  border: 0.25px solid rgb(102, 102, 102);
+  margin-top: 1.75rem;
+  margin-inline-start: 0px;
+  box-sizing: content-box;
+  height: 0px;
+  overflow: visible;
+  width: 100%;
+  opacity: 0.6;
+`;
