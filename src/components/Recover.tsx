@@ -133,7 +133,7 @@ const Recover: FC<RecoveryProps> = props => {
           />
           <ModalBody>
             <Stack direction="column" spacing={5}>
-              <Text fontSize="s" lineHeight="24px">
+              <Text fontSize="1rem" lineHeight="24px">
                 Uh oh! Send the wrong asset to the deposit address? Fill out the
                 details below to attempt recovery of your assets from the state
                 channels.
@@ -143,7 +143,7 @@ const Recover: FC<RecoveryProps> = props => {
                   <Box>
                     <Box display="flex">
                       <Text
-                        fontSize="14px"
+                        fontSize="0.875rem"
                         casing="capitalize"
                         flex="auto"
                         color="#666666"
@@ -152,7 +152,7 @@ const Recover: FC<RecoveryProps> = props => {
                         Token Address
                       </Text>
                       <Text
-                        fontSize="sm"
+                        fontSize="0.875rem"
                         casing="capitalize"
                         color="crimson"
                         fontFamily="Roboto Mono"
@@ -196,7 +196,7 @@ const Recover: FC<RecoveryProps> = props => {
                   <Box>
                     <Box display="flex">
                       <Text
-                        fontSize="14px"
+                        fontSize="0.875rem"
                         casing="capitalize"
                         flex="auto"
                         color="#666666"
@@ -205,7 +205,7 @@ const Recover: FC<RecoveryProps> = props => {
                         Withdrawal Address
                       </Text>
                       <Text
-                        fontSize="sm"
+                        fontSize="0.875rem"
                         casing="capitalize"
                         color="crimson"
                         fontFamily="Roboto Mono"
