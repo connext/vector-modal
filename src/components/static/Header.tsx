@@ -1,7 +1,17 @@
 import React, { FC } from 'react';
-import { ModalHeader, Spinner, Stack, Text, Box } from '@chakra-ui/react';
+import styled, { css } from 'styled-components';
+import { Spinner } from '@chakra-ui/react';
 import { WarningTwoIcon } from '@chakra-ui/icons';
 import { success } from '../../public';
+import { Text, Stack } from './Theme';
+
+// const Box = styled.div`
+//   width: 100%;
+// `;
+
+// const Stack = styled.div`
+//   flex: 1 1 auto;
+// `;
 interface HeaderProps {
   title: string;
   onClose?: () => void;
@@ -27,19 +37,19 @@ const Header: FC<HeaderProps> = props => {
   return (
     <>
       <ModalHeader>
-        <Box w="100%" display="flex" flexDirection="row">
-          <Stack direction="row" spacing={3} alignItems="center" flex="auto">
+        <Stack>
+          <Stack alignItems="center">
             {warningIcon && <WarningTwoIcon />}
             {successIcon && <img src={success} />}
             {spinner && (
               <Spinner thickness="3px" speed="0.65s" color="blue" size="lg" />
             )}
             <Text
-              fontSize="2xl"
-              casing="uppercase"
-              flex="auto"
-              fontFamily="Cooper Hewitt"
+              marginInlineStart="0.75rem"
               fontWeight="700"
+              fontFamily="Cooper Hewitt"
+              textTransform="uppercase"
+              fontSize="1.5rem"
               lineHeight="30px"
             >
               {title}
@@ -48,11 +58,26 @@ const Header: FC<HeaderProps> = props => {
           {handleBack && handleBack()}
           {options && options()}
           {onClose && onClose()}
-        </Box>
-        {subTitle && <Box>{subTitle}</Box>}
+        </Stack>
+        {subTitle && <div>{subTitle}</div>}
       </ModalHeader>
     </>
   );
 };
 
 export default Header;
+
+const ModalHeader = styled.header`
+  flex: 0 1 0%;
+  padding: 1rem 1.5rem;
+  font-size: 1.25rem;
+  font-weight: 600;
+  border-width: 0px;
+  border-style: solid;
+  box-sizing: border-box;
+`;
+
+// const Text = styled.p`
+//   margin-top: 0px;
+//   flex: 1 1 auto;
+// `;
