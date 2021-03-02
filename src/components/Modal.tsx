@@ -1,11 +1,7 @@
 import { BrowserNode } from '@connext/vector-browser-node';
 import React, { FC, useEffect, useState } from 'react';
-import {
-  Modal,
-  ModalOverlay,
-  useDisclosure,
-  IconButton,
-} from '@chakra-ui/react';
+import styled, { css, ThemeProvider } from 'styled-components';
+import { Modal, useDisclosure, IconButton } from '@chakra-ui/react';
 import { ArrowBackIcon, CloseIcon } from '@chakra-ui/icons';
 import {
   EngineEvents,
@@ -48,7 +44,7 @@ import {
   Success,
 } from './pages';
 import Recover from './Recover';
-import { Options, ThemeWrapper } from './static';
+import { Options, ThemeWrapper, Fonts, ModalContentContainer } from './static';
 
 export { useDisclosure };
 
@@ -1361,9 +1357,29 @@ const ConnextModal: FC<ConnextModalProps> = ({
     }
   };
 
+  const theme = {
+    main: 'mediumseagreen',
+    space: [
+      '0.25rem',
+      '0.5rem',
+      '0.75rem',
+      '1rem',
+      '1.5rem',
+      '2rem',
+      '3rem',
+      '4rem',
+      '6rem',
+      '8rem',
+      '12rem',
+      '16rem',
+      '24rem',
+    ],
+  };
+
   return (
     <>
-      <ThemeWrapper>
+      <ThemeProvider theme={theme}>
+        <Fonts />
         <Modal
           id="modal"
           closeOnOverlayClick={false}
@@ -1375,11 +1391,40 @@ const ConnextModal: FC<ConnextModalProps> = ({
           isCentered
         >
           <ModalOverlay />
-          <div className="global-style">{activeScreen(screenState)}</div>
+          <ModalContentContainer>
+            {activeScreen(screenState)}
+          </ModalContentContainer>
         </Modal>
-      </ThemeWrapper>
+      </ThemeProvider>
     </>
   );
 };
 
 export default ConnextModal;
+
+// const Modal = styled.div`
+//   display: flex;
+//   width: 100vw;
+//   height: 100vh;
+//   position: fixed;
+//   left: 0px;
+//   top: 0px;
+//   z-index: 1400;
+//   justify-content: center;
+//   align-items: center;
+//   overflow: hidden;
+//   border-width: 0px;
+//   border-style: solid;
+//   box-sizing: border-box;
+// `;
+
+const ModalOverlay = styled.div`
+  opacity: 1;
+  position: fixed;
+  left: 0px;
+  top: 0px;
+  width: 100vw;
+  height: 100vh;
+  background: rgba(0, 0, 0, 0.48);
+  z-index: 1400;
+`;
