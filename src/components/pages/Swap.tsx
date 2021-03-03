@@ -1,12 +1,6 @@
 import React, { FC, useEffect, useState } from 'react';
 import CSS from 'csstype';
-import {
-  Button,
-  Stack,
-  Box,
-  NumberInputField,
-  NumberInput,
-} from '@chakra-ui/react';
+import { Box, NumberInputField, NumberInput, Button } from '@chakra-ui/react';
 import {
   Header,
   Footer,
@@ -14,6 +8,7 @@ import {
   ModalContent,
   ModalBody,
   Text,
+  Stack,
 } from '../static';
 import { CHAIN_DETAIL } from '../../constants';
 import { graphic } from '../../public';
@@ -107,9 +102,9 @@ const Swap: FC<TransferProps> = props => {
       <ModalContent id="modalContent" style={styleModalContent}>
         <Header title="Send Amount" options={options} />
         <ModalBody>
-          <Stack direction="column" spacing={7}>
-            <Stack direction="column" spacing={5}>
-              <Stack direction="column" spacing={1}>
+          <Stack column={true} spacing={7}>
+            <Stack column={true} spacing={5}>
+              <Stack column={true} spacing={1}>
                 <Box display="flex">
                   <Text
                     // flex="auto"
@@ -188,7 +183,7 @@ const Swap: FC<TransferProps> = props => {
                 </Box>
               </Stack>
 
-              <Stack direction="column" spacing={2}>
+              <Stack column={true} spacing={2}>
                 <Box display="flex">
                   <Text
                     fontSize="0.75rem"

@@ -1,6 +1,6 @@
 import React, { FC } from 'react';
-import { Button } from '@chakra-ui/react';
 import CSS from 'csstype';
+import { Button } from '@chakra-ui/react';
 import {
   Header,
   Footer,
@@ -8,7 +8,7 @@ import {
   ModalContent,
   ModalBody,
   Text,
-  Stack
+  Stack,
 } from '../static';
 import { CHAIN_DETAIL, ERROR_STATES, ErrorStates } from '../../constants';
 import { graphic } from '../../public';
@@ -97,7 +97,7 @@ const Error: FC<ErrorProps> = props => {
                 <Text fontSize="0.875rem" lineHeight="24px">
                   Support help can be found in the{' '}
                   <a
-                    style={{color: "green !important"}}
+                    style={{ color: 'green !important' }}
                     href="https://discord.com/channels/454734546869551114"
                     // isExternal
                   >

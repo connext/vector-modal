@@ -1,12 +1,11 @@
 import React, { FC, useState, useEffect } from 'react';
 import CSS from 'csstype';
 import {
-  Stack,
   Box,
   Input,
   InputGroup,
   InputRightElement,
-  IconButton
+  IconButton,
 } from '@chakra-ui/react';
 import { Loader } from '../static';
 import { CopyIcon, CheckCircleIcon } from '@chakra-ui/icons';
@@ -17,6 +16,7 @@ import {
   ModalContent,
   ModalBody,
   Text,
+  Stack,
 } from '../static';
 import { CHAIN_DETAIL } from '../../constants';
 import { darkGraphic } from '../../public';
@@ -113,11 +113,11 @@ const SwapListener: FC<SwapListenerProps> = props => {
           options={options}
         />
         <ModalBody>
-          <Stack direction="column" spacing={5}>
-            <Stack direction="column" spacing={3}>
+          <Stack column={true} spacing={5}>
+            <Stack column={true} spacing={3}>
               <Box>
-                <Stack direction="row" spacing={8}>
-                  <Stack direction="column" spacing={4}>
+                <Stack spacing={8}>
+                  <Stack column={true} spacing={4}>
                     <Text fontSize="1rem" fontWeight="500">
                       Send{' '}
                       <span style={{ color: '#2964C5' }}>
@@ -129,12 +129,10 @@ const SwapListener: FC<SwapListenerProps> = props => {
                       </span>{' '}
                       to the QR or address below.
                     </Text>
-                    <Stack direction="column" spacing={3}>
+                    <Stack column={true} spacing={3}>
                       <Text fontSize="1rem">Awaiting your transfer...</Text>
-                      <Stack direction="row" spacing={4} alignItems="center">
-                        <Loader
-                          color="blue"
-                        />
+                      <Stack spacing={4} alignItems="center">
+                        <Loader color="blue" />
                         <Text fontFamily="Roboto Mono">
                           {formatTime(currentTimeMin)}:
                           {formatTime(currentTimeSec)}

@@ -1,7 +1,7 @@
 import React, { FC } from 'react';
 import { utils } from 'ethers';
 import CSS from 'csstype';
-import { Stack, Box, Button, Link } from '@chakra-ui/react';
+import { Link, Button } from '@chakra-ui/react';
 import {
   Header,
   Footer,
@@ -9,6 +9,8 @@ import {
   ModalContent,
   ModalBody,
   Text,
+  Stack,
+  Box,
 } from '../static';
 import { CHAIN_DETAIL } from '../../constants';
 import { lightGraphic } from '../../public';
@@ -55,10 +57,10 @@ const Success: FC<SuccessProps> = props => {
           onClose={onClose}
         />
         <ModalBody>
-          <Stack direction="column" spacing={7}>
+          <Stack column={true} spacing={7}>
             <Box>
-              <Stack direction="column" spacing={2}>
-                <Stack direction="row" spacing={2}>
+              <Stack column={true} spacing={2}>
+                <Stack spacing={2}>
                   <Text
                     fontSize="1.5rem"
                     fontFamily="Cooper Hewitt"

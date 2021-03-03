@@ -1,8 +1,7 @@
 import React, { FC } from 'react';
 import CSS from 'csstype';
-import { Stack, Box } from '@chakra-ui/react';
 import { loadingGif } from '../../public';
-import { Footer, ModalContent, ModalBody, Text } from '../static';
+import { Footer, ModalContent, ModalBody, Text, Stack, Box } from '../static';
 
 interface LoadingProps {
   message: string;
@@ -31,7 +30,7 @@ const Loading: FC<LoadingProps> = props => {
     <>
       <ModalContent style={styleModalContent}>
         <ModalBody padding="2.5rem">
-          <Stack direction="column" spacing={5} alignItems="center">
+          <Stack column={true} spacing={5} alignItems="center">
             <Box style={styleLoadingCircle}>
               <img
                 src={loadingGif}
