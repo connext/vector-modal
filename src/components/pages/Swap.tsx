@@ -128,7 +128,7 @@ const Swap: FC<TransferProps> = props => {
                 >
                   <InputGroup flex="auto" colorScheme="white">
                     <Input
-                      size="lg"
+                      body="lg"
                       title="Token Amount"
                       aria-describedby="amount"
                       // styling

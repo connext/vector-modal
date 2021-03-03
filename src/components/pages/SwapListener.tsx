@@ -142,7 +142,7 @@ const SwapListener: FC<SwapListenerProps> = props => {
 
               <InputGroup borderRadius="15px">
                 <Input
-                  size="lg"
+                  body="lg"
                   id="depositAddress"
                   name="address"
                   value={senderChannelAddress}

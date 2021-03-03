@@ -77,7 +77,7 @@ const Error: FC<ErrorProps> = props => {
                         <Input
                           id="address"
                           name="address"
-                          size="sm"
+                          body="sm"
                           value={crossChainTransferId}
                           inputMode="search"
                           title="receiver Address"

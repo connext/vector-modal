@@ -101,7 +101,7 @@ const NetworkBar: FC<NetworkBarProps> = props => {
                 inputMode="search"
                 title="receiver Address"
                 // styled
-                size="md"
+                body="md"
                 fontSize="13px"
                 // misc
                 readOnly={true}

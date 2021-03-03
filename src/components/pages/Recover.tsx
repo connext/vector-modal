@@ -167,11 +167,9 @@ const Recover: FC<RecoveryProps> = props => {
                         id="tokenAddress"
                         name="Token Address"
                         type="search"
-                        size="lg"
+                        body="lg"
                         placeholder="0x..."
                         // styling
-                        boxShadow="none!important"
-                        border="none"
                         value={recoverTokenAddress}
                         onChange={event => {
                           setRecoverTokenAddress(event.target.value);
@@ -209,10 +207,8 @@ const Recover: FC<RecoveryProps> = props => {
                         id="withdrawalAddress"
                         name="Withdrawal Address"
                         type="search"
-                        size="lg"
+                        body="lg"
                         // styling
-                        boxShadow="none!important"
-                        border="none"
                         placeholder="0x..."
                         onChange={event => {
                           setRecoverWithdrawalAddress(event.target.value);
