@@ -421,7 +421,6 @@ const ConnextModal: FC<ConnextModalProps> = ({
   };
 
   const handleSwapCheck = async (_input: string | undefined) => {
-    console.log('handleSwapCheck');
     let err: string | undefined = undefined;
     const input = _input ? _input.trim() : undefined;
 
