@@ -186,7 +186,7 @@ const IconButton = styled.button<IconButtonProps>`
   cursor: ${props => !props.isDisabled ? "pointer" : "not-allowed"};
   opacity: ${props => !props.isDisabled ? "1.0" : "0.4"};
 
-  &::hover {
+  &:hover {
     ${props => !props.isSelected && !props.isDisabled ? "background: rgb(237, 242, 247)" : ""}
   }
 `;

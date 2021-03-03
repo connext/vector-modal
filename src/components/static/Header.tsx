@@ -1,9 +1,8 @@
 import React, { FC } from 'react';
 import styled from 'styled-components';
-import { Spinner } from '@chakra-ui/react';
-import { WarningTwoIcon } from '@chakra-ui/icons';
 import { success } from '../../public';
-import { Text, Stack } from './Theme';
+import { Text, Stack, WarningIcon } from './Theme';
+import Loader from './Loader';
 
 interface HeaderProps {
   title: string;
@@ -32,10 +31,10 @@ const Header: FC<HeaderProps> = props => {
       <ModalHeader>
         <Stack justifyContent="space-between">
           <Stack alignItems="center">
-            {warningIcon && <WarningTwoIcon />}
+            {warningIcon && <WarningIcon />}
             {successIcon && <img src={success} />}
             {spinner && (
-              <Spinner thickness="3px" speed="0.65s" color="blue" size="lg" />
+              <Loader color="blue" />
             )}
             <Text
               marginInlineStart="0.75rem"
