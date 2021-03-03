@@ -5,8 +5,6 @@ import { FullChannelState } from '@connext/vector-types';
 import { getBalanceForAssetId } from '@connext/vector-utils';
 import { BrowserNode } from '@connext/vector-browser-node';
 import {
-  Header,
-  Footer,
   ModalContent,
   ModalBody,
   Text,
@@ -15,10 +13,12 @@ import {
   Button,
   InputGroup,
   Input,
-} from './static';
-import { Success, ErrorScreen } from './pages';
-import { CHAIN_DETAIL, ERROR_STATES } from '../constants';
-import { graphic } from '../public';
+} from '../common';
+import { Header, Footer } from '../static';
+import Success from './Success';
+import ErrorScreen from './ErrorScreen';
+import { CHAIN_DETAIL, ERROR_STATES } from '../../constants';
+import { graphic } from '../../public';
 
 export interface RecoveryProps {
   handleBack: () => void;
