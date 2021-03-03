@@ -1,6 +1,7 @@
 import Box from './Box';
+import Spinner from './Spinner';
 
-export { Box };
+export { Box, Spinner };
 export * from './Button';
 export * from './Fonts';
 export * from './Icon';
