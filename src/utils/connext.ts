@@ -16,11 +16,95 @@ import {
   calculateExchangeAmount,
   createlockHash,
   getBalanceForAssetId,
+  inverse,
 } from '@connext/vector-utils';
 import { providers, Contract, BigNumber, constants, utils } from 'ethers';
 import { Evt } from 'evt';
 import { getOnchainBalance } from './helpers';
 import { iframeSrc } from '../constants';
+
+export const getCrosschainFee = async (
+  node: BrowserNode,
+  routerIdentifier: string,
+  transferAmount: BigNumber,
+  depositChainId: number,
+  depositAssetId: string,
+  depositAssetDecimals: number,
+  withdrawChainId: number,
+  withdrawAssetId: string,
+  withdrawAssetDecimals: number,
+  withdrawChannelAddress: string
+): Promise<BigNumber> => {
+  const transferQuoteResult = await node.getTransferQuote({
+    amount: transferAmount.toString(),
+    recipientChainId: withdrawChainId,
+    recipientAssetId: withdrawAssetId,
+    recipient: node.publicIdentifier,
+    routerIdentifier: routerIdentifier,
+    assetId: depositAssetId,
+    chainId: depositChainId,
+  });
+  console.log('transferQuoteResult: ', transferQuoteResult.toJson());
+  if (transferQuoteResult.isError) {
+    throw transferQuoteResult.getError();
+  }
+  const transferFee = transferQuoteResult.getValue().fee;
+
+  // Get the swap amount
+  const config = await node.getRouterConfig({
+    routerIdentifier,
+  });
+  if (config.isError) {
+    console.error('Router config error:', config.getError()?.toJson());
+    throw new Error('Router config unavailable');
+  }
+  const { allowedSwaps } = config.getValue();
+  const swap = allowedSwaps.find(s => {
+    return (
+      s.fromAssetId.toLowerCase() === depositAssetId.toLowerCase() &&
+      s.fromChainId === depositChainId &&
+      s.toAssetId.toLowerCase() === withdrawAssetId.toLowerCase() &&
+      s.toChainId === withdrawChainId
+    );
+  });
+  if (!swap) {
+    throw new Error(
+      `Swap from ${depositAssetId} on ${depositChainId} to ${withdrawAssetId} on ${withdrawChainId} not allowed. Allowed: ${JSON.stringify(
+        allowedSwaps
+      )}`
+    );
+  }
+  const swapped = transferAmount.lte(transferFee)
+    ? BigNumber.from(0)
+    : transferAmount.sub(transferFee);
+  const swappedAmount = calculateExchangeAmount(
+    swapped.toString(),
+    swap.hardcodedRate,
+    depositAssetDecimals
+  );
+
+  // Get the withdraw quote
+  const withdrawQuoteRes = await node.getWithdrawalQuote({
+    amount: swappedAmount,
+    channelAddress: withdrawChannelAddress,
+    assetId: withdrawAssetId,
+  });
+  console.log('withdrawQuoteRes: ', withdrawQuoteRes.toJson());
+  if (withdrawQuoteRes.isError) {
+    throw withdrawQuoteRes.getError();
+  }
+  const withdrawFee = withdrawQuoteRes.getValue().fee;
+
+  // Get the withdraw fee in deposit asset units
+  const depositAssetWithdrawFee = calculateExchangeAmount(
+    withdrawFee.toString(),
+    inverse(swap.hardcodedRate),
+    withdrawAssetDecimals
+  );
+
+  // Get total fee
+  return BigNumber.from(depositAssetWithdrawFee).add(transferFee);
+};
 
 export const connectNode = async (
   routerPublicIdentifier: string,

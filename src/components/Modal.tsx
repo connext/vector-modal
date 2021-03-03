@@ -74,6 +74,7 @@ import {
   connectNode,
   verifyRouterCapacityForTransfer,
   getOnchainBalance,
+  getCrosschainFee,
 } from '../utils';
 import Loading from './Loading';
 import { Input as NumericalInput } from './NumericalInput';
@@ -455,44 +456,25 @@ const ConnextModal: FC<ConnextModalProps> = ({
       }
 
       const asyncFunctionDebounced = debounce(async () => {
-        const getTransferQuoteRes = await _node.getTransferQuote({
-          amount: transferAmountBn.toString(),
-          recipientChainId: _withdrawChainId,
-          recipientAssetId: withdrawAssetId,
-          recipient: _node.publicIdentifier,
-          routerIdentifier: routerPublicIdentifier,
-          assetId: depositAssetId,
-          chainId: _depositChainId,
-        });
-        console.log(
-          'getTransferQuote: ',
-          getTransferQuoteRes.isError
-            ? getTransferQuoteRes.getError()
-            : getTransferQuoteRes.getValue()
-        );
-
-        const getWithdrawQuoteRes = await _node.getWithdrawalQuote({
-          amount: transferAmountBn.toString(),
-          channelAddress: withdrawChannelRef.current!.channelAddress,
-          assetId: withdrawAssetId,
-        });
-        console.log(
-          'getWithdrawQuoteRes: ',
-          getWithdrawQuoteRes.isError
-            ? getWithdrawQuoteRes.getError()
-            : getWithdrawQuoteRes.getValue()
-        );
-
-        if (getTransferQuoteRes.isError || getWithdrawQuoteRes.isError) {
-          throw getTransferQuoteRes.getError()! ??
-            getWithdrawQuoteRes.getError()!;
+        let fee;
+        try {
+          fee = await getCrosschainFee(
+            _node,
+            routerPublicIdentifier,
+            transferAmountBn,
+            _depositChainId,
+            depositAssetId,
+            depositAssetDecimals ?? 18,
+            _withdrawChainId,
+            withdrawAssetId,
+            withdrawAssetDecimals ?? 18,
+            withdrawChannelRef.current!.channelAddress
+          );
+        } catch (e) {
+          setAmountError(e.message);
+          return;
         }
 
-        // TODO: this is fully assuming 1:1 swap rates
-        const fee = BigNumber.from(getTransferQuoteRes.getValue().fee).add(
-          getWithdrawQuoteRes.getValue().fee
-        );
-        // TODO: account for swap rate on received amount
         const received = transferAmountBn.sub(fee);
         if (received.lte(0)) {
           err = 'Not enough amount to pay fees';
