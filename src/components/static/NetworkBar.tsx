@@ -1,11 +1,11 @@
 import React, { FC } from 'react';
-import { Input, Link, InputGroup } from '@chakra-ui/react';
+import { Input, InputGroup } from '@chakra-ui/react';
 import styled from 'styled-components';
 
 import { CHAIN_DETAIL } from '../../constants';
 import { arrow } from '../../public';
 import { getExplorerLinkForAsset } from '../../utils';
-import { Stack, Box, Text } from './Theme';
+import { Stack, Box, Text, Link } from './Theme';
 
 interface NetworkBarProps {
   senderChainInfo: CHAIN_DETAIL;
@@ -17,7 +17,7 @@ const NetworkBar: FC<NetworkBarProps> = props => {
   return (
     <>
       <Divider />
-      <Stack column={true}>
+      <Stack column={true} spacing={5}>
         <Stack justifyContent="space-between">
           <Box>
             <Text
@@ -27,28 +27,28 @@ const NetworkBar: FC<NetworkBarProps> = props => {
               fontWeight="700"
               lineHeight="18px"
               letterSpacing="0.05em"
-              color="#2964C5"
+              color="#26B1D6"
             >
               {senderChainInfo.name}
             </Text>
-            <Text
-              fontSize="1.25rem"
-              textTransform="uppercase"
-              fontFamily="Cooper Hewitt"
-              fontWeight="700"
-              lineHeight="30px"
-              letterSpacing="0.05em"
+            <Link
+              href={getExplorerLinkForAsset(
+                senderChainInfo.chainId,
+                senderChainInfo.assetId
+              )}
+              target="_blank"
             >
-              <Link
-                href={getExplorerLinkForAsset(
-                  senderChainInfo.chainId,
-                  senderChainInfo.assetId
-                )}
-                isExternal
+              <Text
+                fontSize="1.25rem"
+                textTransform="uppercase"
+                fontFamily="Cooper Hewitt"
+                fontWeight="700"
+                lineHeight="30px"
+                letterSpacing="0.05em"
               >
                 {senderChainInfo.assetName}
-              </Link>
-            </Text>
+              </Text>
+            </Link>
           </Box>
           <img src={arrow} />
           <Box>
@@ -68,7 +68,7 @@ const NetworkBar: FC<NetworkBarProps> = props => {
                 receiverChainInfo.chainId,
                 receiverChainInfo.assetId
               )}
-              isExternal
+              target="_blank"
             >
               <Text
                 fontSize="1.25rem"
