@@ -1,6 +1,6 @@
 import { BrowserNode } from '@connext/vector-browser-node';
 import React, { FC, useEffect, useState } from 'react';
-import styled, { ThemeProvider } from 'styled-components';
+import { ThemeProvider } from 'styled-components';
 import { Modal, useDisclosure } from '@chakra-ui/react';
 import {
   EngineEvents,
