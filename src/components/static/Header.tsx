@@ -1,7 +1,7 @@
 import React, { FC } from 'react';
 import styled from 'styled-components';
 import { success } from '../../public';
-import { Text, Stack, WarningIcon } from './Theme';
+import { Text, Stack, WarningIcon, Box } from './Theme';
 import Loader from './Loader';
 
 interface HeaderProps {
@@ -33,23 +33,25 @@ const Header: FC<HeaderProps> = props => {
           <Stack alignItems="center">
             {warningIcon && <WarningIcon />}
             {successIcon && <img src={success} />}
-            {spinner && (
-              <Loader color="blue" />
-            )}
-            <Text
-              marginInlineStart="0.75rem"
-              fontWeight="700"
-              fontFamily="Cooper Hewitt"
-              textTransform="uppercase"
-              fontSize="1.5rem"
-              lineHeight="30px"
-            >
-              {title}
-            </Text>
+            {spinner && <Loader color="blue" />}
+            <Box>
+              <Text
+                marginInlineStart="0.75rem"
+                fontWeight="700"
+                fontFamily="Cooper Hewitt"
+                textTransform="uppercase"
+                fontSize="1.5rem"
+                lineHeight="30px"
+              >
+                {title}
+              </Text>
+            </Box>
           </Stack>
-          {handleBack && handleBack()}
-          {options && options()}
-          {onClose && onClose()}
+          <Stack>
+            {handleBack && handleBack()}
+            {options && options()}
+            {onClose && onClose()}
+          </Stack>
         </Stack>
         {subTitle && <div>{subTitle}</div>}
       </ModalHeader>
@@ -60,7 +62,6 @@ const Header: FC<HeaderProps> = props => {
 export default Header;
 
 const ModalHeader = styled.header`
-  flex: 0 1 0%;
   padding: 1rem 1.5rem;
   font-size: 1.25rem;
   font-weight: 600;
