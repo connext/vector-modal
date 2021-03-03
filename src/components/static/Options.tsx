@@ -1,5 +1,5 @@
 import React, { FC, useState } from 'react';
-import { MenuList, MenuItem, MenuButton } from '../static';
+import { MenuList, MenuItem, MenuButton } from '../common';
 import { ScreenStates, SCREEN_STATES, ERROR_STATES } from '../../constants';
 
 interface OptionsProps {
@@ -42,7 +42,7 @@ const Options: FC<OptionsProps> = props => {
                 '_blank'
               )
             }
-          > 
+          >
             Support
           </MenuItem>
           <MenuItem
