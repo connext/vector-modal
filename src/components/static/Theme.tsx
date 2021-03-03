@@ -67,11 +67,11 @@ export function getStackStyles(column: boolean | undefined, spacing: string) {
   if (column) {
     return `
         margin-top: ${spacing};
-        margin-start: 0;
+        margin-right: 0;
         `;
   } else {
     return `
-      margin-start: ${spacing};
+      margin-right: ${spacing};
       margin-top: 0;
       `;
   }
@@ -188,6 +188,10 @@ export const Button = styled.button<ButtonProps>`
     opacity: 1;
     background-color: aliceblue;
   }
+`;
+
+export const Link = styled.a`
+  text-decoration: auto;
 `;
 
 const IconBox = styled.div`
