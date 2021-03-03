@@ -1,6 +1,5 @@
 import React, { FC, useEffect, useState } from 'react';
 import CSS from 'csstype';
-import { Box, NumberInputField, NumberInput } from '@chakra-ui/react';
 import {
   Header,
   Footer,
@@ -10,6 +9,8 @@ import {
   Text,
   Stack,
   Button,
+  InputGroup,
+  Input,
 } from '../static';
 import { CHAIN_DETAIL } from '../../constants';
 import { graphic } from '../../public';
@@ -38,12 +39,6 @@ export interface TransferProps {
 }
 const styleModalContent: CSS.Properties = {
   backgroundImage: `url(${graphic})`,
-  backgroundColor: '#F5F5F5',
-  border: '2px solid #4D4D4D',
-  boxSizing: 'border-box',
-  borderRadius: '15px',
-  padding: '0.5rem',
-  backgroundRepeat: 'no-repeat',
 };
 
 const Swap: FC<TransferProps> = props => {
@@ -103,12 +98,12 @@ const Swap: FC<TransferProps> = props => {
       <ModalContent id="modalContent" style={styleModalContent}>
         <Header title="Send Amount" options={options} />
         <ModalBody>
-          <Stack column={true} spacing={7}>
-            <Stack column={true} spacing={5}>
+          <Stack column={true} spacing={5}>
+            <Stack column={true} spacing={4}>
               <Stack column={true} spacing={1}>
-                <Box display="flex">
+                <Stack>
                   <Text
-                    // flex="auto"
+                    flex="auto"
                     fontSize="0.75rem"
                     color={!!amountError ? 'crimson' : 'black'}
                   >
@@ -127,51 +122,49 @@ const Swap: FC<TransferProps> = props => {
                       Bal: {userBalance} {senderChainInfo.assetName}
                     </Text>
                   )}
-                </Box>
-                <Box
-                  bg="white"
-                  w="100%"
-                  display="flex"
-                  flexDirection="row"
+                </Stack>
+                <Stack
+                  colorScheme="white"
                   alignItems="center"
-                  borderRadius="15px"
+                  borderRadius="5px"
                 >
-                  <NumberInput
-                    size="lg"
-                    flex="auto"
-                    title="Token Amount"
-                    aria-describedby="amount"
-                    //styling
-                    fontFamily="Roboto Mono"
-                    fontStyle="normal"
-                    lineHeight="20px"
-                    fontSize="1rem"
-                    fontWeight="500"
-                    // universal input options
-                    inputMode="decimal"
-                    value={transferAmount}
-                    isReadOnly={inputReadOnly ? true : false}
-                  >
-                    <NumberInputField
+                  <InputGroup flex="auto" colorScheme="white">
+                    <Input
+                      size="lg"
+                      title="Token Amount"
+                      aria-describedby="amount"
                       // styling
-                      boxShadow="none!important"
-                      border="none"
+                      fontSize="1rem"
+                      // universal input options
+                      inputMode="decimal"
+                      autoComplete="off"
+                      autoCorrect="off"
+                      // text-specific options
+                      type="text"
+                      pattern="^[0-9]*[.,]?[0-9]*$"
+                      placeholder={'0.0'}
+                      minLength={1}
+                      maxLength={79}
+                      spellCheck="false"
+                      // value
+                      value={transferAmount}
                       onChange={event => {
-                        // replace commas with periods, because uniswap exclusively uses period as the decimal separator
                         enforcer(event.target.value.replace(/,/g, '.'));
                       }}
+                      readOnly={inputReadOnly ? true : false}
                     />
-                  </NumberInput>
+                  </InputGroup>
 
                   {userBalance && (
                     <Button
-                      size="sm"
+                      size="xs"
                       colorScheme="#DEDEDE"
                       color="#737373"
                       borderRadius="5px"
                       border="none"
+                      borderStyle="none"
                       casing="uppercase"
-                      marginRight="10px"
+                      marginRight="10px!important"
                       height="1.5rem"
                       disabled={inputReadOnly ? true : false}
                       onClick={() => {
@@ -181,16 +174,12 @@ const Swap: FC<TransferProps> = props => {
                       max
                     </Button>
                   )}
-                </Box>
+                </Stack>
               </Stack>
 
               <Stack column={true} spacing={2}>
-                <Box display="flex">
-                  <Text
-                    fontSize="0.75rem"
-                    // flex="auto"
-                    color="#666666"
-                  >
+                <Stack>
+                  <Text fontSize="0.75rem" flex="auto" color="#666666">
                     Estimated Fees:
                   </Text>
                   <Text
@@ -200,12 +189,12 @@ const Swap: FC<TransferProps> = props => {
                   >
                     {feeQuote} {senderChainInfo.assetName}
                   </Text>
-                </Box>
+                </Stack>
 
-                <Box display="flex">
+                <Stack>
                   <Text
                     fontSize="0.875rem"
-                    // flex="auto"
+                    flex="auto"
                     color="#666666"
                     fontWeight="700"
                   >
@@ -219,13 +208,15 @@ const Swap: FC<TransferProps> = props => {
                   >
                     {quoteAmount} {senderChainInfo.assetName}
                   </Text>
-                </Box>
+                </Stack>
               </Stack>
 
               <Button
                 size="lg"
                 type="submit"
-                disabled={!!amountError || !transferAmount ? true : false}
+                disabled={
+                  !!amountError || !transferAmount || isLoad ? true : false
+                }
                 onClick={handleSubmit}
               >
                 {isLoad
