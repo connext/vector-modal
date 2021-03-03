@@ -9,6 +9,7 @@ import {
 } from '@connext/vector-types';
 import { getBalanceForAssetId, getRandomBytes32 } from '@connext/vector-utils';
 import { BigNumber, constants, utils, providers, Contract } from 'ethers';
+import { debounce } from 'lodash';
 import {
   ERROR_STATES,
   SCREEN_STATES,
@@ -73,6 +74,7 @@ export type ConnextModalProps = {
   transferAmount?: string;
   injectedProvider?: any;
   loginProvider?: any;
+  iframeSrcOverride?: string;
   onDepositTxCreated?: (txHash: string) => void;
   onWithdrawalTxCreated?: (txHash: string) => void;
 };
@@ -94,6 +96,7 @@ const ConnextModal: FC<ConnextModalProps> = ({
   loginProvider: _loginProvider,
   onDepositTxCreated,
   onWithdrawalTxCreated,
+  iframeSrcOverride,
 }) => {
   const depositAssetId = utils.getAddress(_depositAssetId);
   const withdrawAssetId = utils.getAddress(_withdrawAssetId);
@@ -109,6 +112,9 @@ const ConnextModal: FC<ConnextModalProps> = ({
   const [transferAmountUi, setTransferAmountUi] = useState<
     string | undefined
   >();
+  const [transferFeeUi, setTransferFeeUi] = useState<string>('--');
+  const [receivedAmountUi, setReceivedAmountUi] = useState<string>('--');
+
   const [depositAddress, setDepositAddress] = useState<string>();
 
   const [withdrawChannel, _setWithdrawChannel] = useState<FullChannelState>();
@@ -408,50 +414,16 @@ const ConnextModal: FC<ConnextModalProps> = ({
     );
   };
 
-  // const handleSwapfeeQuote = async (
-  //   input: string
-  // ): Promise<{
-  //   fee: string;
-  // }> => {
-  //   const quote = await getFeeQuote(
-  //     routerPublicIdentifier,
-  //     input,
-  //     senderChain?.assetId!,
-  //     senderChain?.chainId!,
-  //     node!.publicIdentifier,
-  //     receiverChain?.chainId!,
-  //     receiverChain?.assetId!
-  //   );
-  //   return quote;
-  // };
-
-  const handleSwapCheck = (
-    _input: string | undefined
-  ): {
-    isError: boolean;
-    result: {
-      quoteFee: string | undefined;
-      quoteAmount: string | undefined;
-      error: string | undefined;
-    };
-  } => {
+  const handleSwapCheck = async (_input: string | undefined) => {
     let err: string | undefined = undefined;
-    let quote_fee: string | undefined = undefined;
-    let quote_amount: string | undefined = undefined;
     const input = _input ? _input.trim() : undefined;
 
     setAmountError(undefined);
     if (!input) {
       setTransferAmountUi(undefined);
-      return {
-        isError: true,
-        result: {
-          quoteFee: undefined,
-          quoteAmount: undefined,
-          error: undefined,
-        },
-      };
+      return;
     }
+
     try {
       setTransferAmountUi(input);
       const transferAmountBn = BigNumber.from(
@@ -460,6 +432,8 @@ const ConnextModal: FC<ConnextModalProps> = ({
 
       if (transferAmountBn.isZero()) {
         err = 'Transfer amount cannot be 0';
+        setAmountError(err);
+        return;
       }
       if (userBalance) {
         const userBalanceBn = BigNumber.from(
@@ -467,46 +441,86 @@ const ConnextModal: FC<ConnextModalProps> = ({
         );
         if (transferAmountBn.gt(userBalanceBn)) {
           err = 'Transfer amount exceeds user balance';
+          setAmountError(err);
+          return;
         }
       }
-      // const res = await handleSwapfeeQuote(input);
-      const res = { fee: '0' };
-      quote_fee = res.fee;
 
-      const feeBn = BigNumber.from(
-        utils.parseUnits(quote_fee, senderChain?.assetDecimals!)
-      );
+      const asyncFunctionDebounced = debounce(async () => {
+        const getTransferQuoteRes = await node!.getTransferQuote({
+          amount: transferAmountBn.toString(),
+          recipientChainId: receiverChain?.chainId!,
+          recipientAssetId: receiverChain?.assetId!,
+          recipient: node!.publicIdentifier,
+          routerIdentifier: routerPublicIdentifier,
+          chainId: senderChain?.chainId!,
+          assetId: senderChain?.assetId!,
+        });
+        console.log(
+          'getTransferQuote: ',
+          getTransferQuoteRes.isError
+            ? getTransferQuoteRes.getError()
+            : getTransferQuoteRes.getValue()
+        );
+        if (getTransferQuoteRes.isError) {
+          err = getTransferQuoteRes.getError()!.message;
+          setAmountError(err);
+          return;
+        }
 
-      const quoteAmountBn = transferAmountBn.sub(feeBn);
+        const getWithdrawQuoteRes = await node!.getWithdrawalQuote({
+          amount: transferAmountBn.toString(),
+          channelAddress: withdrawChannelRef.current!.channelAddress,
+          assetId: receiverChain?.assetId!,
+        });
+        console.log(
+          'getWithdrawQuoteRes: ',
+          getWithdrawQuoteRes.isError
+            ? getWithdrawQuoteRes.getError()
+            : getWithdrawQuoteRes.getValue()
+        );
 
-      quote_amount = utils.formatUnits(
-        quoteAmountBn,
-        senderChain?.assetDecimals!
-      );
+        if (getWithdrawQuoteRes.isError) {
+          err = getWithdrawQuoteRes.getError()!.message;
+          setAmountError(err);
+          return;
+        }
 
-      if (quoteAmountBn.lt(0)) {
-        err = 'Transfer amount is less than quote fees';
-      }
+        const fee = BigNumber.from(getTransferQuoteRes.getValue().fee).add(
+          getWithdrawQuoteRes.getValue().fee
+        );
+        // TODO: account for swap rate on received amount
+        const received = transferAmountBn.sub(fee);
+        if (received.lte(0)) {
+          err = 'Transfer amount is less than quote fees';
+          setAmountError(err);
+          return;
+        }
+
+        const receivedUi = utils.formatUnits(
+          received.lt(0) ? 0 : received,
+          receiverChain?.assetDecimals
+        );
+        const feeUi = utils.formatUnits(fee, senderChain?.assetDecimals!);
+        console.log('feeUi: ', feeUi);
+        console.log('receivedUi: ', receivedUi);
+        setTransferFeeUi(feeUi);
+        setReceivedAmountUi(receivedUi);
+        console.log(transferFeeUi, receivedAmountUi);
+      }, 1000);
+
+      // this seems to not be perfectly working, im still seeing a few calls
+      asyncFunctionDebounced();
     } catch (e) {
       err = 'Invalid amount';
     }
-
     setAmountError(err);
-    const is_error: boolean = err ? true : false;
-    return {
-      isError: is_error,
-      result: {
-        quoteFee: quote_fee,
-        quoteAmount: quote_amount,
-        error: err,
-      },
-    };
+    return;
   };
 
   const handleSwapRequest = async () => {
-    const res = await handleSwapCheck(transferAmountUi);
-    if (res.isError) {
-      setAmountError(res.result.error);
+    await handleSwapCheck(transferAmountUi);
+    if (amountError) {
       return;
     }
     setIsLoad(true);
@@ -861,7 +875,8 @@ const ConnextModal: FC<ConnextModalProps> = ({
           receiverChainInfo.chainId,
           senderChainInfo.chainProvider,
           receiverChainInfo.chainProvider,
-          loginProvider
+          loginProvider,
+          iframeSrcOverride
         ));
       setNode(_node);
     } catch (e) {
@@ -1294,6 +1309,8 @@ const ConnextModal: FC<ConnextModalProps> = ({
             receiverChainInfo={receiverChain!}
             receiverAddress={withdrawalAddress}
             transferAmount={transferAmountUi}
+            feeQuote={transferFeeUi}
+            quoteAmount={receivedAmountUi}
             options={handleOptions}
           />
         );
