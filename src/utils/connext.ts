@@ -28,12 +28,13 @@ export const connectNode = async (
   withdrawChainId: number,
   depositChainProvider: string,
   withdrawChainProvider: string,
-  loginProvider?: providers.Web3Provider
+  loginProvider?: providers.Web3Provider,
+  iframeSrcOverride?: string
 ): Promise<BrowserNode> => {
   console.log('Connect Node');
   const browserNode = new BrowserNode({
     routerPublicIdentifier,
-    iframeSrc,
+    iframeSrc: iframeSrcOverride ?? iframeSrc,
     supportedChains: [depositChainId, withdrawChainId],
     chainProviders: {
       [depositChainId]: depositChainProvider,
@@ -600,27 +601,4 @@ export const getChannelForChain = async (
     throw new Error(`Could not find channel on ${chainId}`);
   }
   return channel as FullChannelState;
-};
-
-export const getFeeQuote = async (
-  routerIdentifier: string,
-  amount: string,
-  assetId: string,
-  chainId: number,
-  recipient: string,
-  recipientChainId: number,
-  recipientAssetId: string
-): Promise<{
-  fee: string;
-}> => {
-  console.log(
-    routerIdentifier,
-    amount,
-    assetId,
-    chainId,
-    recipient,
-    recipientChainId,
-    recipientAssetId
-  );
-  return { fee: '0' };
 };
