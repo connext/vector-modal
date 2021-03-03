@@ -9,7 +9,7 @@ import {
   ModalBody,
   Text,
 } from '../static';
-import styled, { css } from 'styled-components';
+// import styled, { css } from 'styled-components';
 import { CHAIN_DETAIL, ERROR_STATES, ErrorStates } from '../../constants';
 import { graphic } from '../../public';
 import { constants } from 'ethers';

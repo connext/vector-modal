@@ -1,6 +1,6 @@
 import React, { FC } from 'react';
 import { Input, Link, InputGroup } from '@chakra-ui/react';
-import styled, { css } from 'styled-components';
+import styled from 'styled-components';
 
 import { CHAIN_DETAIL } from '../../constants';
 import { arrow } from '../../public';

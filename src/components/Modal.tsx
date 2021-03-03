@@ -1,6 +1,6 @@
 import { BrowserNode } from '@connext/vector-browser-node';
 import React, { FC, useEffect, useState } from 'react';
-import styled, { css, ThemeProvider } from 'styled-components';
+import styled, { ThemeProvider } from 'styled-components';
 import { Modal, useDisclosure, IconButton } from '@chakra-ui/react';
 import { ArrowBackIcon, CloseIcon } from '@chakra-ui/icons';
 import {
@@ -44,7 +44,7 @@ import {
   Success,
 } from './pages';
 import Recover from './Recover';
-import { Options, ThemeWrapper, Fonts, ModalContentContainer } from './static';
+import { Options, Fonts, ModalContentContainer } from './static';
 
 export { useDisclosure };
 

@@ -1,4 +1,6 @@
-import styled, { css } from 'styled-components';
+import React from 'react';
+import styled from 'styled-components';
+import { useWindowDimensions } from './utils';
 
 type TextProps = {
   color?: string;
@@ -115,3 +117,152 @@ export const ModalBody = styled(Box)<ModalBodyProps>`
   flex: 1 1 0%;
   overflow: auto;
 `;
+
+/// ** MENU:
+type MenuHamburgerButtonProps = {
+  onClick: (e?: React.MouseEvent) => void;
+  isSelected: boolean;
+} & React.ButtonHTMLAttributes<HTMLButtonElement>;
+
+const MenuHamburgerButton = styled.button<MenuHamburgerButtonProps>`
+  -webkit-font-smoothing: antialiased;
+  --removed-body-scroll-bar-size: 0px;
+  display: inline-flex;
+  appearance: none;
+  align-items: center;
+  justify-content: center;
+  transition: all 250ms ease 0s;
+  user-select: none;
+  position: relative;
+  white-space: nowrap;
+  vertical-align: middle;
+  outline: none;
+  width: auto;
+  border-radius: 0.375rem;
+  font-weight: 400;
+  font-style: normal;
+  font-family: Roboto;
+  text-transform: capitalize;
+  height: 2.5rem;
+  min-width: 2.5rem;
+  font-size: 16px;
+  padding: 0px;
+  border: 0px rgb(123, 123, 123);
+  box-sizing: border-box;
+  background: ${props => props.isSelected ? "rgb(226, 232, 240)" : "transparent"};
+  overflow: visible;
+  box-shadow: none !important;
+  cursor: pointer;
+  line-height: inherit;
+  color: inherit;
+`;
+
+export const MenuButton = ({ onClick, isSelected }: MenuHamburgerButtonProps) => {
+  return (
+    <MenuHamburgerButton onClick={onClick} isSelected={isSelected}>
+      <svg viewBox="0 0 24 24" focusable="false" aria-hidden="true">
+        <path fill="currentColor" d="M 3 5 A 1.0001 1.0001 0 1 0 3 7 L 21 7 A 1.0001 1.0001 0 1 0 21 5 L 3 5 z M 3 11 A 1.0001 1.0001 0 1 0 3 13 L 21 13 A 1.0001 1.0001 0 1 0 21 11 L 3 11 z M 3 17 A 1.0001 1.0001 0 1 0 3 19 L 21 19 A 1.0001 1.0001 0 1 0 21 17 L 3 17 z"></path>
+      </svg>
+    </MenuHamburgerButton>
+  );
+};
+
+/// NOTE: MenuListPositioner contains MenuListContainer. This arrangement is a temporary solution in
+/// reverse engineering previous framework UI.
+type MenuListPositionerProps = {
+  hidden: boolean;
+  placement: string;
+};
+
+const MenuListPositioner = styled.div<MenuListPositionerProps>`
+  font-family: -apple-system,BlinkMacSystemFont,"Segoe UI","Roboto","Oxygen","Ubuntu","Cantarell","Fira Sans","Droid Sans","Helvetica Neue",sans-serif;
+  -webkit-font-smoothing: antialiased;
+  --removed-body-scroll-bar-size: 0px;
+  color: inherit;
+  font-size: 1.25rem;
+  font-weight: 600;
+  border-width: 0px;
+  border-style: solid;
+  box-sizing: border-box;
+  z-index: 1;
+  position: absolute;
+  inset: 0px auto auto 0px;
+  visibility: ${props => props.hidden ? "hidden" : "visible"};
+  transform: ${props => props.placement == "bottom-start" ? "translate3d(372px, 72px, 0px)" : "translate3d(188px, 72px, 0px)"};
+`;
+
+type MenuListProps = {
+  children?: React.ReactNode;
+  hidden: boolean;
+};
+
+const MenuListContainer = styled.div<MenuListProps>`
+  font-family: -apple-system,BlinkMacSystemFont,"Segoe UI","Roboto","Oxygen","Ubuntu","Cantarell","Fira Sans","Droid Sans","Helvetica Neue",sans-serif;
+  -webkit-font-smoothing: antialiased;
+  --removed-body-scroll-bar-size: 0px;
+  font-size: 1.25rem;
+  font-weight: 600;
+  box-sizing: border-box;
+  outline: 0px;
+  background: rgb(255, 255, 255);
+  box-shadow: rgba(0, 0, 0, 0.05) 0px 1px 2px 0px;
+  color: inherit;
+  min-width: 14rem;
+  padding-top: 0.5rem;
+  padding-bottom: 0.5rem;
+  z-index: 1;
+  border-radius: 0.375rem;
+  border: 0px;
+  transform-origin: left top;
+  opacity: ${props => props.hidden ? "0" : "1"};
+  visibility: ${props => props.hidden ? "hidden" : "visible"};
+  transform: ${props => props.hidden ? "scale(0.8) translateZ(0px)" : "none"};
+`;
+
+export const MenuList = ({ children, hidden }: MenuListProps) => {
+  const { width } = useWindowDimensions();
+  return (
+    <MenuListPositioner hidden={hidden} placement={width > 765 ? "bottom-start" : "bottom-end"}>
+      <MenuListContainer hidden={hidden}>{children}</MenuListContainer>
+    </MenuListPositioner>
+  );
+};
+
+type MenuItemProps = {
+  children?: React.ReactNode | string,
+  onClick: (e?: React.MouseEvent) => void,
+  isDisabled?: boolean
+} & React.ButtonHTMLAttributes<HTMLButtonElement>;
+
+const MenuItemButton = styled.button<MenuItemProps>`
+  -webkit-font-smoothing: antialiased;
+  --removed-body-scroll-bar-size: 0px;
+  visibility: visible;
+  border-width: 0px;
+  border-style: solid;
+  box-sizing: border-box;
+  text-decoration: none;
+  user-select: none;
+  display: flex;
+  width: 100%;
+  align-items: center;
+  text-align: left;
+  flex: 0 0 auto;
+  outline: 0px;
+  padding: 0.4rem 0.8rem;
+  transition: background 50ms ease-in 0s;
+  font-size: 20px;
+  background: transparent;
+  overflow: visible;
+  box-shadow: none !important;
+  line-height: inherit;
+  color: inherit;
+  cursor: ${props => !props.isDisabled ? "pointer" : "not-allowed"};
+  opacity: ${props => !props.isDisabled ? "1.0" : "0.4"};
+`;
+
+export const MenuItem = ({ onClick, children, isDisabled }: MenuItemProps) => {
+  return (
+    <MenuItemButton onClick={onClick} isDisabled={isDisabled}>{children}</MenuItemButton>
+  );
+};

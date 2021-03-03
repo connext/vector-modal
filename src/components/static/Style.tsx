@@ -1,7 +1,7 @@
 import React from 'react';
-import { extendTheme } from '@chakra-ui/react';
-import { createGlobalStyle } from 'styled-components';
-import { Global, css } from '@emotion/react';
+// import { extendTheme } from '@chakra-ui/react';
+// import { createGlobalStyle } from 'styled-components';
+import { Global } from '@emotion/react';
 import {
   Roboto700,
   Roboto500,

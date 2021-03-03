@@ -1,17 +1,10 @@
 import React, { FC } from 'react';
-import styled, { css } from 'styled-components';
+import styled from 'styled-components';
 import { Spinner } from '@chakra-ui/react';
 import { WarningTwoIcon } from '@chakra-ui/icons';
 import { success } from '../../public';
 import { Text, Stack } from './Theme';
 
-// const Box = styled.div`
-//   width: 100%;
-// `;
-
-// const Stack = styled.div`
-//   flex: 1 1 auto;
-// `;
 interface HeaderProps {
   title: string;
   onClose?: () => void;
@@ -37,7 +30,7 @@ const Header: FC<HeaderProps> = props => {
   return (
     <>
       <ModalHeader>
-        <Stack>
+        <Stack justifyContent="space-between">
           <Stack alignItems="center">
             {warningIcon && <WarningTwoIcon />}
             {successIcon && <img src={success} />}
