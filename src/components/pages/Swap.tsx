@@ -1,4 +1,4 @@
-import React, { FC, useEffect, useState } from 'react';
+import React, { FC, useEffect } from 'react';
 import CSS from 'csstype';
 import {
   ModalContent,
@@ -14,16 +14,7 @@ import { CHAIN_DETAIL } from '../../constants';
 import { graphic } from '../../public';
 
 export interface TransferProps {
-  onUserInput: (
-    _input: string | undefined
-  ) => {
-    isError: boolean;
-    result: {
-      quoteFee: string | undefined;
-      quoteAmount: string | undefined;
-      error: string | undefined;
-    };
-  };
+  onUserInput: (_input: string | undefined) => void;
   swapRequest: () => void;
   options: () => void;
   isLoad: Boolean;
@@ -32,6 +23,8 @@ export interface TransferProps {
   receiverChainInfo: CHAIN_DETAIL;
   receiverAddress: string;
   transferAmount: string | undefined;
+  feeQuote: string;
+  quoteAmount: string | undefined;
   amountError?: string;
   userBalance?: string;
 }
@@ -47,15 +40,14 @@ const Swap: FC<TransferProps> = props => {
     receiverChainInfo,
     receiverAddress,
     transferAmount,
+    feeQuote,
+    quoteAmount,
     isLoad,
     inputReadOnly,
     onUserInput,
     swapRequest,
     options,
   } = props;
-
-  const [feeQuote, setFeeQuote] = useState<string | undefined>('———');
-  const [quoteAmount, setQuoteAmount] = useState<string | undefined>('———');
 
   function escapeRegExp(string: string): string {
     return string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'); // $& means the whole matched string
@@ -65,14 +57,7 @@ const Swap: FC<TransferProps> = props => {
 
   const enforcer = (nextUserInput: string) => {
     if (nextUserInput === '' || inputRegex.test(escapeRegExp(nextUserInput))) {
-      const res = onUserInput(nextUserInput);
-      if (res.isError) {
-        setFeeQuote('———');
-        setQuoteAmount('———');
-        return;
-      }
-      setFeeQuote(res.result.quoteFee);
-      setQuoteAmount(res.result.quoteAmount);
+      onUserInput(nextUserInput);
     }
   };
 
