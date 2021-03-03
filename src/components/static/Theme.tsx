@@ -20,10 +20,10 @@ type TextProps = {
 
 export function truncate(noOfLines: number) {
   return `
-  -webkit-line-clamp: ${noOfLines};
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
+    -webkit-line-clamp: ${noOfLines};
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
     `;
 }
 
@@ -112,8 +112,12 @@ export const ModalContent = styled.section`
   position: relative;
   width: 100%;
   outline: 0px;
-  border-radius: 0.375rem;
-  background: rgb(255, 255, 255);
+  background: #f5f5f5;
+  border: 2px solid #4d4d4d;
+  box-sizing: border-box;
+  border-radius: 15px;
+  padding: 0.5rem;
+  background-repeat: no-repeat;
   color: inherit;
   margin-top: 3.75rem;
   margin-bottom: 3.75rem;
@@ -190,8 +194,59 @@ export const Button = styled.button<ButtonProps>`
   }
 `;
 
-export const Link = styled.a`
+type LinkProps = {
+  color?: string;
+};
+
+export const Link = styled.a<LinkProps>`
   text-decoration: auto;
+  color: ${props => props.color};
+`;
+
+export const InputGroup = styled(Box)`
+  width: 100%;
+  display: flex;
+  font-family: 'Roboto Mono';
+  font-style: normal;
+  font-weight: 500;
+  line-height: 20px;
+  background: #dedede;
+  align-items: center;
+  border-radius: 5px;
+`;
+
+type InputProps = {
+  size?: string;
+  height?: string;
+  fontSize?: string;
+};
+
+export const Input = styled.input<InputProps>`
+  height: ${props =>
+    props.height || props.theme.space[props.theme.sizes[props.size ?? 'md'].h]};
+  font-size: ${props =>
+    props.fontSize ||
+    props.theme.fontSizes[props.theme.sizes[props.size ?? 'md'].fontSize]};
+  padding-left: ${props =>
+    props.theme.space[props.theme.sizes[props.size ?? 'md'].px]};
+  padding-right: ${props =>
+    props.theme.space[props.theme.sizes[props.size ?? 'md'].px]};
+  width: 100%;
+  min-width: 0px;
+  outline: 0px;
+  position: relative;
+  appearance: none;
+  transition: all 0.2s ease 0s;
+  font-family: inherit;
+  font-weight: inherit;
+  font-style: inherit;
+  line-height: inherit;
+  border-radius: inherit;
+  border-width: 0px;
+  border-style: initial;
+  border-image: initial;
+  border-color: inherit;
+  background: inherit;
 `;
 
 const IconBox = styled.div`
