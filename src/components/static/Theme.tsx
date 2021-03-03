@@ -20,7 +20,7 @@ type TextProps = {
 
 export function truncate(noOfLines: number) {
   return `
-      line-clamp: ${noOfLines};
+  -webkit-line-clamp: ${noOfLines};
       white-space: nowrap;
       overflow: hidden;
       text-overflow: ellipsis;
@@ -61,6 +61,22 @@ type StackProps = {
   marginInlineStart?: string;
 };
 
+export const selector = '& > *:not(style) ~ *:not(style)';
+
+export function getStackStyles(column: boolean | undefined, spacing: string) {
+  if (column) {
+    return `
+        margin-top: ${spacing};
+        margin-start: 0;
+        `;
+  } else {
+    return `
+      margin-start: ${spacing};
+      margin-top: 0;
+      `;
+  }
+}
+
 export const Stack = styled(Box)<StackProps>`
   display: flex;
   margin: ${props => props.margin};
@@ -69,10 +85,10 @@ export const Stack = styled(Box)<StackProps>`
   margin-inline-start: ${props => props.marginInlineStart || '0px'};
   flex-direction: ${props => (props.column ? 'column' : 'row')};
 
-  * {
+  & > * {
     &:not(:first-child) {
-      margin: ${props =>
-        props.column ? `${props.spacing}px 0 0 0` : `0 ${props.spacing}px 0 0`};
+      ${props =>
+        getStackStyles(props.column, props.theme.space[props.spacing ?? 0])}
     }
   }
 `;
@@ -119,7 +135,9 @@ export const ModalBody = styled(Box)<ModalBodyProps>`
 `;
 
 const IconBox = styled.div`
-  font-family: -apple-system,BlinkMacSystemFont,"Segoe UI","Roboto","Oxygen","Ubuntu","Cantarell","Fira Sans","Droid Sans","Helvetica Neue",sans-serif;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
+    'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
+    sans-serif;
   -webkit-font-smoothing: antialiased;
   --removed-body-scroll-bar-size: 0px;
   font-size: 1.25rem;
@@ -140,7 +158,10 @@ export const WarningIcon = () => {
   return (
     <IconBox>
       <svg viewBox="0 0 24 24" focusable="false">
-        <path fill="currentColor" d="M23.119,20,13.772,2.15h0a2,2,0,0,0-3.543,0L.881,20a2,2,0,0,0,1.772,2.928H21.347A2,2,0,0,0,23.119,20ZM11,8.423a1,1,0,0,1,2,0v6a1,1,0,1,1-2,0Zm1.05,11.51h-.028a1.528,1.528,0,0,1-1.522-1.47,1.476,1.476,0,0,1,1.448-1.53h.028A1.527,1.527,0,0,1,13.5,18.4,1.475,1.475,0,0,1,12.05,19.933Z"></path>
+        <path
+          fill="currentColor"
+          d="M23.119,20,13.772,2.15h0a2,2,0,0,0-3.543,0L.881,20a2,2,0,0,0,1.772,2.928H21.347A2,2,0,0,0,23.119,20ZM11,8.423a1,1,0,0,1,2,0v6a1,1,0,1,1-2,0Zm1.05,11.51h-.028a1.528,1.528,0,0,1-1.522-1.47,1.476,1.476,0,0,1,1.448-1.53h.028A1.527,1.527,0,0,1,13.5,18.4,1.475,1.475,0,0,1,12.05,19.933Z"
+        ></path>
       </svg>
     </IconBox>
   );
@@ -177,17 +198,21 @@ const IconButton = styled.button<IconButtonProps>`
   padding: 0px;
   border: 0px rgb(123, 123, 123);
   box-sizing: border-box;
-  background: ${props => props.isSelected ? "rgb(226, 232, 240)" : "transparent"};
+  background: ${props =>
+    props.isSelected ? 'rgb(226, 232, 240)' : 'transparent'};
   overflow: visible;
   box-shadow: none !important;
   cursor: pointer;
   line-height: inherit;
   color: inherit;
-  cursor: ${props => !props.isDisabled ? "pointer" : "not-allowed"};
-  opacity: ${props => !props.isDisabled ? "1.0" : "0.4"};
+  cursor: ${props => (!props.isDisabled ? 'pointer' : 'not-allowed')};
+  opacity: ${props => (!props.isDisabled ? '1.0' : '0.4')};
 
   &:hover {
-    ${props => !props.isSelected && !props.isDisabled ? "background: rgb(237, 242, 247)" : ""}
+    ${props =>
+      !props.isSelected && !props.isDisabled
+        ? 'background: rgb(237, 242, 247)'
+        : ''}
   }
 `;
 
@@ -213,24 +238,46 @@ const IconContainer = styled.div`
   display: block;
 `;
 
-export const CloseButton = ({ onClick, isSelected, isDisabled }: IconButtonProps) => {
+export const CloseButton = ({
+  onClick,
+  isSelected,
+  isDisabled,
+}: IconButtonProps) => {
   return (
-    <IconButton onClick={!isDisabled ? onClick : () => {}} isSelected={isSelected} isDisabled={isDisabled}>
+    <IconButton
+      onClick={!isDisabled ? onClick : () => {}}
+      isSelected={isSelected}
+      isDisabled={isDisabled}
+    >
       <IconContainer>
         <svg viewBox="0 0 24 24" focusable="false" aria-hidden="true">
-          <path fill="currentColor" d="M.439,21.44a1.5,1.5,0,0,0,2.122,2.121L11.823,14.3a.25.25,0,0,1,.354,0l9.262,9.263a1.5,1.5,0,1,0,2.122-2.121L14.3,12.177a.25.25,0,0,1,0-.354l9.263-9.262A1.5,1.5,0,0,0,21.439.44L12.177,9.7a.25.25,0,0,1-.354,0L2.561.44A1.5,1.5,0,0,0,.439,2.561L9.7,11.823a.25.25,0,0,1,0,.354Z"></path>
+          <path
+            fill="currentColor"
+            d="M.439,21.44a1.5,1.5,0,0,0,2.122,2.121L11.823,14.3a.25.25,0,0,1,.354,0l9.262,9.263a1.5,1.5,0,1,0,2.122-2.121L14.3,12.177a.25.25,0,0,1,0-.354l9.263-9.262A1.5,1.5,0,0,0,21.439.44L12.177,9.7a.25.25,0,0,1-.354,0L2.561.44A1.5,1.5,0,0,0,.439,2.561L9.7,11.823a.25.25,0,0,1,0,.354Z"
+          ></path>
         </svg>
       </IconContainer>
     </IconButton>
   );
 };
 
-export const BackButton = ({ onClick, isSelected, isDisabled }: IconButtonProps) => {
+export const BackButton = ({
+  onClick,
+  isSelected,
+  isDisabled,
+}: IconButtonProps) => {
   return (
-    <IconButton onClick={!isDisabled ? onClick : () => {}} isSelected={isSelected} isDisabled={isDisabled}>
+    <IconButton
+      onClick={!isDisabled ? onClick : () => {}}
+      isSelected={isSelected}
+      isDisabled={isDisabled}
+    >
       <IconContainer>
         <svg viewBox="0 0 24 24" focusable="false" aria-hidden="true">
-          <path fill="currentColor" d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z"></path>
+          <path
+            fill="currentColor"
+            d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z"
+          ></path>
         </svg>
       </IconContainer>
     </IconButton>
@@ -243,7 +290,10 @@ export const MenuButton = ({ onClick, isSelected }: IconButtonProps) => {
     <IconButton onClick={onClick} isSelected={isSelected} isDisabled={false}>
       <IconContainer>
         <svg viewBox="0 0 24 24" focusable="false" aria-hidden="true">
-          <path fill="currentColor" d="M 3 5 A 1.0001 1.0001 0 1 0 3 7 L 21 7 A 1.0001 1.0001 0 1 0 21 5 L 3 5 z M 3 11 A 1.0001 1.0001 0 1 0 3 13 L 21 13 A 1.0001 1.0001 0 1 0 21 11 L 3 11 z M 3 17 A 1.0001 1.0001 0 1 0 3 19 L 21 19 A 1.0001 1.0001 0 1 0 21 17 L 3 17 z"></path>
+          <path
+            fill="currentColor"
+            d="M 3 5 A 1.0001 1.0001 0 1 0 3 7 L 21 7 A 1.0001 1.0001 0 1 0 21 5 L 3 5 z M 3 11 A 1.0001 1.0001 0 1 0 3 13 L 21 13 A 1.0001 1.0001 0 1 0 21 11 L 3 11 z M 3 17 A 1.0001 1.0001 0 1 0 3 19 L 21 19 A 1.0001 1.0001 0 1 0 21 17 L 3 17 z"
+          ></path>
         </svg>
       </IconContainer>
     </IconButton>
@@ -258,7 +308,9 @@ type MenuListPositionerProps = {
 };
 
 const MenuListPositioner = styled.div<MenuListPositionerProps>`
-  font-family: -apple-system,BlinkMacSystemFont,"Segoe UI","Roboto","Oxygen","Ubuntu","Cantarell","Fira Sans","Droid Sans","Helvetica Neue",sans-serif;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
+    'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
+    sans-serif;
   -webkit-font-smoothing: antialiased;
   --removed-body-scroll-bar-size: 0px;
   color: inherit;
@@ -270,8 +322,11 @@ const MenuListPositioner = styled.div<MenuListPositionerProps>`
   z-index: 1;
   position: absolute;
   inset: 0px auto auto 0px;
-  visibility: ${props => props.hidden ? "hidden" : "visible"};
-  transform: ${props => props.placement == "bottom-start" ? "translate3d(372px, 72px, 0px)" : "translate3d(188px, 72px, 0px)"};
+  visibility: ${props => (props.hidden ? 'hidden' : 'visible')};
+  transform: ${props =>
+    props.placement == 'bottom-start'
+      ? 'translate3d(372px, 72px, 0px)'
+      : 'translate3d(188px, 72px, 0px)'};
 `;
 
 type MenuListProps = {
@@ -280,7 +335,9 @@ type MenuListProps = {
 };
 
 const MenuListContainer = styled.div<MenuListProps>`
-  font-family: -apple-system,BlinkMacSystemFont,"Segoe UI","Roboto","Oxygen","Ubuntu","Cantarell","Fira Sans","Droid Sans","Helvetica Neue",sans-serif;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
+    'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
+    sans-serif;
   -webkit-font-smoothing: antialiased;
   --removed-body-scroll-bar-size: 0px;
   font-size: 1.25rem;
@@ -297,24 +354,27 @@ const MenuListContainer = styled.div<MenuListProps>`
   border-radius: 0.375rem;
   border: 0px;
   transform-origin: left top;
-  opacity: ${props => props.hidden ? "0" : "1"};
-  visibility: ${props => props.hidden ? "hidden" : "visible"};
-  transform: ${props => props.hidden ? "scale(0.8) translateZ(0px)" : "none"};
+  opacity: ${props => (props.hidden ? '0' : '1')};
+  visibility: ${props => (props.hidden ? 'hidden' : 'visible')};
+  transform: ${props => (props.hidden ? 'scale(0.8) translateZ(0px)' : 'none')};
 `;
 
 export const MenuList = ({ children, hidden }: MenuListProps) => {
   const { width } = useWindowDimensions();
   return (
-    <MenuListPositioner hidden={hidden} placement={width > 765 ? "bottom-start" : "bottom-end"}>
+    <MenuListPositioner
+      hidden={hidden}
+      placement={width > 765 ? 'bottom-start' : 'bottom-end'}
+    >
       <MenuListContainer hidden={hidden}>{children}</MenuListContainer>
     </MenuListPositioner>
   );
 };
 
 type MenuItemProps = {
-  children?: React.ReactNode | string,
-  onClick: (e?: React.MouseEvent) => void,
-  isDisabled?: boolean
+  children?: React.ReactNode | string;
+  onClick: (e?: React.MouseEvent) => void;
+  isDisabled?: boolean;
 } & React.ButtonHTMLAttributes<HTMLButtonElement>;
 
 const MenuItemButton = styled.button<MenuItemProps>`
@@ -340,12 +400,14 @@ const MenuItemButton = styled.button<MenuItemProps>`
   box-shadow: none !important;
   line-height: inherit;
   color: inherit;
-  cursor: ${props => !props.isDisabled ? "pointer" : "not-allowed"};
-  opacity: ${props => !props.isDisabled ? "1.0" : "0.4"};
+  cursor: ${props => (!props.isDisabled ? 'pointer' : 'not-allowed')};
+  opacity: ${props => (!props.isDisabled ? '1.0' : '0.4')};
 `;
 
 export const MenuItem = ({ onClick, children, isDisabled }: MenuItemProps) => {
   return (
-    <MenuItemButton onClick={onClick} isDisabled={isDisabled}>{children}</MenuItemButton>
+    <MenuItemButton onClick={onClick} isDisabled={isDisabled}>
+      {children}
+    </MenuItemButton>
   );
 };
