@@ -1,6 +1,6 @@
 import React, { FC, useEffect, useState } from 'react';
 import CSS from 'csstype';
-import { Box, NumberInputField, NumberInput, Button } from '@chakra-ui/react';
+import { Box, NumberInputField, NumberInput } from '@chakra-ui/react';
 import {
   Header,
   Footer,
@@ -9,6 +9,7 @@ import {
   ModalBody,
   Text,
   Stack,
+  Button,
 } from '../static';
 import { CHAIN_DETAIL } from '../../constants';
 import { graphic } from '../../public';
@@ -165,14 +166,14 @@ const Swap: FC<TransferProps> = props => {
                   {userBalance && (
                     <Button
                       size="sm"
-                      bg="#DEDEDE"
+                      colorScheme="#DEDEDE"
                       color="#737373"
                       borderRadius="5px"
                       border="none"
                       casing="uppercase"
                       marginRight="10px"
                       height="1.5rem"
-                      isDisabled={inputReadOnly ? true : false}
+                      disabled={inputReadOnly ? true : false}
                       onClick={() => {
                         enforcer(userBalance);
                       }}
@@ -224,12 +225,14 @@ const Swap: FC<TransferProps> = props => {
               <Button
                 size="lg"
                 type="submit"
-                isLoading={isLoad ? true : false}
-                loadingText="Waiting For Transaction"
-                isDisabled={!!amountError || !transferAmount ? true : false}
+                disabled={!!amountError || !transferAmount ? true : false}
                 onClick={handleSubmit}
               >
-                {userBalance ? 'Swap' : 'Show me QR!'}
+                {isLoad
+                  ? 'Waiting For Transaction'
+                  : userBalance
+                  ? 'Swap'
+                  : 'Show me QR!'}
               </Button>
             </Stack>
 

@@ -1,6 +1,5 @@
 import React, { FC } from 'react';
 import CSS from 'csstype';
-import { Button } from '@chakra-ui/react';
 import {
   Header,
   Footer,
@@ -9,6 +8,7 @@ import {
   ModalBody,
   Text,
   Stack,
+  Button,
 } from '../static';
 import { CHAIN_DETAIL, ERROR_STATES, ErrorStates } from '../../constants';
 import { graphic } from '../../public';

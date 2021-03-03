@@ -1,7 +1,7 @@
 import React, { FC } from 'react';
 import { utils } from 'ethers';
 import CSS from 'csstype';
-import { Link, Button } from '@chakra-ui/react';
+import { Link } from '@chakra-ui/react';
 import {
   Header,
   Footer,
@@ -11,6 +11,7 @@ import {
   Text,
   Stack,
   Box,
+  Button,
 } from '../static';
 import { CHAIN_DETAIL } from '../../constants';
 import { lightGraphic } from '../../public';
@@ -82,7 +83,6 @@ const Success: FC<SuccessProps> = props => {
                       size="sm"
                       borderRadius="5px"
                       colorScheme="purple"
-                      variant="solid"
                       border="none"
                       color="white!important"
                       casing="uppercase!important"
