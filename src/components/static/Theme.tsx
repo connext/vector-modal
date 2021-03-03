@@ -195,18 +195,10 @@ export const Link = styled.a`
 `;
 
 const IconBox = styled.div`
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
-    'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
-    sans-serif;
-  -webkit-font-smoothing: antialiased;
-  --removed-body-scroll-bar-size: 0px;
-  font-size: 1.25rem;
-  font-weight: 600;
   border-width: 0px;
   border-style: solid;
   box-sizing: border-box;
-  width: 1em;
-  height: 1em;
+  width: 1.125rem;
   line-height: 1em;
   flex-shrink: 0;
   color: currentcolor;
