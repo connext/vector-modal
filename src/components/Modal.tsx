@@ -6,10 +6,13 @@ import {
   EngineEvents,
   ERC20Abi,
   FullChannelState,
+  TransferQuote,
+  WithdrawalQuote,
 } from '@connext/vector-types';
 import { getBalanceForAssetId, getRandomBytes32 } from '@connext/vector-utils';
 import { BigNumber, constants, utils, providers, Contract } from 'ethers';
-import { debounce } from 'lodash';
+import AwesomeDebouncePromise from 'awesome-debounce-promise';
+
 import {
   ERROR_STATES,
   SCREEN_STATES,
@@ -33,6 +36,7 @@ import {
   connectNode,
   verifyRouterCapacityForTransfer,
   getUserBalance,
+  getCrosschainFee,
   // getFeeQuote,
 } from '../utils';
 import {
@@ -79,6 +83,8 @@ export type ConnextModalProps = {
   onWithdrawalTxCreated?: (txHash: string) => void;
 };
 
+const getFeesDebounced = AwesomeDebouncePromise(getCrosschainFee, 500);
+
 const ConnextModal: FC<ConnextModalProps> = ({
   showModal,
   routerPublicIdentifier,
@@ -114,6 +120,8 @@ const ConnextModal: FC<ConnextModalProps> = ({
   >();
   const [transferFeeUi, setTransferFeeUi] = useState<string>('--');
   const [receivedAmountUi, setReceivedAmountUi] = useState<string>('--');
+  const [transferQuote, setTransferQuote] = useState<TransferQuote>();
+  const [withdrawQuote, setWithdrawQuote] = useState<WithdrawalQuote>();
 
   const [depositAddress, setDepositAddress] = useState<string>();
 
@@ -297,7 +305,8 @@ const ConnextModal: FC<ConnextModalProps> = ({
         withdrawAssetId,
         routerPublicIdentifier,
         crossChainTransferId,
-        preImage
+        preImage,
+        transferQuote
       );
       console.log('createFromAssetTransfer transferDeets: ', transferDeets);
     } catch (e) {
@@ -412,6 +421,7 @@ const ConnextModal: FC<ConnextModalProps> = ({
   };
 
   const handleSwapCheck = async (_input: string | undefined) => {
+    console.log('handleSwapCheck');
     let err: string | undefined = undefined;
     const input = _input ? _input.trim() : undefined;
 
@@ -443,74 +453,54 @@ const ConnextModal: FC<ConnextModalProps> = ({
         }
       }
 
-      const asyncFunctionDebounced = debounce(async () => {
-        const getTransferQuoteRes = await node!.getTransferQuote({
-          amount: transferAmountBn.toString(),
-          recipientChainId: receiverChain?.chainId!,
-          recipientAssetId: receiverChain?.assetId!,
-          recipient: node!.publicIdentifier,
-          routerIdentifier: routerPublicIdentifier,
-          chainId: senderChain?.chainId!,
-          assetId: senderChain?.assetId!,
-        });
-        console.log(
-          'getTransferQuote: ',
-          getTransferQuoteRes.isError
-            ? getTransferQuoteRes.getError()
-            : getTransferQuoteRes.getValue()
+      let fee;
+      try {
+        const {
+          totalFee,
+          transferQuote: _transferQuote,
+          withdrawalQuote: _withdrawQuote,
+        } = await getFeesDebounced(
+          node!,
+          routerPublicIdentifier,
+          transferAmountBn,
+          senderChain!.chainId,
+          senderChain!.assetId,
+          senderChain!.assetDecimals ?? 18,
+          receiverChain!.chainId,
+          receiverChain!.assetId,
+          receiverChain!.assetDecimals ?? 18,
+          withdrawChannelRef.current!.channelAddress
         );
-        if (getTransferQuoteRes.isError) {
-          err = getTransferQuoteRes.getError()!.message;
-          setAmountError(err);
-          return;
-        }
+        fee = totalFee;
+        setTransferQuote(_transferQuote);
+        setWithdrawQuote(_withdrawQuote);
+      } catch (e) {
+        setAmountError(e.message);
+        return;
+      }
 
-        const getWithdrawQuoteRes = await node!.getWithdrawalQuote({
-          amount: transferAmountBn.toString(),
-          channelAddress: withdrawChannelRef.current!.channelAddress,
-          assetId: receiverChain?.assetId!,
-        });
-        console.log(
-          'getWithdrawQuoteRes: ',
-          getWithdrawQuoteRes.isError
-            ? getWithdrawQuoteRes.getError()
-            : getWithdrawQuoteRes.getValue()
-        );
+      const received = transferAmountBn.sub(fee);
+      if (received.lte(0)) {
+        err = 'Not enough amount to pay fees';
+        setAmountError(err);
+      } else {
+        setAmountError(undefined);
+      }
 
-        if (getWithdrawQuoteRes.isError) {
-          err = getWithdrawQuoteRes.getError()!.message;
-          setAmountError(err);
-          return;
-        }
-
-        const fee = BigNumber.from(getTransferQuoteRes.getValue().fee).add(
-          getWithdrawQuoteRes.getValue().fee
-        );
-        // TODO: account for swap rate on received amount
-        const received = transferAmountBn.sub(fee);
-        if (received.lte(0)) {
-          err = 'Transfer amount is less than quote fees';
-          setAmountError(err);
-          return;
-        }
-
-        const receivedUi = utils.formatUnits(
-          received.lt(0) ? 0 : received,
-          receiverChain?.assetDecimals
-        );
-        const feeUi = utils.formatUnits(fee, senderChain?.assetDecimals!);
-        console.log('feeUi: ', feeUi);
-        console.log('receivedUi: ', receivedUi);
-        setTransferFeeUi(feeUi);
-        setReceivedAmountUi(receivedUi);
-        console.log(transferFeeUi, receivedAmountUi);
-      }, 1000);
-
-      // this seems to not be perfectly working, im still seeing a few calls
-      asyncFunctionDebounced();
+      const receivedUi = utils.formatUnits(
+        received.lt(0) ? 0 : received,
+        receiverChain!.assetDecimals
+      );
+      const feeUi = utils.formatUnits(fee, senderChain!.assetDecimals);
+      console.log('feeUi: ', feeUi);
+      console.log('receivedUi: ', receivedUi);
+      setTransferFeeUi(feeUi);
+      setReceivedAmountUi(receivedUi);
+      console.log(transferFeeUi, receivedAmountUi);
     } catch (e) {
       err = 'Invalid amount';
     }
+
     setAmountError(err);
     return;
   };
@@ -646,7 +636,8 @@ const ConnextModal: FC<ConnextModalProps> = ({
         _withdrawChainId,
         withdrawAssetId,
         withdrawalAddress,
-        routerPublicIdentifier
+        routerPublicIdentifier,
+        withdrawQuote
       );
     } catch (e) {
       handleScreen({

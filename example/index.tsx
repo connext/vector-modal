@@ -87,7 +87,7 @@ function App() {
         onClose={() => setShowModal(false)}
         onReady={params => console.log('MODAL IS READY =======>', params)}
         withdrawalAddress={'0x75e4DD0587663Fce5B2D9aF7fbED3AC54342d3dB'}
-        loginProvider={loginProvider}
+        // loginProvider={loginProvider}
         injectedProvider={loginProvider}
         // prod config
         routerPublicIdentifier="vector7tbbTxQp8ppEQUgPsbGiTrVdapLdU5dH7zTbVuXRf1M4CEBU9Q"
