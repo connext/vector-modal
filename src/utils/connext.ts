@@ -11,6 +11,8 @@ import {
   TransferNames,
   WithdrawalReconciledPayload,
   jsonifyError,
+  WithdrawalQuote,
+  TransferQuote,
 } from '@connext/vector-types';
 import {
   calculateExchangeAmount,
@@ -34,7 +36,11 @@ export const getCrosschainFee = async (
   withdrawAssetId: string,
   withdrawAssetDecimals: number,
   withdrawChannelAddress: string
-): Promise<BigNumber> => {
+): Promise<{
+  withdrawalQuote: WithdrawalQuote;
+  transferQuote: TransferQuote;
+  totalFee: BigNumber;
+}> => {
   const transferQuoteResult = await node.getTransferQuote({
     amount: transferAmount.toString(),
     recipientChainId: withdrawChainId,
@@ -101,9 +107,14 @@ export const getCrosschainFee = async (
     inverse(swap.hardcodedRate),
     withdrawAssetDecimals
   );
+  console.log('converted withdrawal fee', depositAssetWithdrawFee);
 
   // Get total fee
-  return BigNumber.from(depositAssetWithdrawFee).add(transferFee);
+  return {
+    totalFee: BigNumber.from(depositAssetWithdrawFee).add(transferFee),
+    withdrawalQuote: withdrawQuoteRes.getValue(),
+    transferQuote: transferQuoteResult.getValue(),
+  };
 };
 
 export const connectNode = async (
@@ -236,7 +247,8 @@ export const createFromAssetTransfer = async (
   _toAssetId: string,
   routerPublicIdentifier: string,
   crossChainTransferId: string,
-  preImage: string
+  preImage: string,
+  quote?: TransferQuote
 ): Promise<{ transferId: string; preImage: string }> => {
   const depositChannel = await getChannelForChain(
     node,
@@ -253,6 +265,18 @@ export const createFromAssetTransfer = async (
       )}`
     );
   }
+  const validQuote =
+    quote &&
+    quote.amount === toTransfer &&
+    quote.routerIdentifier === depositChannel.aliceIdentifier &&
+    quote.assetId.toLowerCase() === _fromAssetId.toLowerCase() &&
+    quote.chainId === fromChainId &&
+    parseInt(quote.expiry) < Date.now() - 1000 &&
+    BigNumber.from(quote.fee).lt(toTransfer) &&
+    quote.recipient === depositChannel.bobIdentifier &&
+    quote.recipientAssetId.toLowerCase() === _toAssetId.toLowerCase() &&
+    quote.recipientChainId === toChainId &&
+    !!quote.signature; // lazy sig check
   const params: NodeParams.ConditionalTransfer = {
     recipient: depositChannel.bobIdentifier,
     recipientChainId: toChainId,
@@ -269,7 +293,10 @@ export const createFromAssetTransfer = async (
     },
     details: { expiry: '0', lockHash: createlockHash(preImage) },
     publicIdentifier: depositChannel.bobIdentifier,
+    quote: validQuote ? quote : undefined,
   };
+  console.log(`quote is ${validQuote ? 'valid' : 'not valid, rerequesting'}`);
+  console.log('transfer params', params);
   const ret = await node.conditionalTransfer(params);
   if (ret.isError) {
     throw ret.getError();
@@ -468,7 +495,8 @@ export const withdrawToAsset = async (
   toChainId: number,
   _toAssetId: string,
   recipientAddr: string,
-  routerPublicIdentifier: string
+  routerPublicIdentifier: string,
+  quote?: WithdrawalQuote
 ): Promise<{ withdrawalTx: string; withdrawalAmount: string }> => {
   const withdrawChannel = await getChannelForChain(
     node,
@@ -482,13 +510,27 @@ export const withdrawToAsset = async (
     throw new Error('Asset not in receiver channel');
   }
 
+  const validQuote =
+    quote &&
+    quote.amount === toWithdraw &&
+    parseInt(quote.expiry) > Date.now() - 1000 &&
+    quote.assetId.toLowerCase() === _toAssetId.toLowerCase() &&
+    !!quote.signature && // lazy sig check
+    quote.channelAddress === withdrawChannel.channelAddress &&
+    BigNumber.from(toWithdraw).gte(quote.fee);
+
+  console.log(
+    `quote is ${validQuote ? 'valid' : 'not valid, rerequesting'} valid`
+  );
   const params: NodeParams.Withdraw = {
     amount: toWithdraw,
     assetId: toAssetId,
     channelAddress: withdrawChannel.channelAddress,
     publicIdentifier: withdrawChannel.bobIdentifier,
     recipient: recipientAddr,
+    quote: validQuote ? quote : undefined,
   };
+  console.log('withdraw params', params);
   const ret = await node.withdraw(params);
   if (ret.isError) {
     throw ret.getError();

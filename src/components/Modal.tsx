@@ -37,6 +37,8 @@ import {
   EngineEvents,
   ERC20Abi,
   FullChannelState,
+  WithdrawalQuote,
+  TransferQuote,
 } from '@connext/vector-types';
 import {
   getBalanceForAssetId,
@@ -198,6 +200,9 @@ const ConnextModal: FC<ConnextModalProps> = ({
 
   const [amount, setAmount] = useState<BigNumber>(BigNumber.from(0));
 
+  const [transferQuote, setTransferQuote] = useState<TransferQuote>();
+  const [withdrawQuote, setWithdrawQuote] = useState<WithdrawalQuote>();
+
   const activeCrossChainTransferIdRef = React.useRef(
     activeCrossChainTransferId
   );
@@ -326,7 +331,8 @@ const ConnextModal: FC<ConnextModalProps> = ({
         withdrawAssetId,
         routerPublicIdentifier,
         crossChainTransferId,
-        preImage
+        preImage,
+        transferQuote
       );
       console.log('createFromAssetTransfer transferDeets: ', transferDeets);
     } catch (e) {
@@ -458,7 +464,11 @@ const ConnextModal: FC<ConnextModalProps> = ({
       const asyncFunctionDebounced = debounce(async () => {
         let fee;
         try {
-          fee = await getCrosschainFee(
+          const {
+            totalFee,
+            transferQuote: _transferQuote,
+            withdrawalQuote: _withdrawQuote,
+          } = await getCrosschainFee(
             _node,
             routerPublicIdentifier,
             transferAmountBn,
@@ -470,6 +480,9 @@ const ConnextModal: FC<ConnextModalProps> = ({
             withdrawAssetDecimals ?? 18,
             withdrawChannelRef.current!.channelAddress
           );
+          fee = totalFee;
+          setTransferQuote(_transferQuote);
+          setWithdrawQuote(_withdrawQuote);
         } catch (e) {
           setAmountError(e.message);
           return;
@@ -602,7 +615,8 @@ const ConnextModal: FC<ConnextModalProps> = ({
         _withdrawChainId,
         withdrawAssetId,
         withdrawalAddress,
-        routerPublicIdentifier
+        routerPublicIdentifier,
+        withdrawQuote
       );
     } catch (e) {
       handleError(e, 'Error in crossChainTransfer', ERROR_STATES.RETRY);
