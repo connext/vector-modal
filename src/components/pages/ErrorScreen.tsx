@@ -1,5 +1,5 @@
 import React, { FC } from 'react';
-import { Button, Stack, Link } from '@chakra-ui/react';
+import { Button } from '@chakra-ui/react';
 import CSS from 'csstype';
 import {
   Header,
@@ -8,8 +8,8 @@ import {
   ModalContent,
   ModalBody,
   Text,
+  Stack
 } from '../static';
-// import styled, { css } from 'styled-components';
 import { CHAIN_DETAIL, ERROR_STATES, ErrorStates } from '../../constants';
 import { graphic } from '../../public';
 import { constants } from 'ethers';
@@ -64,10 +64,10 @@ const Error: FC<ErrorProps> = props => {
         />
 
         <ModalBody>
-          <Stack direction="column" spacing={7}>
-            <Stack direction="column" spacing={5}>
-              <Stack direction="column" spacing={3}>
-                <Stack direction="column" spacing={1}>
+          <Stack column={true} spacing={7}>
+            <Stack column={true} spacing={5}>
+              <Stack column={true} spacing={3}>
+                <Stack column={true} spacing={1}>
                   {crossChainTransferId !== constants.HashZero && (
                     <Text
                       fontFamily="Roboto Mono"
@@ -96,17 +96,17 @@ const Error: FC<ErrorProps> = props => {
                 )}
                 <Text fontSize="0.875rem" lineHeight="24px">
                   Support help can be found in the{' '}
-                  <Link
-                    color="green!important"
+                  <a
+                    style={{color: "green !important"}}
                     href="https://discord.com/channels/454734546869551114"
-                    isExternal
+                    // isExternal
                   >
                     community Discord here
-                  </Link>
+                  </a>
                   .
                 </Text>
               </Stack>
-              <Stack direction="column" spacing={2}>
+              <Stack column={true} spacing={2}>
                 {retry && (
                   <Button onClick={retry} size="lg">
                     Retry Transfer
