@@ -129,7 +129,6 @@ export default NetworkBar;
 
 const Divider = styled.hr`
   border: 0.25px solid rgb(102, 102, 102);
-  margin-top: 1.75rem;
   margin-inline-start: 0px;
   box-sizing: content-box;
   height: 0px;
