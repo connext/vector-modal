@@ -1,11 +1,10 @@
 import React, { FC } from 'react';
-import { Input, InputGroup } from '@chakra-ui/react';
 import styled from 'styled-components';
 
 import { CHAIN_DETAIL } from '../../constants';
 import { arrow } from '../../public';
 import { getExplorerLinkForAsset } from '../../utils';
-import { Stack, Box, Text, Link } from './Theme';
+import { Stack, Box, Text, Link, InputGroup, Input } from './Theme';
 
 interface NetworkBarProps {
   senderChainInfo: CHAIN_DETAIL;
@@ -17,7 +16,7 @@ const NetworkBar: FC<NetworkBarProps> = props => {
   return (
     <>
       <Divider />
-      <Stack column={true} spacing={5}>
+      <Stack column={true} spacing={4}>
         <Stack justifyContent="space-between">
           <Box>
             <Text
@@ -94,28 +93,18 @@ const NetworkBar: FC<NetworkBarProps> = props => {
             >
               Receiver Address
             </Text>
-            <InputGroup
-              size="md"
-              bg="#DEDEDE"
-              alignItems="center"
-              borderRadius="5px"
-              fontFamily="Roboto Mono"
-              fontStyle="normal"
-              lineHeight="20px"
-              fontWeight="500"
-            >
+            <InputGroup>
               <Input
                 id="address"
                 name="address"
                 value={receiverAddress}
                 inputMode="search"
                 title="receiver Address"
-                // styling
+                // styled
+                size="md"
                 fontSize="13px"
-                border="none"
-                flex="auto"
                 // misc
-                isReadOnly={true}
+                readOnly={true}
               />
             </InputGroup>
           </Stack>
