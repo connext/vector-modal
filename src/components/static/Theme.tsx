@@ -134,6 +134,62 @@ export const ModalBody = styled(Box)<ModalBodyProps>`
   overflow: auto;
 `;
 
+type ButtonProps = {
+  size?: string;
+  borderRadius?: string;
+  colorScheme?: string;
+  border?: string;
+  casing?: string;
+  marginRight?: string;
+  height?: string;
+};
+
+export const Button = styled.button<ButtonProps>`
+  height: ${props =>
+    props.height || props.theme.space[props.theme.sizes[props.size ?? 'md'].h]};
+  min-width: ${props =>
+    props.theme.space[props.theme.sizes[props.size ?? 'md'].minW]};
+  font-size: ${props =>
+    props.theme.fontSizes[props.theme.sizes[props.size ?? 'md'].fontSize]};
+  padding-left: ${props =>
+    props.theme.space[props.theme.sizes[props.size ?? 'md'].px]};
+  padding-right: ${props =>
+    props.theme.space[props.theme.sizes[props.size ?? 'md'].px]};
+  border: ${props => props.theme.border || '1.5px #7b7b7b'};
+  border-radius: ${props => props.borderRadius || '15px'};
+  background-color: ${props => props.colorScheme || 'white'};
+  text-transform: ${props => props.casing || 'capitalize'};
+  margin-right: ${props => props.marginRight || '0px'};
+  font-weight: 400;
+  font-style: normal;
+  font-family: Roboto;
+  border-style: solid;
+  box-sizing: border-box;
+  display: inline-flex;
+  appearance: none;
+  align-items: center;
+  justify-content: center;
+  transition: all 250ms ease 0s;
+  user-select: none;
+  position: relative;
+  white-space: nowrap;
+  vertical-align: middle;
+  outline: none;
+  width: auto;
+  line-height: 1.2;
+  color: inherit;
+  overflow: visible;
+  box-shadow: none !important;
+  cursor: pointer;
+  line-height: inherit;
+  color: inherit;
+
+  &:hover {
+    opacity: 1;
+    background-color: aliceblue;
+  }
+`;
+
 const IconBox = styled.div`
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
     'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
