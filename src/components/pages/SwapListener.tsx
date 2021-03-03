@@ -1,12 +1,5 @@
 import React, { FC, useState, useEffect } from 'react';
 import CSS from 'csstype';
-import {
-  Box,
-  Input,
-  InputGroup,
-  InputRightElement,
-  IconButton,
-} from '@chakra-ui/react';
 import { Loader } from '../static';
 import { CopyIcon, CheckCircleIcon } from '@chakra-ui/icons';
 import {
@@ -17,6 +10,11 @@ import {
   ModalBody,
   Text,
   Stack,
+  Box,
+  Input,
+  InputGroup,
+  IconButton,
+  IconContainer,
 } from '../static';
 import { CHAIN_DETAIL } from '../../constants';
 import { darkGraphic } from '../../public';
@@ -35,12 +33,6 @@ interface SwapListenerProps {
 
 const styleModalContent: CSS.Properties = {
   backgroundImage: `url(${darkGraphic})`,
-  backgroundColor: '#F5F5F5',
-  border: '2px solid #4D4D4D',
-  boxSizing: 'border-box',
-  borderRadius: '15px',
-  padding: '0.5rem',
-  backgroundRepeat: 'no-repeat',
   backgroundPosition: 'right top',
 };
 
@@ -117,7 +109,7 @@ const SwapListener: FC<SwapListenerProps> = props => {
             <Stack column={true} spacing={3}>
               <Box>
                 <Stack spacing={8}>
-                  <Stack column={true} spacing={4}>
+                  <Stack column={true} spacing={5}>
                     <Text fontSize="1rem" fontWeight="500">
                       Send{' '}
                       <span style={{ color: '#2964C5' }}>
@@ -140,7 +132,7 @@ const SwapListener: FC<SwapListenerProps> = props => {
                       </Stack>
                     </Stack>
                   </Stack>
-                  <Box bg="white" borderRadius="15px">
+                  <Box colorScheme="white" borderRadius="15px">
                     <QRCode
                       value={senderChannelAddress}
                       size={150}
@@ -150,45 +142,36 @@ const SwapListener: FC<SwapListenerProps> = props => {
                 </Stack>
               </Box>
 
-              <InputGroup
-                size="lg"
-                bg="#DEDEDE"
-                alignItems="center"
-                borderRadius="15px"
-                fontFamily="Roboto Mono"
-              >
+              <InputGroup borderRadius="15px">
                 <Input
+                  size="lg"
                   id="depositAddress"
                   name="address"
                   value={senderChannelAddress}
                   inputMode="search"
                   title="Deposit Address"
                   // styling
-                  border="none"
                   fontSize="14px"
                   flex="auto"
+                  paddingLeft="12px"
+                  paddingRight="0px"
                   // misc
-                  isReadOnly={true}
+                  readOnly={true}
                 />
-                <InputRightElement
-                  children={
-                    <IconButton
-                      aria-label="Clipboard"
-                      onClick={() => {
-                        console.log(`Copying: ${senderChannelAddress}`);
-                        navigator.clipboard.writeText(senderChannelAddress);
-                        setCopiedAddress(true);
-                        setTimeout(() => setCopiedAddress(false), 5000);
-                      }}
-                      icon={!copiedAddress ? <CopyIcon /> : <CheckCircleIcon />}
-                      // style
-                      size="sm"
-                      fontSize="20px"
-                      border="none"
-                      background="transparent"
-                    />
-                  }
-                />
+
+                <IconButton
+                  aria-label="Clipboard"
+                  onClick={() => {
+                    console.log(`Copying: ${senderChannelAddress}`);
+                    navigator.clipboard.writeText(senderChannelAddress);
+                    setCopiedAddress(true);
+                    setTimeout(() => setCopiedAddress(false), 5000);
+                  }}
+                >
+                  <IconContainer fontSize="20px">
+                    {!copiedAddress ? <CopyIcon /> : <CheckCircleIcon />}
+                  </IconContainer>
+                </IconButton>
               </InputGroup>
             </Stack>
 
