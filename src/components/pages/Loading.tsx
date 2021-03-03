@@ -15,20 +15,11 @@ const styleLoadingCircle: CSS.Properties = {
   overflow: 'hidden',
 };
 
-const styleModalContent: CSS.Properties = {
-  backgroundColor: '#F5F5F5',
-  border: '2px solid #4D4D4D',
-  boxSizing: 'border-box',
-  borderRadius: '15px',
-  padding: '0.5rem',
-  backgroundRepeat: 'no-repeat',
-};
-
 const Loading: FC<LoadingProps> = props => {
   const { message } = props;
   return (
     <>
-      <ModalContent style={styleModalContent}>
+      <ModalContent>
         <ModalBody padding="2.5rem">
           <Stack column={true} spacing={5} alignItems="center">
             <Box style={styleLoadingCircle}>
