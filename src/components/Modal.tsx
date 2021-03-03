@@ -1283,6 +1283,7 @@ const ConnextModal: FC<ConnextModalProps> = ({
         );
 
       case SCREEN_STATES.SWAP:
+        console.log("TRANSFER AMOUNT UI: ", transferAmountUi)
         return (
           <Swap
             onUserInput={handleSwapCheck}

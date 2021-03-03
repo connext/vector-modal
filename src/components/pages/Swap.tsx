@@ -55,9 +55,15 @@ const Swap: FC<TransferProps> = props => {
 
   const inputRegex = RegExp(`^\\d*(?:\\\\[.])?\\d*$`); // match escaped "." characters via in a non-capturing group
 
-  const enforcer = (nextUserInput: string) => {
-    if (nextUserInput === '' || inputRegex.test(escapeRegExp(nextUserInput))) {
-      onUserInput(nextUserInput);
+  const enforcer = (currentInput: string) => {
+    // Check to make sure this isn't a redundant call. This happens due to the useEffect hook below,
+    // which is intended to call the enforcer in the event of an update to transferAmount from
+    // anything outside user input.
+    if (currentInput === transferAmount) {
+      return;
+    }
+    if (currentInput === '' || inputRegex.test(escapeRegExp(currentInput))) {
+      onUserInput(currentInput);
     }
   };
 
@@ -75,6 +81,7 @@ const Swap: FC<TransferProps> = props => {
     };
     effect();
   });
+  console.log(transferAmount);
 
   return (
     <>

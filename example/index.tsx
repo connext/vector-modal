@@ -86,6 +86,7 @@ function App() {
         showModal={showModal}
         onClose={() => setShowModal(false)}
         onReady={params => console.log('MODAL IS READY =======>', params)}
+        transferAmount={transferAmount}
         withdrawalAddress={'0x75e4DD0587663Fce5B2D9aF7fbED3AC54342d3dB'}
         // loginProvider={loginProvider}
         injectedProvider={loginProvider}
