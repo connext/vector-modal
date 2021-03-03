@@ -1,8 +1,7 @@
 import { BrowserNode } from '@connext/vector-browser-node';
 import React, { FC, useEffect, useState } from 'react';
 import styled, { ThemeProvider } from 'styled-components';
-import { Modal, useDisclosure, IconButton } from '@chakra-ui/react';
-import { ArrowBackIcon, CloseIcon } from '@chakra-ui/icons';
+import { Modal, useDisclosure } from '@chakra-ui/react';
 import {
   EngineEvents,
   ERC20Abi,
@@ -44,7 +43,7 @@ import {
   Success,
 } from './pages';
 import Recover from './Recover';
-import { Options, Fonts, ModalContentContainer } from './static';
+import { Options, Fonts, ModalContentContainer, BackButton, CloseButton } from './static';
 
 export { useDisclosure };
 
@@ -1166,10 +1165,7 @@ const ConnextModal: FC<ConnextModalProps> = ({
 
   const handleBack = () => {
     return (
-      <IconButton
-        aria-label="back"
-        border="none"
-        bg="transparent"
+      <BackButton
         isDisabled={
           !lastScreenState ||
           [
@@ -1184,17 +1180,13 @@ const ConnextModal: FC<ConnextModalProps> = ({
           clearInterval(listener!);
           handleScreen({ state: lastScreenState! });
         }}
-        icon={<ArrowBackIcon boxSize={6} />}
       />
     );
   };
 
   const handleCloseButton = () => {
     return (
-      <IconButton
-        aria-label="close"
-        border="none"
-        bg="transparent"
+      <CloseButton
         isDisabled={
           [SCREEN_STATES.LOADING, SCREEN_STATES.STATUS].includes(
             screenState as any
@@ -1203,7 +1195,6 @@ const ConnextModal: FC<ConnextModalProps> = ({
             : false
         }
         onClick={onClose}
-        icon={<CloseIcon boxSize={6} />}
       />
     );
   };
