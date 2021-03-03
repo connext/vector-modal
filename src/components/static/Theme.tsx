@@ -16,6 +16,7 @@ type TextProps = {
   marginInlineStart?: string;
   noOfLines?: number;
   overflow?: string;
+  flex?: string;
 };
 
 export function truncate(noOfLines: number) {
@@ -40,16 +41,24 @@ export const Text = styled.p<TextProps>`
   margin: ${props => props.margin || '0px'};
   margin-inline-start: ${props => props.marginInlineStart};
   overflow: ${props => props.overflow};
+  flex: ${props => props.flex};
   ${props => props.noOfLines && truncate(props.noOfLines)};
   border-width: 0;
   border-style: solid;
   box-sizing: border-box;
 `;
 
-export const Box = styled.div`
+type BoxProps = {
+  colorScheme?: string;
+  borderRadius?: string;
+};
+
+export const Box = styled.div<BoxProps>`
   border-width: 0px;
   border-style: solid;
   box-sizing: border-box;
+  background-color: ${props => props.colorScheme};
+  border-radius: ${props => props.borderRadius};
 `;
 
 type StackProps = {
@@ -58,7 +67,9 @@ type StackProps = {
   margin?: string;
   justifyContent?: string;
   alignItems?: string;
+  colorScheme?: string;
   marginInlineStart?: string;
+  borderRadius?: string;
 };
 
 export const selector = '& > *:not(style) ~ *:not(style)';
@@ -67,11 +78,11 @@ export function getStackStyles(column: boolean | undefined, spacing: string) {
   if (column) {
     return `
         margin-top: ${spacing};
-        margin-right: 0;
+        margin-left: 0;
         `;
   } else {
     return `
-      margin-right: ${spacing};
+      margin-left: ${spacing};
       margin-top: 0;
       `;
   }
@@ -84,6 +95,8 @@ export const Stack = styled(Box)<StackProps>`
   align-items: ${props => props.alignItems};
   margin-inline-start: ${props => props.marginInlineStart || '0px'};
   flex-direction: ${props => (props.column ? 'column' : 'row')};
+  background-color: ${props => props.colorScheme};
+  border-radius: ${props => props.borderRadius};
 
   & > * {
     &:not(:first-child) {
@@ -142,7 +155,9 @@ type ButtonProps = {
   size?: string;
   borderRadius?: string;
   colorScheme?: string;
+  color?: string;
   border?: string;
+  borderStyle?: string;
   casing?: string;
   marginRight?: string;
   height?: string;
@@ -159,15 +174,16 @@ export const Button = styled.button<ButtonProps>`
     props.theme.space[props.theme.sizes[props.size ?? 'md'].px]};
   padding-right: ${props =>
     props.theme.space[props.theme.sizes[props.size ?? 'md'].px]};
-  border: ${props => props.theme.border || '1.5px #7b7b7b'};
+  border: ${props => props.border || '1.5px #7b7b7b'};
+  border-style: ${props => props.borderStyle || 'solid'};
   border-radius: ${props => props.borderRadius || '15px'};
   background-color: ${props => props.colorScheme || 'white'};
+  color: ${props => props.color || 'inherit'};
   text-transform: ${props => props.casing || 'capitalize'};
   margin-right: ${props => props.marginRight || '0px'};
   font-weight: 400;
   font-style: normal;
   font-family: Roboto;
-  border-style: solid;
   box-sizing: border-box;
   display: inline-flex;
   appearance: none;
@@ -181,16 +197,20 @@ export const Button = styled.button<ButtonProps>`
   outline: none;
   width: auto;
   line-height: 1.2;
-  color: inherit;
+
   overflow: visible;
   box-shadow: none !important;
   cursor: pointer;
   line-height: inherit;
-  color: inherit;
 
   &:hover {
     opacity: 1;
-    background-color: aliceblue;
+    filter: brightness(150%);
+  }
+
+  :disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
   }
 `;
 
@@ -203,22 +223,31 @@ export const Link = styled.a<LinkProps>`
   color: ${props => props.color};
 `;
 
-export const InputGroup = styled(Box)`
+type InputGroupProps = {
+  colorScheme?: string;
+  flex?: string;
+  borderRadius?: string;
+};
+
+export const InputGroup = styled(Box)<InputGroupProps>`
   width: 100%;
   display: flex;
   font-family: 'Roboto Mono';
   font-style: normal;
   font-weight: 500;
   line-height: 20px;
-  background: #dedede;
+  background-color: ${props => props.colorScheme || '#dedede'};
+  border-radius: ${props => props.borderRadius || '5px'};
+  flex: ${props => props.flex};
   align-items: center;
-  border-radius: 5px;
 `;
 
 type InputProps = {
   size?: string;
   height?: string;
   fontSize?: string;
+  paddingLeft?: string;
+  paddingRight?: string;
 };
 
 export const Input = styled.input<InputProps>`
@@ -228,8 +257,10 @@ export const Input = styled.input<InputProps>`
     props.fontSize ||
     props.theme.fontSizes[props.theme.sizes[props.size ?? 'md'].fontSize]};
   padding-left: ${props =>
+    props.paddingLeft ||
     props.theme.space[props.theme.sizes[props.size ?? 'md'].px]};
   padding-right: ${props =>
+    props.paddingRight ||
     props.theme.space[props.theme.sizes[props.size ?? 'md'].px]};
   width: 100%;
   min-width: 0px;
@@ -241,12 +272,25 @@ export const Input = styled.input<InputProps>`
   font-weight: inherit;
   font-style: inherit;
   line-height: inherit;
+  box-shadow: none;
   border-radius: inherit;
   border-width: 0px;
   border-style: initial;
   border-image: initial;
   border-color: inherit;
   background: inherit;
+  -webkit-appearance: textfield;
+
+  ::-webkit-search-decoration {
+    -webkit-appearance: none;
+  }
+  [type='number'] {
+    -moz-appearance: textfield;
+  }
+  ::-webkit-outer-spin-button,
+  ::-webkit-inner-spin-button {
+    -webkit-appearance: none;
+  }
 `;
 
 const IconBox = styled.div`
@@ -280,7 +324,7 @@ type IconButtonProps = {
   isDisabled?: boolean;
 };
 
-const IconButton = styled.button<IconButtonProps>`
+export const IconButton = styled.button<IconButtonProps>`
   -webkit-font-smoothing: antialiased;
   --removed-body-scroll-bar-size: 0px;
   display: inline-flex;
@@ -323,7 +367,10 @@ const IconButton = styled.button<IconButtonProps>`
   }
 `;
 
-const IconContainer = styled.div`
+type IconContainerProps = {
+  fontSize?: string;
+};
+export const IconContainer = styled.div<IconContainerProps>`
   -webkit-font-smoothing: antialiased;
   --removed-body-scroll-bar-size: 0px;
   user-select: none;
@@ -332,7 +379,7 @@ const IconContainer = styled.div`
   font-style: normal;
   font-family: Roboto;
   text-transform: capitalize;
-  font-size: 16px;
+  font-size: ${props => props.fontSize || '1rem'};
   border-width: 0px;
   border-style: solid;
   box-sizing: border-box;
