@@ -54,13 +54,13 @@ const Success: FC<SuccessProps> = props => {
           <Stack column={true} spacing={7}>
             <Box>
               <Stack column={true} spacing={2}>
-                <Stack spacing={2}>
+                <Stack>
                   <Text
                     fontSize="1.5rem"
                     fontFamily="Cooper Hewitt"
                     fontWeight="700"
                     lineHeight="30px"
-                    // flex="auto"
+                    flex="auto"
                   >
                     {utils.formatUnits(amount, receiverChainInfo.assetDecimals)}{' '}
                     {receiverChainInfo.assetName}
@@ -68,10 +68,11 @@ const Success: FC<SuccessProps> = props => {
                   <Button
                     size="sm"
                     borderRadius="5px"
-                    colorScheme="purple"
+                    colorScheme="blue"
                     border="none"
-                    color="white!important"
-                    casing="uppercase!important"
+                    borderStyle="none"
+                    color="white"
+                    casing="uppercase"
                     onClick={() =>
                       window.open(
                         getExplorerLinkForTx(
