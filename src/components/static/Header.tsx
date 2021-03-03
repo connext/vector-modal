@@ -1,7 +1,6 @@
 import React, { FC } from 'react';
 import { success } from '../../public';
-import { Text, Stack, WarningIcon, ModalHeader } from '../common';
-import Loader from './Loader';
+import { Text, Stack, WarningIcon, ModalHeader, Spinner } from '../common';
 
 interface HeaderProps {
   title: string;
@@ -32,7 +31,7 @@ const Header: FC<HeaderProps> = props => {
           <Stack alignItems="center" spacing={2}>
             {warningIcon && <WarningIcon />}
             {successIcon && <img src={success} />}
-            {spinner && <Loader color="blue" />}
+            {spinner && <Spinner />}
             <Text
               fontWeight="700"
               fontFamily="Cooper Hewitt"

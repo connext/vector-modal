@@ -1,6 +1,5 @@
 import React, { FC, useState, useEffect } from 'react';
 import CSS from 'csstype';
-import { Loader } from '../static';
 import { CopyIcon, CheckCircleIcon } from '@chakra-ui/icons';
 import {
   ModalContent,
@@ -12,6 +11,7 @@ import {
   InputGroup,
   IconButton,
   IconContainer,
+  Spinner,
 } from '../common';
 import { Header, Footer, NetworkBar } from '../static';
 import { CHAIN_DETAIL } from '../../constants';
@@ -122,7 +122,9 @@ const SwapListener: FC<SwapListenerProps> = props => {
                     <Stack column={true} spacing={3}>
                       <Text fontSize="1rem">Awaiting your transfer...</Text>
                       <Stack spacing={4} alignItems="center">
-                        <Loader color="blue" />
+                        <Box>
+                          <Spinner />
+                        </Box>
                         <Text fontFamily="Roboto Mono">
                           {formatTime(currentTimeMin)}:
                           {formatTime(currentTimeSec)}
