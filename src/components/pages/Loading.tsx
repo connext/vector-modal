@@ -1,7 +1,8 @@
 import React, { FC } from 'react';
 import CSS from 'csstype';
 import { loadingGif } from '../../public';
-import { Footer, ModalContent, ModalBody, Text, Stack, Box } from '../static';
+import { ModalContent, ModalBody, Text, Stack, Box } from '../common';
+import { Footer } from '../static';
 
 interface LoadingProps {
   message: string;

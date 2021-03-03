@@ -1,9 +1,6 @@
 import React, { FC, useEffect, useState } from 'react';
 import CSS from 'csstype';
 import {
-  Header,
-  Footer,
-  NetworkBar,
   ModalContent,
   ModalBody,
   Text,
@@ -11,7 +8,8 @@ import {
   Button,
   InputGroup,
   Input,
-} from '../static';
+} from '../common';
+import { Header, Footer, NetworkBar } from '../static';
 import { CHAIN_DETAIL } from '../../constants';
 import { graphic } from '../../public';
 

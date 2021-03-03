@@ -1,9 +1,7 @@
 import React, { FC } from 'react';
+import { constants } from 'ethers';
 import CSS from 'csstype';
 import {
-  Header,
-  Footer,
-  NetworkBar,
   ModalContent,
   ModalBody,
   Text,
@@ -13,10 +11,10 @@ import {
   InputGroup,
   Input,
   Link,
-} from '../static';
+} from '../common';
+import { Header, Footer, NetworkBar } from '../static';
 import { CHAIN_DETAIL, ERROR_STATES, ErrorStates } from '../../constants';
 import { graphic } from '../../public';
-import { constants } from 'ethers';
 
 export interface ErrorProps {
   error: Error;
@@ -79,12 +77,10 @@ const Error: FC<ErrorProps> = props => {
                         <Input
                           id="address"
                           name="address"
+                          size="sm"
                           value={crossChainTransferId}
                           inputMode="search"
                           title="receiver Address"
-                          // styled
-                          size="sm"
-                          // misc
                           readOnly={true}
                         />
                       </InputGroup>

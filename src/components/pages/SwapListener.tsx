@@ -3,9 +3,6 @@ import CSS from 'csstype';
 import { Loader } from '../static';
 import { CopyIcon, CheckCircleIcon } from '@chakra-ui/icons';
 import {
-  Header,
-  Footer,
-  NetworkBar,
   ModalContent,
   ModalBody,
   Text,
@@ -15,7 +12,8 @@ import {
   InputGroup,
   IconButton,
   IconContainer,
-} from '../static';
+} from '../common';
+import { Header, Footer, NetworkBar } from '../static';
 import { CHAIN_DETAIL } from '../../constants';
 import { darkGraphic } from '../../public';
 // @ts-ignore

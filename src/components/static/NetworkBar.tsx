@@ -4,7 +4,7 @@ import styled from 'styled-components';
 import { CHAIN_DETAIL } from '../../constants';
 import { arrow } from '../../public';
 import { getExplorerLinkForAsset } from '../../utils';
-import { Stack, Box, Text, Link, InputGroup, Input } from './Theme';
+import { Stack, Box, Text, Link, InputGroup, Input } from '../common';
 
 interface NetworkBarProps {
   senderChainInfo: CHAIN_DETAIL;

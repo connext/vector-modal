@@ -1,6 +1,6 @@
 import React, { FC } from 'react';
 import styled from 'styled-components';
-import { Text } from './Theme';
+import { Text } from '../common';
 
 const ModalFooter = styled.div`
   display: flex;

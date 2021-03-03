@@ -1,17 +1,8 @@
 import React, { FC } from 'react';
 import { utils } from 'ethers';
 import CSS from 'csstype';
-import {
-  Header,
-  Footer,
-  NetworkBar,
-  ModalContent,
-  ModalBody,
-  Text,
-  Stack,
-  Box,
-  Button,
-} from '../static';
+import { ModalContent, ModalBody, Text, Stack, Box, Button } from '../common';
+import { Header, Footer, NetworkBar } from '../static';
 import { CHAIN_DETAIL } from '../../constants';
 import { lightGraphic } from '../../public';
 import { getExplorerLinkForTx } from '../../utils';

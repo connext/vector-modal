@@ -1,7 +1,7 @@
 import React, { FC } from 'react';
 import styled from 'styled-components';
 import { success } from '../../public';
-import { Text, Stack, WarningIcon, Box } from './Theme';
+import { Text, Stack, WarningIcon, ModalHeader } from '../common';
 import Loader from './Loader';
 
 interface HeaderProps {
@@ -57,17 +57,3 @@ const Header: FC<HeaderProps> = props => {
 };
 
 export default Header;
-
-const ModalHeader = styled.header`
-  padding: 1rem 1.5rem;
-  font-size: 1.25rem;
-  font-weight: 600;
-  border-width: 0px;
-  border-style: solid;
-  box-sizing: border-box;
-`;
-
-// const Text = styled.p`
-//   margin-top: 0px;
-//   flex: 1 1 auto;
-// `;

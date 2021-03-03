@@ -1,14 +1,7 @@
 import React, { FC } from 'react';
 import CSS from 'csstype';
-import {
-  Header,
-  Footer,
-  NetworkBar,
-  ModalContent,
-  ModalBody,
-  Text,
-  Stack,
-} from '../static';
+import { ModalContent, ModalBody, Text, Stack } from '../common';
+import { Header, Footer, NetworkBar } from '../static';
 import { CHAIN_DETAIL } from '../../constants';
 import { lightGraphic } from '../../public';
 
