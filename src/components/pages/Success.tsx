@@ -1,7 +1,6 @@
 import React, { FC } from 'react';
 import { utils } from 'ethers';
 import CSS from 'csstype';
-import { Link } from '@chakra-ui/react';
 import {
   Header,
   Footer,
@@ -29,12 +28,6 @@ export interface SuccessProps {
 
 const styleModalContent: CSS.Properties = {
   backgroundImage: `url(${lightGraphic})`,
-  backgroundColor: '#F5F5F5',
-  border: '2px solid #4D4D4D',
-  boxSizing: 'border-box',
-  borderRadius: '15px',
-  padding: '0.5rem',
-  backgroundRepeat: 'no-repeat',
   backgroundPosition: 'right top',
 };
 
@@ -72,24 +65,25 @@ const Success: FC<SuccessProps> = props => {
                     {utils.formatUnits(amount, receiverChainInfo.assetDecimals)}{' '}
                     {receiverChainInfo.assetName}
                   </Text>
-                  <Link
-                    href={getExplorerLinkForTx(
-                      receiverChainInfo.chainId,
-                      transactionId
-                    )}
-                    isExternal
+                  <Button
+                    size="sm"
+                    borderRadius="5px"
+                    colorScheme="purple"
+                    border="none"
+                    color="white!important"
+                    casing="uppercase!important"
+                    onClick={() =>
+                      window.open(
+                        getExplorerLinkForTx(
+                          receiverChainInfo.chainId,
+                          transactionId
+                        ),
+                        '_blank'
+                      )
+                    }
                   >
-                    <Button
-                      size="sm"
-                      borderRadius="5px"
-                      colorScheme="purple"
-                      border="none"
-                      color="white!important"
-                      casing="uppercase!important"
-                    >
-                      view tx
-                    </Button>
-                  </Link>
+                    view tx
+                  </Button>
                 </Stack>
                 <Box>
                   <Text fontSize="1rem">
