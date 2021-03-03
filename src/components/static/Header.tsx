@@ -30,22 +30,19 @@ const Header: FC<HeaderProps> = props => {
     <>
       <ModalHeader>
         <Stack justifyContent="space-between">
-          <Stack alignItems="center">
+          <Stack alignItems="center" spacing={2}>
             {warningIcon && <WarningIcon />}
             {successIcon && <img src={success} />}
             {spinner && <Loader color="blue" />}
-            <Box>
-              <Text
-                marginInlineStart="0.75rem"
-                fontWeight="700"
-                fontFamily="Cooper Hewitt"
-                textTransform="uppercase"
-                fontSize="1.5rem"
-                lineHeight="30px"
-              >
-                {title}
-              </Text>
-            </Box>
+            <Text
+              fontWeight="700"
+              fontFamily="Cooper Hewitt"
+              textTransform="uppercase"
+              fontSize="1.5rem"
+              lineHeight="30px"
+            >
+              {title}
+            </Text>
           </Stack>
           <Stack>
             {handleBack && handleBack()}
