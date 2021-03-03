@@ -21,25 +21,27 @@ export const InputGroup = styled(Box)<InputGroupProps>`
 `;
 
 type InputProps = {
-  size?: string;
+  body: string;
   height?: string;
   fontSize?: string;
   paddingLeft?: string;
   paddingRight?: string;
+  flex?: string;
 };
 
 export const Input = styled.input<InputProps>`
   height: ${props =>
-    props.height || props.theme.space[props.theme.sizes[props.size ?? 'md'].h]};
+    props.height || props.theme.space[props.theme.sizes[props.body ?? 'md'].h]};
   font-size: ${props =>
     props.fontSize ||
-    props.theme.fontSizes[props.theme.sizes[props.size ?? 'md'].fontSize]};
+    props.theme.fontSizes[props.theme.sizes[props.body ?? 'md'].fontSize]};
   padding-left: ${props =>
     props.paddingLeft ||
-    props.theme.space[props.theme.sizes[props.size ?? 'md'].px]};
+    props.theme.space[props.theme.sizes[props.body ?? 'md'].px]};
   padding-right: ${props =>
     props.paddingRight ||
-    props.theme.space[props.theme.sizes[props.size ?? 'md'].px]};
+    props.theme.space[props.theme.sizes[props.body ?? 'md'].px]};
+  flex: ${props => props.flex};
   width: 100%;
   min-width: 0px;
   outline: 0px;
