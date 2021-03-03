@@ -6,9 +6,9 @@ import {
   Input,
   InputGroup,
   InputRightElement,
-  IconButton,
-  Spinner,
+  IconButton
 } from '@chakra-ui/react';
+import { Loader } from '../static';
 import { CopyIcon, CheckCircleIcon } from '@chakra-ui/icons';
 import {
   Header,
@@ -132,11 +132,8 @@ const SwapListener: FC<SwapListenerProps> = props => {
                     <Stack direction="column" spacing={3}>
                       <Text fontSize="1rem">Awaiting your transfer...</Text>
                       <Stack direction="row" spacing={4} alignItems="center">
-                        <Spinner
-                          thickness="3px"
-                          speed="0.65s"
+                        <Loader
                           color="blue"
-                          size="lg"
                         />
                         <Text fontFamily="Roboto Mono">
                           {formatTime(currentTimeMin)}:
