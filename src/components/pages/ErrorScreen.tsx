@@ -8,7 +8,11 @@ import {
   ModalBody,
   Text,
   Stack,
+  Box,
   Button,
+  InputGroup,
+  Input,
+  Link,
 } from '../static';
 import { CHAIN_DETAIL, ERROR_STATES, ErrorStates } from '../../constants';
 import { graphic } from '../../public';
@@ -29,12 +33,6 @@ export interface ErrorProps {
 
 const styleModalContent: CSS.Properties = {
   backgroundImage: `url(${graphic})`,
-  backgroundColor: '#F5F5F5',
-  border: '2px solid #4D4D4D',
-  boxSizing: 'border-box',
-  borderRadius: '15px',
-  padding: '0.5rem',
-  backgroundRepeat: 'no-repeat',
 };
 
 const Error: FC<ErrorProps> = props => {
@@ -64,51 +62,75 @@ const Error: FC<ErrorProps> = props => {
         />
 
         <ModalBody>
-          <Stack column={true} spacing={7}>
-            <Stack column={true} spacing={5}>
-              <Stack column={true} spacing={3}>
+          <Stack column={true} spacing={5}>
+            <Stack column={true} spacing={4}>
+              <Stack column={true} spacing={2}>
                 <Stack column={true} spacing={1}>
                   {crossChainTransferId !== constants.HashZero && (
-                    <Text
-                      fontFamily="Roboto Mono"
-                      fontSize="1rem"
-                      noOfLines={2}
-                      color="tomato"
-                    >
-                      {crossChainTransferId}
-                    </Text>
+                    <Stack column={true} spacing={1}>
+                      <Text
+                        fontFamily="Roboto Mono"
+                        fontSize="0.875rem"
+                        noOfLines={1}
+                      >
+                        OrderId
+                      </Text>
+                      <InputGroup>
+                        <Input
+                          id="address"
+                          name="address"
+                          value={crossChainTransferId}
+                          inputMode="search"
+                          title="receiver Address"
+                          // styled
+                          size="sm"
+                          // misc
+                          readOnly={true}
+                        />
+                      </InputGroup>
+                    </Stack>
                   )}
                   <Text
-                    fontSize="1rem"
-                    noOfLines={4}
+                    fontSize="0.875rem"
+                    noOfLines={3}
                     color="tomato"
                     lineHeight="24px"
                   >
                     {error.message}
                   </Text>
                 </Stack>
-                {state === ERROR_STATES.ERROR_TRANSFER && (
-                  <Text fontSize="0.875rem" lineHeight="24px">
-                    An error occurred during the transfer. Your funds are
-                    preserved in the state channel and the tranfer can be
-                    re-attempted.
-                  </Text>
-                )}
-                <Text fontSize="0.875rem" lineHeight="24px">
-                  Support help can be found in the{' '}
-                  <a
-                    style={{ color: 'green !important' }}
-                    href="https://discord.com/channels/454734546869551114"
-                    // isExternal
+                <Box>
+                  {state === ERROR_STATES.ERROR_TRANSFER && (
+                    <Text
+                      fontSize="0.875rem"
+                      lineHeight="24px"
+                      textTransform="initial"
+                    >
+                      An error occurred during the transfer. Your funds are
+                      preserved in the state channel and the tranfer can be
+                      re-attempted.
+                    </Text>
+                  )}
+                  <Text
+                    fontSize="0.875rem"
+                    lineHeight="24px"
+                    textTransform="initial"
                   >
-                    community Discord here
-                  </a>
-                  .
-                </Text>
+                    Support help can be found in the{' '}
+                    <Link
+                      href="https://discord.com/channels/454734546869551114"
+                      target="_blank"
+                      color="green"
+                    >
+                      community Discord here
+                    </Link>
+                    .
+                  </Text>
+                </Box>
               </Stack>
               <Stack column={true} spacing={2}>
                 {retry && (
-                  <Button onClick={retry} size="lg">
+                  <Button size="lg" onClick={retry}>
                     Retry Transfer
                   </Button>
                 )}
