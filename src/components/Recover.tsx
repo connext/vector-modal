@@ -1,20 +1,21 @@
 import React, { FC, useState } from 'react';
 import CSS from 'csstype';
-import {
-  ModalContent,
-  ModalBody,
-  Button,
-  Text,
-  Stack,
-  Box,
-  InputGroup,
-  Input,
-} from '@chakra-ui/react';
 import { BigNumber, constants } from 'ethers';
 import { FullChannelState } from '@connext/vector-types';
 import { getBalanceForAssetId } from '@connext/vector-utils';
 import { BrowserNode } from '@connext/vector-browser-node';
-import { Header, Footer } from './static';
+import {
+  Header,
+  Footer,
+  ModalContent,
+  ModalBody,
+  Text,
+  Stack,
+  Box,
+  Button,
+  InputGroup,
+  Input,
+} from './static';
 import { Success, ErrorScreen } from './pages';
 import { CHAIN_DETAIL, ERROR_STATES } from '../constants';
 import { graphic } from '../public';
@@ -132,19 +133,18 @@ const Recover: FC<RecoveryProps> = props => {
             options={handleOptions}
           />
           <ModalBody>
-            <Stack direction="column" spacing={5}>
+            <Stack column={true} spacing={5}>
               <Text fontSize="1rem" lineHeight="24px">
                 Uh oh! Send the wrong asset to the deposit address? Fill out the
                 details below to attempt recovery of your assets from the state
                 channels.
               </Text>
               <Box>
-                <Stack direction="column" spacing={5}>
-                  <Box>
-                    <Box display="flex">
+                <Stack column={true} spacing={5}>
+                  <Stack column={true} spacing={1}>
+                    <Stack>
                       <Text
                         fontSize="0.875rem"
-                        casing="capitalize"
                         flex="auto"
                         color="#666666"
                         fontWeight="700"
@@ -153,7 +153,6 @@ const Recover: FC<RecoveryProps> = props => {
                       </Text>
                       <Text
                         fontSize="0.875rem"
-                        casing="capitalize"
                         color="crimson"
                         fontFamily="Roboto Mono"
                         fontWeight="700"
@@ -161,43 +160,33 @@ const Recover: FC<RecoveryProps> = props => {
                         {recoverTokenAddressError &&
                           'Must be an Ethereum address'}
                       </Text>
-                    </Box>
-                    <Box
-                      bg="white"
-                      w="100%"
-                      display="flex"
-                      flexDirection="row"
-                      alignItems="center"
-                      borderRadius="15px"
-                      fontFamily="Roboto Mono"
-                    >
-                      <InputGroup>
-                        <Input
-                          id="tokenAddress"
-                          name="Token Address"
-                          type="search"
-                          size="lg"
-                          placeholder="0x..."
-                          // styling
-                          boxShadow="none!important"
-                          border="none"
-                          value={recoverTokenAddress}
-                          onChange={event => {
-                            setRecoverTokenAddress(event.target.value);
-                            setRecoverTokenAddressError(
-                              !isValidAddress(event.target.value)
-                            );
-                          }}
-                        />
-                      </InputGroup>
-                    </Box>
-                  </Box>
+                    </Stack>
 
-                  <Box>
-                    <Box display="flex">
+                    <InputGroup colorScheme="white" borderRadius="15px">
+                      <Input
+                        id="tokenAddress"
+                        name="Token Address"
+                        type="search"
+                        size="lg"
+                        placeholder="0x..."
+                        // styling
+                        boxShadow="none!important"
+                        border="none"
+                        value={recoverTokenAddress}
+                        onChange={event => {
+                          setRecoverTokenAddress(event.target.value);
+                          setRecoverTokenAddressError(
+                            !isValidAddress(event.target.value)
+                          );
+                        }}
+                      />
+                    </InputGroup>
+                  </Stack>
+
+                  <Stack column={true} spacing={1}>
+                    <Stack>
                       <Text
                         fontSize="0.875rem"
-                        casing="capitalize"
                         flex="auto"
                         color="#666666"
                         fontWeight="700"
@@ -206,7 +195,6 @@ const Recover: FC<RecoveryProps> = props => {
                       </Text>
                       <Text
                         fontSize="0.875rem"
-                        casing="capitalize"
                         color="crimson"
                         fontFamily="Roboto Mono"
                         fontWeight="700"
@@ -214,42 +202,34 @@ const Recover: FC<RecoveryProps> = props => {
                         {recoverWithdrawalAddressError &&
                           'Must be an Ethereum address'}
                       </Text>
-                    </Box>
-                    <Box
-                      bg="white"
-                      w="100%"
-                      display="flex"
-                      flexDirection="row"
-                      alignItems="center"
-                      borderRadius="15px"
-                      fontFamily="Roboto Mono"
-                    >
-                      <InputGroup>
-                        <Input
-                          id="withdrawalAddress"
-                          name="Withdrawal Address"
-                          type="search"
-                          size="lg"
-                          // styling
-                          boxShadow="none!important"
-                          border="none"
-                          placeholder="0x..."
-                          onChange={event => {
-                            setRecoverWithdrawalAddress(event.target.value);
-                            setRecoverWithdrawalAddressError(
-                              !isValidAddress(event.target.value)
-                            );
-                          }}
-                          value={recoverWithdrawalAddress}
-                        />
-                      </InputGroup>
-                    </Box>
-                  </Box>
+                    </Stack>
+
+                    <InputGroup colorScheme="white" borderRadius="15px">
+                      <Input
+                        id="withdrawalAddress"
+                        name="Withdrawal Address"
+                        type="search"
+                        size="lg"
+                        // styling
+                        boxShadow="none!important"
+                        border="none"
+                        placeholder="0x..."
+                        onChange={event => {
+                          setRecoverWithdrawalAddress(event.target.value);
+                          setRecoverWithdrawalAddressError(
+                            !isValidAddress(event.target.value)
+                          );
+                        }}
+                        value={recoverWithdrawalAddress}
+                      />
+                    </InputGroup>
+                  </Stack>
 
                   <Button
                     size="lg"
                     type="submit"
                     disabled={
+                      status === 'Loading' ||
                       recoverWithdrawalAddressError ||
                       recoverTokenAddressError ||
                       !recoverTokenAddress ||
@@ -257,13 +237,11 @@ const Recover: FC<RecoveryProps> = props => {
                         ? true
                         : false
                     }
-                    isLoading={status === 'Loading' ? true : false}
-                    loadingText="Recovering"
                     onClick={() =>
                       recover(recoverTokenAddress, recoverWithdrawalAddress)
                     }
                   >
-                    Recover
+                    {status === 'Loading' ? 'Recovering' : 'Recover'}
                   </Button>
                 </Stack>
               </Box>
