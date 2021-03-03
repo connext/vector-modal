@@ -148,8 +148,6 @@ const ConnextModal: FC<ConnextModalProps> = ({
 
   const [listener, setListener] = useState<NodeJS.Timeout>();
 
-  const [amount, setAmount] = useState<BigNumber>(BigNumber.from(0));
-
   const activeCrossChainTransferIdRef = React.useRef(
     activeCrossChainTransferId
   );
@@ -251,7 +249,6 @@ const ConnextModal: FC<ConnextModalProps> = ({
       title: 'deposit detected',
       message: 'Detected balance on chain, transferring into state channel',
     });
-    setAmount(transferAmount);
 
     try {
       console.log(
@@ -766,7 +763,6 @@ const ConnextModal: FC<ConnextModalProps> = ({
     setError(undefined);
     setDepositAddress(undefined);
     setActiveCrossChainTransferId(constants.HashZero);
-    setAmount(BigNumber.from(0));
     setPreImage(undefined);
   };
 
@@ -1344,7 +1340,7 @@ const ConnextModal: FC<ConnextModalProps> = ({
       case SCREEN_STATES.SUCCESS:
         return (
           <Success
-            amount={amount.toString()}
+            amount={receivedAmountUi}
             transactionId={withdrawTx!}
             senderChainInfo={senderChain!}
             receiverChainInfo={receiverChain!}
