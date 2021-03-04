@@ -279,13 +279,14 @@ export const createFromAssetTransfer = async (
       )}`
     );
   }
+  const maxExpiry = Date.now() - 5_000;
   const validQuote =
     quote &&
     quote.amount === toTransfer &&
     quote.routerIdentifier === depositChannel.aliceIdentifier &&
     quote.assetId.toLowerCase() === _fromAssetId.toLowerCase() &&
     quote.chainId === fromChainId &&
-    parseInt(quote.expiry) < Date.now() - 1000 &&
+    parseInt(quote.expiry) < maxExpiry &&
     BigNumber.from(quote.fee).lt(toTransfer) &&
     quote.recipient === depositChannel.bobIdentifier &&
     quote.recipientAssetId.toLowerCase() === _toAssetId.toLowerCase() &&
@@ -524,18 +525,17 @@ export const withdrawToAsset = async (
     throw new Error('Asset not in receiver channel');
   }
 
+  const maxExpiry = Date.now() - 5_000;
   const validQuote =
     quote &&
     quote.amount === toWithdraw &&
-    parseInt(quote.expiry) > Date.now() - 1000 &&
+    parseInt(quote.expiry) < maxExpiry &&
     quote.assetId.toLowerCase() === _toAssetId.toLowerCase() &&
     !!quote.signature && // lazy sig check
     quote.channelAddress === withdrawChannel.channelAddress &&
     BigNumber.from(toWithdraw).gte(quote.fee);
 
-  console.log(
-    `quote is ${validQuote ? 'valid' : 'not valid, rerequesting'} valid`
-  );
+  console.log(`quote is ${validQuote ? 'valid' : 'not valid, rerequesting'}`);
   const params: NodeParams.Withdraw = {
     amount: toWithdraw,
     assetId: toAssetId,
