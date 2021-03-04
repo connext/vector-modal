@@ -812,10 +812,6 @@ const ConnextModal: FC<ConnextModalProps> = ({
 
     if (_transferAmount) {
       try {
-        // const _normalized = utils.formatUnits(
-        //   _transferAmount,
-        //   senderChainInfo.assetDecimals
-        // );
         setInputReadOnly(true);
         setTransferAmountUi(_transferAmount);
       } catch (e) {
