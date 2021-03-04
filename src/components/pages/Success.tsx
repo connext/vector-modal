@@ -1,5 +1,4 @@
 import React, { FC } from 'react';
-import { utils } from 'ethers';
 import CSS from 'csstype';
 import { ModalContent, ModalBody, Text, Stack, Box, Button } from '../common';
 import { Header, Footer, NetworkBar } from '../static';
@@ -53,8 +52,7 @@ const Success: FC<SuccessProps> = props => {
                     lineHeight="30px"
                     flex="auto"
                   >
-                    {utils.formatUnits(amount, receiverChainInfo.assetDecimals)}{' '}
-                    {receiverChainInfo.assetName}
+                    {amount} {receiverChainInfo.assetName}
                   </Text>
                   <Button
                     size="sm"
