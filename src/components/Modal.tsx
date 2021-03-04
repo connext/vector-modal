@@ -812,12 +812,12 @@ const ConnextModal: FC<ConnextModalProps> = ({
 
     if (_transferAmount) {
       try {
-        const _normalized = utils.formatUnits(
-          _transferAmount,
-          senderChainInfo.assetDecimals
-        );
+        // const _normalized = utils.formatUnits(
+        //   _transferAmount,
+        //   senderChainInfo.assetDecimals
+        // );
         setInputReadOnly(true);
-        setTransferAmountUi(_normalized);
+        setTransferAmountUi(_transferAmount);
       } catch (e) {
         const message = 'Error with transferAmount param';
         console.log(e, message);
@@ -1283,7 +1283,6 @@ const ConnextModal: FC<ConnextModalProps> = ({
         );
 
       case SCREEN_STATES.SWAP:
-        console.log("TRANSFER AMOUNT UI: ", transferAmountUi)
         return (
           <Swap
             onUserInput={handleSwapCheck}
