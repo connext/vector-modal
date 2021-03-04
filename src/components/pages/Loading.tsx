@@ -1,7 +1,7 @@
 import React, { FC } from 'react';
 import CSS from 'csstype';
-import { ModalContent, ModalBody, Text, Stack, Box } from '@chakra-ui/react';
 import { loadingGif } from '../../public';
+import { ModalContent, ModalBody, Text, Stack, Box } from '../common';
 import { Footer } from '../static';
 
 interface LoadingProps {
@@ -16,22 +16,13 @@ const styleLoadingCircle: CSS.Properties = {
   overflow: 'hidden',
 };
 
-const styleModalContent: CSS.Properties = {
-  backgroundColor: '#F5F5F5',
-  border: '2px solid #4D4D4D',
-  boxSizing: 'border-box',
-  borderRadius: '15px',
-  padding: '0.5rem',
-  backgroundRepeat: 'no-repeat',
-};
-
 const Loading: FC<LoadingProps> = props => {
   const { message } = props;
   return (
     <>
-      <ModalContent style={styleModalContent}>
+      <ModalContent>
         <ModalBody padding="2.5rem">
-          <Stack direction="column" spacing={5} alignItems="center">
+          <Stack column={true} spacing={5} alignItems="center">
             <Box style={styleLoadingCircle}>
               <img
                 src={loadingGif}
@@ -39,7 +30,7 @@ const Loading: FC<LoadingProps> = props => {
                 style={{ width: '100%', height: '100%' }}
               />
             </Box>
-            <Text fontSize="xl">{message}</Text>
+            <Text fontSize="1.25rem">{message}</Text>
           </Stack>
         </ModalBody>
 

@@ -1,30 +1,20 @@
-import React, { FC, useEffect, useState } from 'react';
+import React, { FC, useEffect } from 'react';
 import CSS from 'csstype';
 import {
   ModalContent,
   ModalBody,
-  Button,
   Text,
   Stack,
-  Box,
-  NumberInputField,
-  NumberInput,
-} from '@chakra-ui/react';
+  Button,
+  InputGroup,
+  Input,
+} from '../common';
 import { Header, Footer, NetworkBar } from '../static';
 import { CHAIN_DETAIL } from '../../constants';
 import { graphic } from '../../public';
 
 export interface TransferProps {
-  onUserInput: (
-    _input: string | undefined
-  ) => {
-    isError: boolean;
-    result: {
-      quoteFee: string | undefined;
-      quoteAmount: string | undefined;
-      error: string | undefined;
-    };
-  };
+  onUserInput: (_input: string | undefined) => void;
   swapRequest: () => void;
   options: () => void;
   isLoad: Boolean;
@@ -33,17 +23,13 @@ export interface TransferProps {
   receiverChainInfo: CHAIN_DETAIL;
   receiverAddress: string;
   transferAmount: string | undefined;
+  feeQuote: string;
+  quoteAmount: string | undefined;
   amountError?: string;
   userBalance?: string;
 }
 const styleModalContent: CSS.Properties = {
   backgroundImage: `url(${graphic})`,
-  backgroundColor: '#F5F5F5',
-  border: '2px solid #4D4D4D',
-  boxSizing: 'border-box',
-  borderRadius: '15px',
-  padding: '0.5rem',
-  backgroundRepeat: 'no-repeat',
 };
 
 const Swap: FC<TransferProps> = props => {
@@ -54,6 +40,8 @@ const Swap: FC<TransferProps> = props => {
     receiverChainInfo,
     receiverAddress,
     transferAmount,
+    feeQuote,
+    quoteAmount,
     isLoad,
     inputReadOnly,
     onUserInput,
@@ -61,25 +49,15 @@ const Swap: FC<TransferProps> = props => {
     options,
   } = props;
 
-  const [feeQuote, setFeeQuote] = useState<string | undefined>('———');
-  const [quoteAmount, setQuoteAmount] = useState<string | undefined>('———');
-
   function escapeRegExp(string: string): string {
     return string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'); // $& means the whole matched string
   }
 
   const inputRegex = RegExp(`^\\d*(?:\\\\[.])?\\d*$`); // match escaped "." characters via in a non-capturing group
 
-  const enforcer = (nextUserInput: string) => {
-    if (nextUserInput === '' || inputRegex.test(escapeRegExp(nextUserInput))) {
-      const res = onUserInput(nextUserInput);
-      if (res.isError) {
-        setFeeQuote('———');
-        setQuoteAmount('———');
-        return;
-      }
-      setFeeQuote(res.result.quoteFee);
-      setQuoteAmount(res.result.quoteAmount);
+  const enforcer = (currentInput: string) => {
+    if (currentInput === '' || inputRegex.test(escapeRegExp(currentInput))) {
+      onUserInput(currentInput);
     }
   };
 
@@ -96,21 +74,20 @@ const Swap: FC<TransferProps> = props => {
       }
     };
     effect();
-  });
+  }, [transferAmount]);
 
   return (
     <>
       <ModalContent id="modalContent" style={styleModalContent}>
         <Header title="Send Amount" options={options} />
         <ModalBody>
-          <Stack direction="column" spacing={7}>
-            <Stack direction="column" spacing={5}>
-              <Stack direction="column" spacing={1}>
-                <Box display="flex">
+          <Stack column={true} spacing={5}>
+            <Stack column={true} spacing={4}>
+              <Stack column={true} spacing={1}>
+                <Stack>
                   <Text
                     flex="auto"
-                    fontSize="xs"
-                    casing="capitalize"
+                    fontSize="0.75rem"
                     color={!!amountError ? 'crimson' : 'black'}
                   >
                     {!!amountError
@@ -119,62 +96,60 @@ const Swap: FC<TransferProps> = props => {
                   </Text>
                   {userBalance && (
                     <Text
-                      fontSize="xs"
-                      casing="uppercase"
-                      textAlign="end"
+                      fontSize="0.75rem"
                       fontFamily="Roboto Mono"
+                      textTransform="uppercase"
+                      textAlign="end"
                       color="#757575"
                     >
                       Bal: {userBalance} {senderChainInfo.assetName}
                     </Text>
                   )}
-                </Box>
-                <Box
-                  bg="white"
-                  w="100%"
-                  display="flex"
-                  flexDirection="row"
+                </Stack>
+                <Stack
+                  colorScheme="white"
                   alignItems="center"
-                  borderRadius="15px"
+                  borderRadius="5px"
                 >
-                  <NumberInput
-                    size="lg"
-                    flex="auto"
-                    title="Token Amount"
-                    aria-describedby="amount"
-                    //styling
-                    fontFamily="Roboto Mono"
-                    fontStyle="normal"
-                    lineHeight="20px"
-                    fontSize="1rem"
-                    fontWeight="500"
-                    // universal input options
-                    inputMode="decimal"
-                    value={transferAmount}
-                    isReadOnly={inputReadOnly ? true : false}
-                  >
-                    <NumberInputField
+                  <InputGroup flex="auto" colorScheme="white">
+                    <Input
+                      body="lg"
+                      title="Token Amount"
+                      aria-describedby="amount"
                       // styling
-                      boxShadow="none!important"
-                      border="none"
+                      fontSize="1rem"
+                      // universal input options
+                      inputMode="decimal"
+                      autoComplete="off"
+                      autoCorrect="off"
+                      // text-specific options
+                      type="text"
+                      pattern="^[0-9]*[.,]?[0-9]*$"
+                      placeholder={'0.0'}
+                      minLength={1}
+                      maxLength={79}
+                      spellCheck="false"
+                      // value
+                      value={transferAmount}
                       onChange={event => {
-                        // replace commas with periods, because uniswap exclusively uses period as the decimal separator
                         enforcer(event.target.value.replace(/,/g, '.'));
                       }}
+                      readOnly={inputReadOnly ? true : false}
                     />
-                  </NumberInput>
+                  </InputGroup>
 
                   {userBalance && (
                     <Button
-                      size="sm"
-                      bg="#DEDEDE"
+                      size="xs"
+                      colorScheme="#DEDEDE"
                       color="#737373"
                       borderRadius="5px"
                       border="none"
+                      borderStyle="none"
                       casing="uppercase"
-                      marginRight="10px"
+                      marginRight="10px!important"
                       height="1.5rem"
-                      isDisabled={inputReadOnly ? true : false}
+                      disabled={inputReadOnly ? true : false}
                       onClick={() => {
                         enforcer(userBalance);
                       }}
@@ -182,33 +157,26 @@ const Swap: FC<TransferProps> = props => {
                       max
                     </Button>
                   )}
-                </Box>
+                </Stack>
               </Stack>
 
-              <Stack direction="column" spacing={2}>
-                <Box display="flex">
-                  <Text
-                    fontSize="xs"
-                    casing="capitalize"
-                    flex="auto"
-                    color="#666666"
-                  >
+              <Stack column={true} spacing={2}>
+                <Stack>
+                  <Text fontSize="0.75rem" flex="auto" color="#666666">
                     Estimated Fees:
                   </Text>
                   <Text
-                    fontSize="xs"
-                    casing="capitalize"
+                    fontSize="0.75rem"
                     fontFamily="Roboto Mono"
                     color="#666666"
                   >
                     {feeQuote} {senderChainInfo.assetName}
                   </Text>
-                </Box>
+                </Stack>
 
-                <Box display="flex">
+                <Stack>
                   <Text
-                    fontSize="14px"
-                    casing="capitalize"
+                    fontSize="0.875rem"
                     flex="auto"
                     color="#666666"
                     fontWeight="700"
@@ -216,26 +184,29 @@ const Swap: FC<TransferProps> = props => {
                     You will receive:
                   </Text>
                   <Text
-                    fontSize="14px"
-                    casing="capitalize"
+                    fontSize="0.875rem"
                     color="#666666"
                     fontFamily="Roboto Mono"
                     fontWeight="700"
                   >
                     {quoteAmount} {senderChainInfo.assetName}
                   </Text>
-                </Box>
+                </Stack>
               </Stack>
 
               <Button
                 size="lg"
                 type="submit"
-                isLoading={isLoad ? true : false}
-                loadingText="Waiting For Transaction"
-                isDisabled={!!amountError || !transferAmount ? true : false}
+                disabled={
+                  !!amountError || !transferAmount || isLoad ? true : false
+                }
                 onClick={handleSubmit}
               >
-                {userBalance ? 'Swap' : 'Show me QR!'}
+                {isLoad
+                  ? 'Waiting For Transaction'
+                  : userBalance
+                  ? 'Swap'
+                  : 'Show me QR!'}
               </Button>
             </Stack>
 

@@ -1,17 +1,20 @@
 import React, { FC } from 'react';
+import { constants } from 'ethers';
+import CSS from 'csstype';
 import {
   ModalContent,
   ModalBody,
-  Button,
   Text,
   Stack,
+  Box,
+  Button,
+  InputGroup,
+  Input,
   Link,
-} from '@chakra-ui/react';
-import CSS from 'csstype';
+} from '../common';
 import { Header, Footer, NetworkBar } from '../static';
 import { CHAIN_DETAIL, ERROR_STATES, ErrorStates } from '../../constants';
 import { graphic } from '../../public';
-import { constants } from 'ethers';
 
 export interface ErrorProps {
   error: Error;
@@ -28,12 +31,6 @@ export interface ErrorProps {
 
 const styleModalContent: CSS.Properties = {
   backgroundImage: `url(${graphic})`,
-  backgroundColor: '#F5F5F5',
-  border: '2px solid #4D4D4D',
-  boxSizing: 'border-box',
-  borderRadius: '15px',
-  padding: '0.5rem',
-  backgroundRepeat: 'no-repeat',
 };
 
 const Error: FC<ErrorProps> = props => {
@@ -51,7 +48,7 @@ const Error: FC<ErrorProps> = props => {
   } = props;
 
   const title =
-    state === ERROR_STATES.ERROR_TRANSFER ? 'Trasfer Error' : 'Setup Error';
+    state === ERROR_STATES.ERROR_TRANSFER ? 'Transfer Error' : 'Setup Error';
   return (
     <>
       <ModalContent id="modalContent" style={styleModalContent}>
@@ -63,51 +60,73 @@ const Error: FC<ErrorProps> = props => {
         />
 
         <ModalBody>
-          <Stack direction="column" spacing={7}>
-            <Stack direction="column" spacing={5}>
-              <Stack direction="column" spacing={3}>
-                <Stack direction="column" spacing={1}>
+          <Stack column={true} spacing={5}>
+            <Stack column={true} spacing={4}>
+              <Stack column={true} spacing={2}>
+                <Stack column={true} spacing={1}>
                   {crossChainTransferId !== constants.HashZero && (
-                    <Text
-                      fontFamily="Roboto Mono"
-                      fontSize="s"
-                      noOfLines={4}
-                      color="tomato"
-                    >
-                      {crossChainTransferId}
-                    </Text>
+                    <Stack column={true} spacing={1}>
+                      <Text
+                        fontFamily="Roboto Mono"
+                        fontSize="0.875rem"
+                        noOfLines={1}
+                      >
+                        OrderId
+                      </Text>
+                      <InputGroup>
+                        <Input
+                          id="address"
+                          name="address"
+                          body="sm"
+                          value={crossChainTransferId}
+                          inputMode="search"
+                          title="receiver Address"
+                          readOnly={true}
+                        />
+                      </InputGroup>
+                    </Stack>
                   )}
                   <Text
-                    fontSize="s"
-                    noOfLines={4}
+                    fontSize="0.875rem"
+                    noOfLines={3}
                     color="tomato"
                     lineHeight="24px"
                   >
                     {error.message}
                   </Text>
                 </Stack>
-                {state === ERROR_STATES.ERROR_TRANSFER && (
-                  <Text fontSize="sm" lineHeight="24px">
-                    An error occurred during the transfer. Your funds are
-                    preserved in the state channel and the tranfer can be
-                    re-attempted.
-                  </Text>
-                )}
-                <Text fontSize="sm" lineHeight="24px">
-                  Support help can be found in the{' '}
-                  <Link
-                    color="green!important"
-                    href="https://discord.com/channels/454734546869551114"
-                    isExternal
+                <Box>
+                  {state === ERROR_STATES.ERROR_TRANSFER && (
+                    <Text
+                      fontSize="0.875rem"
+                      lineHeight="24px"
+                      textTransform="initial"
+                    >
+                      An error occurred during the transfer. Your funds are
+                      preserved in the state channel and the tranfer can be
+                      re-attempted.
+                    </Text>
+                  )}
+                  <Text
+                    fontSize="0.875rem"
+                    lineHeight="24px"
+                    textTransform="initial"
                   >
-                    community Discord here
-                  </Link>
-                  .
-                </Text>
+                    Support help can be found in the{' '}
+                    <Link
+                      href="https://discord.com/channels/454734546869551114"
+                      target="_blank"
+                      color="green"
+                    >
+                      community Discord here
+                    </Link>
+                    .
+                  </Text>
+                </Box>
               </Stack>
-              <Stack direction="column" spacing={2}>
+              <Stack column={true} spacing={2}>
                 {retry && (
-                  <Button onClick={retry} size="lg">
+                  <Button size="lg" onClick={retry}>
                     Retry Transfer
                   </Button>
                 )}

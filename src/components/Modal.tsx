@@ -1,19 +1,18 @@
 import { BrowserNode } from '@connext/vector-browser-node';
 import React, { FC, useEffect, useState } from 'react';
-import {
-  Modal,
-  ModalOverlay,
-  useDisclosure,
-  IconButton,
-} from '@chakra-ui/react';
-import { ArrowBackIcon, CloseIcon } from '@chakra-ui/icons';
+import { ThemeProvider } from 'styled-components';
+import { Modal, useDisclosure } from '@chakra-ui/react';
 import {
   EngineEvents,
   ERC20Abi,
   FullChannelState,
+  TransferQuote,
+  WithdrawalQuote,
 } from '@connext/vector-types';
 import { getBalanceForAssetId, getRandomBytes32 } from '@connext/vector-utils';
 import { BigNumber, constants, utils, providers, Contract } from 'ethers';
+import AwesomeDebouncePromise from 'awesome-debounce-promise';
+
 import {
   ERROR_STATES,
   SCREEN_STATES,
@@ -37,8 +36,17 @@ import {
   connectNode,
   verifyRouterCapacityForTransfer,
   getUserBalance,
+  getCrosschainFee,
   // getFeeQuote,
 } from '../utils';
+import {
+  theme,
+  Fonts,
+  ModalOverlay,
+  ModalContentContainer,
+  BackButton,
+  CloseButton,
+} from './common';
 import {
   Loading,
   Swap,
@@ -46,9 +54,9 @@ import {
   Status,
   ErrorScreen,
   Success,
+  Recover,
 } from './pages';
-import Recover from './Recover';
-import { Options, ThemeWrapper } from './static';
+import { Options } from './static';
 
 export { useDisclosure };
 
@@ -70,9 +78,12 @@ export type ConnextModalProps = {
   transferAmount?: string;
   injectedProvider?: any;
   loginProvider?: any;
+  iframeSrcOverride?: string;
   onDepositTxCreated?: (txHash: string) => void;
   onWithdrawalTxCreated?: (txHash: string) => void;
 };
+
+const getFeesDebounced = AwesomeDebouncePromise(getCrosschainFee, 500);
 
 const ConnextModal: FC<ConnextModalProps> = ({
   showModal,
@@ -91,6 +102,7 @@ const ConnextModal: FC<ConnextModalProps> = ({
   loginProvider: _loginProvider,
   onDepositTxCreated,
   onWithdrawalTxCreated,
+  iframeSrcOverride,
 }) => {
   const depositAssetId = utils.getAddress(_depositAssetId);
   const withdrawAssetId = utils.getAddress(_withdrawAssetId);
@@ -106,6 +118,11 @@ const ConnextModal: FC<ConnextModalProps> = ({
   const [transferAmountUi, setTransferAmountUi] = useState<
     string | undefined
   >();
+  const [transferFeeUi, setTransferFeeUi] = useState<string>('--');
+  const [receivedAmountUi, setReceivedAmountUi] = useState<string>('--');
+  const [transferQuote, setTransferQuote] = useState<TransferQuote>();
+  const [withdrawQuote, setWithdrawQuote] = useState<WithdrawalQuote>();
+
   const [depositAddress, setDepositAddress] = useState<string>();
 
   const [withdrawChannel, _setWithdrawChannel] = useState<FullChannelState>();
@@ -138,8 +155,6 @@ const ConnextModal: FC<ConnextModalProps> = ({
   };
 
   const [listener, setListener] = useState<NodeJS.Timeout>();
-
-  const [amount, setAmount] = useState<BigNumber>(BigNumber.from(0));
 
   const activeCrossChainTransferIdRef = React.useRef(
     activeCrossChainTransferId
@@ -242,7 +257,6 @@ const ConnextModal: FC<ConnextModalProps> = ({
       title: 'deposit detected',
       message: 'Detected balance on chain, transferring into state channel',
     });
-    setAmount(transferAmount);
 
     try {
       console.log(
@@ -291,16 +305,22 @@ const ConnextModal: FC<ConnextModalProps> = ({
         withdrawAssetId,
         routerPublicIdentifier,
         crossChainTransferId,
-        preImage
+        preImage,
+        transferQuote
       );
       console.log('createFromAssetTransfer transferDeets: ', transferDeets);
     } catch (e) {
+      if (e.message.includes('Fees charged are greater than amount')) {
+        handleScreen({ state: SCREEN_STATES.SWAP });
+        setAmountError('Last requested transfer is lower than fees charged');
+        return;
+      }
+
       handleScreen({
         state: ERROR_STATES.ERROR_TRANSFER,
         error: e,
         message: 'Error in createFromAssetTransfer:',
       });
-
       return;
     }
     setPreImage(preImage);
@@ -405,50 +425,18 @@ const ConnextModal: FC<ConnextModalProps> = ({
     );
   };
 
-  // const handleSwapfeeQuote = async (
-  //   input: string
-  // ): Promise<{
-  //   fee: string;
-  // }> => {
-  //   const quote = await getFeeQuote(
-  //     routerPublicIdentifier,
-  //     input,
-  //     senderChain?.assetId!,
-  //     senderChain?.chainId!,
-  //     node!.publicIdentifier,
-  //     receiverChain?.chainId!,
-  //     receiverChain?.assetId!
-  //   );
-  //   return quote;
-  // };
-
-  const handleSwapCheck = (
-    _input: string | undefined
-  ): {
-    isError: boolean;
-    result: {
-      quoteFee: string | undefined;
-      quoteAmount: string | undefined;
-      error: string | undefined;
-    };
-  } => {
+  const handleSwapCheck = async (_input: string | undefined) => {
     let err: string | undefined = undefined;
-    let quote_fee: string | undefined = undefined;
-    let quote_amount: string | undefined = undefined;
     const input = _input ? _input.trim() : undefined;
 
     setAmountError(undefined);
     if (!input) {
       setTransferAmountUi(undefined);
-      return {
-        isError: true,
-        result: {
-          quoteFee: undefined,
-          quoteAmount: undefined,
-          error: undefined,
-        },
-      };
+      setTransferFeeUi('--');
+      setReceivedAmountUi('--');
+      return;
     }
+
     try {
       setTransferAmountUi(input);
       const transferAmountBn = BigNumber.from(
@@ -457,6 +445,8 @@ const ConnextModal: FC<ConnextModalProps> = ({
 
       if (transferAmountBn.isZero()) {
         err = 'Transfer amount cannot be 0';
+        setAmountError(err);
+        return;
       }
       if (userBalance) {
         const userBalanceBn = BigNumber.from(
@@ -464,46 +454,65 @@ const ConnextModal: FC<ConnextModalProps> = ({
         );
         if (transferAmountBn.gt(userBalanceBn)) {
           err = 'Transfer amount exceeds user balance';
+          setAmountError(err);
+          return;
         }
       }
-      // const res = await handleSwapfeeQuote(input);
-      const res = { fee: '0' };
-      quote_fee = res.fee;
 
-      const feeBn = BigNumber.from(
-        utils.parseUnits(quote_fee, senderChain?.assetDecimals!)
-      );
-
-      const quoteAmountBn = transferAmountBn.sub(feeBn);
-
-      quote_amount = utils.formatUnits(
-        quoteAmountBn,
-        senderChain?.assetDecimals!
-      );
-
-      if (quoteAmountBn.lt(0)) {
-        err = 'Transfer amount is less than quote fees';
+      let fee;
+      try {
+        const {
+          totalFee,
+          transferQuote: _transferQuote,
+          withdrawalQuote: _withdrawQuote,
+        } = await getFeesDebounced(
+          node!,
+          routerPublicIdentifier,
+          transferAmountBn,
+          senderChain?.chainId!,
+          senderChain?.assetId!,
+          senderChain?.assetDecimals!,
+          receiverChain?.chainId!,
+          receiverChain?.assetId!,
+          receiverChain?.assetDecimals!,
+          withdrawChannelRef.current!.channelAddress
+        );
+        fee = totalFee;
+        setTransferQuote(_transferQuote);
+        setWithdrawQuote(_withdrawQuote);
+      } catch (e) {
+        setAmountError(e.message);
+        return;
       }
+
+      const received = transferAmountBn.sub(fee);
+      if (received.lte(0)) {
+        err = 'Not enough amount to pay fees';
+        setAmountError(err);
+      } else {
+        setAmountError(undefined);
+      }
+
+      const receivedUi = utils.formatUnits(
+        received.lt(0) ? 0 : received,
+        receiverChain!.assetDecimals
+      );
+      const feeUi = utils.formatUnits(fee, senderChain!.assetDecimals);
+      console.log('feeUi: ', feeUi);
+      console.log('receivedUi: ', receivedUi);
+      setTransferFeeUi(feeUi);
+      setReceivedAmountUi(receivedUi);
     } catch (e) {
       err = 'Invalid amount';
     }
 
     setAmountError(err);
-    const is_error: boolean = err ? true : false;
-    return {
-      isError: is_error,
-      result: {
-        quoteFee: quote_fee,
-        quoteAmount: quote_amount,
-        error: err,
-      },
-    };
+    return;
   };
 
   const handleSwapRequest = async () => {
-    const res = await handleSwapCheck(transferAmountUi);
-    if (res.isError) {
-      setAmountError(res.result.error);
+    await handleSwapCheck(transferAmountUi);
+    if (amountError) {
       return;
     }
     setIsLoad(true);
@@ -632,7 +641,8 @@ const ConnextModal: FC<ConnextModalProps> = ({
         _withdrawChainId,
         withdrawAssetId,
         withdrawalAddress,
-        routerPublicIdentifier
+        routerPublicIdentifier,
+        withdrawQuote
       );
     } catch (e) {
       handleScreen({
@@ -745,11 +755,14 @@ const ConnextModal: FC<ConnextModalProps> = ({
     setInputReadOnly(false);
     setIsLoad(false);
     setTransferAmountUi(_transferAmount);
+    setTransferFeeUi('--');
+    setReceivedAmountUi('--');
+    setTransferQuote(undefined);
+    setWithdrawQuote(undefined);
     setUserBalance(undefined);
     setError(undefined);
     setDepositAddress(undefined);
     setActiveCrossChainTransferId(constants.HashZero);
-    setAmount(BigNumber.from(0));
     setPreImage(undefined);
   };
 
@@ -809,12 +822,8 @@ const ConnextModal: FC<ConnextModalProps> = ({
 
     if (_transferAmount) {
       try {
-        const _normalized = utils.formatUnits(
-          _transferAmount,
-          senderChainInfo.assetDecimals
-        );
         setInputReadOnly(true);
-        setTransferAmountUi(_normalized);
+        setTransferAmountUi(_transferAmount);
       } catch (e) {
         const message = 'Error with transferAmount param';
         console.log(e, message);
@@ -835,6 +844,12 @@ const ConnextModal: FC<ConnextModalProps> = ({
             `Please connect your wallet to the ${senderChainInfo.name} : ${senderChainInfo.chainId} network`
           );
         }
+
+        const _userBalance = await getUserBalance(
+          injectedProvider,
+          senderChainInfo
+        );
+        setUserBalance(_userBalance);
       } catch (e) {
         const message = 'Failed to get chainId from wallet provider';
         console.log(e, message);
@@ -858,7 +873,8 @@ const ConnextModal: FC<ConnextModalProps> = ({
           receiverChainInfo.chainId,
           senderChainInfo.chainProvider,
           receiverChainInfo.chainProvider,
-          loginProvider
+          loginProvider,
+          iframeSrcOverride
         ));
       setNode(_node);
     } catch (e) {
@@ -1170,10 +1186,7 @@ const ConnextModal: FC<ConnextModalProps> = ({
 
   const handleBack = () => {
     return (
-      <IconButton
-        aria-label="back"
-        border="none"
-        bg="transparent"
+      <BackButton
         isDisabled={
           !lastScreenState ||
           [
@@ -1188,17 +1201,13 @@ const ConnextModal: FC<ConnextModalProps> = ({
           clearInterval(listener!);
           handleScreen({ state: lastScreenState! });
         }}
-        icon={<ArrowBackIcon boxSize={6} />}
       />
     );
   };
 
   const handleCloseButton = () => {
     return (
-      <IconButton
-        aria-label="close"
-        border="none"
-        bg="transparent"
+      <CloseButton
         isDisabled={
           [SCREEN_STATES.LOADING, SCREEN_STATES.STATUS].includes(
             screenState as any
@@ -1207,7 +1216,6 @@ const ConnextModal: FC<ConnextModalProps> = ({
             : false
         }
         onClick={onClose}
-        icon={<CloseIcon boxSize={6} />}
       />
     );
   };
@@ -1299,6 +1307,8 @@ const ConnextModal: FC<ConnextModalProps> = ({
             receiverChainInfo={receiverChain!}
             receiverAddress={withdrawalAddress}
             transferAmount={transferAmountUi}
+            feeQuote={transferFeeUi}
+            quoteAmount={receivedAmountUi}
             options={handleOptions}
           />
         );
@@ -1332,7 +1342,7 @@ const ConnextModal: FC<ConnextModalProps> = ({
       case SCREEN_STATES.SUCCESS:
         return (
           <Success
-            amount={amount.toString()}
+            amount={receivedAmountUi}
             transactionId={withdrawTx!}
             senderChainInfo={senderChain!}
             receiverChainInfo={receiverChain!}
@@ -1363,7 +1373,8 @@ const ConnextModal: FC<ConnextModalProps> = ({
 
   return (
     <>
-      <ThemeWrapper>
+      <ThemeProvider theme={theme}>
+        <Fonts />
         <Modal
           id="modal"
           closeOnOverlayClick={false}
@@ -1375,9 +1386,11 @@ const ConnextModal: FC<ConnextModalProps> = ({
           isCentered
         >
           <ModalOverlay />
-          <div className="global-style">{activeScreen(screenState)}</div>
+          <ModalContentContainer>
+            {activeScreen(screenState)}
+          </ModalContentContainer>
         </Modal>
-      </ThemeWrapper>
+      </ThemeProvider>
     </>
   );
 };

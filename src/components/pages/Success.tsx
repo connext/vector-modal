@@ -1,15 +1,6 @@
 import React, { FC } from 'react';
-import { utils } from 'ethers';
 import CSS from 'csstype';
-import {
-  ModalContent,
-  ModalBody,
-  Text,
-  Stack,
-  Box,
-  Button,
-  Link,
-} from '@chakra-ui/react';
+import { ModalContent, ModalBody, Text, Stack, Box, Button } from '../common';
 import { Header, Footer, NetworkBar } from '../static';
 import { CHAIN_DETAIL } from '../../constants';
 import { lightGraphic } from '../../public';
@@ -27,12 +18,6 @@ export interface SuccessProps {
 
 const styleModalContent: CSS.Properties = {
   backgroundImage: `url(${lightGraphic})`,
-  backgroundColor: '#F5F5F5',
-  border: '2px solid #4D4D4D',
-  boxSizing: 'border-box',
-  borderRadius: '15px',
-  padding: '0.5rem',
-  backgroundRepeat: 'no-repeat',
   backgroundPosition: 'right top',
 };
 
@@ -56,44 +41,42 @@ const Success: FC<SuccessProps> = props => {
           onClose={onClose}
         />
         <ModalBody>
-          <Stack direction="column" spacing={7}>
+          <Stack column={true} spacing={7}>
             <Box>
-              <Stack direction="column" spacing={2}>
-                <Stack direction="row" spacing={2}>
+              <Stack column={true} spacing={2}>
+                <Stack>
                   <Text
-                    fontSize="2xl"
-                    casing="capitalize"
+                    fontSize="1.5rem"
                     fontFamily="Cooper Hewitt"
-                    fontStyle="normal"
                     fontWeight="700"
                     lineHeight="30px"
                     flex="auto"
                   >
-                    {utils.formatUnits(amount, receiverChainInfo.assetDecimals)}{' '}
-                    {receiverChainInfo.assetName}
+                    {amount} {receiverChainInfo.assetName}
                   </Text>
-                  <Link
-                    href={getExplorerLinkForTx(
-                      receiverChainInfo.chainId,
-                      transactionId
-                    )}
-                    isExternal
+                  <Button
+                    size="sm"
+                    borderRadius="5px"
+                    colorScheme="blue"
+                    border="none"
+                    borderStyle="none"
+                    color="white"
+                    casing="uppercase"
+                    onClick={() =>
+                      window.open(
+                        getExplorerLinkForTx(
+                          receiverChainInfo.chainId,
+                          transactionId
+                        ),
+                        '_blank'
+                      )
+                    }
                   >
-                    <Button
-                      size="sm"
-                      borderRadius="5px"
-                      colorScheme="purple"
-                      variant="solid"
-                      border="none"
-                      color="white!important"
-                      casing="uppercase!important"
-                    >
-                      view tx
-                    </Button>
-                  </Link>
+                    view tx
+                  </Button>
                 </Stack>
                 <Box>
-                  <Text fontSize="s" casing="capitalize">
+                  <Text fontSize="1rem">
                     {`Now available on ${receiverChainInfo.name}.`}
                   </Text>
                 </Box>

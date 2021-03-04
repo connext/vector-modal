@@ -1,12 +1,5 @@
-import React, { FC } from 'react';
-import {
-  Menu,
-  MenuButton,
-  MenuList,
-  MenuItem,
-  IconButton,
-} from '@chakra-ui/react';
-import { ExternalLinkIcon, CloseIcon, HamburgerIcon } from '@chakra-ui/icons';
+import React, { FC, useState } from 'react';
+import { MenuList, MenuItem, MenuButton } from '../common';
 import { ScreenStates, SCREEN_STATES, ERROR_STATES } from '../../constants';
 
 interface OptionsProps {
@@ -16,21 +9,19 @@ interface OptionsProps {
 }
 
 const Options: FC<OptionsProps> = props => {
+  const [isListOpen, setIsListOpen] = useState<Boolean>(false);
   const { state, onClose, handleRecoveryButton } = props;
   return (
     <>
-      <Menu>
+      <div>
         <MenuButton
-          as={IconButton}
-          aria-label="Options"
-          border="none"
-          bg="transparent"
-          icon={<HamburgerIcon boxSize={6} />}
+          onClick={() => setIsListOpen(!isListOpen)}
+          isSelected={!!isListOpen}
         />
-        <MenuList border="none">
+        <MenuList hidden={!isListOpen}>
           <MenuItem
-            fontSize="20px"
-            background="transparent"
+            // fontSize="20px"
+            // background="transparent"
             onClick={handleRecoveryButton}
             isDisabled={
               [
@@ -42,14 +33,9 @@ const Options: FC<OptionsProps> = props => {
                 : false
             }
           >
-            {' '}
-            {state == SCREEN_STATES.RECOVERY ? 'Home' : 'Recovery'}{' '}
+            {state == SCREEN_STATES.RECOVERY ? 'Home' : 'Recovery'}
           </MenuItem>
-
           <MenuItem
-            fontSize="20px"
-            background="transparent"
-            icon={<ExternalLinkIcon />}
             onClick={() =>
               window.open(
                 'https://discord.com/channels/454734546869551114',
@@ -60,9 +46,6 @@ const Options: FC<OptionsProps> = props => {
             Support
           </MenuItem>
           <MenuItem
-            fontSize="20px"
-            background="transparent"
-            icon={<CloseIcon />}
             isDisabled={
               [SCREEN_STATES.LOADING, SCREEN_STATES.STATUS].includes(
                 state as any
@@ -75,7 +58,7 @@ const Options: FC<OptionsProps> = props => {
             Close
           </MenuItem>
         </MenuList>
-      </Menu>
+      </div>
     </>
   );
 };

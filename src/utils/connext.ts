@@ -11,11 +11,14 @@ import {
   TransferNames,
   WithdrawalReconciledPayload,
   jsonifyError,
+  WithdrawalQuote,
+  TransferQuote,
 } from '@connext/vector-types';
 import {
   calculateExchangeAmount,
   createlockHash,
   getBalanceForAssetId,
+  inverse,
 } from '@connext/vector-utils';
 import { providers, Contract, BigNumber, constants, utils } from 'ethers';
 import { Evt } from 'evt';
@@ -28,12 +31,13 @@ export const connectNode = async (
   withdrawChainId: number,
   depositChainProvider: string,
   withdrawChainProvider: string,
-  loginProvider?: providers.Web3Provider
+  loginProvider?: providers.Web3Provider,
+  iframeSrcOverride?: string
 ): Promise<BrowserNode> => {
   console.log('Connect Node');
   const browserNode = new BrowserNode({
     routerPublicIdentifier,
-    iframeSrc,
+    iframeSrc: iframeSrcOverride ?? iframeSrc,
     supportedChains: [depositChainId, withdrawChainId],
     chainProviders: {
       [depositChainId]: depositChainProvider,
@@ -122,6 +126,98 @@ export const connectNode = async (
   return browserNode;
 };
 
+export const getCrosschainFee = async (
+  node: BrowserNode,
+  routerIdentifier: string,
+  transferAmount: BigNumber,
+  senderChainId: number,
+  senderAssetId: string,
+  senderAssetDecimals: number,
+  receiverChainId: number,
+  receiverAssetId: string,
+  receiverAssetDecimals: number,
+  receiverChannelAddress: string
+): Promise<{
+  withdrawalQuote: WithdrawalQuote;
+  transferQuote: TransferQuote;
+  totalFee: BigNumber;
+}> => {
+  const transferQuoteResult = await node.getTransferQuote({
+    amount: transferAmount.toString(),
+    recipientChainId: receiverChainId,
+    recipientAssetId: receiverAssetId,
+    recipient: node.publicIdentifier,
+    routerIdentifier: routerIdentifier,
+    assetId: senderAssetId,
+    chainId: senderChainId,
+  });
+  console.log('transferQuoteResult: ', transferQuoteResult.toJson());
+  if (transferQuoteResult.isError) {
+    throw transferQuoteResult.getError();
+  }
+  const transferFee = transferQuoteResult.getValue().fee;
+
+  // Get the swap amount
+  const config = await node.getRouterConfig({
+    routerIdentifier,
+  });
+  if (config.isError) {
+    console.error('Router config error:', config.getError()?.toJson());
+    throw new Error('Router config unavailable');
+  }
+  const { allowedSwaps } = config.getValue();
+  const swap = allowedSwaps.find(s => {
+    return (
+      s.fromAssetId.toLowerCase() === senderAssetId.toLowerCase() &&
+      s.fromChainId === senderChainId &&
+      s.toAssetId.toLowerCase() === receiverAssetId.toLowerCase() &&
+      s.toChainId === receiverChainId
+    );
+  });
+  if (!swap) {
+    throw new Error(
+      `Swap from ${senderAssetId} on ${senderChainId} to ${receiverAssetId} on ${receiverChainId} not allowed. Allowed: ${JSON.stringify(
+        allowedSwaps
+      )}`
+    );
+  }
+  const swapped = transferAmount.lte(transferFee)
+    ? BigNumber.from(0)
+    : transferAmount.sub(transferFee);
+  const swappedAmount = calculateExchangeAmount(
+    swapped.toString(),
+    swap.hardcodedRate,
+    senderAssetDecimals
+  );
+
+  // Get the withdraw quote
+  const withdrawQuoteRes = await node.getWithdrawalQuote({
+    amount: swappedAmount,
+    channelAddress: receiverChannelAddress,
+    assetId: receiverAssetId,
+  });
+  console.log('withdrawQuoteRes: ', withdrawQuoteRes.toJson());
+  if (withdrawQuoteRes.isError) {
+    throw withdrawQuoteRes.getError();
+  }
+  const withdrawFee = withdrawQuoteRes.getValue().fee;
+
+  // Get the withdraw fee in deposit asset units
+  const depositAssetWithdrawFee = calculateExchangeAmount(
+    withdrawFee.toString(),
+    inverse(swap.hardcodedRate),
+    receiverAssetDecimals
+  );
+  console.log('converted withdrawal fee', depositAssetWithdrawFee);
+
+  // Get total fee
+  return {
+    totalFee: BigNumber.from(depositAssetWithdrawFee).add(transferFee),
+    withdrawalQuote: withdrawQuoteRes.getValue(),
+    transferQuote: transferQuoteResult.getValue(),
+  };
+};
+
 export const getTotalDepositsBob = async (
   channelAddress: string,
   assetId: string,
@@ -165,7 +261,8 @@ export const createFromAssetTransfer = async (
   _toAssetId: string,
   routerPublicIdentifier: string,
   crossChainTransferId: string,
-  preImage: string
+  preImage: string,
+  quote?: TransferQuote
 ): Promise<{ transferId: string; preImage: string }> => {
   const depositChannel = await getChannelForChain(
     node,
@@ -182,6 +279,19 @@ export const createFromAssetTransfer = async (
       )}`
     );
   }
+  const maxExpiry = Date.now() - 5_000;
+  const validQuote =
+    quote &&
+    quote.amount === toTransfer &&
+    quote.routerIdentifier === depositChannel.aliceIdentifier &&
+    quote.assetId.toLowerCase() === _fromAssetId.toLowerCase() &&
+    quote.chainId === fromChainId &&
+    parseInt(quote.expiry) < maxExpiry &&
+    BigNumber.from(quote.fee).lt(toTransfer) &&
+    quote.recipient === depositChannel.bobIdentifier &&
+    quote.recipientAssetId.toLowerCase() === _toAssetId.toLowerCase() &&
+    quote.recipientChainId === toChainId &&
+    !!quote.signature; // lazy sig check
   const params: NodeParams.ConditionalTransfer = {
     recipient: depositChannel.bobIdentifier,
     recipientChainId: toChainId,
@@ -198,7 +308,10 @@ export const createFromAssetTransfer = async (
     },
     details: { expiry: '0', lockHash: createlockHash(preImage) },
     publicIdentifier: depositChannel.bobIdentifier,
+    quote: validQuote ? quote : undefined,
   };
+  console.log(`quote is ${validQuote ? 'valid' : 'not valid, rerequesting'}`);
+  console.log('transfer params', params);
   const ret = await node.conditionalTransfer(params);
   if (ret.isError) {
     throw ret.getError();
@@ -397,7 +510,8 @@ export const withdrawToAsset = async (
   toChainId: number,
   _toAssetId: string,
   recipientAddr: string,
-  routerPublicIdentifier: string
+  routerPublicIdentifier: string,
+  quote?: WithdrawalQuote
 ): Promise<{ withdrawalTx: string; withdrawalAmount: string }> => {
   const withdrawChannel = await getChannelForChain(
     node,
@@ -411,13 +525,26 @@ export const withdrawToAsset = async (
     throw new Error('Asset not in receiver channel');
   }
 
+  const maxExpiry = Date.now() - 5_000;
+  const validQuote =
+    quote &&
+    quote.amount === toWithdraw &&
+    parseInt(quote.expiry) < maxExpiry &&
+    quote.assetId.toLowerCase() === _toAssetId.toLowerCase() &&
+    !!quote.signature && // lazy sig check
+    quote.channelAddress === withdrawChannel.channelAddress &&
+    BigNumber.from(toWithdraw).gte(quote.fee);
+
+  console.log(`quote is ${validQuote ? 'valid' : 'not valid, rerequesting'}`);
   const params: NodeParams.Withdraw = {
     amount: toWithdraw,
     assetId: toAssetId,
     channelAddress: withdrawChannel.channelAddress,
     publicIdentifier: withdrawChannel.bobIdentifier,
     recipient: recipientAddr,
+    quote: validQuote ? quote : undefined,
   };
+  console.log('withdraw params', params);
   const ret = await node.withdraw(params);
   if (ret.isError) {
     throw ret.getError();
@@ -600,27 +727,4 @@ export const getChannelForChain = async (
     throw new Error(`Could not find channel on ${chainId}`);
   }
   return channel as FullChannelState;
-};
-
-export const getFeeQuote = async (
-  routerIdentifier: string,
-  amount: string,
-  assetId: string,
-  chainId: number,
-  recipient: string,
-  recipientChainId: number,
-  recipientAssetId: string
-): Promise<{
-  fee: string;
-}> => {
-  console.log(
-    routerIdentifier,
-    amount,
-    assetId,
-    chainId,
-    recipient,
-    recipientChainId,
-    recipientAssetId
-  );
-  return { fee: '0' };
 };

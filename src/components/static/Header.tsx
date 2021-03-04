@@ -1,7 +1,7 @@
 import React, { FC } from 'react';
-import { ModalHeader, Spinner, Stack, Text, Box } from '@chakra-ui/react';
-import { WarningTwoIcon } from '@chakra-ui/icons';
 import { success } from '../../public';
+import { Text, Stack, WarningIcon, ModalHeader, Spinner } from '../common';
+
 interface HeaderProps {
   title: string;
   onClose?: () => void;
@@ -27,29 +27,28 @@ const Header: FC<HeaderProps> = props => {
   return (
     <>
       <ModalHeader>
-        <Box w="100%" display="flex" flexDirection="row">
-          <Stack direction="row" spacing={3} alignItems="center" flex="auto">
-            {warningIcon && <WarningTwoIcon />}
+        <Stack justifyContent="space-between">
+          <Stack alignItems="center" spacing={2}>
+            {warningIcon && <WarningIcon />}
             {successIcon && <img src={success} />}
-            {spinner && (
-              <Spinner thickness="3px" speed="0.65s" color="blue" size="lg" />
-            )}
+            {spinner && <Spinner />}
             <Text
-              fontSize="2xl"
-              casing="uppercase"
-              flex="auto"
-              fontFamily="Cooper Hewitt"
               fontWeight="700"
+              fontFamily="Cooper Hewitt"
+              textTransform="uppercase"
+              fontSize="1.5rem"
               lineHeight="30px"
             >
               {title}
             </Text>
           </Stack>
-          {handleBack && handleBack()}
-          {options && options()}
-          {onClose && onClose()}
-        </Box>
-        {subTitle && <Box>{subTitle}</Box>}
+          <Stack>
+            {handleBack && handleBack()}
+            {options && options()}
+            {onClose && onClose()}
+          </Stack>
+        </Stack>
+        {subTitle && <div>{subTitle}</div>}
       </ModalHeader>
     </>
   );
