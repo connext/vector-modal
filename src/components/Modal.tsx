@@ -83,7 +83,7 @@ export type ConnextModalProps = {
   onWithdrawalTxCreated?: (txHash: string) => void;
 };
 
-const getFeesDebounced = AwesomeDebouncePromise(getCrosschainFee, 500);
+const getFeesDebounced = AwesomeDebouncePromise(getCrosschainFee, 200);
 
 const ConnextModal: FC<ConnextModalProps> = ({
   showModal,
