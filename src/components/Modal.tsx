@@ -310,12 +310,17 @@ const ConnextModal: FC<ConnextModalProps> = ({
       );
       console.log('createFromAssetTransfer transferDeets: ', transferDeets);
     } catch (e) {
+      if (e.message.includes('Fees charged are greater than amount')) {
+        handleScreen({ state: SCREEN_STATES.SWAP });
+        setAmountError('Last requested transfer is lower than fees charged');
+        return;
+      }
+
       handleScreen({
         state: ERROR_STATES.ERROR_TRANSFER,
         error: e,
         message: 'Error in createFromAssetTransfer:',
       });
-
       return;
     }
     setPreImage(preImage);
@@ -427,6 +432,8 @@ const ConnextModal: FC<ConnextModalProps> = ({
     setAmountError(undefined);
     if (!input) {
       setTransferAmountUi(undefined);
+      setTransferFeeUi('--');
+      setReceivedAmountUi('--');
       return;
     }
 
@@ -462,12 +469,12 @@ const ConnextModal: FC<ConnextModalProps> = ({
           node!,
           routerPublicIdentifier,
           transferAmountBn,
-          senderChain!.chainId,
-          senderChain!.assetId,
-          senderChain!.assetDecimals ?? 18,
-          receiverChain!.chainId,
-          receiverChain!.assetId,
-          receiverChain!.assetDecimals ?? 18,
+          senderChain?.chainId!,
+          senderChain?.assetId!,
+          senderChain?.assetDecimals!,
+          receiverChain?.chainId!,
+          receiverChain?.assetId!,
+          receiverChain?.assetDecimals!,
           withdrawChannelRef.current!.channelAddress
         );
         fee = totalFee;
@@ -495,7 +502,6 @@ const ConnextModal: FC<ConnextModalProps> = ({
       console.log('receivedUi: ', receivedUi);
       setTransferFeeUi(feeUi);
       setReceivedAmountUi(receivedUi);
-      console.log(transferFeeUi, receivedAmountUi);
     } catch (e) {
       err = 'Invalid amount';
     }
@@ -749,6 +755,10 @@ const ConnextModal: FC<ConnextModalProps> = ({
     setInputReadOnly(false);
     setIsLoad(false);
     setTransferAmountUi(_transferAmount);
+    setTransferFeeUi('--');
+    setReceivedAmountUi('--');
+    setTransferQuote(undefined);
+    setWithdrawQuote(undefined);
     setUserBalance(undefined);
     setError(undefined);
     setDepositAddress(undefined);
@@ -834,6 +844,12 @@ const ConnextModal: FC<ConnextModalProps> = ({
             `Please connect your wallet to the ${senderChainInfo.name} : ${senderChainInfo.chainId} network`
           );
         }
+
+        const _userBalance = await getUserBalance(
+          injectedProvider,
+          senderChainInfo
+        );
+        setUserBalance(_userBalance);
       } catch (e) {
         const message = 'Failed to get chainId from wallet provider';
         console.log(e, message);
