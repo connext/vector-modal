@@ -19,17 +19,6 @@ interface ModalProps {
 
 const Modal: FC<ModalProps> = props => {
   const [showModal, setShowModal] = React.useState(false);
-  console.log(
-    props.withdrawalAddress,
-    props.routerPublicIdentifier,
-    props.depositChainId,
-    props.depositAssetId,
-    props.depositChainProvider,
-    props.withdrawChainId,
-    props.withdrawAssetId,
-    props.withdrawChainProvider,
-    props.transferAmount
-  );
 
   return (
     <>
@@ -56,11 +45,13 @@ const Modal: FC<ModalProps> = props => {
 // to render content in shadowRoot of the custom element.
 // For production use it should support ShadyCSS polyfill
 // to properly distribute styles in custom element rendered by React
+
+// @ts-ignore
 function reactify(fn): hybrids.Descriptor<HTMLElement> {
   return render(
     host => {
       const Component = fn(host);
-      return (host, target) => ReactDOM.render(Component, target);
+      return target => ReactDOM.render(Component, target);
     },
     { shadowRoot: false }
   );
