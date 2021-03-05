@@ -793,6 +793,7 @@ const ConnextModal: FC<ConnextModalProps> = ({
 
   const setup = async () => {
     // set web provider
+    setMessage('getting chains info...');
     const injectedProvider:
       | undefined
       | providers.Web3Provider = !!_injectedProvider
@@ -886,6 +887,7 @@ const ConnextModal: FC<ConnextModalProps> = ({
     }
 
     // setting up channels...
+    setMessage('Setting up channels...');
     let _node: BrowserNode;
     try {
       // browser node object
@@ -977,7 +979,8 @@ const ConnextModal: FC<ConnextModalProps> = ({
       });
     }
 
-    // Verify router supports...
+    //
+    setMessage('Verify router supports...');
     try {
       const swap = await verifyRouterSupports(
         _node,
@@ -1023,6 +1026,7 @@ const ConnextModal: FC<ConnextModalProps> = ({
     }
 
     // Checking for pending Cross-Chain Transfers...
+    setMessage('looking for pending Transfers...');
     const [depositActive, withdrawActive] = await Promise.all([
       _node.getActiveTransfers({
         channelAddress: depositChannel.channelAddress,
@@ -1254,7 +1258,6 @@ const ConnextModal: FC<ConnextModalProps> = ({
     const { state, error, title, message } = params;
     switch (state) {
       case SCREEN_STATES.LOADING:
-        setMessage('Setting up channels...');
         break;
 
       case SCREEN_STATES.SWAP:
@@ -1264,7 +1267,6 @@ const ConnextModal: FC<ConnextModalProps> = ({
         break;
 
       case SCREEN_STATES.RECOVERY:
-        console.log('click');
         break;
 
       case SCREEN_STATES.LISTENER:
