@@ -59,8 +59,7 @@
     "framer-motion": "^3.6.7",
     "lodash": "^4.17.21",
     "qrcode.react": "^1.0.1",
-    "styled-components": "^5.2.1",
-    "stylis-plugin-extra-scope": "^0.3.0"
+    "styled-components": "^5.2.1"
   },
   "devDependencies": {
     "@rollup/plugin-image": "^2.0.6",
