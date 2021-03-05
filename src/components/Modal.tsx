@@ -1,7 +1,7 @@
 import { BrowserNode } from '@connext/vector-browser-node';
 import React, { FC, useEffect, useState } from 'react';
 import { ThemeProvider } from 'styled-components';
-import { Modal, useDisclosure } from '@chakra-ui/react';
+import { Modal } from '@chakra-ui/react';
 import {
   EngineEvents,
   ERC20Abi,
@@ -57,8 +57,6 @@ import {
   Recover,
 } from './pages';
 import { Options } from './static';
-
-export { useDisclosure };
 
 export type ConnextModalProps = {
   showModal: boolean;

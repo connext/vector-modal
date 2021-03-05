@@ -1,3 +1,3 @@
-import ConnextModal, { useDisclosure } from './components/Modal';
+import ConnextModal from './components/Modal';
 
-export { ConnextModal, useDisclosure };
+export { ConnextModal };
