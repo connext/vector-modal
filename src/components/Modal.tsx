@@ -121,6 +121,10 @@ const ConnextModal: FC<ConnextModalProps> = ({
   const [transferQuote, setTransferQuote] = useState<TransferQuote>();
   const [withdrawQuote, setWithdrawQuote] = useState<WithdrawalQuote>();
 
+  const [successWithdrawalAmount, setSuccessWithdrawalAmount] = useState<
+    string
+  >();
+
   const [depositAddress, setDepositAddress] = useState<string>();
 
   const [withdrawChannel, _setWithdrawChannel] = useState<FullChannelState>();
@@ -656,6 +660,12 @@ const ConnextModal: FC<ConnextModalProps> = ({
     if (_onWithdrawalTxCreated) {
       _onWithdrawalTxCreated(result.withdrawalTx);
     }
+
+    const successWithdrawalUi = utils.formatUnits(
+      result.withdrawalAmount,
+      receiverChain?.assetDecimals!
+    );
+    setSuccessWithdrawalAmount(successWithdrawalUi);
 
     handleScreen({ state: SCREEN_STATES.SUCCESS });
 
@@ -1340,7 +1350,7 @@ const ConnextModal: FC<ConnextModalProps> = ({
       case SCREEN_STATES.SUCCESS:
         return (
           <Success
-            amount={receivedAmountUi}
+            amount={successWithdrawalAmount!}
             transactionId={withdrawTx!}
             senderChainInfo={senderChain!}
             receiverChainInfo={receiverChain!}
