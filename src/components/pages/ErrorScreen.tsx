@@ -75,12 +75,12 @@ const Error: FC<ErrorProps> = props => {
                       </Text>
                       <InputGroup>
                         <Input
-                          id="address"
-                          name="address"
+                          id="orderId"
+                          name="orderId"
                           body="sm"
                           value={crossChainTransferId}
                           inputMode="search"
-                          title="receiver Address"
+                          title="OrderId"
                           readOnly={true}
                         />
                       </InputGroup>
