@@ -9,6 +9,6 @@ import WebModal from './components/WebModal';
 // if (process.env.NODE_ENV !== "production") module.hot.accept();
 
 // Define imported web component
-define('web-modal', WebModal);
+define('connext-web-modal', WebModal);
 
 export { ConnextModal };
