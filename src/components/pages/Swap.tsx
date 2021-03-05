@@ -12,6 +12,7 @@ import {
 import { Header, Footer, NetworkBar } from '../static';
 import { CHAIN_DETAIL } from '../../constants';
 import { graphic } from '../../public';
+import { truncate } from '../../utils';
 
 export interface TransferProps {
   onUserInput: (_input: string | undefined) => void;
@@ -24,7 +25,7 @@ export interface TransferProps {
   receiverAddress: string;
   transferAmount: string | undefined;
   feeQuote: string;
-  quoteAmount: string | undefined;
+  quoteAmount: string;
   amountError?: string;
   userBalance?: string;
 }
@@ -102,7 +103,8 @@ const Swap: FC<TransferProps> = props => {
                       textAlign="end"
                       color="#757575"
                     >
-                      Bal: {userBalance} {senderChainInfo.assetName}
+                      Bal: {truncate(userBalance, 4)}{' '}
+                      {senderChainInfo.assetName}
                     </Text>
                   )}
                 </Stack>
@@ -170,7 +172,7 @@ const Swap: FC<TransferProps> = props => {
                     fontFamily="Roboto Mono"
                     color="#666666"
                   >
-                    {feeQuote} {senderChainInfo.assetName}
+                    {truncate(feeQuote, 4)} {senderChainInfo.assetName}
                   </Text>
                 </Stack>
 
@@ -189,7 +191,7 @@ const Swap: FC<TransferProps> = props => {
                     fontFamily="Roboto Mono"
                     fontWeight="700"
                   >
-                    {quoteAmount} {senderChainInfo.assetName}
+                    {truncate(quoteAmount, 4)} {senderChainInfo.assetName}
                   </Text>
                 </Stack>
               </Stack>

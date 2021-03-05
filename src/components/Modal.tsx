@@ -37,7 +37,7 @@ import {
   verifyRouterCapacityForTransfer,
   getUserBalance,
   getCrosschainFee,
-  // getFeeQuote,
+  truncate,
 } from '../utils';
 import {
   theme,
@@ -267,7 +267,9 @@ const ConnextModal: FC<ConnextModalProps> = ({
     handleScreen({
       state: SCREEN_STATES.STATUS,
       title: 'deposit detected',
-      message: `Detected ${statusTransferAmount} ${senderChainInfo?.assetName} on ${senderChainInfo?.name}, transferring into state channel`,
+      message: `Detected ${truncate(statusTransferAmount, 4)} ${
+        senderChainInfo?.assetName
+      } on ${senderChainInfo?.name}, transferring into state channel`,
     });
 
     try {
@@ -300,7 +302,10 @@ const ConnextModal: FC<ConnextModalProps> = ({
     handleScreen({
       state: SCREEN_STATES.STATUS,
       title: 'transferring',
-      message: `Transferring ${statusTransferAmount} ${senderChainInfo?.assetName!} from ${senderChainInfo?.name!} to ${
+      message: `Transferring ${truncate(
+        statusTransferAmount,
+        4
+      )} ${senderChainInfo?.assetName!} from ${senderChainInfo?.name!} to ${
         receiverChainInfo?.name
       }. This step can take some time if the chain is congested`,
     });

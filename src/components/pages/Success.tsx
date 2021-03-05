@@ -4,7 +4,7 @@ import { ModalContent, ModalBody, Text, Stack, Box, Button } from '../common';
 import { Header, Footer, NetworkBar } from '../static';
 import { CHAIN_DETAIL } from '../../constants';
 import { lightGraphic } from '../../public';
-import { getExplorerLinkForTx } from '../../utils';
+import { getExplorerLinkForTx, truncate } from '../../utils';
 
 export interface SuccessProps {
   amount: string;
@@ -52,7 +52,7 @@ const Success: FC<SuccessProps> = props => {
                     lineHeight="30px"
                     flex="auto"
                   >
-                    {amount} {receiverChainInfo.assetName}
+                    {truncate(amount, 4)} {receiverChainInfo.assetName}
                   </Text>
                   <Button
                     size="sm"
