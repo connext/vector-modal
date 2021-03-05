@@ -149,6 +149,10 @@ const ConnextModal: FC<ConnextModalProps> = ({
     string
   >(constants.HashZero);
 
+  const [pendingTransferMessage, setPendingTransferMessage] = useState<
+    string
+  >();
+
   const [preImage, _setPreImage] = useState<string>();
   const preImageRef = React.useRef(preImage);
   const setPreImage = (data: string | undefined) => {
@@ -242,22 +246,28 @@ const ConnextModal: FC<ConnextModalProps> = ({
   };
 
   const transfer = async (
-    _depositChainId: number,
-    _withdrawChainId: number,
+    senderChainInfo: CHAIN_DETAIL,
+    receiverChainInfo: CHAIN_DETAIL,
     _depositAddress: string,
-    _withdrawRpcProvider: providers.JsonRpcProvider,
     transferAmount: BigNumber,
     _evts: EvtContainer,
     _node: BrowserNode,
     verifyRouterCapacity: boolean
   ) => {
+    const _depositChainId: number = senderChainInfo?.chainId!;
+    const _withdrawChainId: number = receiverChainInfo?.chainId!;
+    const _withdrawRpcProvider: providers.JsonRpcProvider = receiverChainInfo?.rpcProvider!;
     const crossChainTransferId = getRandomBytes32();
     setActiveCrossChainTransferId(crossChainTransferId);
 
+    const statusTransferAmount = utils.formatUnits(
+      transferAmount,
+      senderChainInfo?.assetDecimals!
+    );
     handleScreen({
       state: SCREEN_STATES.STATUS,
       title: 'deposit detected',
-      message: 'Detected balance on chain, transferring into state channel',
+      message: `Detected ${statusTransferAmount} ${senderChainInfo?.assetName} on ${senderChainInfo?.name}, transferring into state channel`,
     });
 
     try {
@@ -290,8 +300,9 @@ const ConnextModal: FC<ConnextModalProps> = ({
     handleScreen({
       state: SCREEN_STATES.STATUS,
       title: 'transferring',
-      message:
-        'Transferring funds between chains. This step can take some time if the chain is congested',
+      message: `Transferring ${statusTransferAmount} ${senderChainInfo?.assetName!} from ${senderChainInfo?.name!} to ${
+        receiverChainInfo?.name
+      }. This step can take some time if the chain is congested`,
     });
 
     const preImage = getRandomBytes32();
@@ -419,12 +430,7 @@ const ConnextModal: FC<ConnextModalProps> = ({
       );
     }
 
-    await withdraw(
-      _withdrawChainId,
-      _withdrawRpcProvider,
-      _node,
-      onWithdrawalTxCreated
-    );
+    await withdraw(receiverChainInfo, _node, onWithdrawalTxCreated);
   };
 
   const handleSwapCheck = async (_input: string | undefined) => {
@@ -610,10 +616,9 @@ const ConnextModal: FC<ConnextModalProps> = ({
       }
       setIsLoad(false);
       await transfer(
-        _depositChainId,
-        _withdrawChainId,
+        senderChain!,
+        receiverChain!,
         _depositAddress,
-        _withdrawRpcProvider,
         transferAmountBn,
         _evts,
         _node,
@@ -623,16 +628,17 @@ const ConnextModal: FC<ConnextModalProps> = ({
   };
 
   const withdraw = async (
-    _withdrawChainId: number,
-    _withdrawRpcProvider: providers.JsonRpcProvider,
+    receiverChainInfo: CHAIN_DETAIL,
     _node: BrowserNode,
     _onWithdrawalTxCreated?: (txHash: string) => void
   ) => {
+    const _withdrawChainId: number = receiverChainInfo?.chainId!;
+    const _withdrawRpcProvider: providers.JsonRpcProvider = receiverChainInfo?.rpcProvider!;
+
     handleScreen({
       state: SCREEN_STATES.STATUS,
       title: 'withdrawing',
-      message:
-        'withdrawing funds. This step can take some time if the chain is congested',
+      message: `withdrawing ${senderChain?.assetName} to ${receiverChain?.name}. This step can take some time if the chain is congested`,
     });
 
     // now go to withdrawal screen
@@ -743,10 +749,9 @@ const ConnextModal: FC<ConnextModalProps> = ({
         const transferAmount = updatedDeposits.sub(initialDeposits);
         initialDeposits = updatedDeposits;
         await transfer(
-          _depositChainId,
-          _withdrawChainId,
+          senderChain!,
+          receiverChain!,
           _depositAddress,
-          _withdrawRpcProvider,
           transferAmount,
           _evts,
           _node,
@@ -760,6 +765,7 @@ const ConnextModal: FC<ConnextModalProps> = ({
   const stateReset = () => {
     handleScreen({ state: SCREEN_STATES.LOADING });
     setWebProvider(undefined);
+    setPendingTransferMessage(undefined);
     setInputReadOnly(false);
     setIsLoad(false);
     setTransferAmountUi(_transferAmount);
@@ -781,6 +787,7 @@ const ConnextModal: FC<ConnextModalProps> = ({
   };
 
   const setup = async () => {
+    // set web provider
     const injectedProvider:
       | undefined
       | providers.Web3Provider = !!_injectedProvider
@@ -789,6 +796,7 @@ const ConnextModal: FC<ConnextModalProps> = ({
 
     setWebProvider(injectedProvider);
 
+    // get chain info
     let senderChainInfo: CHAIN_DETAIL;
     try {
       senderChainInfo = await getChain(
@@ -828,6 +836,7 @@ const ConnextModal: FC<ConnextModalProps> = ({
       return;
     }
 
+    // handle if _transferAmount provided
     if (_transferAmount) {
       try {
         setInputReadOnly(true);
@@ -844,6 +853,7 @@ const ConnextModal: FC<ConnextModalProps> = ({
       }
     }
 
+    // handle if injectedProvider provided
     if (injectedProvider) {
       try {
         const network = await injectedProvider.getNetwork();
@@ -859,7 +869,7 @@ const ConnextModal: FC<ConnextModalProps> = ({
         );
         setUserBalance(_userBalance);
       } catch (e) {
-        const message = 'Failed to get chainId from wallet provider';
+        const message = e.message;
         console.log(e, message);
         handleScreen({
           state: ERROR_STATES.ERROR_SETUP,
@@ -870,6 +880,7 @@ const ConnextModal: FC<ConnextModalProps> = ({
       }
     }
 
+    // setting up channels...
     let _node: BrowserNode;
     try {
       // browser node object
@@ -961,6 +972,7 @@ const ConnextModal: FC<ConnextModalProps> = ({
       });
     }
 
+    // Verify router supports...
     try {
       const swap = await verifyRouterSupports(
         _node,
@@ -1005,6 +1017,7 @@ const ConnextModal: FC<ConnextModalProps> = ({
       return;
     }
 
+    // Checking for pending Cross-Chain Transfers...
     const [depositActive, withdrawActive] = await Promise.all([
       _node.getActiveTransfers({
         channelAddress: depositChannel.channelAddress,
@@ -1129,11 +1142,11 @@ const ConnextModal: FC<ConnextModalProps> = ({
     // if offChainDepositAssetBalance > 0
     if (offChainDepositAssetBalance.gt(0)) {
       // then start transfer
+      setPendingTransferMessage(`Detected Pending Cross-Chain Transfer`);
       await transfer(
-        senderChainInfo.chainId,
-        receiverChainInfo.chainId,
+        senderChainInfo,
+        receiverChainInfo,
         _depositAddress,
-        receiverChainInfo.rpcProvider,
         offChainDepositAssetBalance,
         _evts,
         _node,
@@ -1144,27 +1157,13 @@ const ConnextModal: FC<ConnextModalProps> = ({
     // if offchainWithdrawBalance > 0
     else if (offChainWithdrawAssetBalance.gt(0)) {
       // then go to withdraw screen with transfer amount == balance
-      await withdraw(
-        receiverChainInfo.chainId,
-        receiverChainInfo.rpcProvider,
-        _node,
-        onWithdrawalTxCreated
-      );
+      setPendingTransferMessage(`Detected Pending Cross-Chain Transfer`);
+      await withdraw(receiverChainInfo, _node, onWithdrawalTxCreated);
     }
 
     // if both are zero, register listener and display
     // QR code
     else {
-      if (injectedProvider) {
-        console.log(`Using injected provider, not listener.`);
-        // using metamask, will be button-driven
-
-        const _userBalance = await getUserBalance(
-          injectedProvider,
-          senderChainInfo
-        );
-        setUserBalance(_userBalance);
-      }
       handleScreen({ state: SCREEN_STATES.SWAP });
     }
   };
@@ -1295,6 +1294,7 @@ const ConnextModal: FC<ConnextModalProps> = ({
           <Status
             title={title!}
             message={message!}
+            pendingTransferMessage={pendingTransferMessage}
             senderChainInfo={senderChain!}
             receiverChainInfo={receiverChain!}
             receiverAddress={withdrawalAddress}

@@ -8,6 +8,7 @@ import { lightGraphic } from '../../public';
 export interface StatusProps {
   title: string;
   message: string;
+  pendingTransferMessage: string | undefined;
   senderChainInfo: CHAIN_DETAIL;
   receiverChainInfo: CHAIN_DETAIL;
   receiverAddress: string;
@@ -23,6 +24,7 @@ const Status: FC<StatusProps> = props => {
   const {
     title,
     message,
+    pendingTransferMessage,
     senderChainInfo,
     receiverChainInfo,
     receiverAddress,
@@ -34,6 +36,11 @@ const Status: FC<StatusProps> = props => {
         <Header title={title} spinner={true} options={options} />
         <ModalBody>
           <Stack column={true} spacing={7}>
+            {pendingTransferMessage && (
+              <Text fontSize="1rem" color="green">
+                {pendingTransferMessage}
+              </Text>
+            )}
             <Stack column={true} spacing={2}>
               <Text fontSize="1rem">{message}</Text>
               <Text fontSize="14px" color="#666666">
