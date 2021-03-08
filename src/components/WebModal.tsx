@@ -14,7 +14,10 @@ interface ModalProps {
   withdrawChainId: number;
   withdrawAssetId: string;
   withdrawChainProvider: string;
-  transferAmount: string;
+  transferAmount?: string;
+  iframeSrcOverride?: string;
+  injectedProvider?: any;
+  loginProvider?: any;
 }
 
 const Modal: FC<ModalProps> = props => {
@@ -26,9 +29,7 @@ const Modal: FC<ModalProps> = props => {
       <ConnextModal
         showModal={showModal}
         onClose={() => setShowModal(false)}
-        onReady={params => console.log('MODAL IS READY =======>', params)}
         withdrawalAddress={props.withdrawalAddress}
-        injectedProvider={(window as any).ethereum}
         routerPublicIdentifier={props.routerPublicIdentifier}
         depositChainId={props.depositChainId}
         depositAssetId={props.depositAssetId}
@@ -36,6 +37,16 @@ const Modal: FC<ModalProps> = props => {
         withdrawChainId={props.withdrawChainId}
         withdrawAssetId={props.withdrawAssetId}
         withdrawChainProvider={props.withdrawChainProvider}
+        transferAmount={props.transferAmount}
+        // provider
+        iframeSrcOverride={props.iframeSrcOverride}
+        injectedProvider={props.injectedProvider}
+        loginProvider={props.loginProvider}
+        // callback function
+        onReady={params => console.log('MODAL IS READY =======>', params)}
+        onDepositTxCreated={params => console.log('DepositTx created:', params)}
+        onWithdrawalTxCreated={params => console.log('WithdrawalTx :', params)}
+        onFinished={params => console.log('Finished:', params)}
       />
     </>
   );
@@ -58,49 +69,61 @@ function reactify(fn): hybrids.Descriptor<HTMLElement> {
 }
 
 export interface WebModalProps {
-  routeridentifier: string;
-  wcaddress: string;
-  dchain: number;
-  dasset: string;
-  dprovider: string;
-  wchain: number;
-  wasset: string;
-  wprovider: string;
-  amount: string;
+  router_public_identifier: string;
+  withdrawal_address: string;
+  deposit_chain_id: number;
+  deposit_asset_id: string;
+  deposit_chain_provider: string;
+  withdraw_chain_id: number;
+  withdraw_asset_id: string;
+  withdraw_chain_provider: string;
+  transfer_amount?: string;
+  iframe_src?: string;
+  injected_provider?: any;
+  login_provider?: any;
 }
 
 export default {
-  routeridentifier: '0',
-  wcaddress: '0',
-  dchain: 0,
-  dasset: '0',
-  dprovider: '0',
-  wchain: 0,
-  wasset: '0',
-  wprovider: '0',
-  amount: '0',
+  router_public_identifier: '0',
+  withdrawal_address: '0',
+  deposit_chain_id: 0,
+  deposit_asset_id: '0',
+  deposit_chain_provider: '0',
+  withdraw_chain_id: 0,
+  withdraw_asset_id: '0',
+  withdraw_chain_provider: '0',
+  transfer_amount: '0',
+  iframe_src: undefined,
+  injected_provider: undefined,
+  login_provider: undefined,
   render: reactify(
     ({
-      routeridentifier,
-      wcaddress,
-      dchain,
-      dasset,
-      dprovider,
-      wchain,
-      wasset,
-      wprovider,
-      amount,
+      router_public_identifier,
+      withdrawal_address,
+      deposit_chain_id,
+      deposit_asset_id,
+      deposit_chain_provider,
+      withdraw_chain_id,
+      withdraw_asset_id,
+      withdraw_chain_provider,
+      transfer_amount,
+      iframe_src,
+      injected_provider,
+      login_provider,
     }: WebModalProps) => (
       <Modal
-        routerPublicIdentifier={routeridentifier}
-        withdrawalAddress={wcaddress}
-        depositChainId={dchain}
-        depositAssetId={dasset}
-        depositChainProvider={dprovider}
-        withdrawChainId={wchain}
-        withdrawAssetId={wasset}
-        withdrawChainProvider={wprovider}
-        transferAmount={amount}
+        routerPublicIdentifier={router_public_identifier}
+        withdrawalAddress={withdrawal_address}
+        depositChainId={deposit_chain_id}
+        depositAssetId={deposit_asset_id}
+        depositChainProvider={deposit_chain_provider}
+        withdrawChainId={withdraw_chain_id}
+        withdrawAssetId={withdraw_asset_id}
+        withdrawChainProvider={withdraw_chain_provider}
+        transferAmount={transfer_amount}
+        iframeSrcOverride={iframe_src}
+        injectedProvider={injected_provider}
+        loginProvider={login_provider}
       />
     )
   ),
