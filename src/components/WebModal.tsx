@@ -1,3 +1,4 @@
+import '@webcomponents/webcomponentsjs/webcomponents-bundle.js';
 import { render } from 'hybrids';
 
 import React, { FC } from 'react';
