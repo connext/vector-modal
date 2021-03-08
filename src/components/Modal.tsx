@@ -79,6 +79,7 @@ export type ConnextModalProps = {
   iframeSrcOverride?: string;
   onDepositTxCreated?: (txHash: string) => void;
   onWithdrawalTxCreated?: (txHash: string) => void;
+  onFinished?: (amountWei: string) => void;
 };
 
 const getFeesDebounced = AwesomeDebouncePromise(getCrosschainFee, 200);
@@ -98,9 +99,10 @@ const ConnextModal: FC<ConnextModalProps> = ({
   transferAmount: _transferAmount,
   injectedProvider: _injectedProvider,
   loginProvider: _loginProvider,
+  iframeSrcOverride,
   onDepositTxCreated,
   onWithdrawalTxCreated,
-  iframeSrcOverride,
+  onFinished,
 }) => {
   const depositAssetId = utils.getAddress(_depositAssetId);
   const withdrawAssetId = utils.getAddress(_withdrawAssetId);
@@ -435,7 +437,7 @@ const ConnextModal: FC<ConnextModalProps> = ({
       );
     }
 
-    await withdraw(receiverChainInfo, _node, onWithdrawalTxCreated);
+    await withdraw(receiverChainInfo, _node, onWithdrawalTxCreated, onFinished);
   };
 
   const handleSwapCheck = async (_input: string | undefined) => {
@@ -635,7 +637,8 @@ const ConnextModal: FC<ConnextModalProps> = ({
   const withdraw = async (
     receiverChainInfo: CHAIN_DETAIL,
     _node: BrowserNode,
-    _onWithdrawalTxCreated?: (txHash: string) => void
+    _onWithdrawalTxCreated?: (txHash: string) => void,
+    _onFinished?: (amountWei: string) => void
   ) => {
     const _withdrawChainId: number = receiverChainInfo?.chainId!;
     const _withdrawRpcProvider: providers.JsonRpcProvider = receiverChainInfo?.rpcProvider!;
@@ -686,7 +689,6 @@ const ConnextModal: FC<ConnextModalProps> = ({
       .then(receipt => {
         if (receipt.status === 0) {
           // tx reverted
-          // TODO: go to contact screen
           console.error('Transaction reverted onchain', receipt);
           handleScreen({
             state: ERROR_STATES.ERROR_TRANSFER,
@@ -695,6 +697,10 @@ const ConnextModal: FC<ConnextModalProps> = ({
           return;
         }
       });
+
+    if (_onFinished) {
+      _onFinished(result.withdrawalAmount);
+    }
   };
 
   const depositListenerAndTransfer = async (
@@ -1167,7 +1173,12 @@ const ConnextModal: FC<ConnextModalProps> = ({
     else if (offChainWithdrawAssetBalance.gt(0)) {
       // then go to withdraw screen with transfer amount == balance
       setPendingTransferMessage(`Detected Pending Cross-Chain Transfer`);
-      await withdraw(receiverChainInfo, _node, onWithdrawalTxCreated);
+      await withdraw(
+        receiverChainInfo,
+        _node,
+        onWithdrawalTxCreated,
+        onFinished
+      );
     }
 
     // if both are zero, register listener and display

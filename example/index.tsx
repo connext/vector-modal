@@ -86,9 +86,13 @@ function App() {
         showModal={showModal}
         onClose={() => setShowModal(false)}
         onReady={params => console.log('MODAL IS READY =======>', params)}
+        onWithdrawalTxCreated={params =>
+          console.log('withdrawal tx ==>', params)
+        }
+        onFinished={params => console.log('On finish ==>', params)}
         transferAmount={transferAmount}
         withdrawalAddress={'0x75e4DD0587663Fce5B2D9aF7fbED3AC54342d3dB'}
-        // loginProvider={loginProvider}
+        loginProvider={loginProvider}
         injectedProvider={loginProvider}
         // prod config
         routerPublicIdentifier="vector7tbbTxQp8ppEQUgPsbGiTrVdapLdU5dH7zTbVuXRf1M4CEBU9Q"
