@@ -86,14 +86,8 @@ const Swap: FC<TransferProps> = props => {
             <Stack column={true} spacing={4}>
               <Stack column={true} spacing={1}>
                 <Stack>
-                  <Text
-                    flex="auto"
-                    fontSize="0.75rem"
-                    color={!!amountError ? 'crimson' : 'black'}
-                  >
-                    {!!amountError
-                      ? amountError
-                      : `From ${senderChainInfo.name}`}
+                  <Text flex="auto" fontSize="0.75rem">
+                    You send
                   </Text>
                   {userBalance && (
                     <Text
@@ -103,7 +97,7 @@ const Swap: FC<TransferProps> = props => {
                       textAlign="end"
                       color="#757575"
                     >
-                      Bal: {truncate(userBalance, 4)}{' '}
+                      Balance: {truncate(userBalance, 4)}{' '}
                       {senderChainInfo.assetName}
                     </Text>
                   )}
@@ -195,6 +189,53 @@ const Swap: FC<TransferProps> = props => {
                   </Text>
                 </Stack>
               </Stack>
+
+              <Stack column={true} spacing={1}>
+                <Text fontSize="0.75rem">Recipient gets</Text>
+                <Stack
+                  colorScheme="white"
+                  alignItems="center"
+                  borderRadius="5px"
+                >
+                  <InputGroup flex="auto" colorScheme="white">
+                    <Input
+                      body="lg"
+                      title="Token Amount"
+                      aria-describedby="amount"
+                      // styling
+                      fontSize="1rem"
+                      // universal input options
+                      inputMode="decimal"
+                      autoComplete="off"
+                      autoCorrect="off"
+                      // text-specific options
+                      type="text"
+                      pattern="^[0-9]*[.,]?[0-9]*$"
+                      placeholder={'0.0'}
+                      minLength={1}
+                      maxLength={79}
+                      spellCheck="false"
+                      // value
+                      value={transferAmount}
+                      onChange={event => {
+                        enforcer(event.target.value.replace(/,/g, '.'));
+                      }}
+                      readOnly={inputReadOnly ? true : false}
+                    />
+                  </InputGroup>
+                </Stack>
+              </Stack>
+
+              {!!amountError && (
+                <Text
+                  flex="auto"
+                  fontSize="0.75rem"
+                  textAlign="center"
+                  color="crimson"
+                >
+                  {amountError}
+                </Text>
+              )}
 
               <Button
                 size="lg"
