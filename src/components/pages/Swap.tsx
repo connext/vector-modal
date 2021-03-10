@@ -15,7 +15,10 @@ import { graphic } from '../../public';
 import { truncate } from '../../utils';
 
 export interface TransferProps {
-  onUserInput: (_input: string | undefined) => void;
+  onUserInput: (
+    _input: string | undefined,
+    receiveExactAmount: Boolean
+  ) => void;
   swapRequest: () => void;
   options: () => void;
   isLoad: Boolean;
@@ -23,9 +26,9 @@ export interface TransferProps {
   senderChainInfo: CHAIN_DETAIL;
   receiverChainInfo: CHAIN_DETAIL;
   receiverAddress: string;
-  transferAmount: string | undefined;
+  senderAmount: string | undefined;
+  recipientAmount: string | undefined;
   feeQuote: string;
-  quoteAmount: string;
   amountError?: string;
   userBalance?: string;
 }
@@ -40,9 +43,9 @@ const Swap: FC<TransferProps> = props => {
     senderChainInfo,
     receiverChainInfo,
     receiverAddress,
-    transferAmount,
+    senderAmount,
+    recipientAmount,
     feeQuote,
-    quoteAmount,
     isLoad,
     inputReadOnly,
     onUserInput,
@@ -56,26 +59,26 @@ const Swap: FC<TransferProps> = props => {
 
   const inputRegex = RegExp(`^\\d*(?:\\\\[.])?\\d*$`); // match escaped "." characters via in a non-capturing group
 
-  const enforcer = (currentInput: string) => {
+  const enforcer = (currentInput: string, receiveExactAmount: Boolean) => {
     if (currentInput === '' || inputRegex.test(escapeRegExp(currentInput))) {
-      onUserInput(currentInput);
+      onUserInput(currentInput, receiveExactAmount);
     }
   };
 
   const handleSubmit = () => {
-    if (transferAmount) {
+    if (senderAmount) {
       swapRequest();
     }
   };
 
   useEffect(() => {
     const effect = async () => {
-      if (transferAmount) {
-        enforcer(transferAmount);
+      if (senderAmount) {
+        enforcer(senderAmount, false);
       }
     };
     effect();
-  }, [transferAmount]);
+  }, []);
 
   return (
     <>
@@ -126,9 +129,9 @@ const Swap: FC<TransferProps> = props => {
                       maxLength={79}
                       spellCheck="false"
                       // value
-                      value={transferAmount}
+                      value={senderAmount}
                       onChange={event => {
-                        enforcer(event.target.value.replace(/,/g, '.'));
+                        enforcer(event.target.value.replace(/,/g, '.'), false);
                       }}
                       readOnly={inputReadOnly ? true : false}
                     />
@@ -147,7 +150,7 @@ const Swap: FC<TransferProps> = props => {
                       height="1.5rem"
                       disabled={inputReadOnly ? true : false}
                       onClick={() => {
-                        enforcer(userBalance);
+                        enforcer(userBalance, false);
                       }}
                     >
                       max
@@ -167,25 +170,6 @@ const Swap: FC<TransferProps> = props => {
                     color="#666666"
                   >
                     {truncate(feeQuote, 4)} {senderChainInfo.assetName}
-                  </Text>
-                </Stack>
-
-                <Stack>
-                  <Text
-                    fontSize="0.875rem"
-                    flex="auto"
-                    color="#666666"
-                    fontWeight="700"
-                  >
-                    You will receive:
-                  </Text>
-                  <Text
-                    fontSize="0.875rem"
-                    color="#666666"
-                    fontFamily="Roboto Mono"
-                    fontWeight="700"
-                  >
-                    {truncate(quoteAmount, 4)} {senderChainInfo.assetName}
                   </Text>
                 </Stack>
               </Stack>
@@ -216,9 +200,9 @@ const Swap: FC<TransferProps> = props => {
                       maxLength={79}
                       spellCheck="false"
                       // value
-                      value={transferAmount}
+                      value={recipientAmount}
                       onChange={event => {
-                        enforcer(event.target.value.replace(/,/g, '.'));
+                        enforcer(event.target.value.replace(/,/g, '.'), true);
                       }}
                       readOnly={inputReadOnly ? true : false}
                     />
@@ -241,7 +225,7 @@ const Swap: FC<TransferProps> = props => {
                 size="lg"
                 type="submit"
                 disabled={
-                  !!amountError || !transferAmount || isLoad ? true : false
+                  !!amountError || !senderAmount || isLoad ? true : false
                 }
                 onClick={handleSubmit}
               >
