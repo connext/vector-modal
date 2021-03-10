@@ -130,7 +130,7 @@ export const connectNode = async (
 export const getCrosschainFee = async (
   node: BrowserNode,
   routerIdentifier: string,
-  transferAmount: BigNumber,
+  _transferAmount: BigNumber,
   senderChainId: number,
   senderAssetId: string,
   senderAssetDecimals: number,
@@ -147,8 +147,23 @@ export const getCrosschainFee = async (
   senderAmount: string;
   recipientAmount: string;
 }> => {
+  const swap: AllowedSwap = swapDefinition;
+
+  let depositAssetTransferAmount = _transferAmount;
+  if (receiveExactAmount) {
+    // if input at recipient field
+    // convert the input amount to senderAmount
+    depositAssetTransferAmount = BigNumber.from(
+      calculateExchangeAmount(
+        _transferAmount.toString(),
+        inverse(swap.hardcodedRate),
+        senderAssetDecimals
+      )
+    );
+  }
+
   const transferQuoteResult = await node.getTransferQuote({
-    amount: transferAmount.toString(),
+    amount: depositAssetTransferAmount.toString(),
     recipientChainId: receiverChainId,
     recipientAssetId: receiverAssetId,
     recipient: node.publicIdentifier,
@@ -161,21 +176,15 @@ export const getCrosschainFee = async (
   if (transferQuoteResult.isError) {
     throw transferQuoteResult.getError();
   }
-  const transferFee = transferQuoteResult.getValue().fee;
-  const swap: AllowedSwap = swapDefinition;
+  const depositAssetTransferFee = transferQuoteResult.getValue().fee;
 
-  const swapped = transferAmount.lte(transferFee)
+  const swappedAmount = depositAssetTransferAmount.lte(depositAssetTransferFee)
     ? BigNumber.from(0)
-    : transferAmount.sub(transferFee);
-  const swappedAmount = calculateExchangeAmount(
-    swapped.toString(),
-    swap.hardcodedRate,
-    senderAssetDecimals
-  );
+    : depositAssetTransferAmount.sub(depositAssetTransferFee);
 
   // Get the withdraw quote
   const withdrawQuoteRes = await node.getWithdrawalQuote({
-    amount: swappedAmount,
+    amount: swappedAmount.toString(),
     channelAddress: receiverChannelAddress,
     assetId: receiverAssetId,
   });
@@ -189,12 +198,13 @@ export const getCrosschainFee = async (
   const depositAssetWithdrawFee = calculateExchangeAmount(
     withdrawFee.toString(),
     inverse(swap.hardcodedRate),
-    receiverAssetDecimals
+    senderAssetDecimals
   );
   console.log('converted withdrawal fee', depositAssetWithdrawFee);
 
-  const totalFee = BigNumber.from(depositAssetWithdrawFee).add(transferFee);
-
+  const totalFee = BigNumber.from(depositAssetWithdrawFee).add(
+    depositAssetTransferFee
+  );
   console.log('Totalfee', totalFee);
 
   let senderAmount: string;
@@ -204,10 +214,18 @@ export const getCrosschainFee = async (
     senderAmount = BigNumber.from(transferQuoteResult.getValue().amount)
       .add(depositAssetWithdrawFee)
       .toString();
-    recipientAmount = transferAmount.toString();
+    recipientAmount = calculateExchangeAmount(
+      depositAssetTransferAmount.toString(),
+      swap.hardcodedRate,
+      receiverAssetDecimals
+    );
   } else {
-    senderAmount = transferAmount.toString();
-    recipientAmount = transferAmount.sub(totalFee).toString();
+    senderAmount = depositAssetTransferAmount.toString();
+    recipientAmount = calculateExchangeAmount(
+      depositAssetTransferAmount.sub(totalFee).toString(),
+      swap.hardcodedRate,
+      receiverAssetDecimals
+    );
   }
 
   // Get total fee
