@@ -68,15 +68,16 @@ export type ConnextModalProps = {
   withdrawChainId?: number;
   withdrawAssetId: string;
   withdrawalAddress: string;
+  transferAmount?: string;
+  injectedProvider?: any;
+  loginProvider?: any;
+  iframeSrcOverride?: string;
   onClose: () => void;
   onReady?: (params: {
     depositChannelAddress: string;
     withdrawChannelAddress: string;
   }) => any;
-  transferAmount?: string;
-  injectedProvider?: any;
-  loginProvider?: any;
-  iframeSrcOverride?: string;
+  onSwap?: (inputSenderAmountWei: string, node: BrowserNode) => void;
   onDepositTxCreated?: (txHash: string) => void;
   onWithdrawalTxCreated?: (txHash: string) => void;
   onFinished?: (amountWei: string) => void;
@@ -94,12 +95,13 @@ const ConnextModal: FC<ConnextModalProps> = ({
   withdrawAssetId: _withdrawAssetId,
   withdrawChainId: _withdrawChainId,
   withdrawalAddress,
-  onClose,
-  onReady,
   transferAmount: _transferAmount,
   injectedProvider: _injectedProvider,
   loginProvider: _loginProvider,
   iframeSrcOverride,
+  onClose,
+  onReady,
+  onSwap,
   onDepositTxCreated,
   onWithdrawalTxCreated,
   onFinished,
@@ -594,6 +596,10 @@ const ConnextModal: FC<ConnextModalProps> = ({
         error: new Error('Missing input fields'),
       });
       return;
+    }
+
+    if (onSwap) {
+      onSwap(_transferAmount.toString(), _node);
     }
 
     if (!webProvider) {
