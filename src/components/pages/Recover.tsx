@@ -17,6 +17,7 @@ import {
 import { Header, Footer } from '../static';
 import Success from './Success';
 import ErrorScreen from './ErrorScreen';
+import Loading from './Loading';
 import { CHAIN_DETAIL, ERROR_STATES } from '../../constants';
 import { graphic } from '../../public';
 
@@ -125,7 +126,8 @@ const Recover: FC<RecoveryProps> = props => {
 
   return (
     <>
-      {['Initial', 'Loading'].includes(status as any) && (
+      {status === 'Loading' && <Loading message="Recovery in Progress..." />}
+      {status === 'Initial' && (
         <ModalContent id="modalContent" style={styleModalContent}>
           <Header
             title="Recover lost funds"
@@ -225,7 +227,6 @@ const Recover: FC<RecoveryProps> = props => {
                     size="lg"
                     type="submit"
                     disabled={
-                      status === 'Loading' ||
                       recoverWithdrawalAddressError ||
                       recoverTokenAddressError ||
                       !recoverTokenAddress ||
@@ -237,7 +238,7 @@ const Recover: FC<RecoveryProps> = props => {
                       recover(recoverTokenAddress, recoverWithdrawalAddress)
                     }
                   >
-                    {status === 'Loading' ? 'Recovering' : 'Recover'}
+                    Recover
                   </Button>
                 </Stack>
               </Box>
