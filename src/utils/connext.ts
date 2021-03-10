@@ -151,6 +151,12 @@ export const getCrosschainFee = async (
 
   let depositAssetTransferAmount = _transferAmount;
   if (receiveExactAmount) {
+    // Generally unsafe to use the inverse(swap.hardcodedRate)
+    // but I think in this case it is OK because you are trying
+    // to receive that amount, so the swap.hardcodedRate from the
+    // correct swap would not necessarily yield the desired amounts.
+    // Important to note this.
+
     // if input at recipient field
     // convert the input amount to senderAmount
     depositAssetTransferAmount = BigNumber.from(
@@ -178,11 +184,20 @@ export const getCrosschainFee = async (
   }
   const depositAssetTransferFee = transferQuoteResult.getValue().fee;
 
+  // In the case where you want to receive an exact amount, the quote
+  // returned would have an amount in it that is different than the
+  // original `amount` provided (i.e. so when fee is deducted, you get
+  // the original amount)
+  // TODO: swappedAmount here should use quote.amount when comparing against
+  // fee. Also has to make sure that there is at least quote.amount within the
+  // channel
   const swappedAmount = depositAssetTransferAmount.lte(depositAssetTransferFee)
     ? BigNumber.from(0)
     : depositAssetTransferAmount.sub(depositAssetTransferFee);
 
   // Get the withdraw quote
+  // NOTE: you can include the `receiveExactAmount` flag here as well to get
+  // an amount you should withdraw, but how youre doing it is also fine.
   const withdrawQuoteRes = await node.getWithdrawalQuote({
     amount: swappedAmount.toString(),
     channelAddress: receiverChannelAddress,
@@ -227,6 +242,11 @@ export const getCrosschainFee = async (
       receiverAssetDecimals
     );
   }
+
+  // NOTE: you may not want to rely on the retrieved quotes here when
+  // actually calling transfer/withdraw. your amount will be off, and the quote
+  // signature verification will fail. the transfer amount now includes the
+  // withdraw fee, and the amount for the withdraw also includes a fee buffer.
 
   // Get total fee
   return {
