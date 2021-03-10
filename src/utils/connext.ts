@@ -13,6 +13,7 @@ import {
   jsonifyError,
   WithdrawalQuote,
   TransferQuote,
+  AllowedSwap,
 } from '@connext/vector-types';
 import {
   calculateExchangeAmount,
@@ -136,11 +137,15 @@ export const getCrosschainFee = async (
   receiverChainId: number,
   receiverAssetId: string,
   receiverAssetDecimals: number,
-  receiverChannelAddress: string
+  receiverChannelAddress: string,
+  swapDefinition: AllowedSwap,
+  receiveExactAmount: Boolean
 ): Promise<{
   withdrawalQuote: WithdrawalQuote;
   transferQuote: TransferQuote;
   totalFee: BigNumber;
+  senderAmount: string;
+  recipientAmount: string;
 }> => {
   const transferQuoteResult = await node.getTransferQuote({
     amount: transferAmount.toString(),
@@ -150,37 +155,15 @@ export const getCrosschainFee = async (
     routerIdentifier: routerIdentifier,
     assetId: senderAssetId,
     chainId: senderChainId,
+    receiveExactAmount: receiveExactAmount,
   });
   console.log('transferQuoteResult: ', transferQuoteResult.toJson());
   if (transferQuoteResult.isError) {
     throw transferQuoteResult.getError();
   }
   const transferFee = transferQuoteResult.getValue().fee;
+  const swap: AllowedSwap = swapDefinition;
 
-  // Get the swap amount
-  const config = await node.getRouterConfig({
-    routerIdentifier,
-  });
-  if (config.isError) {
-    console.error('Router config error:', config.getError()?.toJson());
-    throw new Error('Router config unavailable');
-  }
-  const { allowedSwaps } = config.getValue();
-  const swap = allowedSwaps.find(s => {
-    return (
-      s.fromAssetId.toLowerCase() === senderAssetId.toLowerCase() &&
-      s.fromChainId === senderChainId &&
-      s.toAssetId.toLowerCase() === receiverAssetId.toLowerCase() &&
-      s.toChainId === receiverChainId
-    );
-  });
-  if (!swap) {
-    throw new Error(
-      `Swap from ${senderAssetId} on ${senderChainId} to ${receiverAssetId} on ${receiverChainId} not allowed. Allowed: ${JSON.stringify(
-        allowedSwaps
-      )}`
-    );
-  }
   const swapped = transferAmount.lte(transferFee)
     ? BigNumber.from(0)
     : transferAmount.sub(transferFee);
@@ -210,9 +193,28 @@ export const getCrosschainFee = async (
   );
   console.log('converted withdrawal fee', depositAssetWithdrawFee);
 
+  const totalFee = BigNumber.from(depositAssetWithdrawFee).add(transferFee);
+
+  console.log('Totalfee', totalFee);
+
+  let senderAmount: string;
+  let recipientAmount: string;
+
+  if (receiveExactAmount) {
+    senderAmount = BigNumber.from(transferQuoteResult.getValue().amount)
+      .add(depositAssetWithdrawFee)
+      .toString();
+    recipientAmount = transferAmount.toString();
+  } else {
+    senderAmount = transferAmount.toString();
+    recipientAmount = transferAmount.sub(totalFee).toString();
+  }
+
   // Get total fee
   return {
-    totalFee: BigNumber.from(depositAssetWithdrawFee).add(transferFee),
+    totalFee: totalFee,
+    senderAmount: senderAmount,
+    recipientAmount: recipientAmount,
     withdrawalQuote: withdrawQuoteRes.getValue(),
     transferQuote: transferQuoteResult.getValue(),
   };
@@ -563,7 +565,7 @@ export const withdrawToAsset = async (
 };
 
 // return strings, does not need to be retried
-export const verifyRouterSupports = async (
+export const verifyAndGetRouterSupports = async (
   node: BrowserNode,
   fromChainId: number,
   _fromAssetId: string,
