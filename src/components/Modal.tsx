@@ -24,7 +24,7 @@ import {
   reconcileDeposit,
   createEvtContainer,
   EvtContainer,
-  verifyRouterSupports,
+  verifyAndGetRouterSupports,
   cancelHangingToTransfers,
   getChannelForChain,
   createFromAssetTransfer,
@@ -118,8 +118,10 @@ const ConnextModal: FC<ConnextModalProps> = ({
   const [transferAmountUi, setTransferAmountUi] = useState<
     string | undefined
   >();
+  const [receivedAmountUi, setReceivedAmountUi] = useState<
+    string | undefined
+  >();
   const [transferFeeUi, setTransferFeeUi] = useState<string>('--');
-  const [receivedAmountUi, setReceivedAmountUi] = useState<string>('--');
   const [transferQuote, setTransferQuote] = useState<TransferQuote>();
   const [withdrawQuote, setWithdrawQuote] = useState<WithdrawalQuote>();
 
@@ -174,11 +176,11 @@ const ConnextModal: FC<ConnextModalProps> = ({
 
   const [node, setNode] = useState<BrowserNode | undefined>();
 
-  const [swap, _setSwap] = useState();
-  const swapRef = React.useRef(swap);
-  const setSwap = (data: any) => {
+  const [swapDefinition, _setSwapDefinition] = useState();
+  const swapRef = React.useRef(swapDefinition);
+  const setSwapDefinition = (data: any) => {
     swapRef.current = data;
-    _setSwap(data);
+    _setSwapDefinition(data);
   };
 
   const [screenState, setScreenState] = useState<ScreenStates>(
@@ -440,27 +442,46 @@ const ConnextModal: FC<ConnextModalProps> = ({
     await withdraw(receiverChainInfo, _node, onWithdrawalTxCreated, onFinished);
   };
 
-  const handleSwapCheck = async (_input: string | undefined) => {
+  const handleAmountError = (
+    err: string | undefined,
+    receiveExactAmount: Boolean
+  ) => {
+    setAmountError(err);
+    if (receiveExactAmount) {
+      setTransferAmountUi('');
+    } else {
+      setReceivedAmountUi('');
+    }
+  };
+
+  const handleSwapCheck = async (
+    _input: string | undefined,
+    receiveExactAmount: Boolean
+  ) => {
     let err: string | undefined = undefined;
     const input = _input ? _input.trim() : undefined;
 
     setAmountError(undefined);
     if (!input) {
-      setTransferAmountUi(undefined);
       setTransferFeeUi('--');
-      setReceivedAmountUi('--');
+      setTransferAmountUi('');
+      setReceivedAmountUi('');
       return;
     }
 
     try {
-      setTransferAmountUi(input);
+      if (receiveExactAmount) {
+        setReceivedAmountUi(input);
+      } else {
+        setTransferAmountUi(input);
+      }
       const transferAmountBn = BigNumber.from(
         utils.parseUnits(input, senderChain?.assetDecimals!)
       );
 
       if (transferAmountBn.isZero()) {
         err = 'Transfer amount cannot be 0';
-        setAmountError(err);
+        handleAmountError(err, receiveExactAmount);
         return;
       }
       if (userBalance) {
@@ -469,15 +490,19 @@ const ConnextModal: FC<ConnextModalProps> = ({
         );
         if (transferAmountBn.gt(userBalanceBn)) {
           err = 'Transfer amount exceeds user balance';
-          setAmountError(err);
+          handleAmountError(err, receiveExactAmount);
           return;
         }
       }
 
-      let fee;
+      let fee: BigNumber;
+      let senderAmount: BigNumber;
+      let recipientAmount: BigNumber;
       try {
         const {
           totalFee,
+          senderAmount: _senderAmount,
+          recipientAmount: _recipientAmount,
           transferQuote: _transferQuote,
           withdrawalQuote: _withdrawQuote,
         } = await getFeesDebounced(
@@ -490,33 +515,45 @@ const ConnextModal: FC<ConnextModalProps> = ({
           receiverChain?.chainId!,
           receiverChain?.assetId!,
           receiverChain?.assetDecimals!,
-          withdrawChannelRef.current!.channelAddress
+          withdrawChannelRef.current!.channelAddress,
+          swapDefinition!,
+          receiveExactAmount
         );
         fee = totalFee;
+        senderAmount = BigNumber.from(_senderAmount);
+        recipientAmount = BigNumber.from(_recipientAmount);
         setTransferQuote(_transferQuote);
         setWithdrawQuote(_withdrawQuote);
       } catch (e) {
-        setAmountError(e.message);
+        handleAmountError(err, receiveExactAmount);
         return;
       }
 
-      const received = transferAmountBn.sub(fee);
-      if (received.lte(0)) {
-        err = 'Not enough amount to pay fees';
-        setAmountError(err);
-      } else {
-        setAmountError(undefined);
-      }
-
-      const receivedUi = utils.formatUnits(
-        received.lt(0) ? 0 : received,
-        receiverChain!.assetDecimals
-      );
       const feeUi = utils.formatUnits(fee, senderChain!.assetDecimals);
       console.log('feeUi: ', feeUi);
-      console.log('receivedUi: ', receivedUi);
       setTransferFeeUi(feeUi);
-      setReceivedAmountUi(receivedUi);
+
+      if (BigNumber.from(recipientAmount).lte(0)) {
+        const err = 'Not enough amount to pay fees';
+        handleAmountError(err, receiveExactAmount);
+        return;
+      }
+
+      if (receiveExactAmount) {
+        const senderUi = utils.formatUnits(
+          senderAmount,
+          senderChain!.assetDecimals
+        );
+        console.log('senderUi: ', senderUi);
+        setTransferAmountUi(senderUi);
+      } else {
+        const receivedUi = utils.formatUnits(
+          recipientAmount,
+          receiverChain!.assetDecimals
+        );
+        console.log('receivedUi: ', receivedUi);
+        setReceivedAmountUi(receivedUi);
+      }
     } catch (e) {
       err = 'Invalid amount';
     }
@@ -526,7 +563,7 @@ const ConnextModal: FC<ConnextModalProps> = ({
   };
 
   const handleSwapRequest = async () => {
-    await handleSwapCheck(transferAmountUi);
+    await handleSwapCheck(transferAmountUi, false);
     if (amountError) {
       return;
     }
@@ -779,9 +816,8 @@ const ConnextModal: FC<ConnextModalProps> = ({
     setPendingTransferMessage(undefined);
     setInputReadOnly(false);
     setIsLoad(false);
-    setTransferAmountUi(_transferAmount);
     setTransferFeeUi('--');
-    setReceivedAmountUi('--');
+    setReceivedAmountUi('');
     setTransferQuote(undefined);
     setWithdrawQuote(undefined);
     setUserBalance(undefined);
@@ -988,7 +1024,7 @@ const ConnextModal: FC<ConnextModalProps> = ({
     //
     setMessage('Verify router supports...');
     try {
-      const swap = await verifyRouterSupports(
+      const swap = await verifyAndGetRouterSupports(
         _node,
         senderChainInfo.chainId,
         senderChainInfo.assetId,
@@ -997,7 +1033,7 @@ const ConnextModal: FC<ConnextModalProps> = ({
         receiverChainInfo.rpcProvider,
         routerPublicIdentifier
       );
-      setSwap(swap);
+      setSwapDefinition(swap);
     } catch (e) {
       const message = 'Error in verifyRouterSupports';
       console.log(e, message);
@@ -1332,9 +1368,9 @@ const ConnextModal: FC<ConnextModalProps> = ({
             senderChainInfo={senderChain!}
             receiverChainInfo={receiverChain!}
             receiverAddress={withdrawalAddress}
-            transferAmount={transferAmountUi}
+            senderAmount={transferAmountUi}
+            recipientAmount={receivedAmountUi}
             feeQuote={transferFeeUi}
-            quoteAmount={receivedAmountUi}
             options={handleOptions}
           />
         );
