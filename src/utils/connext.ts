@@ -149,7 +149,7 @@ export const getCrosschainFee = async (
 }> => {
   const swap: AllowedSwap = swapDefinition;
 
-  let depositAssetTransferAmount = _transferAmount;
+  let transferAmount = _transferAmount;
   if (receiveExactAmount) {
     // Generally unsafe to use the inverse(swap.hardcodedRate)
     // but I think in this case it is OK because you are trying
@@ -159,7 +159,7 @@ export const getCrosschainFee = async (
 
     // if input at recipient field
     // convert the input amount to senderAmount
-    depositAssetTransferAmount = BigNumber.from(
+    transferAmount = BigNumber.from(
       calculateExchangeAmount(
         _transferAmount.toString(),
         inverse(swap.hardcodedRate),
@@ -169,7 +169,7 @@ export const getCrosschainFee = async (
   }
 
   const transferQuoteResult = await node.getTransferQuote({
-    amount: depositAssetTransferAmount.toString(),
+    amount: transferAmount.toString(),
     recipientChainId: receiverChainId,
     recipientAssetId: receiverAssetId,
     recipient: node.publicIdentifier,
@@ -183,14 +183,14 @@ export const getCrosschainFee = async (
     throw transferQuoteResult.getError();
   }
   const depositAssetTransferFee = transferQuoteResult.getValue().fee;
+  const depositAssetTransferAmount = BigNumber.from(
+    transferQuoteResult.getValue().amount
+  );
 
   // In the case where you want to receive an exact amount, the quote
   // returned would have an amount in it that is different than the
   // original `amount` provided (i.e. so when fee is deducted, you get
   // the original amount)
-  // TODO: swappedAmount here should use quote.amount when comparing against
-  // fee. Also has to make sure that there is at least quote.amount within the
-  // channel
   const swappedAmount = depositAssetTransferAmount.lte(depositAssetTransferFee)
     ? BigNumber.from(0)
     : depositAssetTransferAmount.sub(depositAssetTransferFee);
@@ -590,14 +590,19 @@ export const withdrawToAsset = async (
     throw ret.getError();
   }
   const { transactionHash } = ret.getValue();
+  console.log(ret.getValue());
   if (!transactionHash) {
     // TODO: prompt router to retry sending transaction
     throw new Error('Router failed to withdraw');
   }
 
+  const withdrawnAmount = quote
+    ? BigNumber.from(toWithdraw).sub(quote.fee)
+    : BigNumber.from(toWithdraw);
+
   const result = {
     withdrawalTx: transactionHash,
-    withdrawalAmount: toWithdraw,
+    withdrawalAmount: withdrawnAmount.toString(),
   };
   return result;
 };
