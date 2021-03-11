@@ -19,6 +19,7 @@ import { graphic } from '../../public';
 export interface ErrorProps {
   error: Error;
   title: string;
+  switchNetwork?: () => void;
   retry?: () => void;
   handleRecoveryButton?: () => void;
   options: () => void;
@@ -40,6 +41,7 @@ const Error: FC<ErrorProps> = props => {
     title,
     crossChainTransferId,
     retry,
+    switchNetwork,
     options,
     handleBack,
     handleRecoveryButton,
@@ -125,6 +127,12 @@ const Error: FC<ErrorProps> = props => {
                 </Box>
               </Stack>
               <Stack column={true} spacing={2}>
+                {state === ERROR_STATES.ERROR_NETWORK && (
+                  <Button size="lg" onClick={switchNetwork}>
+                    Switch to {senderChainInfo?.name!}
+                  </Button>
+                )}
+
                 {retry && (
                   <Button size="lg" onClick={retry}>
                     Retry Transfer
