@@ -156,6 +156,16 @@ const Swap: FC<TransferProps> = props => {
                       max
                     </Button>
                   )}
+
+                  <Text
+                    margin="0 10px 0 0"
+                    fontFamily="Roboto Mono"
+                    textTransform="uppercase"
+                    fontSize="1rem"
+                    color="#333333"
+                  >
+                    {senderChainInfo.assetName}
+                  </Text>
                 </Stack>
               </Stack>
 
@@ -207,6 +217,15 @@ const Swap: FC<TransferProps> = props => {
                       readOnly={inputReadOnly ? true : false}
                     />
                   </InputGroup>
+                  <Text
+                    margin="0 10px 0 0"
+                    fontFamily="Roboto Mono"
+                    textTransform="uppercase"
+                    fontSize="1rem"
+                    color="#333333"
+                  >
+                    {receiverChainInfo.assetName}
+                  </Text>
                 </Stack>
               </Stack>
 
