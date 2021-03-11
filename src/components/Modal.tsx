@@ -912,12 +912,13 @@ const ConnextModal: FC<ConnextModalProps> = ({
       try {
         const network = await injectedProvider.getNetwork();
         if (senderChainInfo.chainId !== network.chainId) {
-          try {
-          } catch {
-            throw new Error(
-              `Please connect your wallet to the ${senderChainInfo.name} : ${senderChainInfo.chainId} network`
-            );
-          }
+          const err = `Please connect your wallet to the ${senderChainInfo.name} : ${senderChainInfo.chainId} network`;
+          // try {
+          //   if (injectedProvider.isMetaMask) {
+          //   }
+          // } catch {
+          throw new Error(err);
+          // }
         }
       } catch (e) {
         const message = e.message;
@@ -1322,7 +1323,7 @@ const ConnextModal: FC<ConnextModalProps> = ({
     title?: string;
     message?: string;
   }) => {
-    const { state, error, title, message } = params;
+    const { state, error: pError, title: pTitle, message: pMessage } = params;
     switch (state) {
       case SCREEN_STATES.LOADING:
         break;
@@ -1340,19 +1341,19 @@ const ConnextModal: FC<ConnextModalProps> = ({
         break;
 
       case SCREEN_STATES.STATUS:
-        setTitle(title);
-        setMessage(message);
+        setTitle(pTitle);
+        setMessage(pMessage);
         break;
 
       case SCREEN_STATES.ERROR_SETUP:
       case SCREEN_STATES.ERROR_TRANSFER:
-        console.log(message);
+        console.log(pMessage);
         const _title =
-          title ?? state === ERROR_STATES.ERROR_TRANSFER
+          pTitle ?? state === ERROR_STATES.ERROR_TRANSFER
             ? 'Transfer Error'
             : 'Setup Error';
         setTitle(_title);
-        setError(error);
+        setError(pError);
         setPreImage(undefined);
         break;
     }
