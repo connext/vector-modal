@@ -27,19 +27,21 @@ export function getStackStyles(column: boolean | undefined, spacing: string) {
 }
 
 export const Stack = styled(Box)<StackProps>`
-  display: flex;
-  margin: ${props => props.margin};
-  justify-content: ${props => props.justifyContent};
-  align-items: ${props => props.alignItems};
-  margin-inline-start: ${props => props.marginInlineStart || '0px'};
-  flex-direction: ${props => (props.column ? 'column' : 'row')};
-  background-color: ${props => props.colorScheme};
-  border-radius: ${props => props.borderRadius};
+  &&& {
+    display: flex;
+    margin: ${props => props.margin};
+    justify-content: ${props => props.justifyContent};
+    align-items: ${props => props.alignItems};
+    margin-inline-start: ${props => props.marginInlineStart || '0px'};
+    flex-direction: ${props => (props.column ? 'column' : 'row')};
+    background-color: ${props => props.colorScheme};
+    border-radius: ${props => props.borderRadius};
 
-  & > * {
-    &:not(:first-child) {
-      ${props =>
-        getStackStyles(props.column, props.theme.space[props.spacing ?? 0])}
+    & > * {
+      &:not(:first-child) {
+        ${props =>
+          getStackStyles(props.column, props.theme.space[props.spacing ?? 0])}
+      }
     }
   }
 `;
