@@ -18,6 +18,7 @@ import {
   SCREEN_STATES,
   CHAIN_DETAIL,
   ScreenStates,
+  ErrorStates,
 } from '../constants';
 import {
   getTotalDepositsBob,
@@ -911,27 +912,28 @@ const ConnextModal: FC<ConnextModalProps> = ({
     if (injectedProvider) {
       try {
         const network = await injectedProvider.getNetwork();
+        console.log(network);
         if (senderChainInfo.chainId !== network.chainId) {
-          const err = `Please connect your wallet to the ${senderChainInfo.name} : ${senderChainInfo.chainId} network`;
-          // try {
-          //   if (injectedProvider.isMetaMask) {
-          //   }
-          // } catch {
-          throw new Error(err);
-          // }
-        }
-      } catch (e) {
-        const message = e.message;
-        console.log(e, message);
-        handleScreen({
-          state: ERROR_STATES.ERROR_SETUP,
-          error: e,
-          message: message,
-        });
-        return;
-      }
+          const message = `Please connect your wallet to the ${senderChainInfo.name} : ${senderChainInfo.chainId} network`;
+          const defaultMetmaskNetworks = [1, 3, 4, 5, 42];
 
-      try {
+          const _state: ErrorStates =
+            // @ts-ignore
+            ethereum &&
+            // @ts-ignore
+            ethereum.isMetaMask &&
+            !defaultMetmaskNetworks.includes(senderChainInfo.chainId)
+              ? ERROR_STATES.ERROR_NETWORK
+              : ERROR_STATES.ERROR_SETUP;
+          handleScreen({
+            state: _state,
+            error: new Error(message),
+            title: 'Switch Network',
+            message: message,
+          });
+          return;
+        }
+
         const _userBalance = await getUserBalance(
           injectedProvider,
           senderChainInfo
@@ -943,6 +945,7 @@ const ConnextModal: FC<ConnextModalProps> = ({
         handleScreen({
           state: ERROR_STATES.ERROR_SETUP,
           error: e,
+          title: 'Switch Network',
           message: message,
         });
         return;
@@ -1317,6 +1320,17 @@ const ConnextModal: FC<ConnextModalProps> = ({
     }
   };
 
+  const switchNetwork = async () => {
+    console.log(senderChain?.chainParams!);
+    // @ts-ignore
+    await ethereum.request({
+      method: 'wallet_addEthereumChain',
+      params: [senderChain?.chainParams!],
+    });
+
+    init();
+  };
+
   const handleScreen = (params: {
     state: ScreenStates;
     error?: Error | undefined;
@@ -1345,13 +1359,14 @@ const ConnextModal: FC<ConnextModalProps> = ({
         setMessage(pMessage);
         break;
 
-      case SCREEN_STATES.ERROR_SETUP:
-      case SCREEN_STATES.ERROR_TRANSFER:
+      default:
         console.log(pMessage);
-        const _title =
-          pTitle ?? state === ERROR_STATES.ERROR_TRANSFER
-            ? 'Transfer Error'
-            : 'Setup Error';
+        const _title = pTitle
+          ? pTitle
+          : state === ERROR_STATES.ERROR_TRANSFER
+          ? 'Transfer Error'
+          : 'Setup Error';
+
         setTitle(_title);
         setError(pError);
         setPreImage(undefined);
@@ -1440,13 +1455,13 @@ const ConnextModal: FC<ConnextModalProps> = ({
           />
         );
 
-      case SCREEN_STATES.ERROR_SETUP:
-      case SCREEN_STATES.ERROR_TRANSFER:
+      default:
         return (
           <ErrorScreen
             error={error ?? new Error('unknown')}
             title={title!}
             retry={init}
+            switchNetwork={switchNetwork}
             state={state}
             crossChainTransferId={activeCrossChainTransferId}
             senderChainInfo={senderChain!}

@@ -1,11 +1,11 @@
 import { providers, BigNumber, constants, Contract, utils } from 'ethers';
-import { ERC20Abi } from '@connext/vector-types';
+import { ERC20Abi, ChainInfo } from '@connext/vector-types';
 import {
   getChainInfo,
   getChainId,
   getAssetDecimals,
 } from '@connext/vector-utils';
-import { CHAIN_DETAIL } from '../constants';
+import { CHAIN_DETAIL, AddEthereumChainParameter } from '../constants';
 import { delay } from '@connext/vector-utils';
 
 export const hydrateProviders = (
@@ -82,11 +82,22 @@ export const getChain = async (
   // get decimals for deposit asset
   const assetDecimals = await getAssetDecimals(assetId, rpcProvider);
 
-  const chain = await getChainInfo(chainId);
+  const chain: ChainInfo = await getChainInfo(chainId);
   const chainName = chain.name;
   const assetName = chain.assetId[assetId]
     ? chain.assetId[assetId] ?? 'Token'
     : 'Token';
+
+  const chainParams: AddEthereumChainParameter = {
+    chainId: utils.hexValue(chain.chainId),
+    chainName: chain.name,
+    nativeCurrency: {
+      name: chain.nativeCurrency.name,
+      symbol: chain.nativeCurrency.symbol,
+      decimals: 18,
+    },
+    rpcUrls: chain.rpc,
+  };
 
   const chainInfo: CHAIN_DETAIL = {
     name: chainName,
@@ -96,6 +107,7 @@ export const getChain = async (
     assetName: assetName,
     assetId: assetId,
     assetDecimals: assetDecimals,
+    chainParams: chainParams,
   };
 
   return chainInfo;
