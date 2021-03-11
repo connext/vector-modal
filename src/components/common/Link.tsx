@@ -5,6 +5,8 @@ type LinkProps = {
 };
 
 export const Link = styled.a<LinkProps>`
-  text-decoration: auto;
-  color: ${props => props.color};
+  &&& {
+    text-decoration: auto;
+    color: ${props => props.color};
+  }
 `;

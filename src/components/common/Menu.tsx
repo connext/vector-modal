@@ -10,9 +10,6 @@ type MenuListPositionerProps = {
 };
 
 const MenuListPositioner = styled.div<MenuListPositionerProps>`
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
-    'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
-    sans-serif;
   -webkit-font-smoothing: antialiased;
   --removed-body-scroll-bar-size: 0px;
   color: inherit;
