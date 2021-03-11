@@ -91,7 +91,7 @@ const Error: FC<ErrorProps> = props => {
                   <Text
                     fontSize="0.875rem"
                     noOfLines={3}
-                    color="tomato"
+                    color="crimson"
                     lineHeight="24px"
                   >
                     {error.message}
