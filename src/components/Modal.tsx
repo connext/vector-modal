@@ -912,11 +912,25 @@ const ConnextModal: FC<ConnextModalProps> = ({
       try {
         const network = await injectedProvider.getNetwork();
         if (senderChainInfo.chainId !== network.chainId) {
-          throw new Error(
-            `Please connect your wallet to the ${senderChainInfo.name} : ${senderChainInfo.chainId} network`
-          );
+          try {
+          } catch {
+            throw new Error(
+              `Please connect your wallet to the ${senderChainInfo.name} : ${senderChainInfo.chainId} network`
+            );
+          }
         }
+      } catch (e) {
+        const message = e.message;
+        console.log(e, message);
+        handleScreen({
+          state: ERROR_STATES.ERROR_SETUP,
+          error: e,
+          message: message,
+        });
+        return;
+      }
 
+      try {
         const _userBalance = await getUserBalance(
           injectedProvider,
           senderChainInfo
@@ -1333,6 +1347,11 @@ const ConnextModal: FC<ConnextModalProps> = ({
       case SCREEN_STATES.ERROR_SETUP:
       case SCREEN_STATES.ERROR_TRANSFER:
         console.log(message);
+        const _title =
+          title ?? state === ERROR_STATES.ERROR_TRANSFER
+            ? 'Transfer Error'
+            : 'Setup Error';
+        setTitle(_title);
         setError(error);
         setPreImage(undefined);
         break;
@@ -1425,6 +1444,7 @@ const ConnextModal: FC<ConnextModalProps> = ({
         return (
           <ErrorScreen
             error={error ?? new Error('unknown')}
+            title={title!}
             retry={init}
             state={state}
             crossChainTransferId={activeCrossChainTransferId}

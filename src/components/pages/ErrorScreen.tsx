@@ -18,6 +18,7 @@ import { graphic } from '../../public';
 
 export interface ErrorProps {
   error: Error;
+  title: string;
   retry?: () => void;
   handleRecoveryButton?: () => void;
   options: () => void;
@@ -36,6 +37,7 @@ const styleModalContent: CSS.Properties = {
 const Error: FC<ErrorProps> = props => {
   const {
     error,
+    title,
     crossChainTransferId,
     retry,
     options,
@@ -47,8 +49,6 @@ const Error: FC<ErrorProps> = props => {
     receiverAddress,
   } = props;
 
-  const title =
-    state === ERROR_STATES.ERROR_TRANSFER ? 'Transfer Error' : 'Setup Error';
   return (
     <>
       <ModalContent id="modalContent" style={styleModalContent}>

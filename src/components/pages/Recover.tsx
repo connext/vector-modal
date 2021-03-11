@@ -261,6 +261,7 @@ const Recover: FC<RecoveryProps> = props => {
       {status === 'Error' && (
         <ErrorScreen
           error={error ?? new Error('unknown')}
+          title="Recovery Error"
           state={ERROR_STATES.ERROR_TRANSFER}
           crossChainTransferId={constants.HashZero}
           receiverChainInfo={senderChainInfo}
