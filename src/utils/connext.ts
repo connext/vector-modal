@@ -139,7 +139,7 @@ export const getCrosschainFee = async (
   receiverAssetDecimals: number,
   receiverChannelAddress: string,
   swapDefinition: AllowedSwap,
-  receiveExactAmount: Boolean
+  receiveExactAmount: boolean
 ): Promise<{
   withdrawalQuote: WithdrawalQuote;
   transferQuote: TransferQuote;
@@ -176,7 +176,7 @@ export const getCrosschainFee = async (
     routerIdentifier: routerIdentifier,
     assetId: senderAssetId,
     chainId: senderChainId,
-    receiveExactAmount: receiveExactAmount,
+    receiveExactAmount,
   });
   console.log('transferQuoteResult: ', transferQuoteResult.toJson());
   if (transferQuoteResult.isError) {

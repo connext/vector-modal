@@ -17,12 +17,12 @@ import { truncate } from '../../utils';
 export interface TransferProps {
   onUserInput: (
     _input: string | undefined,
-    receiveExactAmount: Boolean
+    receiveExactAmount: boolean
   ) => void;
   swapRequest: () => void;
   options: () => void;
-  isLoad: Boolean;
-  inputReadOnly: Boolean;
+  isLoad: boolean;
+  inputReadOnly: boolean;
   senderChainInfo: CHAIN_DETAIL;
   receiverChainInfo: CHAIN_DETAIL;
   receiverAddress: string;
@@ -59,7 +59,7 @@ const Swap: FC<TransferProps> = props => {
 
   const inputRegex = RegExp(`^\\d*(?:\\\\[.])?\\d*$`); // match escaped "." characters via in a non-capturing group
 
-  const enforcer = (currentInput: string, receiveExactAmount: Boolean) => {
+  const enforcer = (currentInput: string, receiveExactAmount: boolean) => {
     if (currentInput === '' || inputRegex.test(escapeRegExp(currentInput))) {
       onUserInput(currentInput, receiveExactAmount);
     }

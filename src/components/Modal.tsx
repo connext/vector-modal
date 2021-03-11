@@ -196,8 +196,8 @@ const ConnextModal: FC<ConnextModalProps> = ({
 
   const [title, setTitle] = useState<string>();
   const [message, setMessage] = useState<string>();
-  const [isLoad, setIsLoad] = useState<Boolean>(false);
-  const [showTimer, setShowTimer] = useState<Boolean>(false);
+  const [isLoad, setIsLoad] = useState<boolean>(false);
+  const [showTimer, setShowTimer] = useState<boolean>(false);
 
   // temp
   const [inputReadOnly, setInputReadOnly] = useState<boolean>(false);
@@ -447,7 +447,7 @@ const ConnextModal: FC<ConnextModalProps> = ({
 
   const handleAmountError = (
     err: string | undefined,
-    receiveExactAmount: Boolean
+    receiveExactAmount: boolean
   ) => {
     setAmountError(err);
     if (receiveExactAmount) {
@@ -459,7 +459,7 @@ const ConnextModal: FC<ConnextModalProps> = ({
 
   const handleSwapCheck = async (
     _input: string | undefined,
-    receiveExactAmount: Boolean
+    receiveExactAmount: boolean
   ) => {
     let err: string | undefined = undefined;
     const input = _input ? _input.trim() : undefined;
