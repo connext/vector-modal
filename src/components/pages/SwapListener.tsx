@@ -1,6 +1,5 @@
 import React, { FC, useState, useEffect } from 'react';
 import CSS from 'csstype';
-import { CopyIcon, CheckCircleIcon } from '@chakra-ui/icons';
 import {
   ModalContent,
   ModalBody,
@@ -10,8 +9,10 @@ import {
   Input,
   InputGroup,
   IconButton,
-  IconContainer,
+  IconBox,
   Spinner,
+  CopyIcon,
+  CheckCircleIcon,
 } from '../common';
 import { Header, Footer, NetworkBar } from '../static';
 import { CHAIN_DETAIL } from '../../constants';
@@ -168,9 +169,9 @@ const SwapListener: FC<SwapListenerProps> = props => {
                     setTimeout(() => setCopiedAddress(false), 5000);
                   }}
                 >
-                  <IconContainer fontSize="20px">
+                  <IconBox width="1.5rem">
                     {!copiedAddress ? <CopyIcon /> : <CheckCircleIcon />}
-                  </IconContainer>
+                  </IconBox>
                 </IconButton>
               </InputGroup>
             </Stack>

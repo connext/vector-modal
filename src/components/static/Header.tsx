@@ -1,6 +1,13 @@
 import React, { FC } from 'react';
 import { success } from '../../public';
-import { Text, Stack, WarningIcon, ModalHeader, Spinner } from '../common';
+import {
+  Text,
+  Stack,
+  WarningIcon,
+  IconBox,
+  ModalHeader,
+  Spinner,
+} from '../common';
 
 interface HeaderProps {
   title: string;
@@ -29,7 +36,11 @@ const Header: FC<HeaderProps> = props => {
       <ModalHeader>
         <Stack justifyContent="space-between">
           <Stack alignItems="center" spacing={2}>
-            {warningIcon && <WarningIcon />}
+            {warningIcon && (
+              <IconBox>
+                <WarningIcon />
+              </IconBox>
+            )}
             {successIcon && <img src={success} />}
             {spinner && <Spinner />}
             <Text
