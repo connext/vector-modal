@@ -487,16 +487,6 @@ const ConnextModal: FC<ConnextModalProps> = ({
         handleAmountError(err, receiveExactAmount);
         return;
       }
-      if (userBalance) {
-        const userBalanceBn = BigNumber.from(
-          utils.parseUnits(userBalance, senderChain?.assetDecimals!)
-        );
-        if (transferAmountBn.gt(userBalanceBn)) {
-          err = 'Transfer amount exceeds user balance';
-          handleAmountError(err, receiveExactAmount);
-          return;
-        }
-      }
 
       let fee: BigNumber;
       let senderAmount: BigNumber;
@@ -556,6 +546,17 @@ const ConnextModal: FC<ConnextModalProps> = ({
         );
         console.log('receivedUi: ', receivedUi);
         setReceivedAmountUi(receivedUi);
+      }
+
+      if (userBalance) {
+        const userBalanceBn = BigNumber.from(
+          utils.parseUnits(userBalance, senderChain?.assetDecimals!)
+        );
+        if (senderAmount.gt(userBalanceBn)) {
+          err = 'Transfer amount exceeds user balance';
+          handleAmountError(err, receiveExactAmount);
+          return;
+        }
       }
     } catch (e) {
       err = 'Invalid amount';
