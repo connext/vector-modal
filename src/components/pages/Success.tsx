@@ -1,5 +1,4 @@
 import React, { FC } from 'react';
-import CSS from 'csstype';
 import { ModalContent, ModalBody, Text, Stack, Box, Button } from '../common';
 import { Header, Footer, NetworkBar } from '../static';
 import { CHAIN_DETAIL } from '../../constants';
@@ -16,11 +15,6 @@ export interface SuccessProps {
   options: () => void;
 }
 
-const styleModalContent: CSS.Properties = {
-  backgroundImage: `url(${lightGraphic})`,
-  backgroundPosition: 'right top',
-};
-
 const Success: FC<SuccessProps> = props => {
   const {
     amount,
@@ -33,7 +27,11 @@ const Success: FC<SuccessProps> = props => {
   } = props;
   return (
     <>
-      <ModalContent id="modalContent" style={styleModalContent}>
+      <ModalContent
+        id="modalContent"
+        backgroundImage={lightGraphic}
+        backgroundPosition="right top"
+      >
         <Header
           title="Success"
           successIcon={true}

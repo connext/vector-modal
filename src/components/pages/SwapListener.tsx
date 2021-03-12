@@ -1,5 +1,4 @@
 import React, { FC, useState, useEffect } from 'react';
-import CSS from 'csstype';
 import {
   ModalContent,
   ModalBody,
@@ -29,11 +28,6 @@ interface SwapListenerProps {
   receiverChainInfo: CHAIN_DETAIL;
   receiverAddress: string;
 }
-
-const styleModalContent: CSS.Properties = {
-  backgroundImage: `url(${darkGraphic})`,
-  backgroundPosition: 'right top',
-};
 
 const SwapListener: FC<SwapListenerProps> = props => {
   const {
@@ -97,7 +91,11 @@ const SwapListener: FC<SwapListenerProps> = props => {
 
   return (
     <>
-      <ModalContent id="modalContent" style={styleModalContent}>
+      <ModalContent
+        id="modalContent"
+        backgroundImage={darkGraphic}
+        backgroundPosition="right top"
+      >
         <Header
           title="Ready for transfer"
           handleBack={handleBack}

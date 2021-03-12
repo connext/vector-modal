@@ -1,5 +1,4 @@
 import React, { FC, useEffect } from 'react';
-import CSS from 'csstype';
 import {
   ModalContent,
   ModalBody,
@@ -32,9 +31,6 @@ export interface TransferProps {
   amountError?: string;
   userBalance?: string;
 }
-const styleModalContent: CSS.Properties = {
-  backgroundImage: `url(${graphic})`,
-};
 
 const Swap: FC<TransferProps> = props => {
   const {
@@ -82,7 +78,7 @@ const Swap: FC<TransferProps> = props => {
 
   return (
     <>
-      <ModalContent id="modalContent" style={styleModalContent}>
+      <ModalContent id="modalContent" backgroundImage={graphic}>
         <Header title="Send Amount" options={options} />
         <ModalBody>
           <Stack column={true} spacing={5}>

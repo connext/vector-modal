@@ -1,5 +1,4 @@
 import React, { FC, useState } from 'react';
-import CSS from 'csstype';
 import { BigNumber, constants } from 'ethers';
 import { FullChannelState } from '@connext/vector-types';
 import { getBalanceForAssetId } from '@connext/vector-utils';
@@ -29,16 +28,6 @@ export interface RecoveryProps {
   node: BrowserNode;
   depositAddress?: string;
 }
-
-const styleModalContent: CSS.Properties = {
-  backgroundImage: `url(${graphic})`,
-  backgroundColor: '#F5F5F5',
-  backgroundRepeat: 'no-repeat',
-  border: '2px solid #4D4D4D',
-  boxSizing: 'border-box',
-  borderRadius: '15px',
-  padding: '0.5rem',
-};
 
 const Recover: FC<RecoveryProps> = props => {
   const {
@@ -128,7 +117,7 @@ const Recover: FC<RecoveryProps> = props => {
     <>
       {status === 'Loading' && <Loading message="Recovery in Progress..." />}
       {status === 'Initial' && (
-        <ModalContent id="modalContent" style={styleModalContent}>
+        <ModalContent id="modalContent" backgroundImage={graphic}>
           <Header
             title="Recover lost funds"
             handleBack={handleBack}

@@ -1,6 +1,5 @@
 import React, { FC } from 'react';
 import { constants } from 'ethers';
-import CSS from 'csstype';
 import {
   ModalContent,
   ModalBody,
@@ -31,10 +30,6 @@ export interface ErrorProps {
   state: ErrorStates;
 }
 
-const styleModalContent: CSS.Properties = {
-  backgroundImage: `url(${graphic})`,
-};
-
 const Error: FC<ErrorProps> = props => {
   const {
     error,
@@ -53,7 +48,7 @@ const Error: FC<ErrorProps> = props => {
 
   return (
     <>
-      <ModalContent id="modalContent" style={styleModalContent}>
+      <ModalContent id="modalContent" backgroundImage={graphic}>
         <Header
           title={title}
           warningIcon={true}

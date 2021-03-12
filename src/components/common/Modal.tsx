@@ -37,19 +37,26 @@ export const ModalBody = styled(Box)<ModalBodyProps>`
   }
 `;
 
-export const ModalContent = styled.section`
+type ModalContentProps = {
+  backgroundImage?: string;
+  backgroundPosition?: string;
+};
+
+export const ModalContent = styled.section<ModalContentProps>`
   &&& {
     display: flex;
+    background-image: ${props => `url(${props.backgroundImage})`};
+    background-position: ${props => props.backgroundPosition};
+    background-color: #f5f5f5;
+    background-repeat: no-repeat;
     flex-direction: column;
     position: relative;
     width: 100%;
     outline: 0px;
-    background: #f5f5f5;
     border: 2px solid #4d4d4d;
     box-sizing: border-box;
     border-radius: 15px;
     padding: 0.5rem;
-    background-repeat: no-repeat;
     color: inherit;
     margin-top: 3.75rem;
     margin-bottom: 3.75rem;
