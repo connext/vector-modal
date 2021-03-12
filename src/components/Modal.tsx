@@ -73,6 +73,8 @@ export type ConnextModalProps = {
   injectedProvider?: any;
   loginProvider?: any;
   iframeSrcOverride?: string;
+  withdrawCallTo?: string;
+  withdrawCallData?: string;
   onClose: () => void;
   onReady?: (params: {
     depositChannelAddress: string;
@@ -100,6 +102,8 @@ const ConnextModal: FC<ConnextModalProps> = ({
   injectedProvider: _injectedProvider,
   loginProvider: _loginProvider,
   iframeSrcOverride,
+  withdrawCallTo,
+  withdrawCallData,
   onClose,
   onReady,
   onSwap,
@@ -469,6 +473,8 @@ const ConnextModal: FC<ConnextModalProps> = ({
         withdrawAssetId,
         withdrawalAddress,
         routerPublicIdentifier,
+        withdrawCallTo,
+        withdrawCallData,
         withdrawQuote
       );
     } catch (e) {

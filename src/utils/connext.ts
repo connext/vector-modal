@@ -551,6 +551,8 @@ export const withdrawToAsset = async (
   _toAssetId: string,
   recipientAddr: string,
   routerPublicIdentifier: string,
+  withdrawCallTo?: string,
+  withdrawCallData?: string,
   quote?: WithdrawalQuote
 ): Promise<{ withdrawalTx: string; withdrawalAmount: string }> => {
   const withdrawChannel = await getChannelForChain(
@@ -583,6 +585,8 @@ export const withdrawToAsset = async (
     publicIdentifier: withdrawChannel.bobIdentifier,
     recipient: recipientAddr,
     quote: validQuote ? quote : undefined,
+    callTo: withdrawCallTo,
+    callData: withdrawCallData,
   };
   console.log('withdraw params', params);
   const ret = await node.withdraw(params);
