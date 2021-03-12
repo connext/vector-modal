@@ -445,6 +445,145 @@ const ConnextModal: FC<ConnextModalProps> = ({
     await withdraw(receiverChainInfo, _node, onWithdrawalTxCreated, onFinished);
   };
 
+  const withdraw = async (
+    receiverChainInfo: CHAIN_DETAIL,
+    _node: BrowserNode,
+    _onWithdrawalTxCreated?: (txHash: string) => void,
+    _onFinished?: (amountWei: string) => void
+  ) => {
+    const _withdrawChainId: number = receiverChainInfo?.chainId!;
+    const _withdrawRpcProvider: providers.JsonRpcProvider = receiverChainInfo?.rpcProvider!;
+
+    handleScreen({
+      state: SCREEN_STATES.STATUS,
+      title: 'withdrawing',
+      message: `withdrawing ${senderChain?.assetName} to ${receiverChain?.name}. This step can take some time if the chain is congested`,
+    });
+
+    // now go to withdrawal screen
+    let result;
+    try {
+      result = await withdrawToAsset(
+        _node,
+        _withdrawChainId,
+        withdrawAssetId,
+        withdrawalAddress,
+        routerPublicIdentifier,
+        withdrawQuote
+      );
+    } catch (e) {
+      handleScreen({
+        state: ERROR_STATES.ERROR_TRANSFER,
+        error: e,
+        message: 'Error in crossChainTransfer',
+      });
+      return;
+    }
+    // display tx hash through explorer -> handles by the event.
+    console.log('crossChainTransfer: ', result);
+    setWithdrawTx(result.withdrawalTx);
+    if (_onWithdrawalTxCreated) {
+      _onWithdrawalTxCreated(result.withdrawalTx);
+    }
+
+    const successWithdrawalUi = utils.formatUnits(
+      result.withdrawalAmount,
+      receiverChain?.assetDecimals!
+    );
+    setSuccessWithdrawalAmount(successWithdrawalUi);
+
+    handleScreen({ state: SCREEN_STATES.SUCCESS });
+
+    // check tx receipt for withdrawal tx
+    _withdrawRpcProvider
+      .waitForTransaction(result.withdrawalTx)
+      .then(receipt => {
+        if (receipt.status === 0) {
+          // tx reverted
+          console.error('Transaction reverted onchain', receipt);
+          handleScreen({
+            state: ERROR_STATES.ERROR_TRANSFER,
+            error: new Error('Withdrawal transaction reverted'),
+          });
+          return;
+        }
+      });
+
+    if (_onFinished) {
+      _onFinished(result.withdrawalAmount);
+    }
+  };
+
+  const depositListenerAndTransfer = async (
+    _depositChainId: number,
+    _withdrawChainId: number,
+    _depositAddress: string,
+    _depositRpcProvider: providers.JsonRpcProvider,
+    _withdrawRpcProvider: providers.JsonRpcProvider,
+    _evts: EvtContainer,
+    _node: BrowserNode
+  ) => {
+    handleScreen({ state: SCREEN_STATES.LISTENER });
+    setShowTimer(true);
+    let initialDeposits: BigNumber;
+    try {
+      initialDeposits = await getTotalDepositsBob(
+        _depositAddress,
+        depositAssetId,
+        _depositRpcProvider
+      );
+    } catch (e) {
+      handleScreen({
+        state: ERROR_STATES.ERROR_TRANSFER,
+        error: e,
+        message: 'Error getting total deposits',
+      });
+
+      return;
+    }
+    console.log(
+      `Starting balance on ${_depositChainId} for ${_depositAddress} of asset ${depositAssetId}: ${initialDeposits.toString()}`
+    );
+
+    let depositListener = setInterval(async () => {
+      let updatedDeposits: BigNumber;
+      try {
+        updatedDeposits = await getTotalDepositsBob(
+          _depositAddress,
+          depositAssetId,
+          _depositRpcProvider
+        );
+      } catch (e) {
+        console.warn(`Error fetching balance: ${e.message}`);
+        return;
+      }
+      console.log(
+        `Updated balance on ${_depositChainId} for ${_depositAddress} of asset ${depositAssetId}: ${updatedDeposits.toString()}`
+      );
+
+      if (updatedDeposits.lt(initialDeposits)) {
+        initialDeposits = updatedDeposits;
+      }
+
+      if (updatedDeposits.gt(initialDeposits)) {
+        clearInterval(depositListener!);
+        setShowTimer(false);
+        const transferAmount = updatedDeposits.sub(initialDeposits);
+        initialDeposits = updatedDeposits;
+        await transfer(
+          senderChain!,
+          receiverChain!,
+          _depositAddress,
+          transferAmount,
+          _evts,
+          _node,
+          true
+        );
+      }
+    }, 5_000);
+    setListener(depositListener);
+  };
+
   const handleAmountError = (
     err: string | undefined,
     receiveExactAmount: boolean
@@ -679,145 +818,6 @@ const ConnextModal: FC<ConnextModalProps> = ({
     }
   };
 
-  const withdraw = async (
-    receiverChainInfo: CHAIN_DETAIL,
-    _node: BrowserNode,
-    _onWithdrawalTxCreated?: (txHash: string) => void,
-    _onFinished?: (amountWei: string) => void
-  ) => {
-    const _withdrawChainId: number = receiverChainInfo?.chainId!;
-    const _withdrawRpcProvider: providers.JsonRpcProvider = receiverChainInfo?.rpcProvider!;
-
-    handleScreen({
-      state: SCREEN_STATES.STATUS,
-      title: 'withdrawing',
-      message: `withdrawing ${senderChain?.assetName} to ${receiverChain?.name}. This step can take some time if the chain is congested`,
-    });
-
-    // now go to withdrawal screen
-    let result;
-    try {
-      result = await withdrawToAsset(
-        _node,
-        _withdrawChainId,
-        withdrawAssetId,
-        withdrawalAddress,
-        routerPublicIdentifier,
-        withdrawQuote
-      );
-    } catch (e) {
-      handleScreen({
-        state: ERROR_STATES.ERROR_TRANSFER,
-        error: e,
-        message: 'Error in crossChainTransfer',
-      });
-      return;
-    }
-    // display tx hash through explorer -> handles by the event.
-    console.log('crossChainTransfer: ', result);
-    setWithdrawTx(result.withdrawalTx);
-    if (_onWithdrawalTxCreated) {
-      _onWithdrawalTxCreated(result.withdrawalTx);
-    }
-
-    const successWithdrawalUi = utils.formatUnits(
-      result.withdrawalAmount,
-      receiverChain?.assetDecimals!
-    );
-    setSuccessWithdrawalAmount(successWithdrawalUi);
-
-    handleScreen({ state: SCREEN_STATES.SUCCESS });
-
-    // check tx receipt for withdrawal tx
-    _withdrawRpcProvider
-      .waitForTransaction(result.withdrawalTx)
-      .then(receipt => {
-        if (receipt.status === 0) {
-          // tx reverted
-          console.error('Transaction reverted onchain', receipt);
-          handleScreen({
-            state: ERROR_STATES.ERROR_TRANSFER,
-            error: new Error('Withdrawal transaction reverted'),
-          });
-          return;
-        }
-      });
-
-    if (_onFinished) {
-      _onFinished(result.withdrawalAmount);
-    }
-  };
-
-  const depositListenerAndTransfer = async (
-    _depositChainId: number,
-    _withdrawChainId: number,
-    _depositAddress: string,
-    _depositRpcProvider: providers.JsonRpcProvider,
-    _withdrawRpcProvider: providers.JsonRpcProvider,
-    _evts: EvtContainer,
-    _node: BrowserNode
-  ) => {
-    handleScreen({ state: SCREEN_STATES.LISTENER });
-    setShowTimer(true);
-    let initialDeposits: BigNumber;
-    try {
-      initialDeposits = await getTotalDepositsBob(
-        _depositAddress,
-        depositAssetId,
-        _depositRpcProvider
-      );
-    } catch (e) {
-      handleScreen({
-        state: ERROR_STATES.ERROR_TRANSFER,
-        error: e,
-        message: 'Error getting total deposits',
-      });
-
-      return;
-    }
-    console.log(
-      `Starting balance on ${_depositChainId} for ${_depositAddress} of asset ${depositAssetId}: ${initialDeposits.toString()}`
-    );
-
-    let depositListener = setInterval(async () => {
-      let updatedDeposits: BigNumber;
-      try {
-        updatedDeposits = await getTotalDepositsBob(
-          _depositAddress,
-          depositAssetId,
-          _depositRpcProvider
-        );
-      } catch (e) {
-        console.warn(`Error fetching balance: ${e.message}`);
-        return;
-      }
-      console.log(
-        `Updated balance on ${_depositChainId} for ${_depositAddress} of asset ${depositAssetId}: ${updatedDeposits.toString()}`
-      );
-
-      if (updatedDeposits.lt(initialDeposits)) {
-        initialDeposits = updatedDeposits;
-      }
-
-      if (updatedDeposits.gt(initialDeposits)) {
-        clearInterval(depositListener!);
-        setShowTimer(false);
-        const transferAmount = updatedDeposits.sub(initialDeposits);
-        initialDeposits = updatedDeposits;
-        await transfer(
-          senderChain!,
-          receiverChain!,
-          _depositAddress,
-          transferAmount,
-          _evts,
-          _node,
-          true
-        );
-      }
-    }, 5_000);
-    setListener(depositListener);
-  };
-
   const stateReset = () => {
     handleScreen({ state: SCREEN_STATES.LOADING });
     setWebProvider(undefined);
@@ -833,12 +833,6 @@ const ConnextModal: FC<ConnextModalProps> = ({
     setDepositAddress(undefined);
     setActiveCrossChainTransferId(constants.HashZero);
     setPreImage(undefined);
-  };
-
-  const handleClose = () => {
-    clearInterval(listener!);
-    setShowTimer(false);
-    onClose();
   };
 
   const setup = async () => {
@@ -1293,6 +1287,11 @@ const ConnextModal: FC<ConnextModalProps> = ({
     );
   };
 
+  const handleClose = () => {
+    clearInterval(listener!);
+    setShowTimer(false);
+    onClose();
+  };
   const handleCloseButton = () => {
     return (
       <CloseButton
