@@ -595,6 +595,7 @@ const ConnextModal: FC<ConnextModalProps> = ({
     receiveExactAmount: boolean
   ) => {
     setAmountError(err);
+    clearInterval(listener!);
     if (receiveExactAmount) {
       setTransferAmountUi('');
     } else {
@@ -712,10 +713,6 @@ const ConnextModal: FC<ConnextModalProps> = ({
   };
 
   const handleSwapRequest = async () => {
-    await handleSwapCheck(transferAmountUi, false);
-    if (amountError) {
-      return;
-    }
     setIsLoad(true);
 
     const _depositChainId: number = senderChain?.chainId!;
@@ -725,7 +722,7 @@ const ConnextModal: FC<ConnextModalProps> = ({
     const _withdrawRpcProvider: providers.JsonRpcProvider = receiverChain?.rpcProvider!;
     const _node: BrowserNode = node!;
     const _evts: EvtContainer = evts!;
-    const _transferAmount: BigNumber = BigNumber.from(
+    const transferAmountBn: BigNumber = BigNumber.from(
       utils.parseUnits(transferAmountUi!, senderChain?.assetDecimals!)
     );
 
@@ -742,11 +739,30 @@ const ConnextModal: FC<ConnextModalProps> = ({
         state: ERROR_STATES.ERROR_TRANSFER,
         error: new Error('Missing input fields'),
       });
+      setIsLoad(false);
       return;
     }
-
     if (onSwap) {
-      onSwap(_transferAmount.toString(), _node);
+      onSwap(transferAmountBn.toString(), _node);
+    }
+
+    console.log('Verify Router Capacity');
+    try {
+      await verifyRouterCapacityForTransfer(
+        _withdrawRpcProvider,
+        withdrawAssetId,
+        withdrawChannelRef.current!,
+        transferAmountBn,
+        swapRef.current
+      );
+      console.log(
+        `Transferring ${transferAmountBn.toString()} through injected provider`
+      );
+    } catch (e) {
+      console.log('verify', e);
+      handleAmountError(e.message, false);
+      setIsLoad(false);
+      return;
     }
 
     if (!webProvider) {
@@ -763,20 +779,8 @@ const ConnextModal: FC<ConnextModalProps> = ({
         _node
       );
     } else {
-      // deposit + reconcile
-      const transferAmountBn = _transferAmount;
+      // deposit
       try {
-        await verifyRouterCapacityForTransfer(
-          _withdrawRpcProvider,
-          withdrawAssetId,
-          withdrawChannelRef.current!,
-          transferAmountBn,
-          swapRef.current
-        );
-        console.log(
-          `Transferring ${transferAmountBn.toString()} through injected provider`
-        );
-
         const signer = webProvider.getSigner();
         const depositTx =
           depositAssetId === constants.AddressZero
