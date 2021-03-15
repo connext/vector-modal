@@ -595,6 +595,7 @@ const ConnextModal: FC<ConnextModalProps> = ({
     receiveExactAmount: boolean
   ) => {
     setAmountError(err);
+    clearInterval(listener!);
     if (receiveExactAmount) {
       setTransferAmountUi('');
     } else {
