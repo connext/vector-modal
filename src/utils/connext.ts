@@ -108,7 +108,6 @@ export const connectNode = async (
         counterpartyIdentifier: routerPublicIdentifier,
         chainId: withdrawChainId,
       });
-
       if (restoreWithdrawChannelState.isError) {
         console.error('Could not restore withdraw state');
         throw restoreWithdrawChannelState.getError();
