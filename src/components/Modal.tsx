@@ -1169,7 +1169,10 @@ const ConnextModal: FC<ConnextModalProps> = ({
         depositAssetId
       );
     } catch (e) {
-      if (e.context.message.includes('must restore')) {
+      if (
+        e.message.includes('must restore') ||
+        (e.context?.message ?? '').includes('must restore')
+      ) {
         console.warn(
           'Channel is out of sync, restoring before other operations. The channel was likely used in another browser.'
         );
@@ -1178,7 +1181,10 @@ const ConnextModal: FC<ConnextModalProps> = ({
           chainId: senderChainInfo.chainId,
         });
         if (restoreDepositChannelState.isError) {
-          console.error('Could not restore sender channel state', restoreDepositChannelState.getError());
+          console.error(
+            'Could not restore sender channel state',
+            restoreDepositChannelState.getError()
+          );
           handleScreen({
             state: ERROR_STATES.ERROR_SETUP,
             error: restoreDepositChannelState.getError(),
@@ -1191,7 +1197,10 @@ const ConnextModal: FC<ConnextModalProps> = ({
           chainId: receiverChainInfo.chainId,
         });
         if (restoreWithdrawChannelState.isError) {
-          console.error('Could not restore receiver channel state', restoreWithdrawChannelState.getError());
+          console.error(
+            'Could not restore receiver channel state',
+            restoreWithdrawChannelState.getError()
+          );
           handleScreen({
             state: ERROR_STATES.ERROR_SETUP,
             error: restoreWithdrawChannelState.getError(),
@@ -1205,19 +1214,26 @@ const ConnextModal: FC<ConnextModalProps> = ({
             depositChannel.channelAddress,
             depositAssetId
           );
-          return;
         } catch (e) {
-          // fall through
+          const message = 'Error in reconcileDeposit';
+          console.error(e, message);
+          handleScreen({
+            state: ERROR_STATES.ERROR_SETUP,
+            error: e,
+            message: message,
+          });
+          return;
         }
+      } else {
+        const message = 'Error in reconcileDeposit';
+        console.error(e, message);
+        handleScreen({
+          state: ERROR_STATES.ERROR_SETUP,
+          error: e,
+          message: message,
+        });
+        return;
       }
-      const message = 'Error in reconcileDeposit';
-      console.error(e, message);
-      handleScreen({
-        state: ERROR_STATES.ERROR_SETUP,
-        error: e,
-        message: message,
-      });
-      return;
     }
 
     // After reconciling, get channel again
