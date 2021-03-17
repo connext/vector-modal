@@ -14,6 +14,7 @@ import {
   WithdrawalQuote,
   TransferQuote,
   AllowedSwap,
+  WithdrawalResolvedPayload,
 } from '@connext/vector-types';
 import {
   calculateExchangeWad,
@@ -535,6 +536,7 @@ export const cancelHangingToTransfers = async (
 
 export const withdrawToAsset = async (
   node: BrowserNode,
+  evt: Evt<WithdrawalResolvedPayload>,
   toChainId: number,
   _toAssetId: string,
   recipientAddr: string,
@@ -566,12 +568,11 @@ export const withdrawToAsset = async (
   console.log('withdraw params', params);
   const [ret, payload] = await Promise.all([
     node.withdraw(params),
-    node.waitFor(
-      EngineEvents.WITHDRAWAL_RESOLVED,
-      60_000,
+    evt.waitFor(
       data =>
         data.channelAddress === withdrawChannel.channelAddress &&
-        data.recipient === recipientAddr
+        data.recipient === recipientAddr,
+      60_000
     ),
   ]);
   if (ret.isError) {
@@ -709,13 +710,15 @@ export type EvtContainer = {
   >;
   [EngineEvents.DEPOSIT_RECONCILED]: Evt<DepositReconciledPayload>;
   [EngineEvents.WITHDRAWAL_RECONCILED]: Evt<WithdrawalReconciledPayload>;
+  [EngineEvents.WITHDRAWAL_RESOLVED]: Evt<WithdrawalResolvedPayload>;
 };
 
 export const createEvtContainer = (node: BrowserNode): EvtContainer => {
   const createdTransfer = Evt.create<ConditionalTransferCreatedPayload>();
   const resolvedTransfer = Evt.create<ConditionalTransferResolvedPayload>();
   const deposit = Evt.create<DepositReconciledPayload>();
-  const withdraw = Evt.create<WithdrawalReconciledPayload>();
+  const withdrawReconciled = Evt.create<WithdrawalReconciledPayload>();
+  const withdrawResolved = Evt.create<WithdrawalResolvedPayload>();
 
   node.on(EngineEvents.CONDITIONAL_TRANSFER_CREATED, data => {
     console.log('EngineEvents.CONDITIONAL_TRANSFER_CREATED: ', data);
@@ -731,13 +734,18 @@ export const createEvtContainer = (node: BrowserNode): EvtContainer => {
   });
   node.on(EngineEvents.WITHDRAWAL_RECONCILED, data => {
     console.log('EngineEvents.WITHDRAWAL_RECONCILED: ', data);
-    withdraw.post(data);
+    withdrawReconciled.post(data);
+  });
+  node.on(EngineEvents.WITHDRAWAL_RESOLVED, data => {
+    console.log('EngineEvents.WITHDRAWAL_RESOLVED: ', data);
+    withdrawResolved.post(data);
   });
   return {
     [EngineEvents.CONDITIONAL_TRANSFER_CREATED]: createdTransfer,
     [EngineEvents.CONDITIONAL_TRANSFER_RESOLVED]: resolvedTransfer,
     [EngineEvents.DEPOSIT_RECONCILED]: deposit,
-    [EngineEvents.WITHDRAWAL_RECONCILED]: withdraw,
+    [EngineEvents.WITHDRAWAL_RECONCILED]: withdrawReconciled,
+    [EngineEvents.WITHDRAWAL_RESOLVED]: withdrawResolved,
   };
 };
 

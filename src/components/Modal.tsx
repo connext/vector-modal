@@ -443,12 +443,19 @@ const ConnextModal: FC<ConnextModalProps> = ({
       );
     }
 
-    await withdraw(receiverChainInfo, _node, onWithdrawalTxCreated, onFinished);
+    await withdraw(
+      receiverChainInfo,
+      _node,
+      _evts,
+      onWithdrawalTxCreated,
+      onFinished
+    );
   };
 
   const withdraw = async (
     receiverChainInfo: CHAIN_DETAIL,
     _node: BrowserNode,
+    _evts: EvtContainer,
     _onWithdrawalTxCreated?: (txHash: string) => void,
     _onFinished?: (amountWei: string) => void
   ) => {
@@ -466,6 +473,7 @@ const ConnextModal: FC<ConnextModalProps> = ({
     try {
       result = await withdrawToAsset(
         _node,
+        _evts[EngineEvents.WITHDRAWAL_RESOLVED],
         _withdrawChainId,
         withdrawAssetId,
         withdrawalAddress,
@@ -1293,6 +1301,7 @@ const ConnextModal: FC<ConnextModalProps> = ({
       await withdraw(
         receiverChainInfo,
         _node,
+        _evts,
         onWithdrawalTxCreated,
         onFinished
       );
