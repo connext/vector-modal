@@ -14,6 +14,7 @@ import {
   WithdrawalQuote,
   TransferQuote,
   AllowedSwap,
+  WithdrawalResolvedPayload,
 } from '@connext/vector-types';
 import {
   calculateExchangeWad,
@@ -305,8 +306,7 @@ export const createFromAssetTransfer = async (
   _toAssetId: string,
   routerPublicIdentifier: string,
   crossChainTransferId: string,
-  preImage: string,
-  quote?: TransferQuote
+  preImage: string
 ): Promise<{ transferId: string; preImage: string }> => {
   const depositChannel = await getChannelForChain(
     node,
@@ -323,19 +323,6 @@ export const createFromAssetTransfer = async (
       )}`
     );
   }
-  const maxExpiry = Date.now() - 5_000;
-  const validQuote =
-    quote &&
-    quote.amount === toTransfer &&
-    quote.routerIdentifier === depositChannel.aliceIdentifier &&
-    quote.assetId.toLowerCase() === _fromAssetId.toLowerCase() &&
-    quote.chainId === fromChainId &&
-    parseInt(quote.expiry) < maxExpiry &&
-    BigNumber.from(quote.fee).lt(toTransfer) &&
-    quote.recipient === depositChannel.bobIdentifier &&
-    quote.recipientAssetId.toLowerCase() === _toAssetId.toLowerCase() &&
-    quote.recipientChainId === toChainId &&
-    !!quote.signature; // lazy sig check
   const params: NodeParams.ConditionalTransfer = {
     recipient: depositChannel.bobIdentifier,
     recipientChainId: toChainId,
@@ -352,9 +339,7 @@ export const createFromAssetTransfer = async (
     },
     details: { expiry: '0', lockHash: createlockHash(preImage) },
     publicIdentifier: depositChannel.bobIdentifier,
-    quote: validQuote ? quote : undefined,
   };
-  console.log(`quote is ${validQuote ? 'valid' : 'not valid, rerequesting'}`);
   console.log('transfer params', params);
   const ret = await node.conditionalTransfer(params);
   if (ret.isError) {
@@ -418,15 +403,15 @@ export const waitForSenderCancels = async (
   if (active.isError) {
     throw active.getError();
   }
-  const hashlock = active.getValue().filter((t) => {
+  const hashlock = active.getValue().filter(t => {
     return Object.keys(t.transferState).includes('lockHash');
   });
   await Promise.all(
-    hashlock.map(async (t) => {
+    hashlock.map(async t => {
       try {
         console.log('Waiting for sender cancellation: ', t);
         await evt.waitFor(
-          (data) =>
+          data =>
             data.transfer.transferId === t.transferId &&
             data.channelAddress === depositChannelAddress &&
             Object.values(data.transfer.transferResolver)[0] ===
@@ -444,7 +429,7 @@ export const waitForSenderCancels = async (
   if (final.isError) {
     throw final.getError();
   }
-  const remaining = final.getValue().filter((t) => {
+  const remaining = final.getValue().filter(t => {
     return Object.keys(t.transferState).includes('lockHash');
   });
   if (remaining.length > 0) {
@@ -497,7 +482,7 @@ export const cancelHangingToTransfers = async (
     throw transfers.getError();
   }
 
-  const toCancel = transfers.getValue().filter((t) => {
+  const toCancel = transfers.getValue().filter(t => {
     const amResponder = t.responderIdentifier === withdrawChannel.bobIdentifier;
     const correctAsset = t.assetId === toAssetId;
     const isHashlock = Object.keys(t.transferState).includes('lockHash');
@@ -507,7 +492,7 @@ export const cancelHangingToTransfers = async (
 
   // wait for all hanging transfers to cancel
   const hangingResolutions = (await Promise.all(
-    toCancel.map(async (transferToCancel) => {
+    toCancel.map(async transferToCancel => {
       try {
         console.warn(
           'Cancelling hanging receiver transfer w/routingId:',
@@ -532,7 +517,7 @@ export const cancelHangingToTransfers = async (
         });
         // for sender transfer cancellation
         await evt.waitFor(
-          (data) =>
+          data =>
             data.transfer.meta.routingId === transferToCancel.meta!.routingId &&
             data.channelAddress === depositChannel.channelAddress &&
             Object.values(data.transfer.transferResolver)[0] ===
@@ -551,13 +536,13 @@ export const cancelHangingToTransfers = async (
 
 export const withdrawToAsset = async (
   node: BrowserNode,
+  evt: Evt<WithdrawalResolvedPayload>,
   toChainId: number,
   _toAssetId: string,
   recipientAddr: string,
   routerPublicIdentifier: string,
   withdrawCallTo?: string,
-  withdrawCallData?: string,
-  quote?: WithdrawalQuote
+  withdrawCallData?: string
 ): Promise<{ withdrawalTx: string; withdrawalAmount: string }> => {
   const withdrawChannel = await getChannelForChain(
     node,
@@ -571,29 +556,25 @@ export const withdrawToAsset = async (
     throw new Error('Asset not in receiver channel');
   }
 
-  const maxExpiry = Date.now() - 5_000;
-  const validQuote =
-    quote &&
-    quote.amount === toWithdraw &&
-    parseInt(quote.expiry) < maxExpiry &&
-    quote.assetId.toLowerCase() === _toAssetId.toLowerCase() &&
-    !!quote.signature && // lazy sig check
-    quote.channelAddress === withdrawChannel.channelAddress &&
-    BigNumber.from(toWithdraw).gte(quote.fee);
-
-  console.log(`quote is ${validQuote ? 'valid' : 'not valid, rerequesting'}`);
   const params: NodeParams.Withdraw = {
     amount: toWithdraw,
     assetId: toAssetId,
     channelAddress: withdrawChannel.channelAddress,
     publicIdentifier: withdrawChannel.bobIdentifier,
     recipient: recipientAddr,
-    quote: validQuote ? quote : undefined,
     callTo: withdrawCallTo,
     callData: withdrawCallData,
   };
   console.log('withdraw params', params);
-  const ret = await node.withdraw(params);
+  const [ret, payload] = await Promise.all([
+    node.withdraw(params),
+    evt.waitFor(
+      data =>
+        data.channelAddress === withdrawChannel.channelAddress &&
+        data.recipient === recipientAddr,
+      60_000
+    ),
+  ]);
   if (ret.isError) {
     throw ret.getError();
   }
@@ -604,13 +585,9 @@ export const withdrawToAsset = async (
     throw new Error('Router failed to withdraw');
   }
 
-  const withdrawnAmount = quote
-    ? BigNumber.from(toWithdraw).sub(quote.fee)
-    : BigNumber.from(toWithdraw);
-
   const result = {
     withdrawalTx: transactionHash,
-    withdrawalAmount: withdrawnAmount.toString(),
+    withdrawalAmount: payload?.amount ?? toWithdraw,
   };
   return result;
 };
@@ -654,7 +631,7 @@ export const verifyAndGetRouterSupports = async (
   console.log('toAssetId.toLowerCase(): ', toAssetId.toLowerCase());
   console.log('fromChainId: ', fromChainId);
   console.log('toChainId: ', toChainId);
-  const swap = allowedSwaps.find((s) => {
+  const swap = allowedSwaps.find(s => {
     const noninverted =
       s.fromAssetId.toLowerCase() === fromAssetId.toLowerCase() &&
       s.fromChainId === fromChainId &&
@@ -725,39 +702,50 @@ export const verifyRouterCapacityForTransfer = async (
 };
 
 export type EvtContainer = {
-  [EngineEvents.CONDITIONAL_TRANSFER_CREATED]: Evt<ConditionalTransferCreatedPayload>;
-  [EngineEvents.CONDITIONAL_TRANSFER_RESOLVED]: Evt<ConditionalTransferResolvedPayload>;
+  [EngineEvents.CONDITIONAL_TRANSFER_CREATED]: Evt<
+    ConditionalTransferCreatedPayload
+  >;
+  [EngineEvents.CONDITIONAL_TRANSFER_RESOLVED]: Evt<
+    ConditionalTransferResolvedPayload
+  >;
   [EngineEvents.DEPOSIT_RECONCILED]: Evt<DepositReconciledPayload>;
   [EngineEvents.WITHDRAWAL_RECONCILED]: Evt<WithdrawalReconciledPayload>;
+  [EngineEvents.WITHDRAWAL_RESOLVED]: Evt<WithdrawalResolvedPayload>;
 };
 
 export const createEvtContainer = (node: BrowserNode): EvtContainer => {
   const createdTransfer = Evt.create<ConditionalTransferCreatedPayload>();
   const resolvedTransfer = Evt.create<ConditionalTransferResolvedPayload>();
   const deposit = Evt.create<DepositReconciledPayload>();
-  const withdraw = Evt.create<WithdrawalReconciledPayload>();
+  const withdrawReconciled = Evt.create<WithdrawalReconciledPayload>();
+  const withdrawResolved = Evt.create<WithdrawalResolvedPayload>();
 
-  node.on(EngineEvents.CONDITIONAL_TRANSFER_CREATED, (data) => {
+  node.on(EngineEvents.CONDITIONAL_TRANSFER_CREATED, data => {
     console.log('EngineEvents.CONDITIONAL_TRANSFER_CREATED: ', data);
     createdTransfer.post(data);
   });
-  node.on(EngineEvents.CONDITIONAL_TRANSFER_RESOLVED, (data) => {
+  node.on(EngineEvents.CONDITIONAL_TRANSFER_RESOLVED, data => {
     console.log('EngineEvents.CONDITIONAL_TRANSFER_RESOLVED: ', data);
     resolvedTransfer.post(data);
   });
-  node.on(EngineEvents.DEPOSIT_RECONCILED, (data) => {
+  node.on(EngineEvents.DEPOSIT_RECONCILED, data => {
     console.log('EngineEvents.DEPOSIT_RECONCILED: ', data);
     deposit.post(data);
   });
-  node.on(EngineEvents.WITHDRAWAL_RECONCILED, (data) => {
+  node.on(EngineEvents.WITHDRAWAL_RECONCILED, data => {
     console.log('EngineEvents.WITHDRAWAL_RECONCILED: ', data);
-    withdraw.post(data);
+    withdrawReconciled.post(data);
+  });
+  node.on(EngineEvents.WITHDRAWAL_RESOLVED, data => {
+    console.log('EngineEvents.WITHDRAWAL_RESOLVED: ', data);
+    withdrawResolved.post(data);
   });
   return {
     [EngineEvents.CONDITIONAL_TRANSFER_CREATED]: createdTransfer,
     [EngineEvents.CONDITIONAL_TRANSFER_RESOLVED]: resolvedTransfer,
     [EngineEvents.DEPOSIT_RECONCILED]: deposit,
-    [EngineEvents.WITHDRAWAL_RECONCILED]: withdraw,
+    [EngineEvents.WITHDRAWAL_RECONCILED]: withdrawReconciled,
+    [EngineEvents.WITHDRAWAL_RESOLVED]: withdrawResolved,
   };
 };
 
