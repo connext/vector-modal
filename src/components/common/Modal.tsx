@@ -37,16 +37,14 @@ export const ModalBody = styled(Box)<ModalBodyProps>`
   }
 `;
 
-type ModalContentProps = {
-  backgroundImage?: string;
-  backgroundPosition?: string;
-};
+// type ModalContentProps = {
+//   backgroundImage?: string;
+//   backgroundPosition?: string;
+// };
 
-export const ModalContent = styled.section<ModalContentProps>`
+export const ModalContent = styled.section`
   &&& {
     display: flex;
-    background-image: ${(props) => props.backgroundImage};
-    background-position: ${(props) => props.backgroundPosition};
     background-color: #f5f5f5;
     background-repeat: no-repeat;
     flex-direction: column;

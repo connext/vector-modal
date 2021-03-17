@@ -2,7 +2,6 @@ import React, { FC } from 'react';
 import { ModalContent, ModalBody, Text, Stack } from '../common';
 import { Header, Footer, NetworkBar } from '../static';
 import { CHAIN_DETAIL } from '../../constants';
-import { lightGraphic } from '../../public';
 
 export interface StatusProps {
   title: string;
@@ -26,11 +25,7 @@ const Status: FC<StatusProps> = (props) => {
   } = props;
   return (
     <>
-      <ModalContent
-        id="modalContent"
-        backgroundImage={`url(${lightGraphic})`}
-        backgroundPosition="right top"
-      >
+      <ModalContent id="modalContent">
         <Header title={title} spinner={true} options={options} />
         <ModalBody>
           <Stack column={true} spacing={7}>

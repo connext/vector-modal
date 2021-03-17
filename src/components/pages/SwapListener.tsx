@@ -15,7 +15,6 @@ import {
 } from '../common';
 import { Header, Footer, NetworkBar } from '../static';
 import { CHAIN_DETAIL } from '../../constants';
-import { darkGraphic } from '../../public';
 // @ts-ignore
 import QRCode from 'qrcode.react';
 
@@ -91,11 +90,7 @@ const SwapListener: FC<SwapListenerProps> = (props) => {
 
   return (
     <>
-      <ModalContent
-        id="modalContent"
-        backgroundImage={`url(${darkGraphic})`}
-        backgroundPosition="right top"
-      >
+      <ModalContent id="modalContent">
         <Header
           title="Ready for transfer"
           handleBack={handleBack}

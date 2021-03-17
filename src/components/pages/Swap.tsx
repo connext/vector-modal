@@ -10,7 +10,6 @@ import {
 } from '../common';
 import { Header, Footer, NetworkBar } from '../static';
 import { CHAIN_DETAIL } from '../../constants';
-import { graphic } from '../../public';
 import { truncate } from '../../utils';
 
 export interface TransferProps {
@@ -78,7 +77,7 @@ const Swap: FC<TransferProps> = (props) => {
 
   return (
     <>
-      <ModalContent id="modalContent" backgroundImage={`url(${graphic})`}>
+      <ModalContent id="modalContent">
         <Header title="Send Amount" options={options} />
         <ModalBody>
           <Stack column={true} spacing={5}>

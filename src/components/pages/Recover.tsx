@@ -18,7 +18,6 @@ import Success from './Success';
 import ErrorScreen from './ErrorScreen';
 import Loading from './Loading';
 import { CHAIN_DETAIL, ERROR_STATES } from '../../constants';
-import { graphic } from '../../public';
 
 export interface RecoveryProps {
   handleBack: () => void;
@@ -117,7 +116,7 @@ const Recover: FC<RecoveryProps> = (props) => {
     <>
       {status === 'Loading' && <Loading message="Recovery in Progress..." />}
       {status === 'Initial' && (
-        <ModalContent id="modalContent" backgroundImage={`url(${graphic})`}>
+        <ModalContent id="modalContent">
           <Header
             title="Recover lost funds"
             handleBack={handleBack}

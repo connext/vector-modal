@@ -13,7 +13,6 @@ import {
 } from '../common';
 import { Header, Footer, NetworkBar } from '../static';
 import { CHAIN_DETAIL, ERROR_STATES, ErrorStates } from '../../constants';
-import { graphic } from '../../public';
 
 export interface ErrorProps {
   error: Error;
@@ -48,7 +47,7 @@ const Error: FC<ErrorProps> = (props) => {
 
   return (
     <>
-      <ModalContent id="modalContent" backgroundImage={`url(${graphic})`}>
+      <ModalContent id="modalContent">
         <Header
           title={title}
           warningIcon={true}
