@@ -32,7 +32,7 @@ export interface TransferProps {
   userBalance?: string;
 }
 
-const Swap: FC<TransferProps> = props => {
+const Swap: FC<TransferProps> = (props) => {
   const {
     amountError,
     userBalance,
@@ -83,148 +83,156 @@ const Swap: FC<TransferProps> = props => {
         <ModalBody>
           <Stack column={true} spacing={5}>
             <Stack column={true} spacing={4}>
-              <Stack column={true} spacing={1}>
-                <Stack>
-                  <Text flex="auto" fontSize="0.75rem">
-                    You send
-                  </Text>
-                  {userBalance && (
+              <Stack column={true} spacing={6}>
+                <Stack column={true} spacing={1}>
+                  <Stack>
+                    <Text flex="auto" fontSize="0.75rem">
+                      You send
+                    </Text>
+                    {userBalance && (
+                      <Text
+                        fontSize="0.75rem"
+                        fontFamily="Roboto Mono"
+                        textTransform="uppercase"
+                        textAlign="end"
+                        color="#757575"
+                      >
+                        Balance: {truncate(userBalance, 4)}{' '}
+                        {senderChainInfo.assetName}
+                      </Text>
+                    )}
+                  </Stack>
+                  <Stack
+                    colorScheme="white"
+                    alignItems="center"
+                    borderRadius="5px"
+                  >
+                    <InputGroup flex="auto" colorScheme="white">
+                      <Input
+                        body="lg"
+                        title="Token Amount"
+                        aria-describedby="amount"
+                        // styling
+                        fontSize="1rem"
+                        // universal input options
+                        inputMode="decimal"
+                        autoComplete="off"
+                        autoCorrect="off"
+                        // text-specific options
+                        type="text"
+                        pattern="^[0-9]*[.,]?[0-9]*$"
+                        placeholder={'0.0'}
+                        minLength={1}
+                        maxLength={79}
+                        spellCheck="false"
+                        // value
+                        value={senderAmount}
+                        onChange={(event) => {
+                          enforcer(
+                            event.target.value.replace(/,/g, '.'),
+                            false
+                          );
+                        }}
+                        readOnly={inputReadOnly ? true : false}
+                      />
+                    </InputGroup>
+
+                    {userBalance && (
+                      <Button
+                        size="xs"
+                        colorScheme="#DEDEDE"
+                        color="#737373"
+                        borderRadius="5px"
+                        border="none"
+                        borderStyle="none"
+                        casing="uppercase"
+                        marginRight="10px!important"
+                        height="1.5rem"
+                        disabled={inputReadOnly ? true : false}
+                        onClick={() => {
+                          enforcer(userBalance, false);
+                        }}
+                      >
+                        max
+                      </Button>
+                    )}
+
                     <Text
-                      fontSize="0.75rem"
+                      margin="0 10px 0 0"
                       fontFamily="Roboto Mono"
                       textTransform="uppercase"
-                      textAlign="end"
-                      color="#757575"
+                      fontSize="1rem"
+                      color="#333333"
                     >
-                      Balance: {truncate(userBalance, 4)}{' '}
                       {senderChainInfo.assetName}
                     </Text>
-                  )}
+                  </Stack>
                 </Stack>
-                <Stack
-                  colorScheme="white"
-                  alignItems="center"
-                  borderRadius="5px"
-                >
-                  <InputGroup flex="auto" colorScheme="white">
-                    <Input
-                      body="lg"
-                      title="Token Amount"
-                      aria-describedby="amount"
-                      // styling
-                      fontSize="1rem"
-                      // universal input options
-                      inputMode="decimal"
-                      autoComplete="off"
-                      autoCorrect="off"
-                      // text-specific options
-                      type="text"
-                      pattern="^[0-9]*[.,]?[0-9]*$"
-                      placeholder={'0.0'}
-                      minLength={1}
-                      maxLength={79}
-                      spellCheck="false"
-                      // value
-                      value={senderAmount}
-                      onChange={event => {
-                        enforcer(event.target.value.replace(/,/g, '.'), false);
-                      }}
-                      readOnly={inputReadOnly ? true : false}
-                    />
-                  </InputGroup>
 
-                  {userBalance && (
-                    <Button
-                      size="xs"
-                      colorScheme="#DEDEDE"
-                      color="#737373"
-                      borderRadius="5px"
-                      border="none"
-                      borderStyle="none"
-                      casing="uppercase"
-                      marginRight="10px!important"
-                      height="1.5rem"
-                      disabled={inputReadOnly ? true : false}
-                      onClick={() => {
-                        enforcer(userBalance, false);
-                      }}
-                    >
-                      max
-                    </Button>
-                  )}
-
-                  <Text
-                    margin="0 10px 0 0"
-                    fontFamily="Roboto Mono"
-                    textTransform="uppercase"
-                    fontSize="1rem"
-                    color="#333333"
-                  >
-                    {senderChainInfo.assetName}
-                  </Text>
-                </Stack>
-              </Stack>
-
-              <Stack column={true} spacing={2}>
                 <Stack>
-                  <Text fontSize="0.75rem" flex="auto" color="#666666">
+                  <Text
+                    fontSize="0.875rem"
+                    fontWeight="700"
+                    flex="auto"
+                    color="#666666"
+                  >
                     Estimated Fees:
                   </Text>
                   <Text
-                    fontSize="0.75rem"
+                    fontSize="0.875rem"
                     fontFamily="Roboto Mono"
                     color="#666666"
+                    fontWeight="700"
                   >
                     {truncate(feeQuote, 4)} {senderChainInfo.assetName}
                   </Text>
                 </Stack>
-              </Stack>
 
-              <Stack column={true} spacing={1}>
-                <Text fontSize="0.75rem">Recipient gets</Text>
-                <Stack
-                  colorScheme="white"
-                  alignItems="center"
-                  borderRadius="5px"
-                >
-                  <InputGroup flex="auto" colorScheme="white">
-                    <Input
-                      body="lg"
-                      title="Token Amount"
-                      aria-describedby="amount"
-                      // styling
-                      fontSize="1rem"
-                      // universal input options
-                      inputMode="decimal"
-                      autoComplete="off"
-                      autoCorrect="off"
-                      // text-specific options
-                      type="text"
-                      pattern="^[0-9]*[.,]?[0-9]*$"
-                      placeholder={'0.0'}
-                      minLength={1}
-                      maxLength={79}
-                      spellCheck="false"
-                      // value
-                      value={recipientAmount}
-                      onChange={event => {
-                        enforcer(event.target.value.replace(/,/g, '.'), true);
-                      }}
-                      readOnly={inputReadOnly ? true : false}
-                    />
-                  </InputGroup>
-                  <Text
-                    margin="0 10px 0 0"
-                    fontFamily="Roboto Mono"
-                    textTransform="uppercase"
-                    fontSize="1rem"
-                    color="#333333"
+                <Stack column={true} spacing={1}>
+                  <Text fontSize="0.75rem">Recipient gets</Text>
+                  <Stack
+                    colorScheme="white"
+                    alignItems="center"
+                    borderRadius="5px"
                   >
-                    {receiverChainInfo.assetName}
-                  </Text>
+                    <InputGroup flex="auto" colorScheme="white">
+                      <Input
+                        body="lg"
+                        title="Token Amount"
+                        aria-describedby="amount"
+                        // styling
+                        fontSize="1rem"
+                        // universal input options
+                        inputMode="decimal"
+                        autoComplete="off"
+                        autoCorrect="off"
+                        // text-specific options
+                        type="text"
+                        pattern="^[0-9]*[.,]?[0-9]*$"
+                        placeholder={'0.0'}
+                        minLength={1}
+                        maxLength={79}
+                        spellCheck="false"
+                        // value
+                        value={recipientAmount}
+                        onChange={(event) => {
+                          enforcer(event.target.value.replace(/,/g, '.'), true);
+                        }}
+                        readOnly={inputReadOnly ? true : false}
+                      />
+                    </InputGroup>
+                    <Text
+                      margin="0 10px 0 0"
+                      fontFamily="Roboto Mono"
+                      textTransform="uppercase"
+                      fontSize="1rem"
+                      color="#333333"
+                    >
+                      {receiverChainInfo.assetName}
+                    </Text>
+                  </Stack>
                 </Stack>
               </Stack>
-
               {!!amountError && (
                 <Text
                   flex="auto"
