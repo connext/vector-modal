@@ -16,7 +16,7 @@ import {
   AllowedSwap,
 } from '@connext/vector-types';
 import {
-  calculateExchangeAmount,
+  calculateExchangeWad,
   createlockHash,
   getBalanceForAssetId,
   inverse,
@@ -159,8 +159,9 @@ export const getCrosschainFee = async (
     // if input at recipient field
     // convert the input amount to senderAmount
     transferAmount = BigNumber.from(
-      calculateExchangeAmount(
-        _transferAmount.toString(),
+      calculateExchangeWad(
+        _transferAmount,
+        receiverAssetDecimals,
         inverse(swap.hardcodedRate),
         senderAssetDecimals
       )
@@ -209,8 +210,9 @@ export const getCrosschainFee = async (
   const withdrawFee = withdrawQuoteRes.getValue().fee;
 
   // Get the withdraw fee in deposit asset units
-  const depositAssetWithdrawFee = calculateExchangeAmount(
-    withdrawFee.toString(),
+  const depositAssetWithdrawFee = calculateExchangeWad(
+    BigNumber.from(withdrawFee),
+    receiverAssetDecimals,
     inverse(swap.hardcodedRate),
     senderAssetDecimals
   );
@@ -219,24 +221,27 @@ export const getCrosschainFee = async (
   const totalFee = BigNumber.from(depositAssetWithdrawFee).add(
     depositAssetTransferFee
   );
-  console.log('Totalfee', totalFee);
+  console.log('totalFee', totalFee);
 
-  let senderAmount: string;
-  let recipientAmount: string;
+  let senderAmount: BigNumber;
+  let recipientAmount: BigNumber;
 
   if (receiveExactAmount) {
-    senderAmount = BigNumber.from(transferQuoteResult.getValue().amount)
-      .add(depositAssetWithdrawFee)
-      .toString();
-    recipientAmount = calculateExchangeAmount(
-      depositAssetTransferAmount.toString(),
+    senderAmount = BigNumber.from(depositAssetTransferAmount).add(
+      depositAssetWithdrawFee
+    );
+
+    recipientAmount = calculateExchangeWad(
+      depositAssetTransferAmount,
+      senderAssetDecimals,
       swap.hardcodedRate,
       receiverAssetDecimals
     );
   } else {
-    senderAmount = depositAssetTransferAmount.toString();
-    recipientAmount = calculateExchangeAmount(
-      depositAssetTransferAmount.sub(totalFee).toString(),
+    senderAmount = depositAssetTransferAmount;
+    recipientAmount = calculateExchangeWad(
+      depositAssetTransferAmount.sub(totalFee),
+      senderAssetDecimals,
       swap.hardcodedRate,
       receiverAssetDecimals
     );
@@ -250,8 +255,8 @@ export const getCrosschainFee = async (
   // Get total fee
   return {
     totalFee: totalFee,
-    senderAmount: senderAmount,
-    recipientAmount: recipientAmount,
+    senderAmount: senderAmount.toString(),
+    recipientAmount: recipientAmount.toString(),
     withdrawalQuote: withdrawQuoteRes.getValue(),
     transferQuote: transferQuoteResult.getValue(),
   };
@@ -413,15 +418,15 @@ export const waitForSenderCancels = async (
   if (active.isError) {
     throw active.getError();
   }
-  const hashlock = active.getValue().filter(t => {
+  const hashlock = active.getValue().filter((t) => {
     return Object.keys(t.transferState).includes('lockHash');
   });
   await Promise.all(
-    hashlock.map(async t => {
+    hashlock.map(async (t) => {
       try {
         console.log('Waiting for sender cancellation: ', t);
         await evt.waitFor(
-          data =>
+          (data) =>
             data.transfer.transferId === t.transferId &&
             data.channelAddress === depositChannelAddress &&
             Object.values(data.transfer.transferResolver)[0] ===
@@ -439,7 +444,7 @@ export const waitForSenderCancels = async (
   if (final.isError) {
     throw final.getError();
   }
-  const remaining = final.getValue().filter(t => {
+  const remaining = final.getValue().filter((t) => {
     return Object.keys(t.transferState).includes('lockHash');
   });
   if (remaining.length > 0) {
@@ -492,7 +497,7 @@ export const cancelHangingToTransfers = async (
     throw transfers.getError();
   }
 
-  const toCancel = transfers.getValue().filter(t => {
+  const toCancel = transfers.getValue().filter((t) => {
     const amResponder = t.responderIdentifier === withdrawChannel.bobIdentifier;
     const correctAsset = t.assetId === toAssetId;
     const isHashlock = Object.keys(t.transferState).includes('lockHash');
@@ -502,7 +507,7 @@ export const cancelHangingToTransfers = async (
 
   // wait for all hanging transfers to cancel
   const hangingResolutions = (await Promise.all(
-    toCancel.map(async transferToCancel => {
+    toCancel.map(async (transferToCancel) => {
       try {
         console.warn(
           'Cancelling hanging receiver transfer w/routingId:',
@@ -527,7 +532,7 @@ export const cancelHangingToTransfers = async (
         });
         // for sender transfer cancellation
         await evt.waitFor(
-          data =>
+          (data) =>
             data.transfer.meta.routingId === transferToCancel.meta!.routingId &&
             data.channelAddress === depositChannel.channelAddress &&
             Object.values(data.transfer.transferResolver)[0] ===
@@ -649,7 +654,7 @@ export const verifyAndGetRouterSupports = async (
   console.log('toAssetId.toLowerCase(): ', toAssetId.toLowerCase());
   console.log('fromChainId: ', fromChainId);
   console.log('toChainId: ', toChainId);
-  const swap = allowedSwaps.find(s => {
+  const swap = allowedSwaps.find((s) => {
     const noninverted =
       s.fromAssetId.toLowerCase() === fromAssetId.toLowerCase() &&
       s.fromChainId === fromChainId &&
@@ -677,9 +682,11 @@ export const verifyAndGetRouterSupports = async (
 export const verifyRouterCapacityForTransfer = async (
   ethProvider: providers.BaseProvider,
   toAssetId: string,
+  toAssetDecimals: number,
   withdrawChannel: FullChannelState,
   transferAmount: BigNumber,
-  swap: any
+  swap: any,
+  fromAssetDecimals: number
 ) => {
   console.log(`verifyRouterCapacityForTransfer for ${transferAmount}`);
   const routerOnchain = await getOnchainBalance(
@@ -690,19 +697,19 @@ export const verifyRouterCapacityForTransfer = async (
   const routerOffchain = BigNumber.from(
     getBalanceForAssetId(withdrawChannel, toAssetId, 'alice')
   );
-  const swappedAmount = calculateExchangeAmount(
-    transferAmount.toString(),
-    swap.hardcodedRate
+  const swappedAmount = calculateExchangeWad(
+    transferAmount,
+    fromAssetDecimals,
+    swap.hardcodedRate,
+    toAssetDecimals
   );
-  console.log('transferAmount: ', transferAmount);
-  console.log('swappedAmount: ', swappedAmount);
-  console.log('routerOnchain: ', routerOnchain);
-  console.log('routerOffchain: ', routerOffchain);
+  console.log('transferAmount: ', transferAmount.toString());
+  console.log('swappedAmount: ', swappedAmount.toString());
+  console.log('routerOnchain: ', routerOnchain.toString());
+  console.log('routerOffchain: ', routerOffchain.toString());
   if (routerOffchain.gte(swappedAmount)) {
     return;
   }
-  // TODO: dont think we need this. what about 6 decimals?
-  // const collateralCushion = utils.parseEther('1');
 
   const routerBalanceFull = routerOnchain.add(routerOffchain);
   console.log('routerBalanceFull: ', routerBalanceFull);
@@ -718,12 +725,8 @@ export const verifyRouterCapacityForTransfer = async (
 };
 
 export type EvtContainer = {
-  [EngineEvents.CONDITIONAL_TRANSFER_CREATED]: Evt<
-    ConditionalTransferCreatedPayload
-  >;
-  [EngineEvents.CONDITIONAL_TRANSFER_RESOLVED]: Evt<
-    ConditionalTransferResolvedPayload
-  >;
+  [EngineEvents.CONDITIONAL_TRANSFER_CREATED]: Evt<ConditionalTransferCreatedPayload>;
+  [EngineEvents.CONDITIONAL_TRANSFER_RESOLVED]: Evt<ConditionalTransferResolvedPayload>;
   [EngineEvents.DEPOSIT_RECONCILED]: Evt<DepositReconciledPayload>;
   [EngineEvents.WITHDRAWAL_RECONCILED]: Evt<WithdrawalReconciledPayload>;
 };
@@ -734,19 +737,19 @@ export const createEvtContainer = (node: BrowserNode): EvtContainer => {
   const deposit = Evt.create<DepositReconciledPayload>();
   const withdraw = Evt.create<WithdrawalReconciledPayload>();
 
-  node.on(EngineEvents.CONDITIONAL_TRANSFER_CREATED, data => {
+  node.on(EngineEvents.CONDITIONAL_TRANSFER_CREATED, (data) => {
     console.log('EngineEvents.CONDITIONAL_TRANSFER_CREATED: ', data);
     createdTransfer.post(data);
   });
-  node.on(EngineEvents.CONDITIONAL_TRANSFER_RESOLVED, data => {
+  node.on(EngineEvents.CONDITIONAL_TRANSFER_RESOLVED, (data) => {
     console.log('EngineEvents.CONDITIONAL_TRANSFER_RESOLVED: ', data);
     resolvedTransfer.post(data);
   });
-  node.on(EngineEvents.DEPOSIT_RECONCILED, data => {
+  node.on(EngineEvents.DEPOSIT_RECONCILED, (data) => {
     console.log('EngineEvents.DEPOSIT_RECONCILED: ', data);
     deposit.post(data);
   });
-  node.on(EngineEvents.WITHDRAWAL_RECONCILED, data => {
+  node.on(EngineEvents.WITHDRAWAL_RECONCILED, (data) => {
     console.log('EngineEvents.WITHDRAWAL_RECONCILED: ', data);
     withdraw.post(data);
   });
