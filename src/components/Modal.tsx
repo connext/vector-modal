@@ -294,9 +294,11 @@ const ConnextModal: FC<ConnextModalProps> = ({
         await verifyRouterCapacityForTransfer(
           _withdrawRpcProvider,
           withdrawAssetId,
+          receiverChainInfo.assetDecimals,
           withdrawChannelRef.current!,
           transferAmount,
-          swapRef.current
+          swapRef.current,
+          senderChainInfo.assetDecimals
         );
       }
     } catch (e) {
@@ -751,9 +753,11 @@ const ConnextModal: FC<ConnextModalProps> = ({
       await verifyRouterCapacityForTransfer(
         _withdrawRpcProvider,
         withdrawAssetId,
+        receiverChain!.assetDecimals,
         withdrawChannelRef.current!,
         transferAmountBn,
-        swapRef.current
+        swapRef.current,
+        senderChain!.assetDecimals
       );
       console.log(
         `Transferring ${transferAmountBn.toString()} through injected provider`

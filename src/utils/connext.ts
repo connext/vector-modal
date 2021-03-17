@@ -16,7 +16,7 @@ import {
   AllowedSwap,
 } from '@connext/vector-types';
 import {
-  calculateExchangeAmount,
+  calculateExchangeWad,
   createlockHash,
   getBalanceForAssetId,
   inverse,
@@ -159,8 +159,9 @@ export const getCrosschainFee = async (
     // if input at recipient field
     // convert the input amount to senderAmount
     transferAmount = BigNumber.from(
-      calculateExchangeAmount(
-        _transferAmount.toString(),
+      calculateExchangeWad(
+        _transferAmount,
+        receiverAssetDecimals,
         inverse(swap.hardcodedRate),
         senderAssetDecimals
       )
@@ -209,8 +210,9 @@ export const getCrosschainFee = async (
   const withdrawFee = withdrawQuoteRes.getValue().fee;
 
   // Get the withdraw fee in deposit asset units
-  const depositAssetWithdrawFee = calculateExchangeAmount(
-    withdrawFee.toString(),
+  const depositAssetWithdrawFee = calculateExchangeWad(
+    BigNumber.from(withdrawFee),
+    receiverAssetDecimals,
     inverse(swap.hardcodedRate),
     senderAssetDecimals
   );
@@ -219,24 +221,27 @@ export const getCrosschainFee = async (
   const totalFee = BigNumber.from(depositAssetWithdrawFee).add(
     depositAssetTransferFee
   );
-  console.log('Totalfee', totalFee);
+  console.log('totalFee', totalFee);
 
-  let senderAmount: string;
-  let recipientAmount: string;
+  let senderAmount: BigNumber;
+  let recipientAmount: BigNumber;
 
   if (receiveExactAmount) {
-    senderAmount = BigNumber.from(transferQuoteResult.getValue().amount)
-      .add(depositAssetWithdrawFee)
-      .toString();
-    recipientAmount = calculateExchangeAmount(
-      depositAssetTransferAmount.toString(),
+    senderAmount = BigNumber.from(transferQuoteResult.getValue().amount).add(
+      depositAssetWithdrawFee
+    );
+
+    recipientAmount = calculateExchangeWad(
+      depositAssetTransferAmount,
+      senderAssetDecimals,
       swap.hardcodedRate,
       receiverAssetDecimals
     );
   } else {
-    senderAmount = depositAssetTransferAmount.toString();
-    recipientAmount = calculateExchangeAmount(
-      depositAssetTransferAmount.sub(totalFee).toString(),
+    senderAmount = depositAssetTransferAmount;
+    recipientAmount = calculateExchangeWad(
+      depositAssetTransferAmount.sub(totalFee),
+      senderAssetDecimals,
       swap.hardcodedRate,
       receiverAssetDecimals
     );
@@ -250,8 +255,8 @@ export const getCrosschainFee = async (
   // Get total fee
   return {
     totalFee: totalFee,
-    senderAmount: senderAmount,
-    recipientAmount: recipientAmount,
+    senderAmount: senderAmount.toString(),
+    recipientAmount: recipientAmount.toString(),
     withdrawalQuote: withdrawQuoteRes.getValue(),
     transferQuote: transferQuoteResult.getValue(),
   };
@@ -677,9 +682,11 @@ export const verifyAndGetRouterSupports = async (
 export const verifyRouterCapacityForTransfer = async (
   ethProvider: providers.BaseProvider,
   toAssetId: string,
+  toAssetDecimals: number,
   withdrawChannel: FullChannelState,
   transferAmount: BigNumber,
-  swap: any
+  swap: any,
+  fromAssetDecimals: number
 ) => {
   console.log(`verifyRouterCapacityForTransfer for ${transferAmount}`);
   const routerOnchain = await getOnchainBalance(
@@ -690,19 +697,19 @@ export const verifyRouterCapacityForTransfer = async (
   const routerOffchain = BigNumber.from(
     getBalanceForAssetId(withdrawChannel, toAssetId, 'alice')
   );
-  const swappedAmount = calculateExchangeAmount(
-    transferAmount.toString(),
-    swap.hardcodedRate
+  const swappedAmount = calculateExchangeWad(
+    transferAmount,
+    fromAssetDecimals,
+    swap.hardcodedRate,
+    toAssetDecimals
   );
-  console.log('transferAmount: ', transferAmount);
-  console.log('swappedAmount: ', swappedAmount);
-  console.log('routerOnchain: ', routerOnchain);
-  console.log('routerOffchain: ', routerOffchain);
+  console.log('transferAmount: ', transferAmount.toString());
+  console.log('swappedAmount: ', swappedAmount.toString());
+  console.log('routerOnchain: ', routerOnchain.toString());
+  console.log('routerOffchain: ', routerOffchain.toString());
   if (routerOffchain.gte(swappedAmount)) {
     return;
   }
-  // TODO: dont think we need this. what about 6 decimals?
-  // const collateralCushion = utils.parseEther('1');
 
   const routerBalanceFull = routerOnchain.add(routerOffchain);
   console.log('routerBalanceFull: ', routerBalanceFull);
