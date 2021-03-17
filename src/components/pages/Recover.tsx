@@ -29,7 +29,7 @@ export interface RecoveryProps {
   depositAddress?: string;
 }
 
-const Recover: FC<RecoveryProps> = props => {
+const Recover: FC<RecoveryProps> = (props) => {
   const {
     handleBack,
     handleCloseButton,
@@ -117,7 +117,7 @@ const Recover: FC<RecoveryProps> = props => {
     <>
       {status === 'Loading' && <Loading message="Recovery in Progress..." />}
       {status === 'Initial' && (
-        <ModalContent id="modalContent" backgroundImage={graphic}>
+        <ModalContent id="modalContent" backgroundImage={`url(${graphic})`}>
           <Header
             title="Recover lost funds"
             handleBack={handleBack}
@@ -162,7 +162,7 @@ const Recover: FC<RecoveryProps> = props => {
                         placeholder="0x..."
                         // styling
                         value={recoverTokenAddress}
-                        onChange={event => {
+                        onChange={(event) => {
                           setRecoverTokenAddress(event.target.value);
                           setRecoverTokenAddressError(
                             !isValidAddress(event.target.value)
@@ -201,7 +201,7 @@ const Recover: FC<RecoveryProps> = props => {
                         body="lg"
                         // styling
                         placeholder="0x..."
-                        onChange={event => {
+                        onChange={(event) => {
                           setRecoverWithdrawalAddress(event.target.value);
                           setRecoverWithdrawalAddressError(
                             !isValidAddress(event.target.value)

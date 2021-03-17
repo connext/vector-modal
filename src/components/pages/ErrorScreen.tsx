@@ -30,7 +30,7 @@ export interface ErrorProps {
   state: ErrorStates;
 }
 
-const Error: FC<ErrorProps> = props => {
+const Error: FC<ErrorProps> = (props) => {
   const {
     error,
     title,
@@ -48,7 +48,7 @@ const Error: FC<ErrorProps> = props => {
 
   return (
     <>
-      <ModalContent id="modalContent" backgroundImage={graphic}>
+      <ModalContent id="modalContent" backgroundImage={`url(${graphic})`}>
         <Header
           title={title}
           warningIcon={true}

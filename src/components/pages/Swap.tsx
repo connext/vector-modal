@@ -78,7 +78,7 @@ const Swap: FC<TransferProps> = (props) => {
 
   return (
     <>
-      <ModalContent id="modalContent" backgroundImage={graphic}>
+      <ModalContent id="modalContent" backgroundImage={`url(${graphic})`}>
         <Header title="Send Amount" options={options} />
         <ModalBody>
           <Stack column={true} spacing={5}>

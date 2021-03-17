@@ -29,7 +29,7 @@ interface SwapListenerProps {
   receiverAddress: string;
 }
 
-const SwapListener: FC<SwapListenerProps> = props => {
+const SwapListener: FC<SwapListenerProps> = (props) => {
   const {
     showTimer,
     senderChannelAddress,
@@ -63,9 +63,9 @@ const SwapListener: FC<SwapListenerProps> = props => {
     if (!running) {
       setRunning(true);
       let watch = setInterval(() => {
-        setCurrentTimeSec(prevSec => {
+        setCurrentTimeSec((prevSec) => {
           if (prevSec >= 60) {
-            setCurrentTimeMin(prevMin => prevMin + 1);
+            setCurrentTimeMin((prevMin) => prevMin + 1);
             return 0;
           }
           return prevSec + 1;
@@ -93,7 +93,7 @@ const SwapListener: FC<SwapListenerProps> = props => {
     <>
       <ModalContent
         id="modalContent"
-        backgroundImage={darkGraphic}
+        backgroundImage={`url(${darkGraphic})`}
         backgroundPosition="right top"
       >
         <Header

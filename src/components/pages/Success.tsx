@@ -15,7 +15,7 @@ export interface SuccessProps {
   options: () => void;
 }
 
-const Success: FC<SuccessProps> = props => {
+const Success: FC<SuccessProps> = (props) => {
   const {
     amount,
     transactionId,
@@ -29,7 +29,7 @@ const Success: FC<SuccessProps> = props => {
     <>
       <ModalContent
         id="modalContent"
-        backgroundImage={lightGraphic}
+        backgroundImage={`url(${lightGraphic})`}
         backgroundPosition="right top"
       >
         <Header

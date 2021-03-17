@@ -14,7 +14,7 @@ export interface StatusProps {
   options: () => void;
 }
 
-const Status: FC<StatusProps> = props => {
+const Status: FC<StatusProps> = (props) => {
   const {
     title,
     message,
@@ -28,7 +28,7 @@ const Status: FC<StatusProps> = props => {
     <>
       <ModalContent
         id="modalContent"
-        backgroundImage={lightGraphic}
+        backgroundImage={`url(${lightGraphic})`}
         backgroundPosition="right top"
       >
         <Header title={title} spinner={true} options={options} />
