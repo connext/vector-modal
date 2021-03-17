@@ -2,7 +2,6 @@ import React, { FC } from 'react';
 import { ModalContent, ModalBody, Text, Stack, Box, Button } from '../common';
 import { Header, Footer, NetworkBar } from '../static';
 import { CHAIN_DETAIL } from '../../constants';
-import { lightGraphic } from '../../public';
 import { getExplorerLinkForTx, truncate } from '../../utils';
 
 export interface SuccessProps {
@@ -15,7 +14,7 @@ export interface SuccessProps {
   options: () => void;
 }
 
-const Success: FC<SuccessProps> = props => {
+const Success: FC<SuccessProps> = (props) => {
   const {
     amount,
     transactionId,
@@ -27,11 +26,7 @@ const Success: FC<SuccessProps> = props => {
   } = props;
   return (
     <>
-      <ModalContent
-        id="modalContent"
-        backgroundImage={lightGraphic}
-        backgroundPosition="right top"
-      >
+      <ModalContent id="modalContent">
         <Header
           title="Success"
           successIcon={true}

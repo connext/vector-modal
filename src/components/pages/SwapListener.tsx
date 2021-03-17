@@ -15,7 +15,6 @@ import {
 } from '../common';
 import { Header, Footer, NetworkBar } from '../static';
 import { CHAIN_DETAIL } from '../../constants';
-import { darkGraphic } from '../../public';
 // @ts-ignore
 import QRCode from 'qrcode.react';
 
@@ -29,7 +28,7 @@ interface SwapListenerProps {
   receiverAddress: string;
 }
 
-const SwapListener: FC<SwapListenerProps> = props => {
+const SwapListener: FC<SwapListenerProps> = (props) => {
   const {
     showTimer,
     senderChannelAddress,
@@ -63,9 +62,9 @@ const SwapListener: FC<SwapListenerProps> = props => {
     if (!running) {
       setRunning(true);
       let watch = setInterval(() => {
-        setCurrentTimeSec(prevSec => {
+        setCurrentTimeSec((prevSec) => {
           if (prevSec >= 60) {
-            setCurrentTimeMin(prevMin => prevMin + 1);
+            setCurrentTimeMin((prevMin) => prevMin + 1);
             return 0;
           }
           return prevSec + 1;
@@ -91,11 +90,7 @@ const SwapListener: FC<SwapListenerProps> = props => {
 
   return (
     <>
-      <ModalContent
-        id="modalContent"
-        backgroundImage={darkGraphic}
-        backgroundPosition="right top"
-      >
+      <ModalContent id="modalContent">
         <Header
           title="Ready for transfer"
           handleBack={handleBack}

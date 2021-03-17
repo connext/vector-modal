@@ -31,22 +31,20 @@ type ModalBodyProps = {
 
 export const ModalBody = styled(Box)<ModalBodyProps>`
   &&& {
-    padding: ${props => props.padding || '0.5rem 1.5rem'};
+    padding: ${(props) => props.padding || '0.5rem 1.5rem'};
     flex: 1 1 0%;
     overflow: auto;
   }
 `;
 
-type ModalContentProps = {
-  backgroundImage?: string;
-  backgroundPosition?: string;
-};
+// type ModalContentProps = {
+//   backgroundImage?: string;
+//   backgroundPosition?: string;
+// };
 
-export const ModalContent = styled.section<ModalContentProps>`
+export const ModalContent = styled.section`
   &&& {
     display: flex;
-    background-image: ${props => `url(${props.backgroundImage})`};
-    background-position: ${props => props.backgroundPosition};
     background-color: #f5f5f5;
     background-repeat: no-repeat;
     flex-direction: column;
