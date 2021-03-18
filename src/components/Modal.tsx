@@ -8,13 +8,7 @@ import {
   FullChannelState,
 } from '@connext/vector-types';
 import { getBalanceForAssetId, getRandomBytes32 } from '@connext/vector-utils';
-import {
-  BigNumber,
-  constants,
-  utils,
-  providers,
-  Contract,
-} from 'ethers';
+import { BigNumber, constants, utils, providers, Contract } from 'ethers';
 import AwesomeDebouncePromise from 'awesome-debounce-promise';
 
 import {
@@ -281,12 +275,27 @@ const ConnextModal: FC<ConnextModalProps> = ({
       transferAmount,
       senderChain?.assetDecimals!
     );
+
+    // For UI
+    let existingChannelBalanceUi: string | undefined;
+    if (existingChannelBalanceBn) {
+      existingChannelBalanceUi = truncate(
+        utils.formatUnits(
+          existingChannelBalanceBn!,
+          senderChain?.assetDecimals!
+        ),
+        4
+      );
+    }
+
     handleScreen({
       state: SCREEN_STATES.STATUS,
       title: 'deposit detected',
-      message: `Detected ${truncate(statusTransferAmount, 4)} ${
-        senderChain?.assetName
-      } on ${senderChain?.name}, transferring into state channel`,
+      message: `Detected ${
+        existingChannelBalanceBn && existingChannelBalanceUi + ' +'
+      } ${truncate(statusTransferAmount, 4)} ${senderChain?.assetName} on ${
+        senderChain?.name
+      }, transferring into state channel`,
     });
 
     try {
@@ -321,7 +330,9 @@ const ConnextModal: FC<ConnextModalProps> = ({
     handleScreen({
       state: SCREEN_STATES.STATUS,
       title: 'transferring',
-      message: `Transferring ${truncate(
+      message: `Transferring ${
+        existingChannelBalanceBn && existingChannelBalanceUi + ' +'
+      } ${truncate(
         statusTransferAmount,
         4
       )} ${senderChain?.assetName!} from ${senderChain?.name!} to ${
@@ -835,7 +846,7 @@ const ConnextModal: FC<ConnextModalProps> = ({
     setInputReadOnly(false);
     setIsLoad(false);
     setTransferFeeUi('--');
-    setExistingChannelBalanceBn(BigNumber.from(0));
+    setExistingChannelBalanceBn(undefined);
     setReceivedAmountUi('');
     setUserBalance(undefined);
     setError(undefined);
@@ -1276,9 +1287,6 @@ const ConnextModal: FC<ConnextModalProps> = ({
     }
     // if offChainDepositAssetBalance > 0
     if (offChainDepositAssetBalance.gt(0)) {
-      // then start transfer
-      setPendingTransferMessage(`Detected Pending Cross-Chain Transfer`);
-
       handleScreen({
         state: SCREEN_STATES.EXISTING_BALANCE,
         existingChannelBalance: offChainDepositAssetBalance,
@@ -1393,6 +1401,11 @@ const ConnextModal: FC<ConnextModalProps> = ({
     init();
   };
 
+  const addMoreFunds = async () => {
+    // existing funds helper text will be added
+    handleScreen({ state: SCREEN_STATES.SWAP });
+  };
+
   const handleScreen = (params: {
     state: ScreenStates;
     error?: Error | undefined;
@@ -1475,6 +1488,7 @@ const ConnextModal: FC<ConnextModalProps> = ({
         return (
           <ExistingBalance
             transfer={transfer}
+            addMoreFunds={addMoreFunds}
             existingChannelBalanceBn={existingChannelBalanceBn!}
             senderChainInfo={senderChain!}
             receiverChainInfo={receiverChain!}
@@ -1496,6 +1510,7 @@ const ConnextModal: FC<ConnextModalProps> = ({
             receiverAddress={withdrawalAddress}
             senderAmount={transferAmountUi}
             recipientAmount={receivedAmountUi}
+            existingChannelBalanceBn={existingChannelBalanceBn!}
             feeQuote={transferFeeUi}
             options={handleOptions}
           />
