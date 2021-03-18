@@ -14,7 +14,6 @@ import {
   utils,
   providers,
   Contract,
-  BigNumber,
 } from 'ethers';
 import AwesomeDebouncePromise from 'awesome-debounce-promise';
 
