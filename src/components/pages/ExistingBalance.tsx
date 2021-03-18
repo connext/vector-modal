@@ -1,5 +1,5 @@
 import React, { FC } from 'react';
-import { BigNumber, constants, utils, providers, Contract } from 'ethers';
+import { BigNumber, utils } from 'ethers';
 import { ModalContent, ModalBody, Text, Stack, Button } from '../common';
 import { Header, Footer, NetworkBar } from '../static';
 import { CHAIN_DETAIL } from '../../constants';
@@ -10,6 +10,7 @@ export interface ExistingBalanceProps {
   senderChainInfo: CHAIN_DETAIL;
   receiverChainInfo: CHAIN_DETAIL;
   receiverAddress: string;
+  addMoreFunds: () => void;
   options: () => void;
   transfer: (transferAmount: BigNumber, verifyRouterCapacity: boolean) => void;
 }
@@ -22,6 +23,7 @@ const ExistingBalance: FC<ExistingBalanceProps> = (props) => {
     receiverAddress,
     options,
     transfer,
+    addMoreFunds,
   } = props;
   return (
     <>
@@ -64,7 +66,9 @@ const ExistingBalance: FC<ExistingBalanceProps> = (props) => {
                   continue...
                 </Button>
 
-                <Button size="lg">Add More Funds</Button>
+                <Button size="lg" onClick={addMoreFunds}>
+                  Add More Funds
+                </Button>
               </Stack>
             </Stack>
             <NetworkBar
