@@ -1,39 +1,57 @@
-import React, { FC } from 'react';
-import CSS from 'csstype';
-import { loadingGif } from '../../public';
-import { ModalContent, ModalBody, Text, Stack, Box } from '../common';
+import React, { FC, useRef, useEffect } from 'react';
+import { Rive, Layout } from 'rive-js';
+import styled from 'styled-components';
+import { ModalContent, ModalBody, Text, Stack } from '../common';
 import { Footer } from '../static';
 
 interface LoadingProps {
   message: string;
 }
 
-const styleLoadingCircle: CSS.Properties = {
-  height: '96px',
-  width: '96px',
-  borderRadius: '64px',
-  backgroundColor: '#fcd116',
-  overflow: 'hidden',
-};
-
-const Loading: FC<LoadingProps> = props => {
+const Loading: FC<LoadingProps> = (props) => {
   const { message } = props;
+  const canvas = useRef<HTMLCanvasElement>(null);
+  const animationContainer = useRef<HTMLDivElement>(null);
+
+  // Resizes the canvas to match the parent element
+  useEffect(() => {
+    const resize = () => {
+      if (animationContainer.current && canvas.current) {
+        const {
+          width,
+          height,
+        } = animationContainer.current.getBoundingClientRect();
+        console.log(width, height);
+        canvas.current.width = 300;
+        canvas.current.height = 130;
+      }
+    };
+
+    resize();
+  });
+
+  // Start the animation
+  useEffect(() => {
+    const rive = new Rive({
+      src: 'https://connext-media.s3.us-east-2.amazonaws.com/loading.riv',
+      canvas: canvas.current,
+      autoplay: true,
+      layout: new Layout('cover', 'center'),
+    });
+
+    return () => rive?.stop();
+  }, []);
   return (
     <>
       <ModalContent>
-        <ModalBody padding="2.5rem">
+        <ModalBody padding="1rem">
           <Stack column={true} spacing={5} alignItems="center">
-            <Box style={styleLoadingCircle}>
-              <img
-                src={loadingGif}
-                alt="loading"
-                style={{ width: '100%', height: '100%' }}
-              />
-            </Box>
+            <AppLogo ref={animationContainer}>
+              <canvas ref={canvas} />
+            </AppLogo>
             <Text fontSize="1.25rem">{message}</Text>
           </Stack>
         </ModalBody>
-
         <Footer />
       </ModalContent>
     </>
@@ -41,3 +59,10 @@ const Loading: FC<LoadingProps> = props => {
 };
 
 export default Loading;
+
+const AppLogo = styled.div`
+  &&& {
+    pointer-events: none;
+    clip-path: circle(60px at center);
+  }
+`;
