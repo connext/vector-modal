@@ -8,7 +8,14 @@ import {
   FullChannelState,
 } from '@connext/vector-types';
 import { getBalanceForAssetId, getRandomBytes32 } from '@connext/vector-utils';
-import { BigNumber, constants, utils, providers, Contract } from 'ethers';
+import {
+  BigNumber,
+  constants,
+  utils,
+  providers,
+  Contract,
+  BigNumber,
+} from 'ethers';
 import AwesomeDebouncePromise from 'awesome-debounce-promise';
 
 import {
@@ -207,9 +214,9 @@ const ConnextModal: FC<ConnextModalProps> = ({
   const [inputReadOnly, setInputReadOnly] = useState<boolean>(false);
 
   const [
-    existingChannelBalanceUi,
-    setExistingChannelBalanceUi,
-  ] = useState<string>();
+    existingChannelBalanceBn,
+    setExistingChannelBalanceBn,
+  ] = useState<BigNumber>();
 
   const cancelTransfer = async (
     depositChannelAddress: string,
@@ -829,7 +836,7 @@ const ConnextModal: FC<ConnextModalProps> = ({
     setInputReadOnly(false);
     setIsLoad(false);
     setTransferFeeUi('--');
-    setExistingChannelBalanceUi('');
+    setExistingChannelBalanceBn(BigNumber.from(0));
     setReceivedAmountUi('');
     setUserBalance(undefined);
     setError(undefined);
@@ -1275,7 +1282,7 @@ const ConnextModal: FC<ConnextModalProps> = ({
 
       handleScreen({
         state: SCREEN_STATES.EXISTING_BALANCE,
-        existingChannelBalance: offChainDepositAssetBalance.toString(),
+        existingChannelBalance: offChainDepositAssetBalance,
       });
     }
 
@@ -1392,7 +1399,7 @@ const ConnextModal: FC<ConnextModalProps> = ({
     error?: Error | undefined;
     title?: string;
     message?: string;
-    existingChannelBalance?: string;
+    existingChannelBalance?: BigNumber;
   }) => {
     const {
       state,
@@ -1406,13 +1413,8 @@ const ConnextModal: FC<ConnextModalProps> = ({
         break;
 
       case SCREEN_STATES.EXISTING_BALANCE:
-        console.log(_existingChannelBalance);
-        setExistingChannelBalanceUi(
-          utils.formatUnits(
-            _existingChannelBalance!,
-            senderChain?.assetDecimals!
-          )
-        );
+        console.log();
+        setExistingChannelBalanceBn(_existingChannelBalance);
         break;
 
       case SCREEN_STATES.SWAP:
@@ -1473,7 +1475,8 @@ const ConnextModal: FC<ConnextModalProps> = ({
       case SCREEN_STATES.EXISTING_BALANCE:
         return (
           <ExistingBalance
-            existingChannelBalance={existingChannelBalanceUi!}
+            transfer={transfer}
+            existingChannelBalanceBn={existingChannelBalanceBn!}
             senderChainInfo={senderChain!}
             receiverChainInfo={receiverChain!}
             receiverAddress={withdrawalAddress}
