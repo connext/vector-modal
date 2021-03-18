@@ -262,48 +262,43 @@ const ConnextModal: FC<ConnextModalProps> = ({
   };
 
   const transfer = async (
-    senderChainInfo: CHAIN_DETAIL,
-    receiverChainInfo: CHAIN_DETAIL,
-    _depositAddress: string,
     transferAmount: BigNumber,
-    _evts: EvtContainer,
-    _node: BrowserNode,
     verifyRouterCapacity: boolean
   ) => {
-    const _depositChainId: number = senderChainInfo?.chainId!;
-    const _withdrawChainId: number = receiverChainInfo?.chainId!;
-    const _withdrawRpcProvider: providers.JsonRpcProvider = receiverChainInfo?.rpcProvider!;
+    const _depositChainId: number = senderChain?.chainId!;
+    const _withdrawChainId: number = receiverChain?.chainId!;
+    const _withdrawRpcProvider: providers.JsonRpcProvider = receiverChain?.rpcProvider!;
     const crossChainTransferId = getRandomBytes32();
     setActiveCrossChainTransferId(crossChainTransferId);
 
     const statusTransferAmount = utils.formatUnits(
       transferAmount,
-      senderChainInfo?.assetDecimals!
+      senderChain?.assetDecimals!
     );
     handleScreen({
       state: SCREEN_STATES.STATUS,
       title: 'deposit detected',
       message: `Detected ${truncate(statusTransferAmount, 4)} ${
-        senderChainInfo?.assetName
-      } on ${senderChainInfo?.name}, transferring into state channel`,
+        senderChain?.assetName
+      } on ${senderChain?.name}, transferring into state channel`,
     });
 
     try {
       console.log(
-        `Calling reconcileDeposit with ${_depositAddress} and ${depositAssetId}`
+        `Calling reconcileDeposit with ${depositAddress!} and ${depositAssetId}`
       );
-      await reconcileDeposit(_node, _depositAddress, depositAssetId);
+      await reconcileDeposit(node!, depositAddress!, depositAssetId);
 
       if (verifyRouterCapacity) {
         console.log('withdrawChannel: ', withdrawChannelRef.current);
         await verifyRouterCapacityForTransfer(
           _withdrawRpcProvider,
           withdrawAssetId,
-          receiverChainInfo.assetDecimals,
+          receiverChain?.assetDecimals!,
           withdrawChannelRef.current!,
           transferAmount,
           swapRef.current,
-          senderChainInfo.assetDecimals
+          senderChain?.assetDecimals!
         );
       }
     } catch (e) {
@@ -323,8 +318,8 @@ const ConnextModal: FC<ConnextModalProps> = ({
       message: `Transferring ${truncate(
         statusTransferAmount,
         4
-      )} ${senderChainInfo?.assetName!} from ${senderChainInfo?.name!} to ${
-        receiverChainInfo?.name
+      )} ${senderChain?.assetName!} from ${senderChain?.name!} to ${
+        receiverChain?.name
       }. This step can take some time if the chain is congested`,
     });
 
@@ -334,7 +329,7 @@ const ConnextModal: FC<ConnextModalProps> = ({
         `Calling createFromAssetTransfer ${_depositChainId} ${depositAssetId} ${_withdrawChainId} ${withdrawAssetId} ${crossChainTransferId}`
       );
       const transferDeets = await createFromAssetTransfer(
-        _node,
+        node!,
         _depositChainId,
         depositAssetId,
         _withdrawChainId,
@@ -361,7 +356,7 @@ const ConnextModal: FC<ConnextModalProps> = ({
     setPreImage(preImage);
 
     // listen for a sender-side cancellation, if it happens, short-circuit and show cancellation
-    const senderCancel = _evts[EngineEvents.CONDITIONAL_TRANSFER_RESOLVED]
+    const senderCancel = evts![EngineEvents.CONDITIONAL_TRANSFER_RESOLVED]
       .pipe((data) => {
         return (
           data.transfer.meta?.routingId === crossChainTransferId &&
@@ -372,7 +367,7 @@ const ConnextModal: FC<ConnextModalProps> = ({
       })
       .waitFor(500_000);
 
-    const receiverCreate = _evts[EngineEvents.CONDITIONAL_TRANSFER_CREATED]
+    const receiverCreate = evts![EngineEvents.CONDITIONAL_TRANSFER_CREATED]
       .pipe((data) => {
         return (
           data.transfer.meta?.routingId === crossChainTransferId &&
@@ -415,7 +410,7 @@ const ConnextModal: FC<ConnextModalProps> = ({
       return;
     }
 
-    const senderResolve = _evts[EngineEvents.CONDITIONAL_TRANSFER_RESOLVED]
+    const senderResolve = evts![EngineEvents.CONDITIONAL_TRANSFER_RESOLVED]
       .pipe((data) => {
         return (
           data.transfer.meta?.routingId === crossChainTransferId &&
@@ -426,7 +421,7 @@ const ConnextModal: FC<ConnextModalProps> = ({
 
     try {
       await resolveToAssetTransfer(
-        _node,
+        node!,
         _withdrawChainId,
         preImage,
         crossChainTransferId,
@@ -453,9 +448,9 @@ const ConnextModal: FC<ConnextModalProps> = ({
     }
 
     await withdraw(
-      receiverChainInfo,
-      _node,
-      _evts,
+      receiverChain!,
+      node!,
+      evts!,
       onWithdrawalTxCreated,
       onFinished
     );
@@ -589,15 +584,7 @@ const ConnextModal: FC<ConnextModalProps> = ({
         setShowTimer(false);
         const transferAmount = updatedDeposits.sub(initialDeposits);
         initialDeposits = updatedDeposits;
-        await transfer(
-          senderChain!,
-          receiverChain!,
-          _depositAddress,
-          transferAmount,
-          _evts,
-          _node,
-          true
-        );
+        await transfer(transferAmount, true);
       }
     }, 5_000);
     setListener(depositListener);
@@ -831,15 +818,7 @@ const ConnextModal: FC<ConnextModalProps> = ({
         return;
       }
       setIsLoad(false);
-      await transfer(
-        senderChain!,
-        receiverChain!,
-        _depositAddress,
-        transferAmountBn,
-        _evts,
-        _node,
-        false
-      );
+      await transfer(transferAmountBn, false);
     }
   };
 
