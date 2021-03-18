@@ -1,24 +1,27 @@
 import React, { FC } from 'react';
+import { BigNumber, constants, utils, providers, Contract } from 'ethers';
 import { ModalContent, ModalBody, Text, Stack, Button } from '../common';
 import { Header, Footer, NetworkBar } from '../static';
 import { CHAIN_DETAIL } from '../../constants';
 import { truncate } from '../../utils';
 
 export interface ExistingBalanceProps {
-  existingChannelBalance: string;
+  existingChannelBalanceBn: BigNumber;
   senderChainInfo: CHAIN_DETAIL;
   receiverChainInfo: CHAIN_DETAIL;
   receiverAddress: string;
   options: () => void;
+  transfer: (transferAmount: BigNumber, verifyRouterCapacity: boolean) => void;
 }
 
 const ExistingBalance: FC<ExistingBalanceProps> = (props) => {
   const {
-    existingChannelBalance,
+    existingChannelBalanceBn,
     senderChainInfo,
     receiverChainInfo,
     receiverAddress,
     options,
+    transfer,
   } = props;
   return (
     <>
@@ -35,7 +38,13 @@ const ExistingBalance: FC<ExistingBalanceProps> = (props) => {
                   lineHeight="30px"
                   flex="auto"
                 >
-                  {truncate(existingChannelBalance, 4)}{' '}
+                  {truncate(
+                    utils.formatUnits(
+                      existingChannelBalanceBn!,
+                      senderChainInfo?.assetDecimals!
+                    ),
+                    4
+                  )}{' '}
                   {senderChainInfo.assetName}
                 </Text>
                 <Text fontSize="14px" color="#333333" textTransform="none">
@@ -46,7 +55,14 @@ const ExistingBalance: FC<ExistingBalanceProps> = (props) => {
               </Stack>
 
               <Stack column={true} spacing={2}>
-                <Button size="lg">continue</Button>
+                <Button
+                  size="lg"
+                  onClick={() => {
+                    transfer(existingChannelBalanceBn, true);
+                  }}
+                >
+                  continue...
+                </Button>
 
                 <Button size="lg">Add More Funds</Button>
               </Stack>
