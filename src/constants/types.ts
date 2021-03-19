@@ -33,6 +33,7 @@ export type ErrorStates = keyof typeof ERROR_STATES;
 
 export const SCREEN_STATES = {
   LOADING: 'LOADING',
+  EXISTING_BALANCE: 'EXISTING_BALANCE',
   SWAP: 'SWAP',
   RECOVERY: 'RECOVERY',
   LISTENER: 'LISTENER',

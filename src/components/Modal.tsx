@@ -54,6 +54,7 @@ import {
   ErrorScreen,
   Success,
   Recover,
+  ExistingBalance,
 } from './pages';
 import { Options } from './static';
 
@@ -128,9 +129,10 @@ const ConnextModal: FC<ConnextModalProps> = ({
   >();
   const [transferFeeUi, setTransferFeeUi] = useState<string>('--');
 
-  const [successWithdrawalAmount, setSuccessWithdrawalAmount] = useState<
-    string
-  >();
+  const [
+    successWithdrawalAmount,
+    setSuccessWithdrawalAmount,
+  ] = useState<string>();
 
   const [depositAddress, setDepositAddress] = useState<string>();
 
@@ -152,13 +154,15 @@ const ConnextModal: FC<ConnextModalProps> = ({
   const [error, setError] = useState<Error>();
   const [amountError, setAmountError] = useState<string>();
 
-  const [activeCrossChainTransferId, _setActiveCrossChainTransferId] = useState<
-    string
-  >(constants.HashZero);
+  const [
+    activeCrossChainTransferId,
+    _setActiveCrossChainTransferId,
+  ] = useState<string>(constants.HashZero);
 
-  const [pendingTransferMessage, setPendingTransferMessage] = useState<
-    string
-  >();
+  const [
+    pendingTransferMessage,
+    setPendingTransferMessage,
+  ] = useState<string>();
 
   const [preImage, _setPreImage] = useState<string>();
   const preImageRef = React.useRef(preImage);
@@ -202,6 +206,11 @@ const ConnextModal: FC<ConnextModalProps> = ({
   // temp
   const [inputReadOnly, setInputReadOnly] = useState<boolean>(false);
 
+  const [
+    existingChannelBalanceBn,
+    setExistingChannelBalanceBn,
+  ] = useState<BigNumber>();
+
   const cancelTransfer = async (
     depositChannelAddress: string,
     withdrawChannelAddress: string,
@@ -217,13 +226,13 @@ const ConnextModal: FC<ConnextModalProps> = ({
     });
 
     const senderResolution = _evts.CONDITIONAL_TRANSFER_RESOLVED.pipe(
-      data =>
+      (data) =>
         data.transfer.meta.crossChainTransferId === crossChainTransferId &&
         data.channelAddress === depositChannelAddress
     ).waitFor(45_000);
 
     const receiverResolution = _evts.CONDITIONAL_TRANSFER_RESOLVED.pipe(
-      data =>
+      (data) =>
         data.transfer.meta.crossChainTransferId === crossChainTransferId &&
         data.channelAddress === withdrawChannelAddress
     ).waitFor(45_000);
@@ -253,48 +262,58 @@ const ConnextModal: FC<ConnextModalProps> = ({
   };
 
   const transfer = async (
-    senderChainInfo: CHAIN_DETAIL,
-    receiverChainInfo: CHAIN_DETAIL,
-    _depositAddress: string,
     transferAmount: BigNumber,
-    _evts: EvtContainer,
-    _node: BrowserNode,
     verifyRouterCapacity: boolean
   ) => {
-    const _depositChainId: number = senderChainInfo?.chainId!;
-    const _withdrawChainId: number = receiverChainInfo?.chainId!;
-    const _withdrawRpcProvider: providers.JsonRpcProvider = receiverChainInfo?.rpcProvider!;
+    const _depositChainId: number = senderChain?.chainId!;
+    const _withdrawChainId: number = receiverChain?.chainId!;
+    const _withdrawRpcProvider: providers.JsonRpcProvider = receiverChain?.rpcProvider!;
     const crossChainTransferId = getRandomBytes32();
     setActiveCrossChainTransferId(crossChainTransferId);
 
     const statusTransferAmount = utils.formatUnits(
       transferAmount,
-      senderChainInfo?.assetDecimals!
+      senderChain?.assetDecimals!
     );
+
+    // For UI
+    let existingChannelBalanceUi: string | undefined;
+    if (existingChannelBalanceBn) {
+      existingChannelBalanceUi = truncate(
+        utils.formatUnits(
+          existingChannelBalanceBn!,
+          senderChain?.assetDecimals!
+        ),
+        4
+      );
+    }
+
     handleScreen({
       state: SCREEN_STATES.STATUS,
       title: 'deposit detected',
-      message: `Detected ${truncate(statusTransferAmount, 4)} ${
-        senderChainInfo?.assetName
-      } on ${senderChainInfo?.name}, transferring into state channel`,
+      message: `Detected ${
+        existingChannelBalanceBn && existingChannelBalanceUi + ' +'
+      } ${truncate(statusTransferAmount, 4)} ${senderChain?.assetName} on ${
+        senderChain?.name
+      }, transferring into state channel`,
     });
 
     try {
       console.log(
-        `Calling reconcileDeposit with ${_depositAddress} and ${depositAssetId}`
+        `Calling reconcileDeposit with ${depositAddress!} and ${depositAssetId}`
       );
-      await reconcileDeposit(_node, _depositAddress, depositAssetId);
+      await reconcileDeposit(node!, depositAddress!, depositAssetId);
 
       if (verifyRouterCapacity) {
         console.log('withdrawChannel: ', withdrawChannelRef.current);
         await verifyRouterCapacityForTransfer(
           _withdrawRpcProvider,
           withdrawAssetId,
-          receiverChainInfo.assetDecimals,
+          receiverChain?.assetDecimals!,
           withdrawChannelRef.current!,
           transferAmount,
           swapRef.current,
-          senderChainInfo.assetDecimals
+          senderChain?.assetDecimals!
         );
       }
     } catch (e) {
@@ -311,11 +330,13 @@ const ConnextModal: FC<ConnextModalProps> = ({
     handleScreen({
       state: SCREEN_STATES.STATUS,
       title: 'transferring',
-      message: `Transferring ${truncate(
+      message: `Transferring ${
+        existingChannelBalanceBn && existingChannelBalanceUi + ' +'
+      } ${truncate(
         statusTransferAmount,
         4
-      )} ${senderChainInfo?.assetName!} from ${senderChainInfo?.name!} to ${
-        receiverChainInfo?.name
+      )} ${senderChain?.assetName!} from ${senderChain?.name!} to ${
+        receiverChain?.name
       }. This step can take some time if the chain is congested`,
     });
 
@@ -325,7 +346,7 @@ const ConnextModal: FC<ConnextModalProps> = ({
         `Calling createFromAssetTransfer ${_depositChainId} ${depositAssetId} ${_withdrawChainId} ${withdrawAssetId} ${crossChainTransferId}`
       );
       const transferDeets = await createFromAssetTransfer(
-        _node,
+        node!,
         _depositChainId,
         depositAssetId,
         _withdrawChainId,
@@ -352,8 +373,8 @@ const ConnextModal: FC<ConnextModalProps> = ({
     setPreImage(preImage);
 
     // listen for a sender-side cancellation, if it happens, short-circuit and show cancellation
-    const senderCancel = _evts[EngineEvents.CONDITIONAL_TRANSFER_RESOLVED]
-      .pipe(data => {
+    const senderCancel = evts![EngineEvents.CONDITIONAL_TRANSFER_RESOLVED]
+      .pipe((data) => {
         return (
           data.transfer.meta?.routingId === crossChainTransferId &&
           data.transfer.responderIdentifier === routerPublicIdentifier &&
@@ -363,8 +384,8 @@ const ConnextModal: FC<ConnextModalProps> = ({
       })
       .waitFor(500_000);
 
-    const receiverCreate = _evts[EngineEvents.CONDITIONAL_TRANSFER_CREATED]
-      .pipe(data => {
+    const receiverCreate = evts![EngineEvents.CONDITIONAL_TRANSFER_CREATED]
+      .pipe((data) => {
         return (
           data.transfer.meta?.routingId === crossChainTransferId &&
           data.transfer.initiatorIdentifier === routerPublicIdentifier
@@ -406,8 +427,8 @@ const ConnextModal: FC<ConnextModalProps> = ({
       return;
     }
 
-    const senderResolve = _evts[EngineEvents.CONDITIONAL_TRANSFER_RESOLVED]
-      .pipe(data => {
+    const senderResolve = evts![EngineEvents.CONDITIONAL_TRANSFER_RESOLVED]
+      .pipe((data) => {
         return (
           data.transfer.meta?.routingId === crossChainTransferId &&
           data.transfer.responderIdentifier === routerPublicIdentifier
@@ -417,7 +438,7 @@ const ConnextModal: FC<ConnextModalProps> = ({
 
     try {
       await resolveToAssetTransfer(
-        _node,
+        node!,
         _withdrawChainId,
         preImage,
         crossChainTransferId,
@@ -444,9 +465,9 @@ const ConnextModal: FC<ConnextModalProps> = ({
     }
 
     await withdraw(
-      receiverChainInfo,
-      _node,
-      _evts,
+      receiverChain!,
+      node!,
+      evts!,
       onWithdrawalTxCreated,
       onFinished
     );
@@ -507,7 +528,7 @@ const ConnextModal: FC<ConnextModalProps> = ({
     // check tx receipt for withdrawal tx
     _withdrawRpcProvider
       .waitForTransaction(result.withdrawalTx)
-      .then(receipt => {
+      .then((receipt) => {
         if (receipt.status === 0) {
           // tx reverted
           console.error('Transaction reverted onchain', receipt);
@@ -580,15 +601,7 @@ const ConnextModal: FC<ConnextModalProps> = ({
         setShowTimer(false);
         const transferAmount = updatedDeposits.sub(initialDeposits);
         initialDeposits = updatedDeposits;
-        await transfer(
-          senderChain!,
-          receiverChain!,
-          _depositAddress,
-          transferAmount,
-          _evts,
-          _node,
-          true
-        );
+        await transfer(transferAmount, true);
       }
     }, 5_000);
     setListener(depositListener);
@@ -822,15 +835,7 @@ const ConnextModal: FC<ConnextModalProps> = ({
         return;
       }
       setIsLoad(false);
-      await transfer(
-        senderChain!,
-        receiverChain!,
-        _depositAddress,
-        transferAmountBn,
-        _evts,
-        _node,
-        false
-      );
+      await transfer(transferAmountBn, false);
     }
   };
 
@@ -841,6 +846,7 @@ const ConnextModal: FC<ConnextModalProps> = ({
     setInputReadOnly(false);
     setIsLoad(false);
     setTransferFeeUi('--');
+    setExistingChannelBalanceBn(undefined);
     setReceivedAmountUi('');
     setUserBalance(undefined);
     setError(undefined);
@@ -1111,30 +1117,30 @@ const ConnextModal: FC<ConnextModalProps> = ({
     ]);
     const depositHashlock = depositActive
       .getValue()
-      .filter(t => Object.keys(t.transferState).includes('lockHash'));
+      .filter((t) => Object.keys(t.transferState).includes('lockHash'));
     const withdrawHashlock = withdrawActive
       .getValue()
-      .filter(t => Object.keys(t.transferState).includes('lockHash'));
+      .filter((t) => Object.keys(t.transferState).includes('lockHash'));
     console.warn(
       'deposit active on init',
       depositHashlock.length,
       'ids:',
-      depositHashlock.map(t => t.transferId)
+      depositHashlock.map((t) => t.transferId)
     );
     console.warn(
       'withdraw active on init',
       withdrawHashlock.length,
       'ids:',
-      withdrawHashlock.map(t => t.transferId)
+      withdrawHashlock.map((t) => t.transferId)
     );
 
     // set a listener to check for transfers that may have been pushed after a refresh after the hanging transfers have already been canceled
-    _evts.CONDITIONAL_TRANSFER_CREATED.pipe(data => {
+    _evts.CONDITIONAL_TRANSFER_CREATED.pipe((data) => {
       return (
         data.transfer.responderIdentifier === _node.publicIdentifier &&
         data.transfer.meta.routingId !== activeCrossChainTransferIdRef.current
       );
-    }).attach(async data => {
+    }).attach(async (data) => {
       console.warn('Cancelling transfer thats not active');
       await cancelTransfer(
         _depositAddress,
@@ -1281,17 +1287,10 @@ const ConnextModal: FC<ConnextModalProps> = ({
     }
     // if offChainDepositAssetBalance > 0
     if (offChainDepositAssetBalance.gt(0)) {
-      // then start transfer
-      setPendingTransferMessage(`Detected Pending Cross-Chain Transfer`);
-      await transfer(
-        senderChainInfo,
-        receiverChainInfo,
-        _depositAddress,
-        offChainDepositAssetBalance,
-        _evts,
-        _node,
-        true
-      );
+      handleScreen({
+        state: SCREEN_STATES.EXISTING_BALANCE,
+        existingChannelBalance: offChainDepositAssetBalance,
+      });
     }
 
     // if offchainWithdrawBalance > 0
@@ -1402,15 +1401,32 @@ const ConnextModal: FC<ConnextModalProps> = ({
     init();
   };
 
+  const addMoreFunds = async () => {
+    // existing funds helper text will be added
+    handleScreen({ state: SCREEN_STATES.SWAP });
+  };
+
   const handleScreen = (params: {
     state: ScreenStates;
     error?: Error | undefined;
     title?: string;
     message?: string;
+    existingChannelBalance?: BigNumber;
   }) => {
-    const { state, error: pError, title: pTitle, message: pMessage } = params;
+    const {
+      state,
+      error: pError,
+      title: pTitle,
+      message: pMessage,
+      existingChannelBalance: _existingChannelBalance,
+    } = params;
     switch (state) {
       case SCREEN_STATES.LOADING:
+        break;
+
+      case SCREEN_STATES.EXISTING_BALANCE:
+        console.log();
+        setExistingChannelBalanceBn(_existingChannelBalance);
         break;
 
       case SCREEN_STATES.SWAP:
@@ -1468,6 +1484,18 @@ const ConnextModal: FC<ConnextModalProps> = ({
           />
         );
 
+      case SCREEN_STATES.EXISTING_BALANCE:
+        return (
+          <ExistingBalance
+            transfer={transfer}
+            addMoreFunds={addMoreFunds}
+            existingChannelBalanceBn={existingChannelBalanceBn!}
+            senderChainInfo={senderChain!}
+            receiverChainInfo={receiverChain!}
+            receiverAddress={withdrawalAddress}
+            options={handleOptions}
+          />
+        );
       case SCREEN_STATES.SWAP:
         return (
           <Swap
@@ -1482,6 +1510,7 @@ const ConnextModal: FC<ConnextModalProps> = ({
             receiverAddress={withdrawalAddress}
             senderAmount={transferAmountUi}
             recipientAmount={receivedAmountUi}
+            existingChannelBalanceBn={existingChannelBalanceBn!}
             feeQuote={transferFeeUi}
             options={handleOptions}
           />

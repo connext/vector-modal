@@ -1,4 +1,5 @@
 import React, { FC, useEffect } from 'react';
+import { BigNumber, utils } from 'ethers';
 import {
   ModalContent,
   ModalBody,
@@ -27,6 +28,7 @@ export interface TransferProps {
   senderAmount: string | undefined;
   recipientAmount: string | undefined;
   feeQuote: string;
+  existingChannelBalanceBn?: BigNumber;
   amountError?: string;
   userBalance?: string;
 }
@@ -40,6 +42,7 @@ const Swap: FC<TransferProps> = (props) => {
     receiverAddress,
     senderAmount,
     recipientAmount,
+    existingChannelBalanceBn,
     feeQuote,
     isLoad,
     inputReadOnly,
@@ -82,7 +85,27 @@ const Swap: FC<TransferProps> = (props) => {
         <ModalBody>
           <Stack column={true} spacing={5}>
             <Stack column={true} spacing={4}>
-              <Stack column={true} spacing={6}>
+              <Stack column={true} spacing={5}>
+                {existingChannelBalanceBn && (
+                  <Text
+                    flex="auto"
+                    fontSize="0.875rem"
+                    fontStyle="italic"
+                    textTransform="none"
+                    color="#333333"
+                  >
+                    You are adding more funds for Swap, your existing channel
+                    currently holds{' '}
+                    {truncate(
+                      utils.formatUnits(
+                        existingChannelBalanceBn!,
+                        senderChainInfo?.assetDecimals!
+                      ),
+                      4
+                    )}{' '}
+                    {senderChainInfo.assetName}
+                  </Text>
+                )}
                 <Stack column={true} spacing={1}>
                   <Stack>
                     <Text flex="auto" fontSize="0.75rem">
