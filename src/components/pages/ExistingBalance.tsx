@@ -11,8 +11,8 @@ export interface ExistingBalanceProps {
   receiverChainInfo: CHAIN_DETAIL;
   receiverAddress: string;
   addMoreFunds: () => void;
+  continueButton: () => void;
   options: () => void;
-  transfer: (transferAmount: BigNumber, verifyRouterCapacity: boolean) => void;
 }
 
 const ExistingBalance: FC<ExistingBalanceProps> = (props) => {
@@ -22,7 +22,7 @@ const ExistingBalance: FC<ExistingBalanceProps> = (props) => {
     receiverChainInfo,
     receiverAddress,
     options,
-    transfer,
+    continueButton,
     addMoreFunds,
   } = props;
   return (
@@ -57,12 +57,7 @@ const ExistingBalance: FC<ExistingBalanceProps> = (props) => {
               </Stack>
 
               <Stack column={true} spacing={2}>
-                <Button
-                  size="lg"
-                  onClick={() => {
-                    transfer(existingChannelBalanceBn, true);
-                  }}
-                >
+                <Button size="lg" onClick={continueButton}>
                   continue...
                 </Button>
 
