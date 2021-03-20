@@ -90,7 +90,10 @@ function App() {
           console.log('withdrawal tx ==>', params)
         }
         onFinished={params => console.log('On finish ==>', params)}
-        onSwap={params => console.log('onSwap ==>', params)}
+        onSwap={params => {
+          console.log('onSwap params: ', params);
+          throw new Error(params);
+        }}
         transferAmount={transferAmount}
         withdrawalAddress={'0x75e4DD0587663Fce5B2D9aF7fbED3AC54342d3dB'}
         loginProvider={loginProvider}
