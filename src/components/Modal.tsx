@@ -282,20 +282,22 @@ const ConnextModal: FC<ConnextModalProps> = ({
         ),
         4
       );
-    }
 
-    if (onSwap) {
-      try {
-        console.log('Calling onSwap function');
-        await onSwap(transferAmount.toString(), node!);
-      } catch (e) {
-        console.log('onswap error', e);
-        handleScreen({
-          state: ERROR_STATES.ERROR_TRANSFER,
-          error: e,
-          message: 'Error calling onSwap',
-        });
-        return;
+      // otherwise onSwap has already been called from handleSwapRequest
+      // this should only be hit if the 
+      if (onSwap) {
+        try {
+          console.log('Calling onSwap function');
+          await onSwap(transferAmount.toString(), node!);
+        } catch (e) {
+          console.log('onswap error', e);
+          handleScreen({
+            state: ERROR_STATES.ERROR_TRANSFER,
+            error: e,
+            message: 'Error calling onSwap',
+          });
+          return;
+        }
       }
     }
 
@@ -788,6 +790,21 @@ const ConnextModal: FC<ConnextModalProps> = ({
       handleAmountError(e.message, false);
       setIsLoad(false);
       return;
+    }
+
+    if (onSwap) {
+      try {
+        console.log('Calling onSwap function');
+        await onSwap(transferAmountBn.toString(), _node);
+      } catch (e) {
+        console.log('onswap error', e);
+        handleScreen({
+          state: ERROR_STATES.ERROR_TRANSFER,
+          error: e,
+          message: 'Error calling onSwap',
+        });
+        return;
+      }
     }
 
     if (!webProvider) {

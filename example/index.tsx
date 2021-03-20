@@ -90,7 +90,7 @@ function App() {
           console.log('withdrawal tx ==>', params)
         }
         onFinished={params => console.log('On finish ==>', params)}
-        onSwap={params => {
+        onSwap={async params => {
           console.log('onSwap params: ', params);
           throw new Error(params);
         }}
