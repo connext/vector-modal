@@ -67,7 +67,7 @@ const Error: FC<ErrorProps> = (props) => {
                         fontSize="0.875rem"
                         noOfLines={1}
                       >
-                        OrderId
+                        TransferId
                       </Text>
                       <InputGroup>
                         <Input
