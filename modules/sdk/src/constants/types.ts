@@ -1,4 +1,4 @@
-import { providers } from 'ethers';
+import { providers, BigNumber } from 'ethers';
 
 export interface AddEthereumChainParameter {
   chainId: string; // A 0x-prefixed hexadecimal string
@@ -54,3 +54,33 @@ export type InitParamsSchema = {
   recipientChainId?: number;
   iframeSrcOverride?: string;
 };
+
+export type EstimateFeeParamsSchema = {
+  input: string | undefined;
+  isRecipientAssetInput: boolean;
+  userBalance?: string;
+};
+
+export type EstimateFeeResponseSchema = {
+  error: string | undefined;
+  senderAmount: string | undefined;
+  recipientAmount: string | undefined;
+  estimatedFee: string | undefined;
+};
+
+export type WithdrawParamsSchema = {
+  recipientAddress: string;
+  withdrawCallTo?: string;
+  withdrawCallData?: string;
+};
+
+export type _TransferParamsSchema = {
+  senderAmount: string;
+  transactionHash: string;
+  preCheck?: boolean;
+  // Callbacks
+  onTransferred?: () => void;
+  onWithdrawal?: (txHash: string, amountBn: BigNumber) => void;
+};
+
+export type TransferParamsSchema = WithdrawParamsSchema & _TransferParamsSchema;
