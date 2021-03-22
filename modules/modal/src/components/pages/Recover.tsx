@@ -17,7 +17,7 @@ import { Header, Footer } from '../static';
 import Success from './Success';
 import ErrorScreen from './ErrorScreen';
 import Loading from './Loading';
-import { CHAIN_DETAIL, ERROR_STATES } from '../../constants';
+import { CHAIN_DETAIL, ERROR_STATES } from '@connext/vector-sdk';
 
 export interface RecoveryProps {
   handleBack: () => void;

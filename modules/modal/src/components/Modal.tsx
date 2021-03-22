@@ -17,8 +17,6 @@ import {
   CHAIN_DETAIL,
   ScreenStates,
   ErrorStates,
-} from '../constants';
-import {
   getTotalDepositsBob,
   reconcileDeposit,
   createEvtContainer,
@@ -37,7 +35,7 @@ import {
   getUserBalance,
   getCrosschainFee,
   truncate,
-} from '../utils';
+} from '@connext/vector-sdk';
 import {
   theme,
   Fonts,

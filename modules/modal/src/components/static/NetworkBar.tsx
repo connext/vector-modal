@@ -1,9 +1,8 @@
 import React, { FC } from 'react';
 import styled from 'styled-components';
 
-import { CHAIN_DETAIL } from '../../constants';
+import { CHAIN_DETAIL, getExplorerLinkForAsset } from '@connext/vector-sdk';
 import { arrow } from '../../public';
-import { getExplorerLinkForAsset } from '../../utils';
 import { Stack, Box, Text, Link, InputGroup, Input } from '../common';
 
 interface NetworkBarProps {
@@ -11,7 +10,7 @@ interface NetworkBarProps {
   receiverChainInfo: CHAIN_DETAIL;
   receiverAddress?: string;
 }
-const NetworkBar: FC<NetworkBarProps> = props => {
+const NetworkBar: FC<NetworkBarProps> = (props) => {
   const { senderChainInfo, receiverChainInfo, receiverAddress } = props;
   return (
     <>

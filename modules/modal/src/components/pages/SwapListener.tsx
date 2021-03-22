@@ -14,7 +14,7 @@ import {
   CheckCircleIcon,
 } from '../common';
 import { Header, Footer, NetworkBar } from '../static';
-import { CHAIN_DETAIL } from '../../constants';
+import { CHAIN_DETAIL } from '@connext/vector-sdk';
 // @ts-ignore
 import QRCode from 'qrcode.react';
 

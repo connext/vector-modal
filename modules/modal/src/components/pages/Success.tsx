@@ -1,8 +1,7 @@
 import React, { FC } from 'react';
 import { ModalContent, ModalBody, Text, Stack, Box, Button } from '../common';
 import { Header, Footer, NetworkBar } from '../static';
-import { CHAIN_DETAIL } from '../../constants';
-import { getExplorerLinkForTx, truncate } from '../../utils';
+import { CHAIN_DETAIL, getExplorerLinkForTx, truncate } from '@connext/vector-sdk';
 
 export interface SuccessProps {
   amount: string;

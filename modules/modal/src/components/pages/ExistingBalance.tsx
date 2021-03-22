@@ -2,8 +2,7 @@ import React, { FC } from 'react';
 import { BigNumber, utils } from 'ethers';
 import { ModalContent, ModalBody, Text, Stack, Button } from '../common';
 import { Header, Footer, NetworkBar } from '../static';
-import { CHAIN_DETAIL } from '../../constants';
-import { truncate } from '../../utils';
+import { CHAIN_DETAIL, truncate } from '@connext/vector-sdk';
 
 export interface ExistingBalanceProps {
   existingChannelBalanceBn: BigNumber;

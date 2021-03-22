@@ -10,8 +10,7 @@ import {
   Input,
 } from '../common';
 import { Header, Footer, NetworkBar } from '../static';
-import { CHAIN_DETAIL } from '../../constants';
-import { truncate } from '../../utils';
+import { CHAIN_DETAIL, truncate } from '@connext/vector-sdk';
 
 export interface TransferProps {
   onUserInput: (

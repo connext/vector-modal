@@ -12,7 +12,7 @@ import {
   Link,
 } from '../common';
 import { Header, Footer, NetworkBar } from '../static';
-import { CHAIN_DETAIL, ERROR_STATES, ErrorStates } from '../../constants';
+import { CHAIN_DETAIL, ERROR_STATES, ErrorStates } from '@connext/vector-sdk';
 
 export interface ErrorProps {
   error: Error;

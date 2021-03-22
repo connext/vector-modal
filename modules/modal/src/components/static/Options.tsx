@@ -1,6 +1,6 @@
 import React, { FC, useState } from 'react';
 import { MenuList, MenuItem, MenuButton } from '../common';
-import { ScreenStates, SCREEN_STATES, ERROR_STATES } from '../../constants';
+import { ScreenStates, SCREEN_STATES, ERROR_STATES } from '@connext/vector-sdk';
 
 interface OptionsProps {
   state: ScreenStates;
