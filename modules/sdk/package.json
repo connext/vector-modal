@@ -1,5 +1,5 @@
 {
-  "name": "sdk",
+  "name": "@connext/vector-sdk",
   "version": "0.0.0",
   "description": "> TODO: description",
   "author": "sanchaymittal <sanchaymittal@gmail.com>",
@@ -53,6 +53,17 @@
       "limit": "10 KB"
     }
   ],
+  "dependencies": {
+    "@connext/vector-browser-node": "0.2.1-beta.2",
+    "@connext/vector-contracts": "0.2.1-beta.2",
+    "@connext/vector-types": "0.2.1-beta.2",
+    "@connext/vector-utils": "0.2.1-beta.2",
+    "@sinclair/typebox": "^0.16.0",
+    "awesome-debounce-promise": "^2.1.0",
+    "ethers": "5.0.32",
+    "evt": "1.9.12",
+    "lodash": "^4.17.21"
+  },
   "devDependencies": {
     "@size-limit/preset-small-lib": "^4.10.1",
     "husky": "^5.2.0",
