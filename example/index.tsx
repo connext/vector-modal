@@ -16,9 +16,10 @@ const magic = new Magic('pk_test_D646A81EA4676AB2', {
 
 function App() {
   const [showModal, setShowModal] = React.useState(false);
-  const [loginProvider, _setLoginProvider] = React.useState<
-    providers.Web3Provider
-  >();
+  const [
+    loginProvider,
+    _setLoginProvider,
+  ] = React.useState<providers.Web3Provider>();
   const [loginType, setLoginType] = React.useState<LoginType>('none');
   const [transferAmount, setTransferAmount] = React.useState<string>();
 
@@ -52,7 +53,7 @@ function App() {
   return (
     <>
       <div
-        onChange={async event => {
+        onChange={async (event) => {
           console.log('event: ', event.target);
           setLoginType((event.target as any).value);
           await setLoginProvider((event.target as any).value);
@@ -65,7 +66,7 @@ function App() {
       <input
         type="number"
         defaultChecked
-        onChange={event => setTransferAmount(event.target.value)}
+        onChange={(event) => setTransferAmount(event.target.value)}
       />{' '}
       Transfer Amount
       <br />
@@ -85,15 +86,15 @@ function App() {
       <ConnextModal
         showModal={showModal}
         onClose={() => setShowModal(false)}
-        onReady={params => console.log('MODAL IS READY =======>', params)}
-        onWithdrawalTxCreated={params =>
+        onReady={(params) => console.log('MODAL IS READY =======>', params)}
+        onWithdrawalTxCreated={(params) =>
           console.log('withdrawal tx ==>', params)
         }
-        onFinished={params => console.log('On finish ==>', params)}
-        onSwap={async params => {
-          console.log('onSwap params: ', params);
-          throw new Error(params);
-        }}
+        onFinished={(params) => console.log('On finish ==>', params)}
+        // onSwap={(params) => {
+        //   console.log('onSwap params: ', params);
+        // throw new Error(params);
+        // }}
         transferAmount={transferAmount}
         withdrawalAddress={'0x75e4DD0587663Fce5B2D9aF7fbED3AC54342d3dB'}
         loginProvider={loginProvider}
