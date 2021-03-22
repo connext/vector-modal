@@ -52,4 +52,5 @@ export type InitParamsSchema = {
   recipientAssetId: string;
   senderChainId?: number;
   recipientChainId?: number;
+  iframeSrcOverride?: string;
 };
