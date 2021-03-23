@@ -626,7 +626,12 @@ export class ConnextSdk {
   }
 
   async withdraw(params: WithdrawParamsSchema) {
-    const { recipientAddress, withdrawCallTo, withdrawCallData } = params;
+    const {
+      recipientAddress,
+      onFinished,
+      withdrawCallTo,
+      withdrawCallData,
+    } = params;
     // now go to withdrawal screen
     let result;
     try {
@@ -654,6 +659,14 @@ export class ConnextSdk {
 
     console.log(successWithdrawalUi);
 
+    if (onFinished) {
+      onFinished(
+        result.withdrawalTx,
+        successWithdrawalUi,
+        result.withdrawalAmount
+      );
+    }
+
     // check tx receipt for withdrawal tx
     this.recipientChain?.rpcProvider
       .waitForTransaction(result.withdrawalTx)
@@ -671,7 +684,7 @@ export class ConnextSdk {
     const {
       recipientAddress,
       onTransferred,
-      onWithdrawal,
+      onFinished,
       withdrawCallTo,
       withdrawCallData,
     } = params;
@@ -686,7 +699,7 @@ export class ConnextSdk {
     try {
       await this.withdraw({
         recipientAddress: recipientAddress,
-        onWithdrawal: onWithdrawal,
+        onFinished: onFinished,
         withdrawCallTo: withdrawCallTo,
         withdrawCallData: withdrawCallData,
       });
