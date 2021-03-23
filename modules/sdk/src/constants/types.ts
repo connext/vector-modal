@@ -65,22 +65,20 @@ export type EstimateFeeResponseSchema = {
   error: string | undefined;
   senderAmount: string | undefined;
   recipientAmount: string | undefined;
-  estimatedFee: string | undefined;
+  totalFee: string | undefined;
 };
 
 export type WithdrawParamsSchema = {
   recipientAddress: string;
+  onWithdrawal?: (txHash: string, amountBn: BigNumber) => void;
   withdrawCallTo?: string;
   withdrawCallData?: string;
 };
 
-export type _TransferParamsSchema = {
-  senderAmount: string;
-  transactionHash: string;
-  preCheck?: boolean;
+export type TransferParamsSchema = {
   // Callbacks
   onTransferred?: () => void;
-  onWithdrawal?: (txHash: string, amountBn: BigNumber) => void;
 };
 
-export type TransferParamsSchema = WithdrawParamsSchema & _TransferParamsSchema;
+export type CrossChainSwapParamsSchema = WithdrawParamsSchema &
+  TransferParamsSchema;
