@@ -142,56 +142,6 @@ const ConnextModal: FC<ConnextModalProps> = ({
     setExistingChannelBalanceBn,
   ] = useState<BigNumber>();
 
-  // const cancelTransfer = async (
-  //   depositChannelAddress: string,
-  //   withdrawChannelAddress: string,
-  //   transferId: string,
-  //   crossChainTransferId: string,
-  //   _evts: EvtContainer,
-  //   _node: BrowserNode
-  // ) => {
-  //   // show a better screen here, loading UI
-  //   handleScreen({
-  //     state: ERROR_STATES.ERROR_TRANSFER,
-  //     error: new Error('Cancelling transfer...'),
-  //   });
-
-  //   const senderResolution = _evts.CONDITIONAL_TRANSFER_RESOLVED.pipe(
-  //     (data) =>
-  //       data.transfer.meta.crossChainTransferId === crossChainTransferId &&
-  //       data.channelAddress === depositChannelAddress
-  //   ).waitFor(45_000);
-
-  //   const receiverResolution = _evts.CONDITIONAL_TRANSFER_RESOLVED.pipe(
-  //     (data) =>
-  //       data.transfer.meta.crossChainTransferId === crossChainTransferId &&
-  //       data.channelAddress === withdrawChannelAddress
-  //   ).waitFor(45_000);
-  //   try {
-  //     await cancelToAssetTransfer(_node, withdrawChannelAddress, transferId);
-  //   } catch (e) {
-  //     handleScreen({
-  //       state: ERROR_STATES.ERROR_TRANSFER,
-  //       error: e,
-  //       message: 'Error in cancelToAssetTransfer',
-  //     });
-  //   }
-
-  //   try {
-  //     await Promise.all([senderResolution, receiverResolution]);
-  //     handleScreen({
-  //       state: ERROR_STATES.ERROR_TRANSFER,
-  //       error: new Error('Transfer was cancelled'),
-  //     });
-  //   } catch (e) {
-  //     handleScreen({
-  //       state: ERROR_STATES.ERROR_TRANSFER,
-  //       error: e,
-  //       message: 'Error waiting for sender and receiver cancellations',
-  //     });
-  //   }
-  // };
-
   const onSuccess = (
     txHash: string,
     amountUi?: string,
