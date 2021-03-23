@@ -28,7 +28,7 @@ import {
   withdrawToAsset,
 } from '../utils';
 
-export class ConnextNode {
+export class ConnextSdk {
   public routerPublicIdentifier = '';
   public senderChainChannelAddress = '';
   public recipientChainChannelAddress = '';
