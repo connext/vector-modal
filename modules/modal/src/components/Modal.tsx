@@ -35,6 +35,7 @@ import {
   getUserBalance,
   getCrosschainFee,
   truncate,
+  ConnextSdk,
 } from '@connext/vector-sdk';
 import {
   theme,
@@ -151,6 +152,8 @@ const ConnextModal: FC<ConnextModalProps> = ({
 
   const [error, setError] = useState<Error>();
   const [amountError, setAmountError] = useState<string>();
+
+  const [connextSdk, setConnextSdk] = useState<ConnextSdk>();
 
   const [
     activeCrossChainTransferId,
@@ -286,7 +289,7 @@ const ConnextModal: FC<ConnextModalProps> = ({
       );
 
       // otherwise onSwap has already been called from handleSwapRequest
-      // this should only be hit if the 
+      // this should only be hit if the
       if (onSwap) {
         try {
           console.log('Calling onSwap function');
@@ -639,203 +642,90 @@ const ConnextModal: FC<ConnextModalProps> = ({
     _input: string | undefined,
     receiveExactAmount: boolean
   ) => {
-    let err: string | undefined = undefined;
     const input = _input ? _input.trim() : undefined;
-
-    setAmountError(undefined);
-    if (!input) {
-      setTransferFeeUi('--');
-      setTransferAmountUi('');
-      setReceivedAmountUi('');
-      return;
-    }
+    receiveExactAmount
+      ? setReceivedAmountUi(input)
+      : setTransferAmountUi(input);
 
     try {
+      const res = await connextSdk!.estimateFees({
+        input: input,
+        isRecipientAssetInput: receiveExactAmount,
+        userBalance: userBalance,
+      });
+      console.log(res);
+      setAmountError(res.error);
+
       receiveExactAmount
-        ? setReceivedAmountUi(input)
-        : setTransferAmountUi(input);
+        ? setTransferAmountUi(res.senderAmount)
+        : setReceivedAmountUi(res.recipientAmount);
 
-      const transferAmountBn = BigNumber.from(
-        utils.parseUnits(
-          input,
-          receiveExactAmount
-            ? receiverChain?.assetDecimals!
-            : senderChain?.assetDecimals!
-        )
-      );
-
-      if (transferAmountBn.isZero()) {
-        err = 'Transfer amount cannot be 0';
-        handleAmountError(err, receiveExactAmount);
-        return;
-      }
-
-      let fee: BigNumber;
-      let senderAmount: BigNumber;
-      let recipientAmount: BigNumber;
-      try {
-        const {
-          totalFee,
-          senderAmount: _senderAmount,
-          recipientAmount: _recipientAmount,
-        } = await getFeesDebounced(
-          node!,
-          routerPublicIdentifier,
-          transferAmountBn,
-          senderChain?.chainId!,
-          senderChain?.assetId!,
-          senderChain?.assetDecimals!,
-          receiverChain?.chainId!,
-          receiverChain?.assetId!,
-          receiverChain?.assetDecimals!,
-          withdrawChannelRef.current!.channelAddress,
-          swapDefinition!,
-          receiveExactAmount
-        );
-        fee = totalFee;
-        senderAmount = BigNumber.from(_senderAmount);
-        recipientAmount = BigNumber.from(_recipientAmount);
-      } catch (e) {
-        handleAmountError(err, receiveExactAmount);
-        return;
-      }
-
-      const feeUi = utils.formatUnits(fee, senderChain!.assetDecimals);
-      console.log('feeUi: ', feeUi);
-      setTransferFeeUi(feeUi);
-
-      if (BigNumber.from(recipientAmount).lte(0)) {
-        const err = 'Not enough amount to pay fees';
-        handleAmountError(err, receiveExactAmount);
-        return;
-      }
-
-      if (receiveExactAmount) {
-        const senderUi = utils.formatUnits(
-          senderAmount,
-          senderChain!.assetDecimals
-        );
-        console.log('senderUi: ', senderUi);
-        setTransferAmountUi(senderUi);
-      } else {
-        const receivedUi = utils.formatUnits(
-          recipientAmount,
-          receiverChain!.assetDecimals
-        );
-        console.log('receivedUi: ', receivedUi);
-        setReceivedAmountUi(receivedUi);
-      }
-
-      if (userBalance) {
-        const userBalanceBn = BigNumber.from(
-          utils.parseUnits(userBalance, senderChain?.assetDecimals!)
-        );
-        if (senderAmount.gt(userBalanceBn)) {
-          err = 'Transfer amount exceeds user balance';
-          handleAmountError(err, receiveExactAmount);
-          return;
-        }
-      }
+      if (res.totalFee) setTransferFeeUi(res.totalFee);
     } catch (e) {
-      err = 'Invalid amount';
+      const message = 'Error Estimating Fees';
+      console.log(message, e);
+      setAmountError(e.message);
     }
-
-    setAmountError(err);
-    return;
   };
 
   const handleSwapRequest = async () => {
     setIsLoad(true);
 
-    const _depositChainId: number = senderChain?.chainId!;
-    const _withdrawChainId: number = receiverChain?.chainId!;
-    const _depositAddress: string = depositAddress!;
-    const _depositRpcProvider: providers.JsonRpcProvider = senderChain?.rpcProvider!;
-    const _withdrawRpcProvider: providers.JsonRpcProvider = receiverChain?.rpcProvider!;
-    const _node: BrowserNode = node!;
-    const _evts: EvtContainer = evts!;
+    try {
+      await connextSdk!.preTransferCheck(receivedAmountUi!);
+    } catch (e) {
+      console.log('Error at preCheck', e);
+      setIsLoad(false);
+      setAmountError(e.message);
+      return;
+    }
+
     const transferAmountBn: BigNumber = BigNumber.from(
       utils.parseUnits(transferAmountUi!, senderChain?.assetDecimals!)
     );
 
-    if (
-      !_depositChainId ||
-      !_withdrawChainId ||
-      !_depositAddress ||
-      !_withdrawRpcProvider ||
-      !_node ||
-      !_evts
-    ) {
-      // TODO: handle this better
-      handleScreen({
-        state: ERROR_STATES.ERROR_TRANSFER,
-        error: new Error('Missing input fields'),
-      });
-      setIsLoad(false);
-      return;
-    }
-
-    console.log('Verify Router Capacity');
-    try {
-      await verifyRouterCapacityForTransfer(
-        _withdrawRpcProvider,
-        withdrawAssetId,
-        receiverChain!.assetDecimals,
-        withdrawChannelRef.current!,
-        transferAmountBn,
-        swapRef.current,
-        senderChain!.assetDecimals
-      );
-      console.log(
-        `Transferring ${transferAmountBn.toString()} through injected provider`
-      );
-    } catch (e) {
-      console.log('verify', e);
-      handleAmountError(e.message, false);
-      setIsLoad(false);
-      return;
-    }
-
-    if (onSwap) {
-      try {
-        console.log('Calling onSwap function');
-        await onSwap(transferAmountBn.toString(), _node);
-      } catch (e) {
-        console.log('onswap error', e);
-        handleScreen({
-          state: ERROR_STATES.ERROR_TRANSFER,
-          error: e,
-          message: 'Error calling onSwap',
-        });
-        return;
-      }
-    }
+    // if (onSwap) {
+    //   try {
+    //     console.log('Calling onSwap function');
+    //     await onSwap(transferAmountBn.toString(), node!);
+    //   } catch (e) {
+    //     console.log('onswap error', e);
+    //     handleScreen({
+    //       state: ERROR_STATES.ERROR_TRANSFER,
+    //       error: e,
+    //       message: 'Error calling onSwap',
+    //     });
+    //     return;
+    //   }
+    // }
 
     if (!webProvider) {
       console.log(`Starting block listener`);
       // display QR
       setIsLoad(false);
-      await depositListenerAndTransfer(
-        _depositChainId,
-        _withdrawChainId,
-        _depositAddress,
-        _depositRpcProvider,
-        _withdrawRpcProvider,
-        _evts,
-        _node
-      );
+      // await depositListenerAndTransfer(
+      //   _depositChainId,
+      //   _withdrawChainId,
+      //   _depositAddress,
+      //   _depositRpcProvider,
+      //   _withdrawRpcProvider,
+      //   _evts,
+      //   _node
+      // );
     } else {
       // deposit
       try {
         const signer = webProvider.getSigner();
+        const depositAddress = connextSdk!.senderChainChannelAddress;
+        console.log(depositAddress, transferAmountBn, depositAssetId);
         const depositTx =
           depositAssetId === constants.AddressZero
             ? await signer.sendTransaction({
-                to: _depositAddress,
+                to: depositAddress!,
                 value: transferAmountBn,
               })
             : await new Contract(depositAssetId, ERC20Abi, signer).transfer(
-                _depositAddress,
+                depositAddress!,
                 transferAmountBn
               );
 
@@ -843,7 +733,7 @@ const ConnextModal: FC<ConnextModalProps> = ({
         if (onDepositTxCreated) {
           onDepositTxCreated(depositTx.hash);
         }
-        const receipt = await depositTx.wait();
+        const receipt = await depositTx.wait(1);
         console.log('deposit mined:', receipt.transactionHash);
       } catch (e) {
         setIsLoad(false);
@@ -862,7 +752,16 @@ const ConnextModal: FC<ConnextModalProps> = ({
         return;
       }
       setIsLoad(false);
-      await transfer(transferAmountBn, false);
+
+      try {
+        await connextSdk!.crossChainSwap({
+          recipientAddress: withdrawalAddress,
+          withdrawalCallTo: withdrawCallTo,
+          withdrawalCallData: withdrawCallData,
+        });
+      } catch (e) {}
+
+      // await transfer(transferAmountBn, false);
     }
   };
 
@@ -993,23 +892,22 @@ const ConnextModal: FC<ConnextModalProps> = ({
       }
     }
 
-    // setting up channels...
     setMessage('Setting up channels...');
-    let _node: BrowserNode;
+
     try {
-      // browser node object
-      _node =
-        node ??
-        (await connectNode(
-          routerPublicIdentifier,
-          senderChainInfo.chainId,
-          receiverChainInfo.chainId,
-          senderChainInfo.chainProvider,
-          receiverChainInfo.chainProvider,
-          loginProvider,
-          iframeSrcOverride
-        ));
-      setNode(_node);
+      let connextSdk = new ConnextSdk();
+      await connextSdk.init({
+        routerPublicIdentifier,
+        loginProvider: loginProvider,
+        senderChainProvider: depositChainProvider,
+        senderAssetId: depositAssetId,
+        recipientChainProvider: withdrawChainProvider,
+        recipientAssetId: withdrawAssetId,
+        senderChainId: _depositChainId,
+        recipientChainId: _withdrawChainId,
+        iframeSrcOverride: iframeSrcOverride,
+      });
+      setConnextSdk(connextSdk);
     } catch (e) {
       if (e.message.includes('localStorage not available in this window')) {
         alert(
@@ -1021,323 +919,19 @@ const ConnextModal: FC<ConnextModalProps> = ({
           'Please disable shields or ad blockers or allow third party cookies in your browser and try again. Connext requires cross-site cookies to store your channel states.'
         );
       }
-      const message = 'Error initalizing Browser Node';
+      const message = 'Error initalizing';
       console.log(e, message);
       handleScreen({
         state: ERROR_STATES.ERROR_SETUP,
         error: e,
-        message: message,
+        message: e.message,
       });
       return;
     }
-
-    console.log('INITIALIZED BROWSER NODE');
-
-    // create evt containers
-    const _evts = evts ?? createEvtContainer(_node);
-    setEvts(_evts);
-
-    let depositChannel: FullChannelState;
-    try {
-      depositChannel = await getChannelForChain(
-        _node,
-        routerPublicIdentifier,
-        senderChainInfo.chainId
-      );
-      console.log('SETTING DepositChannel: ', depositChannel);
-    } catch (e) {
-      const message = 'Could not get sender channel';
-      console.log(e, message);
-      handleScreen({
-        state: ERROR_STATES.ERROR_SETUP,
-        error: e,
-        message: message,
-      });
-      return;
-    }
-    const _depositAddress = depositChannel!.channelAddress;
-    setDepositAddress(_depositAddress);
-
-    let _withdrawChannel: FullChannelState;
-    try {
-      _withdrawChannel = await getChannelForChain(
-        _node,
-        routerPublicIdentifier,
-        receiverChainInfo.chainId
-      );
-      console.log('SETTING _withdrawChannel: ', _withdrawChannel);
-      setWithdrawChannel(_withdrawChannel);
-    } catch (e) {
-      const message = 'Could not get receiver channel';
-      console.log(e, message);
-      handleScreen({
-        state: ERROR_STATES.ERROR_SETUP,
-        error: e,
-        message: message,
-      });
-      return;
-    }
-
-    // callback for ready
-    if (onReady) {
-      onReady({
-        depositChannelAddress: depositChannel.channelAddress,
-        withdrawChannelAddress: _withdrawChannel.channelAddress,
-      });
-    }
-
-    //
-    setMessage('Verify router supports...');
-    try {
-      const swap = await verifyAndGetRouterSupports(
-        _node,
-        senderChainInfo.chainId,
-        senderChainInfo.assetId,
-        receiverChainInfo.chainId,
-        receiverChainInfo.assetId,
-        receiverChainInfo.rpcProvider,
-        routerPublicIdentifier
-      );
-      setSwapDefinition(swap);
-    } catch (e) {
-      const message = 'Error in verifyRouterSupports';
-      console.log(e, message);
-      handleScreen({
-        state: ERROR_STATES.ERROR_SETUP,
-        error: e,
-        message: message,
-      });
-      return;
-    }
-
-    try {
-      await reconcileDeposit(
-        _node,
-        depositChannel.channelAddress,
-        depositAssetId
-      );
-    } catch (e) {
-      if (
-        e.message.includes('must restore') ||
-        (e.context?.message ?? '').includes('must restore')
-      ) {
-        console.warn(
-          'Channel is out of sync, restoring before other operations. The channel was likely used in another browser.'
-        );
-        const restoreDepositChannelState = await _node.restoreState({
-          counterpartyIdentifier: routerPublicIdentifier,
-          chainId: senderChainInfo.chainId,
-        });
-        if (restoreDepositChannelState.isError) {
-          console.error(
-            'Could not restore sender channel state',
-            restoreDepositChannelState.getError()
-          );
-          handleScreen({
-            state: ERROR_STATES.ERROR_SETUP,
-            error: restoreDepositChannelState.getError(),
-            message: 'Could not restore sender channel state',
-          });
-          return;
-        }
-        const restoreWithdrawChannelState = await _node.restoreState({
-          counterpartyIdentifier: routerPublicIdentifier,
-          chainId: receiverChainInfo.chainId,
-        });
-        if (restoreWithdrawChannelState.isError) {
-          console.error(
-            'Could not restore receiver channel state',
-            restoreWithdrawChannelState.getError()
-          );
-          handleScreen({
-            state: ERROR_STATES.ERROR_SETUP,
-            error: restoreWithdrawChannelState.getError(),
-            message: 'Could not restore receiver channel state',
-          });
-          return;
-        }
-        try {
-          await reconcileDeposit(
-            _node,
-            depositChannel.channelAddress,
-            depositAssetId
-          );
-        } catch (e) {
-          const message = 'Error in reconcileDeposit';
-          console.error(e, message);
-          handleScreen({
-            state: ERROR_STATES.ERROR_SETUP,
-            error: e,
-            message: message,
-          });
-          return;
-        }
-      } else {
-        const message = 'Error in reconcileDeposit';
-        console.error(e, message);
-        handleScreen({
-          state: ERROR_STATES.ERROR_SETUP,
-          error: e,
-          message: message,
-        });
-        return;
-      }
-    }
-
-    // prune any existing receiver transfers
-    try {
-      const hangingResolutions = await cancelHangingToTransfers(
-        _node,
-        _evts[EngineEvents.CONDITIONAL_TRANSFER_CREATED],
-        senderChainInfo.chainId,
-        receiverChainInfo.chainId,
-        receiverChainInfo.assetId,
-        routerPublicIdentifier
-      );
-      console.log('Found hangingResolutions: ', hangingResolutions);
-    } catch (e) {
-      const message = 'Error in cancelHangingToTransfers';
-      console.log(e, message);
-      handleScreen({
-        state: ERROR_STATES.ERROR_SETUP,
-        error: e,
-        message: message,
-      });
-      return;
-    }
-
-    // Checking for pending Cross-Chain Transfers...
-    setMessage('looking for pending Transfers...');
-    const [depositActive, withdrawActive] = await Promise.all([
-      _node.getActiveTransfers({
-        channelAddress: depositChannel.channelAddress,
-      }),
-      _node.getActiveTransfers({
-        channelAddress: _withdrawChannel.channelAddress,
-      }),
-    ]);
-    const depositHashlock = depositActive
-      .getValue()
-      .filter((t) => Object.keys(t.transferState).includes('lockHash'));
-    const withdrawHashlock = withdrawActive
-      .getValue()
-      .filter((t) => Object.keys(t.transferState).includes('lockHash'));
-    console.warn(
-      'deposit active on init',
-      depositHashlock.length,
-      'ids:',
-      depositHashlock.map((t) => t.transferId)
-    );
-    console.warn(
-      'withdraw active on init',
-      withdrawHashlock.length,
-      'ids:',
-      withdrawHashlock.map((t) => t.transferId)
-    );
-
-    // set a listener to check for transfers that may have been pushed after a refresh after the hanging transfers have already been canceled
-    _evts.CONDITIONAL_TRANSFER_CREATED.pipe((data) => {
-      return (
-        data.transfer.responderIdentifier === _node.publicIdentifier &&
-        data.transfer.meta.routingId !== activeCrossChainTransferIdRef.current
-      );
-    }).attach(async (data) => {
-      console.warn('Cancelling transfer thats not active');
-      await cancelTransfer(
-        _depositAddress,
-        _withdrawChannel.channelAddress,
-        data.transfer.transferId,
-        data.transfer.meta.crossChainTransferId,
-        _evts!,
-        _node
-      );
-    });
-
-    try {
-      console.log('Waiting for sender cancellations..');
-      await waitForSenderCancels(
-        _node,
-        _evts[EngineEvents.CONDITIONAL_TRANSFER_RESOLVED],
-        depositChannel.channelAddress
-      );
-      console.log('done!');
-    } catch (e) {
-      const message = 'Error in waitForSenderCancels';
-      console.log(e, message);
-      handleScreen({
-        state: ERROR_STATES.ERROR_SETUP,
-        error: e,
-        message: message,
-      });
-      return;
-    }
-
-    // After reconciling, get channel again
-    try {
-      depositChannel = await getChannelForChain(
-        _node,
-        routerPublicIdentifier,
-        senderChainInfo.chainId
-      );
-    } catch (e) {
-      const message = 'Could not get sender channel';
-      console.log(e, message);
-      handleScreen({
-        state: ERROR_STATES.ERROR_SETUP,
-        error: e,
-        message: message,
-      });
-      return;
-    }
-
-    const offChainDepositAssetBalance = BigNumber.from(
-      getBalanceForAssetId(depositChannel, depositAssetId, 'bob')
-    );
-    console.log(
-      `Offchain balance for ${_depositAddress} of asset ${depositAssetId}: ${offChainDepositAssetBalance}`
-    );
-
-    const offChainWithdrawAssetBalance = BigNumber.from(
-      getBalanceForAssetId(_withdrawChannel, withdrawAssetId, 'bob')
-    );
-    console.log(
-      `Offchain balance for ${_withdrawChannel.channelAddress} of asset ${withdrawAssetId}: ${offChainWithdrawAssetBalance}`
-    );
-
-    if (
-      offChainDepositAssetBalance.gt(0) &&
-      offChainWithdrawAssetBalance.gt(0)
-    ) {
-      console.warn(
-        'Balance exists in both channels, transferring first, then withdrawing'
-      );
-    }
-    // if offChainDepositAssetBalance > 0
-    if (offChainDepositAssetBalance.gt(0)) {
-      handleScreen({
-        state: SCREEN_STATES.EXISTING_BALANCE,
-        existingChannelBalance: offChainDepositAssetBalance,
-      });
-    }
-
-    // if offchainWithdrawBalance > 0
-    else if (offChainWithdrawAssetBalance.gt(0)) {
-      // then go to withdraw screen with transfer amount == balance
-      setPendingTransferMessage(`Detected Pending Cross-Chain Transfer`);
-      await withdraw(
-        receiverChainInfo,
-        _node,
-        _evts,
-        onWithdrawalTxCreated,
-        onFinished
-      );
-    }
-
     // if both are zero, register listener and display
     // QR code
-    else {
-      handleScreen({ state: SCREEN_STATES.SWAP });
-    }
+
+    handleScreen({ state: SCREEN_STATES.SWAP });
   };
 
   const init = async () => {
