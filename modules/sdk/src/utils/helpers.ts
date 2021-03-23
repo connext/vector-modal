@@ -115,18 +115,19 @@ export const getChain = async (
 
 export const getUserBalance = async (
   injectedProvider: providers.Web3Provider,
-  senderChainInfo: CHAIN_DETAIL
+  senderChainAssetId: string,
+  senderChainAssetDecimals: number
 ): Promise<string> => {
   const userAddress = await injectedProvider!.getSigner().getAddress();
   console.log('injected signer address', userAddress);
 
   const balance = await getOnchainBalance(
     injectedProvider,
-    senderChainInfo.assetId,
+    senderChainAssetId,
     userAddress
   );
 
-  const userBalance = utils.formatUnits(balance, senderChainInfo.assetDecimals);
+  const userBalance = utils.formatUnits(balance, senderChainAssetDecimals);
 
   return userBalance;
 };
