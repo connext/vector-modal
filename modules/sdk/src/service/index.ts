@@ -488,15 +488,6 @@ export class ConnextSdk {
 
     console.log('Verify Router Capacity');
     try {
-      console.log(
-        `Calling reconcileDeposit with ${this
-          .senderChainChannelAddress!} and ${this.senderChain?.assetId!}`
-      );
-      await reconcileDeposit(
-        this.connextClient!,
-        this.senderChainChannelAddress!,
-        this.senderChain?.assetId!
-      );
       await verifyRouterCapacityForTransfer(
         this.recipientChain?.rpcProvider!,
         this.recipientChain?.assetId!,
@@ -515,6 +506,16 @@ export class ConnextSdk {
   async transfer(params: TransferParamsSchema) {
     const crossChainTransferId = getRandomBytes32();
     const preImage = getRandomBytes32();
+
+    console.log(
+      `Calling reconcileDeposit with ${this
+        .senderChainChannelAddress!} and ${this.senderChain?.assetId!}`
+    );
+    await reconcileDeposit(
+      this.connextClient!,
+      this.senderChainChannelAddress!,
+      this.senderChain?.assetId!
+    );
 
     try {
       console.log(
