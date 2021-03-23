@@ -70,7 +70,11 @@ export type EstimateFeeResponseSchema = {
 
 export type WithdrawParamsSchema = {
   recipientAddress: string;
-  onWithdrawal?: (txHash: string, amountBn: BigNumber) => void;
+  onFinished?: (
+    txHash: string,
+    amountUi?: string,
+    amountBn?: BigNumber
+  ) => void;
   withdrawCallTo?: string;
   withdrawCallData?: string;
 };
