@@ -295,7 +295,6 @@ export const reconcileDeposit = async (
   if (ret.isError) {
     throw ret.getError();
   }
-  return ret.getValue();
 };
 
 export const createFromAssetTransfer = async (
@@ -403,15 +402,15 @@ export const waitForSenderCancels = async (
   if (active.isError) {
     throw active.getError();
   }
-  const hashlock = active.getValue().filter(t => {
+  const hashlock = active.getValue().filter((t) => {
     return Object.keys(t.transferState).includes('lockHash');
   });
   await Promise.all(
-    hashlock.map(async t => {
+    hashlock.map(async (t) => {
       try {
         console.log('Waiting for sender cancellation: ', t);
         await evt.waitFor(
-          data =>
+          (data) =>
             data.transfer.transferId === t.transferId &&
             data.channelAddress === depositChannelAddress &&
             Object.values(data.transfer.transferResolver)[0] ===
@@ -429,7 +428,7 @@ export const waitForSenderCancels = async (
   if (final.isError) {
     throw final.getError();
   }
-  const remaining = final.getValue().filter(t => {
+  const remaining = final.getValue().filter((t) => {
     return Object.keys(t.transferState).includes('lockHash');
   });
   if (remaining.length > 0) {
@@ -482,7 +481,7 @@ export const cancelHangingToTransfers = async (
     throw transfers.getError();
   }
 
-  const toCancel = transfers.getValue().filter(t => {
+  const toCancel = transfers.getValue().filter((t) => {
     const amResponder = t.responderIdentifier === withdrawChannel.bobIdentifier;
     const correctAsset = t.assetId === toAssetId;
     const isHashlock = Object.keys(t.transferState).includes('lockHash');
@@ -492,7 +491,7 @@ export const cancelHangingToTransfers = async (
 
   // wait for all hanging transfers to cancel
   const hangingResolutions = (await Promise.all(
-    toCancel.map(async transferToCancel => {
+    toCancel.map(async (transferToCancel) => {
       try {
         console.warn(
           'Cancelling hanging receiver transfer w/routingId:',
@@ -517,7 +516,7 @@ export const cancelHangingToTransfers = async (
         });
         // for sender transfer cancellation
         await evt.waitFor(
-          data =>
+          (data) =>
             data.transfer.meta.routingId === transferToCancel.meta!.routingId &&
             data.channelAddress === depositChannel.channelAddress &&
             Object.values(data.transfer.transferResolver)[0] ===
@@ -569,7 +568,7 @@ export const withdrawToAsset = async (
   const [ret, payload] = await Promise.all([
     node.withdraw(params),
     evt.waitFor(
-      data =>
+      (data) =>
         data.channelAddress === withdrawChannel.channelAddress &&
         data.recipient === recipientAddr,
       60_000
@@ -631,7 +630,7 @@ export const verifyAndGetRouterSupports = async (
   console.log('toAssetId.toLowerCase(): ', toAssetId.toLowerCase());
   console.log('fromChainId: ', fromChainId);
   console.log('toChainId: ', toChainId);
-  const swap = allowedSwaps.find(s => {
+  const swap = allowedSwaps.find((s) => {
     const noninverted =
       s.fromAssetId.toLowerCase() === fromAssetId.toLowerCase() &&
       s.fromChainId === fromChainId &&
@@ -702,12 +701,8 @@ export const verifyRouterCapacityForTransfer = async (
 };
 
 export type EvtContainer = {
-  [EngineEvents.CONDITIONAL_TRANSFER_CREATED]: Evt<
-    ConditionalTransferCreatedPayload
-  >;
-  [EngineEvents.CONDITIONAL_TRANSFER_RESOLVED]: Evt<
-    ConditionalTransferResolvedPayload
-  >;
+  [EngineEvents.CONDITIONAL_TRANSFER_CREATED]: Evt<ConditionalTransferCreatedPayload>;
+  [EngineEvents.CONDITIONAL_TRANSFER_RESOLVED]: Evt<ConditionalTransferResolvedPayload>;
   [EngineEvents.DEPOSIT_RECONCILED]: Evt<DepositReconciledPayload>;
   [EngineEvents.WITHDRAWAL_RECONCILED]: Evt<WithdrawalReconciledPayload>;
   [EngineEvents.WITHDRAWAL_RESOLVED]: Evt<WithdrawalResolvedPayload>;
@@ -720,23 +715,23 @@ export const createEvtContainer = (node: BrowserNode): EvtContainer => {
   const withdrawReconciled = Evt.create<WithdrawalReconciledPayload>();
   const withdrawResolved = Evt.create<WithdrawalResolvedPayload>();
 
-  node.on(EngineEvents.CONDITIONAL_TRANSFER_CREATED, data => {
+  node.on(EngineEvents.CONDITIONAL_TRANSFER_CREATED, (data) => {
     console.log('EngineEvents.CONDITIONAL_TRANSFER_CREATED: ', data);
     createdTransfer.post(data);
   });
-  node.on(EngineEvents.CONDITIONAL_TRANSFER_RESOLVED, data => {
+  node.on(EngineEvents.CONDITIONAL_TRANSFER_RESOLVED, (data) => {
     console.log('EngineEvents.CONDITIONAL_TRANSFER_RESOLVED: ', data);
     resolvedTransfer.post(data);
   });
-  node.on(EngineEvents.DEPOSIT_RECONCILED, data => {
+  node.on(EngineEvents.DEPOSIT_RECONCILED, (data) => {
     console.log('EngineEvents.DEPOSIT_RECONCILED: ', data);
     deposit.post(data);
   });
-  node.on(EngineEvents.WITHDRAWAL_RECONCILED, data => {
+  node.on(EngineEvents.WITHDRAWAL_RECONCILED, (data) => {
     console.log('EngineEvents.WITHDRAWAL_RECONCILED: ', data);
     withdrawReconciled.post(data);
   });
-  node.on(EngineEvents.WITHDRAWAL_RESOLVED, data => {
+  node.on(EngineEvents.WITHDRAWAL_RESOLVED, (data) => {
     console.log('EngineEvents.WITHDRAWAL_RESOLVED: ', data);
     withdrawResolved.post(data);
   });
