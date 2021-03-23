@@ -5,12 +5,15 @@ import { BigNumber, constants, utils } from 'ethers';
 import AwesomeDebouncePromise from 'awesome-debounce-promise';
 import {
   CHAIN_DETAIL,
+  SetupParamsSchema,
   InitParamsSchema,
   EstimateFeeParamsSchema,
   EstimateFeeResponseSchema,
   TransferParamsSchema,
   WithdrawParamsSchema,
   CrossChainSwapParamsSchema,
+  CheckPendingTransferResponseSchema,
+  InitResponseSchema,
 } from '../constants';
 import {
   getChain,
@@ -46,7 +49,37 @@ export class ConnextSdk {
 
   private getFeesDebounced = AwesomeDebouncePromise(getCrosschainFee, 200);
 
-  async init(params: InitParamsSchema) {
+  async init(params: InitParamsSchema): Promise<InitResponseSchema> {
+    try {
+      await this.setup({
+        routerPublicIdentifier: params.routerPublicIdentifier,
+        loginProvider: params.loginProvider,
+        senderChainProvider: params.senderChainProvider,
+        senderAssetId: params.senderAssetId,
+        recipientChainProvider: params.recipientChainProvider,
+        recipientAssetId: params.recipientAssetId,
+        senderChainId: params.senderChainId,
+        recipientChainId: params.recipientChainId,
+        iframeSrcOverride: params.iframeSrcOverride,
+      });
+    } catch (e) {
+      const message = 'Failed at Setup';
+      console.log(e, message);
+      throw Error(e);
+    }
+
+    try {
+      const response = await this.checkPendingTransfer();
+      console.log('SUCCESS INIT');
+      return response;
+    } catch (e) {
+      const message = 'Failed at Pending Tranfer Check';
+      console.log(e, message);
+      throw Error(e);
+    }
+  }
+
+  async setup(params: SetupParamsSchema) {
     this.routerPublicIdentifier = params.routerPublicIdentifier;
 
     let senderChainInfo: CHAIN_DETAIL;
@@ -155,12 +188,9 @@ export class ConnextSdk {
       console.log(e, message);
       throw Error(e);
     }
-
-    console.log('SUCCESS INIT');
   }
 
-  async setup() {}
-  async checkPendingTransfer() {
+  async checkPendingTransfer(): Promise<CheckPendingTransferResponseSchema> {
     try {
       await reconcileDeposit(
         this.connextClient!,
@@ -361,24 +391,10 @@ export class ConnextSdk {
         .recipientChain?.assetId!}: ${offChainRecipientChainAssetBalance}`
     );
 
-    if (
-      offChainSenderChainAssetBalance.gt(0) &&
-      offChainRecipientChainAssetBalance.gt(0)
-    ) {
-      console.warn(
-        'Balance exists in both channels, transferring first, then withdrawing'
-      );
-    }
-    // if offChainDepositAssetBalance > 0
-    if (offChainSenderChainAssetBalance.gt(0)) {
-      // TODO: Existing Balance Detected
-    }
-
-    // if offchainWithdrawBalance > 0
-    else if (offChainRecipientChainAssetBalance.gt(0)) {
-      // then go to withdraw screen with transfer amount == balance
-      // TODO: Existing Balance Detected at recipient chain
-    }
+    return {
+      offChainSenderChainAssetBalanceBn: offChainSenderChainAssetBalance,
+      offChainRecipientChainAssetBalanceBn: offChainRecipientChainAssetBalance,
+    };
   }
 
   async estimateFees(
