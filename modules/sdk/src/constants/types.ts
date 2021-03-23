@@ -43,7 +43,7 @@ export const SCREEN_STATES = {
 } as const;
 export type ScreenStates = keyof typeof SCREEN_STATES;
 
-export type InitParamsSchema = {
+export type SetupParamsSchema = {
   routerPublicIdentifier: string; // "vectorA876de..."
   loginProvider: any;
   senderChainProvider: string;
@@ -55,6 +55,14 @@ export type InitParamsSchema = {
   iframeSrcOverride?: string;
 };
 
+export type InitParamsSchema = SetupParamsSchema;
+
+export type CheckPendingTransferResponseSchema = {
+  offChainSenderChainAssetBalanceBn: BigNumber;
+  offChainRecipientChainAssetBalanceBn: BigNumber;
+};
+
+export type InitResponseSchema = CheckPendingTransferResponseSchema;
 export type EstimateFeeParamsSchema = {
   input: string | undefined;
   isRecipientAssetInput: boolean;
