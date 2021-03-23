@@ -993,6 +993,19 @@ const ConnextModal: FC<ConnextModalProps> = ({
     setMessage('Setting up channels...');
     let _node: BrowserNode;
     try {
+      // call isAlive if node set already (i.e. retry)
+      if (node && depositAddress && withdrawChannel) {
+        await Promise.all([
+          node.sendIsAliveMessage({
+            channelAddress: depositAddress,
+            skipCheckIn: false,
+          }),
+          node.sendIsAliveMessage({
+            channelAddress: withdrawChannel.channelAddress,
+            skipCheckIn: false,
+          }),
+        ]);
+      }
       // browser node object
       _node =
         node ??
