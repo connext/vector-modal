@@ -467,7 +467,8 @@ const ConnextModal: FC<ConnextModalProps> = ({
 
         const _userBalance = await getUserBalance(
           injectedProvider,
-          senderChainInfo
+          senderChainInfo.assetId,
+          senderChainInfo.assetDecimals
         );
         setUserBalance(_userBalance);
       } catch (e) {
@@ -484,9 +485,9 @@ const ConnextModal: FC<ConnextModalProps> = ({
 
     setMessage('Setting up channels...');
 
+    let connextSdk = new ConnextSdk();
     try {
-      let connextSdk = new ConnextSdk();
-      await connextSdk.init({
+      await connextSdk.setup({
         routerPublicIdentifier,
         loginProvider: loginProvider,
         senderChainProvider: depositChainProvider,
@@ -518,10 +519,68 @@ const ConnextModal: FC<ConnextModalProps> = ({
       });
       return;
     }
+
+    setMessage('Looking for pending Transfers...');
+    let response;
+    try {
+      response = await connextSdk!.checkPendingTransfer();
+    } catch (e) {
+      const message = 'Failed at Pending Tranfer Check';
+      console.log(e, message);
+      throw Error(e);
+    }
+
+    console.log(response);
+
+    const offChainDepositAssetBalance =
+      response.offChainSenderChainAssetBalanceBn;
+    const offChainWithdrawAssetBalance =
+      response.offChainRecipientChainAssetBalanceBn;
+    if (
+      offChainDepositAssetBalance.gt(0) &&
+      offChainWithdrawAssetBalance.gt(0)
+    ) {
+      console.warn(
+        'Balance exists in both channels, transferring first, then withdrawing'
+      );
+    }
+    // if offChainDepositAssetBalance > 0
+    if (offChainDepositAssetBalance.gt(0)) {
+      handleScreen({
+        state: SCREEN_STATES.EXISTING_BALANCE,
+        existingChannelBalance: offChainDepositAssetBalance,
+      });
+    }
+
+    // if offchainWithdrawBalance > 0
+    else if (offChainWithdrawAssetBalance.gt(0)) {
+      // then go to withdraw screen with transfer amount == balance
+      handleScreen({
+        state: SCREEN_STATES.STATUS,
+        title: 'withdrawing',
+        message: `withdrawing ${senderChain?.assetName} to ${receiverChain?.name}. This step can take some time if the chain is congested`,
+      });
+
+      try {
+        await connextSdk!.withdraw({
+          recipientAddress: withdrawalAddress,
+          onFinished: onSuccess,
+          withdrawCallTo: withdrawCallTo,
+          withdrawCallData: withdrawCallData,
+        });
+      } catch (e) {
+        console.log('Error at withdraw', e);
+        throw Error(e);
+      }
+
+      handleScreen({ state: SCREEN_STATES.SUCCESS });
+    }
+
     // if both are zero, register listener and display
     // QR code
-
-    handleScreen({ state: SCREEN_STATES.SWAP });
+    else {
+      handleScreen({ state: SCREEN_STATES.SWAP });
+    }
   };
 
   const init = async () => {
