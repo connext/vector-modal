@@ -728,7 +728,7 @@ const ConnextModal: FC<ConnextModalProps> = ({
   };
 
   const continueButton = async () => {
-    setExistingChannelBalanceBn('');
+    setExistingChannelBalanceBn(undefined);
     handleSwap();
   };
 
