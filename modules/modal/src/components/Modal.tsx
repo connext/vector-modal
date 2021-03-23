@@ -2,7 +2,7 @@ import { BrowserNode } from '@connext/vector-browser-node';
 import React, { FC, useEffect, useState } from 'react';
 import { ThemeProvider } from 'styled-components';
 import { Modal } from '@chakra-ui/react';
-import { ERC20Abi, FullChannelState } from '@connext/vector-types';
+import { ERC20Abi } from '@connext/vector-types';
 import { BigNumber, constants, utils, providers, Contract } from 'ethers';
 import {
   ERROR_STATES,
@@ -111,13 +111,6 @@ const ConnextModal: FC<ConnextModalProps> = ({
 
   const [depositAddress, setDepositAddress] = useState<string>();
 
-  const [withdrawChannel, _setWithdrawChannel] = useState<FullChannelState>();
-  const withdrawChannelRef = React.useRef(withdrawChannel);
-  const setWithdrawChannel = (data: FullChannelState) => {
-    withdrawChannelRef.current = data;
-    _setWithdrawChannel(data);
-  };
-
   const [senderChain, setSenderChain] = useState<CHAIN_DETAIL>();
   const [receiverChain, setReceiverChain] = useState<CHAIN_DETAIL>();
 
@@ -158,8 +151,6 @@ const ConnextModal: FC<ConnextModalProps> = ({
   };
 
   const [node, setNode] = useState<BrowserNode | undefined>();
-
-  const [swapDefinition, _setSwapDefinition] = useState();
 
   const [screenState, setScreenState] = useState<ScreenStates>(
     SCREEN_STATES.LOADING
@@ -233,24 +224,10 @@ const ConnextModal: FC<ConnextModalProps> = ({
   // };
 
   const handleSwap = async () => {
-    // For UI
-    // let existingChannelBalanceUi: string | undefined;
-    // if (existingChannelBalanceBn) {
-    //   existingChannelBalanceUi = truncate(
-    //     utils.formatUnits(
-    //       existingChannelBalanceBn!,
-    //       senderChain?.assetDecimals!
-    //     ),
-    //     4
-    //   );
-
-    // call createFromAssetTransfer
     handleScreen({
       state: SCREEN_STATES.STATUS,
       title: 'transferring',
-      message: `Transferring ${senderChain?.assetName!} from ${senderChain?.name!} to ${
-        receiverChain?.name
-      }. This step can take some time if the chain is congested`,
+      message: `Transferring ${senderChain?.assetName!}. This step can take some time if the chain is congested`,
     });
 
     try {
@@ -276,6 +253,8 @@ const ConnextModal: FC<ConnextModalProps> = ({
       console.log('Error at withdraw', e);
       throw Error(e);
     }
+
+    handleScreen({ state: SCREEN_STATES.SUCCESS });
   };
 
   const depositListenerAndTransfer = async () => {
@@ -783,7 +762,6 @@ const ConnextModal: FC<ConnextModalProps> = ({
           <Status
             title={title!}
             message={message!}
-            pendingTransferMessage={pendingTransferMessage}
             senderChainInfo={senderChain!}
             receiverChainInfo={receiverChain!}
             receiverAddress={withdrawalAddress}
