@@ -223,6 +223,16 @@ const ConnextModal: FC<ConnextModalProps> = ({
   //   }
   // };
 
+  const onSuccess = (
+    txHash: string,
+    amountUi?: string,
+    amountBn?: BigNumber
+  ) => {
+    console.log(txHash, amountUi, amountBn);
+    setWithdrawTx(txHash);
+    setSuccessWithdrawalAmount(amountUi!);
+  };
+
   const handleSwap = async () => {
     handleScreen({
       state: SCREEN_STATES.STATUS,
@@ -246,6 +256,7 @@ const ConnextModal: FC<ConnextModalProps> = ({
     try {
       await connextSdk!.withdraw({
         recipientAddress: withdrawalAddress,
+        onFinished: onSuccess,
         withdrawCallTo: withdrawCallTo,
         withdrawCallData: withdrawCallData,
       });
