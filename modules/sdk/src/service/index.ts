@@ -10,6 +10,7 @@ import {
   EstimateFeeResponseSchema,
   TransferParamsSchema,
   WithdrawParamsSchema,
+  CrossChainSwapParamsSchema,
 } from '../constants';
 import {
   getChain,
@@ -57,7 +58,7 @@ export class ConnextSdk {
     } catch (e) {
       const message = 'Failed to fetch sender chain info';
       console.log(e, message);
-      throw new Error(`${message}: ${e}`);
+      throw Error(e);
     }
 
     let recipientChainInfo: CHAIN_DETAIL;
@@ -71,7 +72,7 @@ export class ConnextSdk {
     } catch (e) {
       const message = 'Failed to fetch receiver chain info';
       console.log(e, message);
-      throw new Error(`${message}: ${e}`);
+      throw Error(e);
     }
 
     // setup browser node
@@ -93,7 +94,7 @@ export class ConnextSdk {
     } catch (e) {
       const message = 'Error initalizing Browser Node';
       console.log(e, message);
-      throw new Error(`${message}: ${e}`);
+      throw Error(e);
     }
 
     console.log('INITIALIZED BROWSER NODE');
@@ -112,7 +113,7 @@ export class ConnextSdk {
     } catch (e) {
       const message = 'Could not get sender channel';
       console.log(e, message);
-      throw new Error(`${message}: ${e}`);
+      throw Error(e);
     }
     const senderChainChannelAddress = senderChainChannel!.channelAddress;
     this.senderChainChannelAddress = senderChainChannelAddress;
@@ -128,7 +129,7 @@ export class ConnextSdk {
     } catch (e) {
       const message = 'Could not get sender channel';
       console.log(e, message);
-      throw new Error(`${message}: ${e}`);
+      throw Error(e);
     }
 
     const recipientChainChannelAddress = recipientChainChannel?.channelAddress!;
@@ -150,7 +151,7 @@ export class ConnextSdk {
     } catch (e) {
       const message = 'Error in verifyRouterSupports';
       console.log(e, message);
-      throw new Error(`${message}: ${e}`);
+      throw Error(e);
     }
 
     try {
@@ -198,12 +199,12 @@ export class ConnextSdk {
         } catch (e) {
           const message = 'Error in reconcileDeposit';
           console.error(message, e);
-          throw new Error(`${message}: ${e}`);
+          throw Error(e);
         }
       } else {
         const message = 'Error in reconcileDeposit';
         console.error(message, e);
-        throw new Error(`${message}: ${e}`);
+        throw Error(e);
       }
     }
 
@@ -223,7 +224,7 @@ export class ConnextSdk {
     } catch (e) {
       const message = 'Error in cancelHangingToTransfers';
       console.log(e, message);
-      throw new Error(`${message}: ${e}`);
+      throw Error(e);
     }
 
     // get active transfers
@@ -283,7 +284,7 @@ export class ConnextSdk {
     } catch (e) {
       const message = 'Error in waitForSenderCancels';
       console.log(e, message);
-      throw new Error(`${message}: ${e}`);
+      throw Error(e);
     }
 
     // After reconciling, get channel again
@@ -296,7 +297,7 @@ export class ConnextSdk {
     } catch (e) {
       const message = 'Could not get sender channel';
       console.log(e, message);
-      throw new Error(`${message}: ${e}`);
+      throw Error(e);
     }
 
     const offChainSenderChainAssetBalance = BigNumber.from(
@@ -341,22 +342,25 @@ export class ConnextSdk {
 
   async estimateFees(
     params: EstimateFeeParamsSchema
-  ): Promise<EstimateFeeResponseSchema | undefined> {
+  ): Promise<EstimateFeeResponseSchema> {
     const { input: _input, isRecipientAssetInput, userBalance } = params;
 
     const input = _input ? _input.trim() : undefined;
+    let err: string | undefined = undefined;
 
     if (!input) {
-      return;
+      return {
+        error: err,
+        senderAmount: '',
+        recipientAmount: '',
+        totalFee: undefined,
+      };
     }
 
-    let err: string | undefined = undefined;
-    let senderAmountUi: string | undefined = isRecipientAssetInput
-      ? undefined
-      : input;
+    let senderAmountUi: string | undefined = isRecipientAssetInput ? '' : input;
     let recipientAmountUi: string | undefined = isRecipientAssetInput
       ? input
-      : undefined;
+      : '';
     let totalFee: string | undefined = undefined;
 
     try {
@@ -375,7 +379,7 @@ export class ConnextSdk {
           error: err,
           senderAmount: senderAmountUi,
           recipientAmount: recipientAmountUi,
-          estimatedFee: totalFee,
+          totalFee: totalFee,
         };
       }
 
@@ -409,7 +413,7 @@ export class ConnextSdk {
           error: e.message,
           senderAmount: senderAmountUi,
           recipientAmount: recipientAmountUi,
-          estimatedFee: totalFee,
+          totalFee: totalFee,
         };
       }
 
@@ -422,7 +426,7 @@ export class ConnextSdk {
           error: err,
           senderAmount: senderAmountUi,
           recipientAmount: recipientAmountUi,
-          estimatedFee: totalFee,
+          totalFee: totalFee,
         };
       }
 
@@ -450,7 +454,7 @@ export class ConnextSdk {
             error: err,
             senderAmount: senderAmountUi,
             recipientAmount: recipientAmountUi,
-            estimatedFee: totalFee,
+            totalFee: totalFee,
           };
         }
       }
@@ -462,18 +466,18 @@ export class ConnextSdk {
       error: err,
       senderAmount: senderAmountUi,
       recipientAmount: recipientAmountUi,
-      estimatedFee: totalFee,
+      totalFee: totalFee,
     };
   }
 
-  async preCheckTransfer(senderAmount: string) {
-    if (senderAmount) {
+  async preTransferCheck(input: string) {
+    if (!input) {
       const message = 'Transfer Amount is undefined';
       console.log(message);
       throw new Error(`${message}`);
     }
     const transferAmountBn: BigNumber = BigNumber.from(
-      utils.parseUnits(senderAmount, this.senderChain?.assetDecimals!)
+      utils.parseUnits(input, this.senderChain?.assetDecimals!)
     );
 
     if (transferAmountBn.isZero()) {
@@ -502,9 +506,6 @@ export class ConnextSdk {
         this.swapDefinition!,
         this.senderChain?.assetDecimals!
       );
-      console.log(
-        `Transferring ${transferAmountBn.toString()} through injected provider`
-      );
     } catch (e) {
       console.log(e);
       throw Error(e);
@@ -512,34 +513,8 @@ export class ConnextSdk {
   }
 
   async transfer(params: TransferParamsSchema) {
-    const { senderAmount, transactionHash, preCheck = true } = params;
     const crossChainTransferId = getRandomBytes32();
     const preImage = getRandomBytes32();
-
-    if (preCheck) {
-      try {
-        await this.preCheckTransfer(senderAmount);
-      } catch (e) {
-        console.log(e);
-        throw Error(e);
-      }
-    }
-
-    try {
-      await this.senderChain
-        ?.rpcProvider!.waitForTransaction(transactionHash, 2)
-        .then((receipt) => {
-          if (receipt.status === 0) {
-            // tx reverted
-            const message = 'Transaction reverted onchain';
-            console.error(message, receipt);
-            throw new Error(message);
-          }
-        });
-    } catch (e) {
-      console.log(e);
-      throw Error(e);
-    }
 
     try {
       console.log(
@@ -613,7 +588,7 @@ export class ConnextSdk {
       const message =
         'Did not receive transfer after 500 seconds, please try again later or attempt recovery';
       console.log(e, message);
-      throw new Error(`${message}: ${e}`);
+      throw Error(e);
     }
 
     const senderResolve = this.evts![
@@ -647,13 +622,6 @@ export class ConnextSdk {
         e
       );
     }
-
-    const withdrawalParams: WithdrawParamsSchema = {
-      recipientAddress: params.recipientAddress,
-      withdrawCallTo: params.withdrawCallTo,
-      withdrawCallData: params.withdrawCallData,
-    };
-    await this.withdraw(withdrawalParams);
   }
 
   async withdraw(params: WithdrawParamsSchema) {
@@ -696,5 +664,36 @@ export class ConnextSdk {
           throw new Error(message);
         }
       });
+  }
+
+  async crossChainSwap(params: CrossChainSwapParamsSchema) {
+    const {
+      recipientAddress,
+      onTransferred,
+      onWithdrawal,
+      withdrawCallTo,
+      withdrawCallData,
+    } = params;
+
+    try {
+      await this.transfer({ onTransferred: onTransferred });
+    } catch (e) {
+      console.log('Error at Transfer', e);
+      throw Error(e);
+    }
+
+    try {
+      await this.withdraw({
+        recipientAddress: recipientAddress,
+        onWithdrawal: onWithdrawal,
+        withdrawCallTo: withdrawCallTo,
+        withdrawCallData: withdrawCallData,
+      });
+    } catch (e) {
+      console.log('Error at withdraw', e);
+      throw Error(e);
+    }
+
+    console.log('Successfully Swap');
   }
 }
