@@ -310,23 +310,15 @@ const ConnextModal: FC<ConnextModalProps> = ({
 
   };
 
-  const depositListenerAndTransfer = async (
-    _depositChainId: number,
-    _withdrawChainId: number,
-    _depositAddress: string,
-    _depositRpcProvider: providers.JsonRpcProvider,
-    _withdrawRpcProvider: providers.JsonRpcProvider,
-    _evts: EvtContainer,
-    _node: BrowserNode
-  ) => {
+  const depositListenerAndTransfer = async () => {
     handleScreen({ state: SCREEN_STATES.LISTENER });
     setShowTimer(true);
     let initialDeposits: BigNumber;
     try {
       initialDeposits = await getTotalDepositsBob(
-        _depositAddress,
-        depositAssetId,
-        _depositRpcProvider
+        connextSdk!.senderChannelChainAddress,
+        senderChain?.chainId,
+        senderChain?.rpcProvider
       );
     } catch (e) {
       handleScreen({
@@ -334,27 +326,26 @@ const ConnextModal: FC<ConnextModalProps> = ({
         error: e,
         message: 'Error getting total deposits',
       });
-
       return;
     }
     console.log(
-      `Starting balance on ${_depositChainId} for ${_depositAddress} of asset ${depositAssetId}: ${initialDeposits.toString()}`
+      `Starting balance on ${senderChain?.chainId!} for ${connextSdk!.senderChannelChainAddress} of asset ${depositAssetId}: ${initialDeposits.toString()}`
     );
 
     let depositListener = setInterval(async () => {
       let updatedDeposits: BigNumber;
       try {
         updatedDeposits = await getTotalDepositsBob(
-          _depositAddress,
+          connextSdk!.senderChannelChainAddress,
           depositAssetId,
-          _depositRpcProvider
+          senderChain?.rpcProvider
         );
       } catch (e) {
         console.warn(`Error fetching balance: ${e.message}`);
         return;
       }
       console.log(
-        `Updated balance on ${_depositChainId} for ${_depositAddress} of asset ${depositAssetId}: ${updatedDeposits.toString()}`
+        `Updated balance on ${senderChain?.chainId!} for ${connextSdk!.senderChannelChainAddress} of asset ${depositAssetId}: ${updatedDeposits.toString()}`
       );
 
       if (updatedDeposits.lt(initialDeposits)) {
@@ -437,15 +428,7 @@ const ConnextModal: FC<ConnextModalProps> = ({
       console.log(`Starting block listener`);
       // display QR
       setIsLoad(false);
-      // await depositListenerAndTransfer(
-      //   _depositChainId,
-      //   _withdrawChainId,
-      //   _depositAddress,
-      //   _depositRpcProvider,
-      //   _withdrawRpcProvider,
-      //   _evts,
-      //   _node
-      // );
+      await depositListenerAndTransfer();
     } else {
       // deposit
       try {
