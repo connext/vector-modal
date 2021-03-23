@@ -141,7 +141,6 @@ const ConnextModal: FC<ConnextModalProps> = ({
     withdrawChannelRef.current = data;
     _setWithdrawChannel(data);
   };
-  const [evts, setEvts] = useState<EvtContainer>();
 
   const [senderChain, setSenderChain] = useState<CHAIN_DETAIL>();
   const [receiverChain, setReceiverChain] = useState<CHAIN_DETAIL>();
@@ -185,11 +184,6 @@ const ConnextModal: FC<ConnextModalProps> = ({
   const [node, setNode] = useState<BrowserNode | undefined>();
 
   const [swapDefinition, _setSwapDefinition] = useState();
-  const swapRef = React.useRef(swapDefinition);
-  const setSwapDefinition = (data: any) => {
-    swapRef.current = data;
-    _setSwapDefinition(data);
-  };
 
   const [screenState, setScreenState] = useState<ScreenStates>(
     SCREEN_STATES.LOADING
@@ -212,69 +206,68 @@ const ConnextModal: FC<ConnextModalProps> = ({
     setExistingChannelBalanceBn,
   ] = useState<BigNumber>();
 
-  const cancelTransfer = async (
-    depositChannelAddress: string,
-    withdrawChannelAddress: string,
-    transferId: string,
-    crossChainTransferId: string,
-    _evts: EvtContainer,
-    _node: BrowserNode
-  ) => {
-    // show a better screen here, loading UI
-    handleScreen({
-      state: ERROR_STATES.ERROR_TRANSFER,
-      error: new Error('Cancelling transfer...'),
-    });
+  // const cancelTransfer = async (
+  //   depositChannelAddress: string,
+  //   withdrawChannelAddress: string,
+  //   transferId: string,
+  //   crossChainTransferId: string,
+  //   _evts: EvtContainer,
+  //   _node: BrowserNode
+  // ) => {
+  //   // show a better screen here, loading UI
+  //   handleScreen({
+  //     state: ERROR_STATES.ERROR_TRANSFER,
+  //     error: new Error('Cancelling transfer...'),
+  //   });
 
-    const senderResolution = _evts.CONDITIONAL_TRANSFER_RESOLVED.pipe(
-      (data) =>
-        data.transfer.meta.crossChainTransferId === crossChainTransferId &&
-        data.channelAddress === depositChannelAddress
-    ).waitFor(45_000);
+  //   const senderResolution = _evts.CONDITIONAL_TRANSFER_RESOLVED.pipe(
+  //     (data) =>
+  //       data.transfer.meta.crossChainTransferId === crossChainTransferId &&
+  //       data.channelAddress === depositChannelAddress
+  //   ).waitFor(45_000);
 
-    const receiverResolution = _evts.CONDITIONAL_TRANSFER_RESOLVED.pipe(
-      (data) =>
-        data.transfer.meta.crossChainTransferId === crossChainTransferId &&
-        data.channelAddress === withdrawChannelAddress
-    ).waitFor(45_000);
-    try {
-      await cancelToAssetTransfer(_node, withdrawChannelAddress, transferId);
-    } catch (e) {
-      handleScreen({
-        state: ERROR_STATES.ERROR_TRANSFER,
-        error: e,
-        message: 'Error in cancelToAssetTransfer',
-      });
-    }
+  //   const receiverResolution = _evts.CONDITIONAL_TRANSFER_RESOLVED.pipe(
+  //     (data) =>
+  //       data.transfer.meta.crossChainTransferId === crossChainTransferId &&
+  //       data.channelAddress === withdrawChannelAddress
+  //   ).waitFor(45_000);
+  //   try {
+  //     await cancelToAssetTransfer(_node, withdrawChannelAddress, transferId);
+  //   } catch (e) {
+  //     handleScreen({
+  //       state: ERROR_STATES.ERROR_TRANSFER,
+  //       error: e,
+  //       message: 'Error in cancelToAssetTransfer',
+  //     });
+  //   }
 
-    try {
-      await Promise.all([senderResolution, receiverResolution]);
-      handleScreen({
-        state: ERROR_STATES.ERROR_TRANSFER,
-        error: new Error('Transfer was cancelled'),
-      });
-    } catch (e) {
-      handleScreen({
-        state: ERROR_STATES.ERROR_TRANSFER,
-        error: e,
-        message: 'Error waiting for sender and receiver cancellations',
-      });
-    }
-  };
+  //   try {
+  //     await Promise.all([senderResolution, receiverResolution]);
+  //     handleScreen({
+  //       state: ERROR_STATES.ERROR_TRANSFER,
+  //       error: new Error('Transfer was cancelled'),
+  //     });
+  //   } catch (e) {
+  //     handleScreen({
+  //       state: ERROR_STATES.ERROR_TRANSFER,
+  //       error: e,
+  //       message: 'Error waiting for sender and receiver cancellations',
+  //     });
+  //   }
+  // };
 
-  const handleSwap = async (
-  ) => {
+  const handleSwap = async () => {
     // For UI
-    let existingChannelBalanceUi: string | undefined;
-    if (existingChannelBalanceBn) {
-      existingChannelBalanceUi = truncate(
-        utils.formatUnits(
-          existingChannelBalanceBn!,
-          senderChain?.assetDecimals!
-        ),
-        4
-      );
-  
+    // let existingChannelBalanceUi: string | undefined;
+    // if (existingChannelBalanceBn) {
+    //   existingChannelBalanceUi = truncate(
+    //     utils.formatUnits(
+    //       existingChannelBalanceBn!,
+    //       senderChain?.assetDecimals!
+    //     ),
+    //     4
+    //   );
+
     // call createFromAssetTransfer
     handleScreen({
       state: SCREEN_STATES.STATUS,
@@ -307,7 +300,6 @@ const ConnextModal: FC<ConnextModalProps> = ({
       console.log('Error at withdraw', e);
       throw Error(e);
     }
-
   };
 
   const depositListenerAndTransfer = async () => {
@@ -329,7 +321,9 @@ const ConnextModal: FC<ConnextModalProps> = ({
       return;
     }
     console.log(
-      `Starting balance on ${senderChain?.chainId!} for ${connextSdk!.senderChannelChainAddress} of asset ${depositAssetId}: ${initialDeposits.toString()}`
+      `Starting balance on ${senderChain?.chainId!} for ${
+        connextSdk!.senderChannelChainAddress
+      } of asset ${depositAssetId}: ${initialDeposits.toString()}`
     );
 
     let depositListener = setInterval(async () => {
@@ -345,7 +339,9 @@ const ConnextModal: FC<ConnextModalProps> = ({
         return;
       }
       console.log(
-        `Updated balance on ${senderChain?.chainId!} for ${connextSdk!.senderChannelChainAddress} of asset ${depositAssetId}: ${updatedDeposits.toString()}`
+        `Updated balance on ${senderChain?.chainId!} for ${
+          connextSdk!.senderChannelChainAddress
+        } of asset ${depositAssetId}: ${updatedDeposits.toString()}`
       );
 
       if (updatedDeposits.lt(initialDeposits)) {
@@ -732,9 +728,8 @@ const ConnextModal: FC<ConnextModalProps> = ({
   };
 
   const continueButton = async () => {
-    const transferAmountBn = existingChannelBalanceBn!;
-    setExistingChannelBalanceBn(undefined);
-    transfer(transferAmountBn, true);
+    setExistingChannelBalanceBn('');
+    handleSwap();
   };
 
   const addMoreFunds = async () => {
