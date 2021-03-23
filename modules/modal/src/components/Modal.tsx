@@ -262,21 +262,8 @@ const ConnextModal: FC<ConnextModalProps> = ({
     }
   };
 
-  const transfer = async (
-    transferAmount: BigNumber,
-    verifyRouterCapacity: boolean
+  const handleSwap = async (
   ) => {
-    const _depositChainId: number = senderChain?.chainId!;
-    const _withdrawChainId: number = receiverChain?.chainId!;
-    const _withdrawRpcProvider: providers.JsonRpcProvider = receiverChain?.rpcProvider!;
-    const crossChainTransferId = getRandomBytes32();
-    setActiveCrossChainTransferId(crossChainTransferId);
-
-    const statusTransferAmount = utils.formatUnits(
-      transferAmount,
-      senderChain?.assetDecimals!
-    );
-
     // For UI
     let existingChannelBalanceUi: string | undefined;
     if (existingChannelBalanceBn) {
@@ -287,219 +274,22 @@ const ConnextModal: FC<ConnextModalProps> = ({
         ),
         4
       );
-
-      // otherwise onSwap has already been called from handleSwapRequest
-      // this should only be hit if the
-      if (onSwap) {
-        try {
-          console.log('Calling onSwap function');
-          await onSwap(transferAmount.toString(), node!);
-        } catch (e) {
-          console.log('onswap error', e);
-          handleScreen({
-            state: ERROR_STATES.ERROR_TRANSFER,
-            error: e,
-            message: 'Error calling onSwap',
-          });
-          return;
-        }
-      }
-    }
-
-    handleScreen({
-      state: SCREEN_STATES.STATUS,
-      title: 'deposit detected',
-      message: `Detected ${
-        existingChannelBalanceBn && existingChannelBalanceUi + ' +'
-      } ${truncate(statusTransferAmount, 4)} ${senderChain?.assetName} on ${
-        senderChain?.name
-      }, transferring into state channel`,
-    });
-
-    try {
-      console.log(
-        `Calling reconcileDeposit with ${depositAddress!} and ${depositAssetId}`
-      );
-      await reconcileDeposit(node!, depositAddress!, depositAssetId);
-
-      if (verifyRouterCapacity) {
-        console.log('withdrawChannel: ', withdrawChannelRef.current);
-        await verifyRouterCapacityForTransfer(
-          _withdrawRpcProvider,
-          withdrawAssetId,
-          receiverChain?.assetDecimals!,
-          withdrawChannelRef.current!,
-          transferAmount,
-          swapRef.current,
-          senderChain?.assetDecimals!
-        );
-      }
-    } catch (e) {
-      handleScreen({
-        state: ERROR_STATES.ERROR_TRANSFER,
-        error: e,
-        message: 'Error in reconcileDeposit',
-      });
-
-      return;
-    }
+  
     // call createFromAssetTransfer
-
     handleScreen({
       state: SCREEN_STATES.STATUS,
       title: 'transferring',
-      message: `Transferring ${
-        existingChannelBalanceBn && existingChannelBalanceUi + ' +'
-      } ${truncate(
-        statusTransferAmount,
-        4
-      )} ${senderChain?.assetName!} from ${senderChain?.name!} to ${
+      message: `Transferring ${senderChain?.assetName!} from ${senderChain?.name!} to ${
         receiverChain?.name
       }. This step can take some time if the chain is congested`,
     });
 
-    const preImage = getRandomBytes32();
     try {
-      console.log(
-        `Calling createFromAssetTransfer ${_depositChainId} ${depositAssetId} ${_withdrawChainId} ${withdrawAssetId} ${crossChainTransferId}`
-      );
-      const transferDeets = await createFromAssetTransfer(
-        node!,
-        _depositChainId,
-        depositAssetId,
-        _withdrawChainId,
-        withdrawAssetId,
-        routerPublicIdentifier,
-        crossChainTransferId,
-        preImage
-      );
-      console.log('createFromAssetTransfer transferDeets: ', transferDeets);
+      await connextSdk!.transfer();
     } catch (e) {
-      if (e.message.includes('Fees charged are greater than amount')) {
-        handleScreen({ state: SCREEN_STATES.SWAP });
-        setAmountError('Last requested transfer is lower than fees charged');
-        return;
-      }
-
-      handleScreen({
-        state: ERROR_STATES.ERROR_TRANSFER,
-        error: e,
-        message: 'Error in createFromAssetTransfer:',
-      });
-      return;
+      console.log('Error at Transfer', e);
+      throw Error(e);
     }
-    setPreImage(preImage);
-
-    // listen for a sender-side cancellation, if it happens, short-circuit and show cancellation
-    const senderCancel = evts![EngineEvents.CONDITIONAL_TRANSFER_RESOLVED]
-      .pipe((data) => {
-        return (
-          data.transfer.meta?.routingId === crossChainTransferId &&
-          data.transfer.responderIdentifier === routerPublicIdentifier &&
-          Object.values(data.transfer.transferResolver)[0] ===
-            constants.HashZero
-        );
-      })
-      .waitFor(500_000);
-
-    const receiverCreate = evts![EngineEvents.CONDITIONAL_TRANSFER_CREATED]
-      .pipe((data) => {
-        return (
-          data.transfer.meta?.routingId === crossChainTransferId &&
-          data.transfer.initiatorIdentifier === routerPublicIdentifier
-        );
-      })
-      .waitFor(500_000);
-
-    // wait a long time for this, it needs to send onchain txs
-    // if the receiver create doesnt complete, sender side can get cancelled
-    try {
-      const senderCanceledOrReceiverCreated = await Promise.race([
-        senderCancel,
-        receiverCreate,
-      ]);
-      console.log(
-        'Received senderCanceledOrReceiverCreated: ',
-        senderCanceledOrReceiverCreated
-      );
-      if (
-        Object.values(
-          senderCanceledOrReceiverCreated.transfer.transferResolver ?? {}
-        )[0] === constants.HashZero
-      ) {
-        console.error('Transfer was cancelled');
-        handleScreen({
-          state: ERROR_STATES.ERROR_TRANSFER,
-          error: new Error('Transfer was cancelled'),
-        });
-        return;
-      }
-    } catch (e) {
-      handleScreen({
-        state: ERROR_STATES.ERROR_TRANSFER,
-        error: e,
-        message:
-          'Did not receive transfer after 500 seconds, please try again later or attempt recovery',
-      });
-
-      return;
-    }
-
-    const senderResolve = evts![EngineEvents.CONDITIONAL_TRANSFER_RESOLVED]
-      .pipe((data) => {
-        return (
-          data.transfer.meta?.routingId === crossChainTransferId &&
-          data.transfer.responderIdentifier === routerPublicIdentifier
-        );
-      })
-      .waitFor(45_000);
-
-    try {
-      await resolveToAssetTransfer(
-        node!,
-        _withdrawChainId,
-        preImage,
-        crossChainTransferId,
-        routerPublicIdentifier
-      );
-    } catch (e) {
-      handleScreen({
-        state: ERROR_STATES.ERROR_TRANSFER,
-        error: e,
-        message: 'Error in resolveToAssetTransfer:',
-      });
-
-      return;
-    }
-    setPreImage(undefined);
-
-    try {
-      await senderResolve;
-    } catch (e) {
-      console.warn(
-        'Did not find resolve event from router, proceeding with withdrawal',
-        e
-      );
-    }
-
-    await withdraw(
-      receiverChain!,
-      node!,
-      evts!,
-      onWithdrawalTxCreated,
-      onFinished
-    );
-  };
-
-  const withdraw = async (
-    receiverChainInfo: CHAIN_DETAIL,
-    _node: BrowserNode,
-    _evts: EvtContainer,
-    _onWithdrawalTxCreated?: (txHash: string) => void,
-    _onFinished?: (amountWei: string) => void
-  ) => {
-    const _withdrawChainId: number = receiverChainInfo?.chainId!;
-    const _withdrawRpcProvider: providers.JsonRpcProvider = receiverChainInfo?.rpcProvider!;
 
     handleScreen({
       state: SCREEN_STATES.STATUS,
@@ -507,60 +297,17 @@ const ConnextModal: FC<ConnextModalProps> = ({
       message: `withdrawing ${senderChain?.assetName} to ${receiverChain?.name}. This step can take some time if the chain is congested`,
     });
 
-    // now go to withdrawal screen
-    let result;
     try {
-      result = await withdrawToAsset(
-        _node,
-        _evts[EngineEvents.WITHDRAWAL_RESOLVED],
-        _withdrawChainId,
-        withdrawAssetId,
-        withdrawalAddress,
-        routerPublicIdentifier,
-        withdrawCallTo,
-        withdrawCallData
-      );
+      await connextSdk!.withdraw({
+        recipientAddress: withdrawalAddress,
+        withdrawCallTo: withdrawCallTo,
+        withdrawCallData: withdrawCallData,
+      });
     } catch (e) {
-      handleScreen({
-        state: ERROR_STATES.ERROR_TRANSFER,
-        error: e,
-        message: 'Error in crossChainTransfer',
-      });
-      return;
-    }
-    // display tx hash through explorer -> handles by the event.
-    console.log('crossChainTransfer: ', result);
-    setWithdrawTx(result.withdrawalTx);
-    if (_onWithdrawalTxCreated) {
-      _onWithdrawalTxCreated(result.withdrawalTx);
+      console.log('Error at withdraw', e);
+      throw Error(e);
     }
 
-    const successWithdrawalUi = utils.formatUnits(
-      result.withdrawalAmount,
-      receiverChain?.assetDecimals!
-    );
-    setSuccessWithdrawalAmount(successWithdrawalUi);
-
-    handleScreen({ state: SCREEN_STATES.SUCCESS });
-
-    // check tx receipt for withdrawal tx
-    _withdrawRpcProvider
-      .waitForTransaction(result.withdrawalTx)
-      .then((receipt) => {
-        if (receipt.status === 0) {
-          // tx reverted
-          console.error('Transaction reverted onchain', receipt);
-          handleScreen({
-            state: ERROR_STATES.ERROR_TRANSFER,
-            error: new Error('Withdrawal transaction reverted'),
-          });
-          return;
-        }
-      });
-
-    if (_onFinished) {
-      _onFinished(result.withdrawalAmount);
-    }
   };
 
   const depositListenerAndTransfer = async (
@@ -619,7 +366,7 @@ const ConnextModal: FC<ConnextModalProps> = ({
         setShowTimer(false);
         const transferAmount = updatedDeposits.sub(initialDeposits);
         initialDeposits = updatedDeposits;
-        await transfer(transferAmount, true);
+        await handleSwap();
       }
     }, 5_000);
     setListener(depositListener);
@@ -753,15 +500,7 @@ const ConnextModal: FC<ConnextModalProps> = ({
       }
       setIsLoad(false);
 
-      try {
-        await connextSdk!.crossChainSwap({
-          recipientAddress: withdrawalAddress,
-          withdrawalCallTo: withdrawCallTo,
-          withdrawalCallData: withdrawCallData,
-        });
-      } catch (e) {}
-
-      // await transfer(transferAmountBn, false);
+      await handleSwap();
     }
   };
 
