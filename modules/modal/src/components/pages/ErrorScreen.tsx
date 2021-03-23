@@ -1,5 +1,4 @@
 import React, { FC } from 'react';
-import { constants } from 'ethers';
 import {
   ModalContent,
   ModalBody,
@@ -7,8 +6,6 @@ import {
   Stack,
   Box,
   Button,
-  InputGroup,
-  Input,
   Link,
 } from '../common';
 import { Header, Footer, NetworkBar } from '../static';
@@ -22,7 +19,6 @@ export interface ErrorProps {
   handleRecoveryButton?: () => void;
   options: () => void;
   handleBack: () => void;
-  crossChainTransferId: string;
   senderChainInfo?: CHAIN_DETAIL;
   receiverChainInfo: CHAIN_DETAIL;
   receiverAddress: string;
@@ -33,7 +29,6 @@ const Error: FC<ErrorProps> = (props) => {
   const {
     error,
     title,
-    crossChainTransferId,
     retry,
     switchNetwork,
     options,
@@ -60,28 +55,6 @@ const Error: FC<ErrorProps> = (props) => {
             <Stack column={true} spacing={4}>
               <Stack column={true} spacing={2}>
                 <Stack column={true} spacing={1}>
-                  {crossChainTransferId !== constants.HashZero && (
-                    <Stack column={true} spacing={1}>
-                      <Text
-                        fontFamily="Roboto Mono"
-                        fontSize="0.875rem"
-                        noOfLines={1}
-                      >
-                        TransferId
-                      </Text>
-                      <InputGroup>
-                        <Input
-                          id="orderId"
-                          name="orderId"
-                          body="sm"
-                          value={crossChainTransferId}
-                          inputMode="search"
-                          title="OrderId"
-                          readOnly={true}
-                        />
-                      </InputGroup>
-                    </Stack>
-                  )}
                   <Text
                     fontSize="0.875rem"
                     noOfLines={3}
