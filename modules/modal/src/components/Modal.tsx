@@ -2,15 +2,8 @@ import { BrowserNode } from '@connext/vector-browser-node';
 import React, { FC, useEffect, useState } from 'react';
 import { ThemeProvider } from 'styled-components';
 import { Modal } from '@chakra-ui/react';
-import {
-  EngineEvents,
-  ERC20Abi,
-  FullChannelState,
-} from '@connext/vector-types';
-import { getBalanceForAssetId, getRandomBytes32 } from '@connext/vector-utils';
+import { ERC20Abi, FullChannelState } from '@connext/vector-types';
 import { BigNumber, constants, utils, providers, Contract } from 'ethers';
-import AwesomeDebouncePromise from 'awesome-debounce-promise';
-
 import {
   ERROR_STATES,
   SCREEN_STATES,
@@ -18,23 +11,8 @@ import {
   ScreenStates,
   ErrorStates,
   getTotalDepositsBob,
-  reconcileDeposit,
-  createEvtContainer,
-  EvtContainer,
-  verifyAndGetRouterSupports,
-  cancelHangingToTransfers,
-  getChannelForChain,
-  createFromAssetTransfer,
-  withdrawToAsset,
-  resolveToAssetTransfer,
-  waitForSenderCancels,
-  cancelToAssetTransfer,
   getChain,
-  connectNode,
-  verifyRouterCapacityForTransfer,
   getUserBalance,
-  getCrosschainFee,
-  truncate,
   ConnextSdk,
 } from '@connext/vector-sdk';
 import {
@@ -83,8 +61,6 @@ export type ConnextModalProps = {
   onWithdrawalTxCreated?: (txHash: string) => void;
   onFinished?: (amountWei: string) => void;
 };
-
-const getFeesDebounced = AwesomeDebouncePromise(getCrosschainFee, 200);
 
 const ConnextModal: FC<ConnextModalProps> = ({
   showModal,
