@@ -995,7 +995,8 @@ const ConnextModal: FC<ConnextModalProps> = ({
     try {
       // call isAlive if node set already (i.e. retry)
       if (node && depositAddress && withdrawChannel) {
-        await Promise.all([
+        console.log('node found, sending isAlive message');
+        const [depositRes, withdrawRes] = await Promise.all([
           node.sendIsAliveMessage({
             channelAddress: depositAddress,
             skipCheckIn: false,
@@ -1005,6 +1006,7 @@ const ConnextModal: FC<ConnextModalProps> = ({
             skipCheckIn: false,
           }),
         ]);
+        console.log('messages sent', depositRes.isError, withdrawRes.isError);
       }
       // browser node object
       _node =
