@@ -372,19 +372,6 @@ const ConnextModal: FC<ConnextModalProps> = ({
     setListener(depositListener);
   };
 
-  const handleAmountError = (
-    err: string | undefined,
-    receiveExactAmount: boolean
-  ) => {
-    setAmountError(err);
-    clearInterval(listener!);
-    if (receiveExactAmount) {
-      setTransferAmountUi('');
-    } else {
-      setReceivedAmountUi('');
-    }
-  };
-
   const handleSwapCheck = async (
     _input: string | undefined,
     receiveExactAmount: boolean
