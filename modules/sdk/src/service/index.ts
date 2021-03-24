@@ -396,7 +396,7 @@ export class ConnextSdk {
   async estimateFees(
     params: EstimateFeeParamsSchema
   ): Promise<EstimateFeeResponseSchema> {
-    const { input: _input, isRecipientAssetInput, userBalance } = params;
+    const { input: _input, isRecipientAssetInput, userBalanceWei } = params;
 
     const input = _input ? _input.trim() : undefined;
     let err: string | undefined = undefined;
@@ -497,9 +497,9 @@ export class ConnextSdk {
         console.log('receivedUi: ', recipientAmountUi);
       }
 
-      if (userBalance) {
+      if (userBalanceWei) {
         const userBalanceBn = BigNumber.from(
-          utils.parseUnits(userBalance, this.senderChain?.assetDecimals!)
+          utils.parseUnits(userBalanceWei, this.senderChain?.assetDecimals!)
         );
         if (senderAmountBn.gt(userBalanceBn)) {
           err = 'Transfer amount exceeds user balance';

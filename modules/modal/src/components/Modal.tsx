@@ -228,7 +228,7 @@ const ConnextModal: FC<ConnextModalProps> = ({
       const res = await connextSdk!.estimateFees({
         input: input,
         isRecipientAssetInput: receiveExactAmount,
-        userBalance: userBalance,
+        userBalanceWei: userBalance,
       });
       console.log(res);
       setAmountError(res.error);

@@ -47,7 +47,7 @@ export type InitResponseSchema = CheckPendingTransferResponseSchema;
 export type EstimateFeeParamsSchema = {
   input: string | undefined;
   isRecipientAssetInput?: boolean;
-  userBalance?: string;
+  userBalanceWei?: string;
 };
 
 export type EstimateFeeResponseSchema = {
