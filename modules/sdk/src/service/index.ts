@@ -65,7 +65,7 @@ export class ConnextSdk {
     } catch (e) {
       const message = 'Failed at Setup';
       console.log(e, message);
-      throw Error(e);
+      throw e;
     }
 
     try {
@@ -75,7 +75,7 @@ export class ConnextSdk {
     } catch (e) {
       const message = 'Failed at Pending Tranfer Check';
       console.log(e, message);
-      throw Error(e);
+      throw e;
     }
   }
 
@@ -93,7 +93,7 @@ export class ConnextSdk {
     } catch (e) {
       const message = 'Failed to fetch sender chain info';
       console.log(e, message);
-      throw Error(e);
+      throw e;
     }
 
     let recipientChainInfo: CHAIN_DETAIL;
@@ -107,7 +107,7 @@ export class ConnextSdk {
     } catch (e) {
       const message = 'Failed to fetch receiver chain info';
       console.log(e, message);
-      throw Error(e);
+      throw e;
     }
 
     // setup browser node
@@ -129,7 +129,7 @@ export class ConnextSdk {
     } catch (e) {
       const message = 'Error initalizing Browser Node';
       console.log(e, message);
-      throw Error(e);
+      throw e;
     }
 
     console.log('INITIALIZED BROWSER NODE');
@@ -148,7 +148,7 @@ export class ConnextSdk {
     } catch (e) {
       const message = 'Could not get sender channel';
       console.log(e, message);
-      throw Error(e);
+      throw e;
     }
     const senderChainChannelAddress = senderChainChannel!.channelAddress;
     this.senderChainChannelAddress = senderChainChannelAddress;
@@ -164,7 +164,7 @@ export class ConnextSdk {
     } catch (e) {
       const message = 'Could not get sender channel';
       console.log(e, message);
-      throw Error(e);
+      throw e;
     }
 
     const recipientChainChannelAddress = recipientChainChannel?.channelAddress!;
@@ -186,7 +186,7 @@ export class ConnextSdk {
     } catch (e) {
       const message = 'Error in verifyRouterSupports';
       console.log(e, message);
-      throw Error(e);
+      throw e;
     }
   }
 
@@ -214,9 +214,7 @@ export class ConnextSdk {
         if (restoreDepositChannelState.isError) {
           const message = 'Could not restore sender channel state';
           console.error(message, restoreDepositChannelState.getError());
-          throw new Error(
-            `${message}: ${restoreDepositChannelState.getError()}`
-          );
+          throw restoreDepositChannelState.getError();
         }
         const restoreWithdrawChannelState = await this.connextClient!.restoreState(
           {
@@ -227,9 +225,7 @@ export class ConnextSdk {
         if (restoreWithdrawChannelState.isError) {
           const message = 'Could not restore receiver channel state';
           console.error(message, restoreWithdrawChannelState.getError());
-          throw new Error(
-            `${message}: ${restoreWithdrawChannelState.getError()}`
-          );
+          throw restoreWithdrawChannelState.getError();
         }
         try {
           await reconcileDeposit(
@@ -240,12 +236,12 @@ export class ConnextSdk {
         } catch (e) {
           const message = 'Error in reconcileDeposit';
           console.error(message, e);
-          throw Error(e);
+          throw e;
         }
       } else {
         const message = 'Error in reconcileDeposit';
         console.error(message, e);
-        throw Error(e);
+        throw e;
       }
     }
 
@@ -263,7 +259,7 @@ export class ConnextSdk {
     } catch (e) {
       const message = 'Error in cancelHangingToTransfers';
       console.log(e, message);
-      throw Error(e);
+      throw e;
     }
 
     // get active transfers
@@ -325,7 +321,7 @@ export class ConnextSdk {
       } catch (e) {
         const message = 'Error in cancelToAssetTransfer';
         console.log(e, message);
-        throw Error(e);
+        throw e;
       }
 
       try {
@@ -336,7 +332,7 @@ export class ConnextSdk {
       } catch (e) {
         const message = 'Error waiting for sender and receiver cancellations';
         console.log(e, message);
-        throw Error(e);
+        throw e;
       }
     });
 
@@ -351,7 +347,7 @@ export class ConnextSdk {
     } catch (e) {
       const message = 'Error in waitForSenderCancels';
       console.log(e, message);
-      throw Error(e);
+      throw e;
     }
 
     // After reconciling, get channel again
@@ -364,7 +360,7 @@ export class ConnextSdk {
     } catch (e) {
       const message = 'Could not get sender channel';
       console.log(e, message);
-      throw Error(e);
+      throw e;
     }
 
     const offChainSenderChainAssetBalance = BigNumber.from(
@@ -531,7 +527,7 @@ export class ConnextSdk {
     if (!input) {
       const message = 'Transfer Amount is undefined';
       console.log(message);
-      throw new Error(`${message}`);
+      throw new Error(message);
     }
     const transferAmountBn: BigNumber = BigNumber.from(
       utils.parseUnits(input, this.senderChain?.assetDecimals!)
@@ -540,7 +536,7 @@ export class ConnextSdk {
     if (transferAmountBn.isZero()) {
       const message = 'Transfer amount cannot be 0';
       console.log(message);
-      throw new Error(`${message}`);
+      throw new Error(message);
     }
 
     console.log('Verify Router Capacity');
@@ -556,7 +552,7 @@ export class ConnextSdk {
       );
     } catch (e) {
       console.log(e);
-      throw Error(e);
+      throw e;
     }
   }
 
@@ -601,7 +597,7 @@ export class ConnextSdk {
         throw new Error(message);
       }
       console.log(e);
-      throw Error(e);
+      throw e;
     }
 
     // listen for a sender-side cancellation, if it happens, short-circuit and show cancellation
@@ -642,13 +638,13 @@ export class ConnextSdk {
       ) {
         const message = 'Transfer was cancelled';
         console.log(message);
-        throw new Error(`${message}`);
+        throw new Error(message);
       }
     } catch (e) {
       const message =
         'Did not receive transfer after 500 seconds, please try again later or attempt recovery';
       console.log(e, message);
-      throw Error(e);
+      throw e;
     }
 
     const senderResolve = this.evts![
@@ -671,7 +667,7 @@ export class ConnextSdk {
     } catch (e) {
       const message = 'Error in resolveToAssetTransfer';
       console.log(message);
-      throw new Error(`${message}`);
+      throw new Error(message);
     }
 
     try {
@@ -706,7 +702,7 @@ export class ConnextSdk {
       );
     } catch (e) {
       console.log(e);
-      throw Error(e);
+      throw e;
     }
     // display tx hash through explorer -> handles by the event.
     console.log('crossChainTransfer: ', result);
@@ -752,7 +748,7 @@ export class ConnextSdk {
       await this.transfer({ onTransferred: onTransferred });
     } catch (e) {
       console.log('Error at Transfer', e);
-      throw Error(e);
+      throw e;
     }
 
     try {
@@ -764,7 +760,7 @@ export class ConnextSdk {
       });
     } catch (e) {
       console.log('Error at withdraw', e);
-      throw Error(e);
+      throw e;
     }
 
     console.log('Successfully Swap');

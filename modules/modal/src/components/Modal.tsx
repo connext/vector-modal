@@ -337,7 +337,7 @@ const ConnextModal: FC<ConnextModalProps> = ({
       await connextSdk!.transfer();
     } catch (e) {
       console.log('Error at Transfer', e);
-      throw Error(e);
+      throw e;
     }
 
     handleScreen({
@@ -355,7 +355,7 @@ const ConnextModal: FC<ConnextModalProps> = ({
       });
     } catch (e) {
       console.log('Error at withdraw', e);
-      throw Error(e);
+      throw e;
     }
 
     handleScreen({ state: SCREEN_STATES.SUCCESS });
@@ -529,7 +529,7 @@ const ConnextModal: FC<ConnextModalProps> = ({
     } catch (e) {
       const message = 'Failed at Pending Tranfer Check';
       console.log(e, message);
-      throw Error(e);
+      throw e;
     }
 
     console.log(response);
@@ -572,7 +572,7 @@ const ConnextModal: FC<ConnextModalProps> = ({
         });
       } catch (e) {
         console.log('Error at withdraw', e);
-        throw Error(e);
+        throw e;
       }
 
       handleScreen({ state: SCREEN_STATES.SUCCESS });
