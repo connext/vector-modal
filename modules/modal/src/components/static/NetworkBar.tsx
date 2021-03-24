@@ -1,7 +1,6 @@
 import React, { FC } from 'react';
-import styled from 'styled-components';
-
 import { CHAIN_DETAIL, getExplorerLinkForAsset } from '@connext/vector-sdk';
+import styled from 'styled-components';
 import { arrow } from '../../public';
 import { Stack, Box, Text, Link, InputGroup, Input } from '../common';
 

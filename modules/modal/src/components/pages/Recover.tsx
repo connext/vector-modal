@@ -1,5 +1,6 @@
 import React, { FC, useState } from 'react';
 import { BigNumber, constants } from 'ethers';
+import { CHAIN_DETAIL } from '@connext/vector-sdk';
 import { FullChannelState } from '@connext/vector-types';
 import { getBalanceForAssetId } from '@connext/vector-utils';
 import { BrowserNode } from '@connext/vector-browser-node';
@@ -13,11 +14,11 @@ import {
   InputGroup,
   Input,
 } from '../common';
+import { ERROR_STATES } from '../../constants';
 import { Header, Footer } from '../static';
 import Success from './Success';
 import ErrorScreen from './ErrorScreen';
 import Loading from './Loading';
-import { CHAIN_DETAIL, ERROR_STATES } from '@connext/vector-sdk';
 
 export interface RecoveryProps {
   handleBack: () => void;

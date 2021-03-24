@@ -1,4 +1,5 @@
 import React, { FC } from 'react';
+import { CHAIN_DETAIL } from '@connext/vector-sdk';
 import {
   ModalContent,
   ModalBody,
@@ -8,8 +9,8 @@ import {
   Button,
   Link,
 } from '../common';
+import { ERROR_STATES, ErrorStates } from '../../constants';
 import { Header, Footer, NetworkBar } from '../static';
-import { CHAIN_DETAIL, ERROR_STATES, ErrorStates } from '@connext/vector-sdk';
 
 export interface ErrorProps {
   error: Error;
