@@ -334,7 +334,7 @@ const ConnextModal: FC<ConnextModalProps> = ({
     });
 
     try {
-      await connextSdk!.transfer();
+      await connextSdk!.transfer({});
     } catch (e) {
       console.log('Error at Transfer', e);
       throw e;
