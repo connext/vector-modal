@@ -71,7 +71,7 @@ export const connectNode = async (
     'Channel is already setup'
   );
   if (error && !shouldAttemptRestore) {
-    throw new Error(`Error initializing browser node: ${error}`);
+    throw error;
   }
 
   if (error && shouldAttemptRestore) {

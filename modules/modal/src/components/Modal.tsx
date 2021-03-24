@@ -1,20 +1,22 @@
-import { BrowserNode } from '@connext/vector-browser-node';
 import React, { FC, useEffect, useState } from 'react';
 import { ThemeProvider } from 'styled-components';
 import { Modal } from '@chakra-ui/react';
-import { ERC20Abi } from '@connext/vector-types';
-import { BigNumber, constants, utils, providers, Contract } from 'ethers';
+import { BrowserNode } from '@connext/vector-browser-node';
 import {
-  ERROR_STATES,
-  SCREEN_STATES,
   CHAIN_DETAIL,
-  ScreenStates,
-  ErrorStates,
   getTotalDepositsBob,
   getChain,
   getUserBalance,
   ConnextSdk,
 } from '@connext/vector-sdk';
+import { ERC20Abi } from '@connext/vector-types';
+import { BigNumber, constants, utils, providers, Contract } from 'ethers';
+import {
+  ERROR_STATES,
+  SCREEN_STATES,
+  ScreenStates,
+  ErrorStates,
+} from '../constants';
 import {
   theme,
   Fonts,
@@ -162,7 +164,7 @@ const ConnextModal: FC<ConnextModalProps> = ({
     let initialDeposits: BigNumber;
     try {
       initialDeposits = await getTotalDepositsBob(
-        connextSdk!.senderChainChannelAddress,
+        connextSdk?.senderChannelChainAddress!,
         senderChain?.chainId,
         senderChain?.rpcProvider
       );
@@ -335,7 +337,7 @@ const ConnextModal: FC<ConnextModalProps> = ({
       await connextSdk!.transfer();
     } catch (e) {
       console.log('Error at Transfer', e);
-      throw Error(e);
+      throw e;
     }
 
     handleScreen({
@@ -353,7 +355,7 @@ const ConnextModal: FC<ConnextModalProps> = ({
       });
     } catch (e) {
       console.log('Error at withdraw', e);
-      throw Error(e);
+      throw e;
     }
 
     handleScreen({ state: SCREEN_STATES.SUCCESS });
@@ -527,7 +529,7 @@ const ConnextModal: FC<ConnextModalProps> = ({
     } catch (e) {
       const message = 'Failed at Pending Tranfer Check';
       console.log(e, message);
-      throw Error(e);
+      throw e;
     }
 
     console.log(response);
@@ -570,7 +572,7 @@ const ConnextModal: FC<ConnextModalProps> = ({
         });
       } catch (e) {
         console.log('Error at withdraw', e);
-        throw Error(e);
+        throw e;
       }
 
       handleScreen({ state: SCREEN_STATES.SUCCESS });

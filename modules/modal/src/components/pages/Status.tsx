@@ -1,7 +1,7 @@
 import React, { FC } from 'react';
+import { CHAIN_DETAIL } from '@connext/vector-sdk';
 import { ModalContent, ModalBody, Text, Stack } from '../common';
 import { Header, Footer, NetworkBar } from '../static';
-import { CHAIN_DETAIL } from '@connext/vector-sdk';
 
 export interface StatusProps {
   title: string;

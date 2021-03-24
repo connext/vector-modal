@@ -1,6 +1,6 @@
 import React, { FC, useState } from 'react';
 import { MenuList, MenuItem, MenuButton } from '../common';
-import { ScreenStates, SCREEN_STATES, ERROR_STATES } from '@connext/vector-sdk';
+import { ScreenStates, SCREEN_STATES, ERROR_STATES } from '../../constants';
 
 interface OptionsProps {
   state: ScreenStates;
@@ -8,7 +8,7 @@ interface OptionsProps {
   handleRecoveryButton: () => void;
 }
 
-const Options: FC<OptionsProps> = props => {
+const Options: FC<OptionsProps> = (props) => {
   const [isListOpen, setIsListOpen] = useState<Boolean>(false);
   const { state, onClose, handleRecoveryButton } = props;
   return (

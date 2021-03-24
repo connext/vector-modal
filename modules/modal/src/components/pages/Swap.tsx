@@ -1,5 +1,6 @@
 import React, { FC, useEffect } from 'react';
 import { BigNumber, utils } from 'ethers';
+import { CHAIN_DETAIL, truncate } from '@connext/vector-sdk';
 import {
   ModalContent,
   ModalBody,
@@ -10,7 +11,6 @@ import {
   Input,
 } from '../common';
 import { Header, Footer, NetworkBar } from '../static';
-import { CHAIN_DETAIL, truncate } from '@connext/vector-sdk';
 
 export interface TransferProps {
   onUserInput: (
