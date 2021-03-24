@@ -164,9 +164,9 @@ const ConnextModal: FC<ConnextModalProps> = ({
     let initialDeposits: BigNumber;
     try {
       initialDeposits = await getTotalDepositsBob(
-        connextSdk?.senderChannelChainAddress!,
-        senderChain?.chainId,
-        senderChain?.rpcProvider
+        connextSdk?.senderChainChannelAddress!,
+        senderChain!.assetId!,
+        senderChain!.rpcProvider!
       );
     } catch (e) {
       handleScreen({
@@ -178,7 +178,7 @@ const ConnextModal: FC<ConnextModalProps> = ({
     }
     console.log(
       `Starting balance on ${senderChain?.chainId!} for ${
-        connextSdk!.senderChannelChainAddress
+        connextSdk!.senderChainChannelAddress
       } of asset ${depositAssetId}: ${initialDeposits.toString()}`
     );
 
@@ -186,9 +186,9 @@ const ConnextModal: FC<ConnextModalProps> = ({
       let updatedDeposits: BigNumber;
       try {
         updatedDeposits = await getTotalDepositsBob(
-          connextSdk!.senderChannelChainAddress,
+          connextSdk!.senderChainChannelAddress,
           depositAssetId,
-          senderChain?.rpcProvider
+          senderChain!.rpcProvider!
         );
       } catch (e) {
         console.warn(`Error fetching balance: ${e.message}`);
@@ -196,7 +196,7 @@ const ConnextModal: FC<ConnextModalProps> = ({
       }
       console.log(
         `Updated balance on ${senderChain?.chainId!} for ${
-          connextSdk!.senderChannelChainAddress
+          connextSdk!.senderChainChannelAddress
         } of asset ${depositAssetId}: ${updatedDeposits.toString()}`
       );
 
