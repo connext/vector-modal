@@ -162,7 +162,7 @@ const ConnextModal: FC<ConnextModalProps> = ({
     let initialDeposits: BigNumber;
     try {
       initialDeposits = await getTotalDepositsBob(
-        connextSdk!.senderChannelChainAddress,
+        connextSdk!.senderChainChannelAddress,
         senderChain?.chainId,
         senderChain?.rpcProvider
       );
