@@ -84,9 +84,7 @@ export const getChain = async (
 
   const chain: ChainInfo = await getChainInfo(chainId);
   const chainName = chain.name;
-  const assetName = chain.assetId[assetId]
-    ? chain.assetId[assetId] ?? 'Token'
-    : 'Token';
+  const assetName = chain.assetId[assetId]?.symbol ?? 'Token';
 
   const chainParams: AddEthereumChainParameter = {
     chainId: utils.hexValue(chain.chainId),

@@ -113,6 +113,25 @@ export class ConnextSdk {
     // setup browser node
     let _node: BrowserNode;
     try {
+      // call isAlive if node set already (i.e. retry)
+      if (
+        this.connextClient &&
+        this.senderChainChannelAddress &&
+        this.recipientChainChannelAddress
+      ) {
+        console.log('node found, sending isAlive message');
+        const [depositRes, withdrawRes] = await Promise.all([
+          this.connextClient.sendIsAliveMessage({
+            channelAddress: this.senderChainChannelAddress,
+            skipCheckIn: false,
+          }),
+          this.connextClient.sendIsAliveMessage({
+            channelAddress: this.recipientChainChannelAddress,
+            skipCheckIn: false,
+          }),
+        ]);
+        console.log('messages sent', depositRes.isError, withdrawRes.isError);
+      }
       // browser node object
       _node =
         this.connextClient ??
