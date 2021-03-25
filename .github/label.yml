@@ -2,13 +2,13 @@ examples:
   - example/*
   - example/**/*
 
-react:
-  - modules/react/*
-  - modules/react/**/*
+modal:
+  - modules/modal/*
+  - modules/modal/**/*
 
-utils:
-  - modules/utils/*
-  - modules/utils/**/*
+sdk:
+  - modules/sdk/*
+  - modules/sdk/**/*
 
 cypress:
   - cypress/*
