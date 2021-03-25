@@ -41,7 +41,7 @@ const Header: FC<HeaderProps> = (props) => {
               </IconBox>
             )}
             {successIcon && (
-              <img src="https://connext-media.s3.us-east-2.amazonaws.com/success.svg" />
+              <img src="https://cdn.connext.network/success.svg" />
             )}
             {spinner && <Spinner />}
             <Text

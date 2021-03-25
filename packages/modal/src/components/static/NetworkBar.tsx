@@ -46,7 +46,7 @@ const NetworkBar: FC<NetworkBarProps> = (props) => {
               </Text>
             </Link>
           </Box>
-          <img src="https://connext-media.s3.us-east-2.amazonaws.com/network_arrow.svg" />
+          <img src="https://cdn.connext.network/network_arrow.svg" />
           <Box>
             <Text
               fontSize="0.75rem"

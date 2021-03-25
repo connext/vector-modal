@@ -33,7 +33,7 @@ const Loading: FC<LoadingProps> = (props) => {
   // Start the animation
   useEffect(() => {
     const rive = new Rive({
-      src: 'https://connext-media.s3.us-east-2.amazonaws.com/loading.riv',
+      src: 'https://cdn.connext.network/loading.riv',
       canvas: canvas.current,
       autoplay: true,
       layout: new Layout('cover', 'center'),

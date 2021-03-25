@@ -9,42 +9,42 @@ export const Fonts = () => (
         font-family: 'Cooper Hewitt';
         font-style: normal;
         font-weight: 700;
-        src: url(https://connext-media.s3.us-east-2.amazonaws.com/fonts/cooper-hewitt/CooperHewitt-Semibold.otf);
+        src: url(https://cdn.connext.network/fonts/cooper-hewitt/CooperHewitt-Semibold.otf);
       }
       /* latin-ext */
       @font-face {
         font-family: 'Cooper Hewitt';
         font-style: normal;
         font-weight: 500;
-        src: url(https://connext-media.s3.us-east-2.amazonaws.com/fonts/cooper-hewitt/CooperHewitt-Medium.otf);
+        src: url(https://cdn.connext.network/fonts/cooper-hewitt/CooperHewitt-Medium.otf);
       }
       /* latin-ext */
       @font-face {
         font-family: 'Cooper Hewitt';
         font-style: normal;
         font-weight: 400;
-        src: url(https://connext-media.s3.us-east-2.amazonaws.com/fonts/cooper-hewitt/CooperHewitt-Book.otf);
+        src: url(https://cdn.connext.network/fonts/cooper-hewitt/CooperHewitt-Book.otf);
       }
       /* latin-ext */
       @font-face {
         font-family: 'Roboto';
         font-style: normal;
         font-weight: 700;
-        src: url(https://connext-media.s3.us-east-2.amazonaws.com/fonts/roboto/Roboto-Bold.ttf);
+        src: url(https://cdn.connext.network/fonts/roboto/Roboto-Bold.ttf);
       }
       /* latin-ext */
       @font-face {
         font-family: 'Roboto';
         font-style: normal;
         font-weight: 500;
-        src: url(https://connext-media.s3.us-east-2.amazonaws.com/fonts/roboto/Roboto-Medium.ttf);
+        src: url(https://cdn.connext.network/fonts/roboto/Roboto-Medium.ttf);
       }
       /* latin-ext */
       @font-face {
         font-family: 'Roboto';
         font-style: normal;
         font-weight: 400;
-        src: url(https://connext-media.s3.us-east-2.amazonaws.com/fonts/roboto/Roboto-Regular.ttf);
+        src: url(https://cdn.connext.network/fonts/roboto/Roboto-Regular.ttf);
       }
 
       /* latin-ext */
@@ -52,7 +52,7 @@ export const Fonts = () => (
         font-family: 'Roboto Mono';
         font-style: normal;
         font-weight: 400;
-        src: url(https://connext-media.s3.us-east-2.amazonaws.com/fonts/roboto_mono/RobotoMono-Regular.ttf);
+        src: url(https://cdn.connext.network/fonts/roboto_mono/RobotoMono-Regular.ttf);
       }
       `}
   />
