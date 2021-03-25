@@ -1,5 +1,4 @@
 import React, { FC, useEffect } from 'react';
-import { BigNumber, utils } from 'ethers';
 import { CHAIN_DETAIL, truncate } from '@connext/vector-sdk';
 import {
   ModalContent,
@@ -27,7 +26,7 @@ export interface TransferProps {
   senderAmount: string | undefined;
   recipientAmount: string | undefined;
   feeQuote: string;
-  existingChannelBalanceBn?: BigNumber;
+  existingChannelBalance?: string;
   amountError?: string;
   userBalance?: string;
 }
@@ -41,7 +40,7 @@ const Swap: FC<TransferProps> = (props) => {
     receiverAddress,
     senderAmount,
     recipientAmount,
-    existingChannelBalanceBn,
+    existingChannelBalance,
     feeQuote,
     isLoad,
     inputReadOnly,
@@ -85,7 +84,7 @@ const Swap: FC<TransferProps> = (props) => {
           <Stack column={true} spacing={5}>
             <Stack column={true} spacing={4}>
               <Stack column={true} spacing={5}>
-                {existingChannelBalanceBn && (
+                {existingChannelBalance && (
                   <Text
                     flex="auto"
                     fontSize="0.875rem"
@@ -94,14 +93,7 @@ const Swap: FC<TransferProps> = (props) => {
                     color="#333333"
                   >
                     You are adding more funds for Swap, your existing channel
-                    currently holds{' '}
-                    {truncate(
-                      utils.formatUnits(
-                        existingChannelBalanceBn!,
-                        senderChainInfo?.assetDecimals!
-                      ),
-                      4
-                    )}{' '}
+                    currently holds {truncate(existingChannelBalance!, 4)}{' '}
                     {senderChainInfo.assetName}
                   </Text>
                 )}

@@ -1,11 +1,10 @@
 import React, { FC } from 'react';
-import { BigNumber, utils } from 'ethers';
 import { CHAIN_DETAIL, truncate } from '@connext/vector-sdk';
 import { ModalContent, ModalBody, Text, Stack, Button } from '../common';
 import { Header, Footer, NetworkBar } from '../static';
 
 export interface ExistingBalanceProps {
-  existingChannelBalanceBn: BigNumber;
+  existingChannelBalance: string;
   senderChainInfo: CHAIN_DETAIL;
   receiverChainInfo: CHAIN_DETAIL;
   receiverAddress: string;
@@ -16,7 +15,7 @@ export interface ExistingBalanceProps {
 
 const ExistingBalance: FC<ExistingBalanceProps> = (props) => {
   const {
-    existingChannelBalanceBn,
+    existingChannelBalance,
     senderChainInfo,
     receiverChainInfo,
     receiverAddress,
@@ -39,13 +38,7 @@ const ExistingBalance: FC<ExistingBalanceProps> = (props) => {
                   lineHeight="30px"
                   flex="auto"
                 >
-                  {truncate(
-                    utils.formatUnits(
-                      existingChannelBalanceBn!,
-                      senderChainInfo?.assetDecimals!
-                    ),
-                    4
-                  )}{' '}
+                  {truncate(existingChannelBalance, 4)}{' '}
                   {senderChainInfo.assetName}
                 </Text>
                 <Text fontSize="14px" color="#333333" textTransform="none">
