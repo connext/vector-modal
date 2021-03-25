@@ -1,5 +1,4 @@
 import React, { FC } from 'react';
-import { success } from '../../public';
 import {
   Text,
   Stack,
@@ -20,7 +19,7 @@ interface HeaderProps {
   spinner?: boolean;
 }
 
-const Header: FC<HeaderProps> = props => {
+const Header: FC<HeaderProps> = (props) => {
   const {
     title,
     subTitle,
@@ -41,7 +40,9 @@ const Header: FC<HeaderProps> = props => {
                 <WarningIcon />
               </IconBox>
             )}
-            {successIcon && <img src={success} />}
+            {successIcon && (
+              <img src="https://connext-media.s3.us-east-2.amazonaws.com/success.svg" />
+            )}
             {spinner && <Spinner />}
             <Text
               fontWeight="700"

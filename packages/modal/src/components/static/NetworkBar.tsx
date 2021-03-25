@@ -1,7 +1,6 @@
 import React, { FC } from 'react';
 import { CHAIN_DETAIL, getExplorerLinkForAsset } from '@connext/vector-sdk';
 import styled from 'styled-components';
-import { arrow } from '../../public';
 import { Stack, Box, Text, Link, InputGroup, Input } from '../common';
 
 interface NetworkBarProps {
@@ -47,7 +46,7 @@ const NetworkBar: FC<NetworkBarProps> = (props) => {
               </Text>
             </Link>
           </Box>
-          <img src={arrow} />
+          <img src="https://connext-media.s3.us-east-2.amazonaws.com/network_arrow.svg" />
           <Box>
             <Text
               fontSize="0.75rem"
