@@ -1,14 +1,5 @@
 import React from 'react';
 import { Global } from '@emotion/react';
-import {
-  Roboto700,
-  Roboto500,
-  Roboto400,
-  RobotoMono400,
-  CooperHewitt700,
-  CooperHewitt500,
-  CooperHewitt400,
-} from '../../public/fonts';
 
 export const Fonts = () => (
   <Global
@@ -18,42 +9,42 @@ export const Fonts = () => (
         font-family: 'Cooper Hewitt';
         font-style: normal;
         font-weight: 700;
-        src: url(${CooperHewitt700});
+        src: url(https://connext-media.s3.us-east-2.amazonaws.com/fonts/cooper-hewitt/CooperHewitt-Semibold.otf);
       }
       /* latin-ext */
       @font-face {
         font-family: 'Cooper Hewitt';
         font-style: normal;
         font-weight: 500;
-        src: url(${CooperHewitt500});
+        src: url(https://connext-media.s3.us-east-2.amazonaws.com/fonts/cooper-hewitt/CooperHewitt-Medium.otf);
       }
       /* latin-ext */
       @font-face {
         font-family: 'Cooper Hewitt';
         font-style: normal;
         font-weight: 400;
-        src: url(${CooperHewitt400});
+        src: url(https://connext-media.s3.us-east-2.amazonaws.com/fonts/cooper-hewitt/CooperHewitt-Book.otf);
       }
       /* latin-ext */
       @font-face {
         font-family: 'Roboto';
         font-style: normal;
         font-weight: 700;
-        src: url(${Roboto700});
+        src: url(https://connext-media.s3.us-east-2.amazonaws.com/fonts/roboto/Roboto-Bold.ttf);
       }
       /* latin-ext */
       @font-face {
         font-family: 'Roboto';
         font-style: normal;
         font-weight: 500;
-        src: url(${Roboto500});
+        src: url(https://connext-media.s3.us-east-2.amazonaws.com/fonts/roboto/Roboto-Medium.ttf);
       }
       /* latin-ext */
       @font-face {
         font-family: 'Roboto';
         font-style: normal;
         font-weight: 400;
-        src: url(${Roboto400});
+        src: url(https://connext-media.s3.us-east-2.amazonaws.com/fonts/roboto/Roboto-Regular.ttf);
       }
 
       /* latin-ext */
@@ -61,7 +52,7 @@ export const Fonts = () => (
         font-family: 'Roboto Mono';
         font-style: normal;
         font-weight: 400;
-        src: url(${RobotoMono400});
+        src: url(https://connext-media.s3.us-east-2.amazonaws.com/fonts/roboto_mono/RobotoMono-Regular.ttf);
       }
       `}
   />
