@@ -2,8 +2,6 @@
   "name": "mono",
   "private": true,
   "devDependencies": {
-    "@changesets/changelog-github": "^0.3.0",
-    "@changesets/cli": "^2.10.3",
     "@types/react": "^17.0.3",
     "@types/react-dom": "^17.0.3",
     "cypress": "^6.8.0",
@@ -26,9 +24,5 @@
     "start:app": "yarn run build && yarn --cwd example && yarn --cwd example start",
     "cypress": "cypress run",
     "cypress:open": "cypress open",
-    "changeset": "changeset",
-    "release": "changeset publish",
-    "version:canary": "changeset version --snapshot canary",
-    "release:canary": "changeset publish --tag canary"
   }
 }
