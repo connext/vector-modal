@@ -219,18 +219,14 @@ export const getCrosschainFee = async (
   );
   console.log('converted withdrawal fee', depositAssetWithdrawFee);
 
-  const totalFee = BigNumber.from(depositAssetWithdrawFee).add(
-    depositAssetTransferFee
-  );
+  const totalFee = depositAssetWithdrawFee.add(depositAssetTransferFee);
   console.log('totalFee', totalFee);
 
   let senderAmount: BigNumber;
   let recipientAmount: BigNumber;
 
   if (receiveExactAmount) {
-    senderAmount = BigNumber.from(depositAssetTransferAmount).add(
-      depositAssetWithdrawFee
-    );
+    senderAmount = depositAssetTransferAmount.add(depositAssetWithdrawFee);
 
     recipientAmount = calculateExchangeWad(
       depositAssetTransferAmount,
