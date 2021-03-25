@@ -1,4 +1,8 @@
-import { EngineEvents, FullChannelState } from '@connext/vector-types';
+import {
+  EngineEvents,
+  FullChannelState,
+  ERC20Abi,
+} from '@connext/vector-types';
 import { BrowserNode } from '@connext/vector-browser-node';
 import { getBalanceForAssetId, getRandomBytes32 } from '@connext/vector-utils';
 import { BigNumber, constants, utils } from 'ethers';
@@ -31,6 +35,8 @@ import {
   withdrawToAsset,
   cancelToAssetTransfer,
 } from '../utils';
+
+export { BrowserNode, ERC20Abi, FullChannelState, getBalanceForAssetId };
 
 export class ConnextSdk {
   public routerPublicIdentifier = '';

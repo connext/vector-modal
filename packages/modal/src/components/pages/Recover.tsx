@@ -1,9 +1,11 @@
 import React, { FC, useState } from 'react';
 import { BigNumber, constants } from 'ethers';
-import { CHAIN_DETAIL } from '@connext/vector-sdk';
-import { FullChannelState } from '@connext/vector-types';
-import { getBalanceForAssetId } from '@connext/vector-utils';
-import { BrowserNode } from '@connext/vector-browser-node';
+import {
+  CHAIN_DETAIL,
+  BrowserNode,
+  FullChannelState,
+  getBalanceForAssetId,
+} from '@connext/vector-sdk';
 import {
   ModalContent,
   ModalBody,
