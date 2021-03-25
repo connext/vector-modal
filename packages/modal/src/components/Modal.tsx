@@ -1,15 +1,15 @@
 import React, { FC, useEffect, useState } from 'react';
 import { ThemeProvider } from 'styled-components';
 import { Modal } from '@chakra-ui/react';
-import { BrowserNode } from '@connext/vector-browser-node';
 import {
   CHAIN_DETAIL,
   getTotalDepositsBob,
   getChain,
   getUserBalance,
   ConnextSdk,
+  BrowserNode,
+  ERC20Abi,
 } from '@connext/vector-sdk';
-import { ERC20Abi } from '@connext/vector-types';
 import { BigNumber, constants, utils, providers, Contract } from 'ethers';
 import {
   ERROR_STATES,
@@ -332,7 +332,7 @@ const ConnextModal: FC<ConnextModalProps> = ({
     });
 
     try {
-      await connextSdk!.transfer({});
+      await connextSdk!.transfer();
     } catch (e) {
       console.log('Error at Transfer', e);
       throw e;
@@ -520,11 +520,11 @@ const ConnextModal: FC<ConnextModalProps> = ({
       return;
     }
 
-    if(onReady){
+    if (onReady) {
       onReady({
         depositChannelAddress: connextSdk!.senderChainChannelAddress,
-        withdrawChannelAddress: connextSdk!.recipientChainChannelAddress
-      })
+        withdrawChannelAddress: connextSdk!.recipientChainChannelAddress,
+      });
     }
 
     setMessage('Looking for pending Transfers...');
