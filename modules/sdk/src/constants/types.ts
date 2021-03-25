@@ -63,7 +63,7 @@ export type EstimateFeeResponseSchema = {
 
 export type WithdrawParamsSchema = {
   recipientAddress: string;
-  withdrawalQuote: WithdrawalQuote;
+  withdrawalQuote?: WithdrawalQuote;
   onFinished?: (
     txHash: string,
     amountUi?: string,
@@ -78,7 +78,7 @@ export type WithdrawParamsSchema = {
 };
 
 export type TransferParamsSchema = {
-  transferQuote: TransferQuote;
+  transferQuote?: TransferQuote;
   // Callbacks
   onTransferred?: () => void;
 };
