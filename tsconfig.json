@@ -1,13 +1,13 @@
 {
   "extends": "./tsconfig.build.json",
-  "include": ["packages", "types", "scripts", "example"],
+  "include": ["modules", "types", "scripts", "example"],
   "compilerOptions": {
     "allowJs": false,
     "baseUrl": ".",
     "typeRoots": ["./node_modules/@types", "./types"],
     "paths": {
-      "@connext/sdk": ["packages/sdk/src"],
-      "@connext/modal": ["packages/modal/src"],
+      "@connext/sdk": ["modules/sdk/src"],
+      "@connext/modal": ["modules/modal/src"],
       "$test/*": ["test/*"]
     }
   }

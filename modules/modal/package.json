@@ -3,11 +3,11 @@
   "version": "1.0.3-beta.22",
   "license": "MIT",
   "author": "connext",
-  "description": "Official React library for @connext",
+  "description": "TODO: @connext",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/mono/mono.git",
-    "directory": "packages/react"
+    "directory": "modules/modal"
   },
   "scripts": {
     "start": "tsdx watch --tsconfig tsconfig.build.json --verbose --noClean",

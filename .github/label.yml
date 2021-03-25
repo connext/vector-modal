@@ -3,12 +3,12 @@ examples:
   - example/**/*
 
 react:
-  - packages/react/*
-  - packages/react/**/*
+  - modules/react/*
+  - modules/react/**/*
 
 utils:
-  - packages/utils/*
-  - packages/utils/**/*
+  - modules/utils/*
+  - modules/utils/**/*
 
 cypress:
   - cypress/*
