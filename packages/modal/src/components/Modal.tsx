@@ -111,6 +111,10 @@ const ConnextModal: FC<ConnextModalProps> = ({
   >();
   const [transferFeeUi, setTransferFeeUi] = useState<string>('--');
 
+  const [existingChannelBalanceUi, setExistingChannelBalanceUi] = useState<
+    string | undefined
+  >();
+
   const [
     successWithdrawalAmount,
     setSuccessWithdrawalAmount,
@@ -148,11 +152,6 @@ const ConnextModal: FC<ConnextModalProps> = ({
 
   // temp
   const [inputReadOnly, setInputReadOnly] = useState<boolean>(false);
-
-  const [
-    existingChannelBalanceBn,
-    setExistingChannelBalanceBn,
-  ] = useState<BigNumber>();
 
   const onSuccess = (
     txHash: string,
@@ -247,8 +246,10 @@ const ConnextModal: FC<ConnextModalProps> = ({
 
       if (res.totalFee) setTransferFeeUi(res.totalFee);
 
-      setTransferQuote(res.transferQuote);
-      setWithdrawalQuote(res.withdrawalQuote);
+      if (!existingChannelBalanceUi) {
+        setTransferQuote(res.transferQuote);
+        setWithdrawalQuote(res.withdrawalQuote);
+      }
     } catch (e) {
       const message = 'Error Estimating Fees';
       console.log(message, e);
@@ -347,8 +348,14 @@ const ConnextModal: FC<ConnextModalProps> = ({
     try {
       await connextSdk!.transfer({ transferQuote: transferQuote! });
     } catch (e) {
-      console.log('Error at Transfer', e);
-      throw e;
+      const message = 'Error at Transfer';
+      console.log(e, message);
+      handleScreen({
+        state: ERROR_STATES.ERROR_TRANSFER,
+        error: e,
+        message: message,
+      });
+      return;
     }
 
     handleScreen({
@@ -362,13 +369,19 @@ const ConnextModal: FC<ConnextModalProps> = ({
         recipientAddress: withdrawalAddress,
         onFinished: onSuccess,
         withdrawalQuote: withdrawalQuote!,
-        withdrawCallTo: withdrawCallTo,
-        withdrawCallData: withdrawCallData,
+        withdrawalCallTo: withdrawCallTo,
+        withdrawalCallData: withdrawCallData,
         generateCallData: generateCallData,
       });
     } catch (e) {
-      console.log('Error at withdraw', e);
-      throw e;
+      const message = 'Error at withdraw';
+      console.log(e, message);
+      handleScreen({
+        state: ERROR_STATES.ERROR_TRANSFER,
+        error: e,
+        message: message,
+      });
+      return;
     }
 
     handleScreen({ state: SCREEN_STATES.SUCCESS });
@@ -380,7 +393,7 @@ const ConnextModal: FC<ConnextModalProps> = ({
     setInputReadOnly(false);
     setIsLoad(false);
     setTransferFeeUi('--');
-    setExistingChannelBalanceBn(undefined);
+    setExistingChannelBalanceUi('');
     setReceivedAmountUi('');
     setUserBalance(undefined);
     setError(undefined);
@@ -414,7 +427,6 @@ const ConnextModal: FC<ConnextModalProps> = ({
         error: e,
         message: message,
       });
-
       return;
     }
 
@@ -549,7 +561,12 @@ const ConnextModal: FC<ConnextModalProps> = ({
     } catch (e) {
       const message = 'Failed at Pending Tranfer Check';
       console.log(e, message);
-      throw e;
+      handleScreen({
+        state: ERROR_STATES.ERROR_SETUP,
+        error: e,
+        message: message,
+      });
+      return;
     }
 
     console.log(response);
@@ -568,9 +585,14 @@ const ConnextModal: FC<ConnextModalProps> = ({
     }
     // if offChainDepositAssetBalance > 0
     if (offChainDepositAssetBalance.gt(0)) {
+      const existingBalance = utils.formatUnits(
+        offChainDepositAssetBalance,
+        senderChainInfo?.assetDecimals!
+      );
+
+      setExistingChannelBalanceUi(existingBalance);
       handleScreen({
         state: SCREEN_STATES.EXISTING_BALANCE,
-        existingChannelBalance: offChainDepositAssetBalance,
       });
     }
 
@@ -587,12 +609,20 @@ const ConnextModal: FC<ConnextModalProps> = ({
         await connextSdk!.withdraw({
           recipientAddress: withdrawalAddress,
           onFinished: onSuccess,
-          withdrawCallTo: withdrawCallTo,
-          withdrawCallData: withdrawCallData,
+          withdrawalQuote: withdrawalQuote!,
+          withdrawalCallTo: withdrawCallTo,
+          withdrawalCallData: withdrawCallData,
+          generateCallData: generateCallData,
         });
       } catch (e) {
-        console.log('Error at withdraw', e);
-        throw e;
+        const message = 'Error at withdraw';
+        console.log(e, message);
+        handleScreen({
+          state: ERROR_STATES.ERROR_TRANSFER,
+          error: e,
+          message: message,
+        });
+        return;
       }
 
       handleScreen({ state: SCREEN_STATES.SUCCESS });
@@ -694,7 +724,7 @@ const ConnextModal: FC<ConnextModalProps> = ({
   };
 
   const continueButton = async () => {
-    setExistingChannelBalanceBn(undefined);
+    setExistingChannelBalanceUi('');
     handleSwap();
   };
 
@@ -708,22 +738,13 @@ const ConnextModal: FC<ConnextModalProps> = ({
     error?: Error | undefined;
     title?: string;
     message?: string;
-    existingChannelBalance?: BigNumber;
   }) => {
-    const {
-      state,
-      error: pError,
-      title: pTitle,
-      message: pMessage,
-      existingChannelBalance: _existingChannelBalance,
-    } = params;
+    const { state, error: pError, title: pTitle, message: pMessage } = params;
     switch (state) {
       case SCREEN_STATES.LOADING:
         break;
 
       case SCREEN_STATES.EXISTING_BALANCE:
-        console.log();
-        setExistingChannelBalanceBn(_existingChannelBalance);
         break;
 
       case SCREEN_STATES.SWAP:
@@ -784,7 +805,7 @@ const ConnextModal: FC<ConnextModalProps> = ({
           <ExistingBalance
             addMoreFunds={addMoreFunds}
             continueButton={continueButton}
-            existingChannelBalanceBn={existingChannelBalanceBn!}
+            existingChannelBalance={existingChannelBalanceUi!}
             senderChainInfo={senderChain!}
             receiverChainInfo={receiverChain!}
             receiverAddress={withdrawalAddress}
@@ -805,7 +826,7 @@ const ConnextModal: FC<ConnextModalProps> = ({
             receiverAddress={withdrawalAddress}
             senderAmount={transferAmountUi}
             recipientAmount={receivedAmountUi}
-            existingChannelBalanceBn={existingChannelBalanceBn!}
+            existingChannelBalance={existingChannelBalanceUi!}
             feeQuote={transferFeeUi}
             options={handleOptions}
           />
