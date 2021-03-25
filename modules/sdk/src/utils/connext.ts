@@ -567,7 +567,7 @@ export const withdrawToAsset = async (
   }
 
   let callData = withdrawCallData;
-  if (typeof generateCallData === 'function') {
+  if (generateCallData && quote && typeof generateCallData === 'function') {
     console.log('Using generateCallData function');
     const res = await generateCallData(quote, node);
     callData = res.callData ? res.callData : withdrawCallData;
