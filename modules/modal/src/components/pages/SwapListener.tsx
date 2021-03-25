@@ -28,7 +28,7 @@ interface SwapListenerProps {
   receiverAddress: string;
 }
 
-const SwapListener: FC<SwapListenerProps> = (props) => {
+const SwapListener: FC<SwapListenerProps> = props => {
   const {
     showTimer,
     senderChannelAddress,
@@ -53,40 +53,28 @@ const SwapListener: FC<SwapListenerProps> = (props) => {
     return value;
   };
 
-  function reset() {
-    setCurrentTimeSec(0);
-    setCurrentTimeMin(0);
-  }
-
-  function handleStart() {
-    if (!running) {
-      setRunning(true);
-      let watch = setInterval(() => {
-        setCurrentTimeSec((prevSec) => {
-          if (prevSec >= 60) {
-            setCurrentTimeMin((prevMin) => prevMin + 1);
-            return 0;
-          }
-          return prevSec + 1;
-        });
-      }, 1000);
-      setWatchInterval(watch);
-    }
-  }
-
-  function handleStop() {
-    setRunning(false);
-    clearInterval(watchInterval!);
-  }
-
   useEffect(() => {
     if (showTimer) {
-      handleStart();
+      if (!running) {
+        setRunning(true);
+        let watch = setInterval(() => {
+          setCurrentTimeSec(prevSec => {
+            if (prevSec >= 60) {
+              setCurrentTimeMin(prevMin => prevMin + 1);
+              return 0;
+            }
+            return prevSec + 1;
+          });
+        }, 1000);
+        setWatchInterval(watch);
+      }
     } else {
-      handleStop();
-      reset();
+      setRunning(false);
+      clearInterval(watchInterval!);
+      setCurrentTimeSec(0);
+      setCurrentTimeMin(0);
     }
-  }, [showTimer]);
+  }, [showTimer, running, watchInterval]);
 
   return (
     <>

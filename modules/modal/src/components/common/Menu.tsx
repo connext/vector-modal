@@ -23,7 +23,7 @@ const MenuListPositioner = styled.div<MenuListPositionerProps>`
   inset: 0px auto auto 0px;
   visibility: ${props => (props.hidden ? 'hidden' : 'visible')};
   transform: ${props =>
-    props.placement == 'bottom-start'
+    props.placement === 'bottom-start'
       ? 'translate3d(372px, 72px, 0px)'
       : 'translate3d(188px, 72px, 0px)'};
 `;

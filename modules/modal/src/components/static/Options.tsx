@@ -8,7 +8,7 @@ interface OptionsProps {
   handleRecoveryButton: () => void;
 }
 
-const Options: FC<OptionsProps> = (props) => {
+const Options: FC<OptionsProps> = props => {
   const [isListOpen, setIsListOpen] = useState<Boolean>(false);
   const { state, onClose, handleRecoveryButton } = props;
   return (
@@ -33,7 +33,7 @@ const Options: FC<OptionsProps> = (props) => {
                 : false
             }
           >
-            {state == SCREEN_STATES.RECOVERY ? 'Home' : 'Recovery'}
+            {state === SCREEN_STATES.RECOVERY ? 'Home' : 'Recovery'}
           </MenuItem>
           <MenuItem
             onClick={() =>

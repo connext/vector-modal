@@ -26,7 +26,7 @@ export interface ErrorProps {
   state: ErrorStates;
 }
 
-const Error: FC<ErrorProps> = (props) => {
+const Error: FC<ErrorProps> = props => {
   const {
     error,
     title,

@@ -45,6 +45,7 @@ export const retryWithDelay = async <T = any>(
   retries = 5
 ): Promise<T> => {
   let error: Error = new Error("Shouldn't happen");
+  // eslint-disable-next-line
   for (const _ of Array(retries).fill(0)) {
     try {
       const res = await fn();

@@ -12,7 +12,7 @@ export interface StatusProps {
   options: () => void;
 }
 
-const Status: FC<StatusProps> = (props) => {
+const Status: FC<StatusProps> = props => {
   const {
     title,
     message,

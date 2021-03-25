@@ -1,5 +1,9 @@
 import React, { FC } from 'react';
-import { CHAIN_DETAIL, getExplorerLinkForTx, truncate } from '@connext/vector-sdk';
+import {
+  CHAIN_DETAIL,
+  getExplorerLinkForTx,
+  truncate,
+} from '@connext/vector-sdk';
 import { ModalContent, ModalBody, Text, Stack, Box, Button } from '../common';
 import { Header, Footer, NetworkBar } from '../static';
 
@@ -13,7 +17,7 @@ export interface SuccessProps {
   options: () => void;
 }
 
-const Success: FC<SuccessProps> = (props) => {
+const Success: FC<SuccessProps> = props => {
   const {
     amount,
     transactionId,

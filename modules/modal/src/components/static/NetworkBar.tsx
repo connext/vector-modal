@@ -8,7 +8,7 @@ interface NetworkBarProps {
   receiverChainInfo: CHAIN_DETAIL;
   receiverAddress?: string;
 }
-const NetworkBar: FC<NetworkBarProps> = (props) => {
+const NetworkBar: FC<NetworkBarProps> = props => {
   const { senderChainInfo, receiverChainInfo, receiverAddress } = props;
   return (
     <>
@@ -46,7 +46,11 @@ const NetworkBar: FC<NetworkBarProps> = (props) => {
               </Text>
             </Link>
           </Box>
-          <img src="https://cdn.connext.network/network_arrow.svg" />
+          <img
+            src="https://cdn.connext.network/network_arrow.svg"
+            alt="arrow"
+            width="32"
+          />
           <Box>
             <Text
               fontSize="0.75rem"

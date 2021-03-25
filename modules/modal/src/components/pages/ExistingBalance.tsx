@@ -13,7 +13,7 @@ export interface ExistingBalanceProps {
   options: () => void;
 }
 
-const ExistingBalance: FC<ExistingBalanceProps> = (props) => {
+const ExistingBalance: FC<ExistingBalanceProps> = props => {
   const {
     existingChannelBalance,
     senderChainInfo,

@@ -19,7 +19,7 @@ interface HeaderProps {
   spinner?: boolean;
 }
 
-const Header: FC<HeaderProps> = (props) => {
+const Header: FC<HeaderProps> = props => {
   const {
     title,
     subTitle,
@@ -41,7 +41,10 @@ const Header: FC<HeaderProps> = (props) => {
               </IconBox>
             )}
             {successIcon && (
-              <img src="https://cdn.connext.network/success.svg" />
+              <img
+                src="https://cdn.connext.network/success.svg"
+                alt="success"
+              />
             )}
             {spinner && <Spinner />}
             <Text

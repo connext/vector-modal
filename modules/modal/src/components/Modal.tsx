@@ -115,10 +115,9 @@ const ConnextModal: FC<ConnextModalProps> = ({
     string | undefined
   >();
 
-  const [
-    successWithdrawalAmount,
-    setSuccessWithdrawalAmount,
-  ] = useState<string>();
+  const [successWithdrawalAmount, setSuccessWithdrawalAmount] = useState<
+    string
+  >();
 
   const [transferQuote, setTransferQuote] = useState<TransferQuote>();
   const [withdrawalQuote, setWithdrawalQuote] = useState<WithdrawalQuote>();
@@ -646,6 +645,7 @@ const ConnextModal: FC<ConnextModalProps> = ({
 
   useEffect(() => {
     init();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [showModal]);
 
   const handleOptions = () => {

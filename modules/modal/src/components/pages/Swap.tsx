@@ -31,7 +31,7 @@ export interface TransferProps {
   userBalance?: string;
 }
 
-const Swap: FC<TransferProps> = (props) => {
+const Swap: FC<TransferProps> = props => {
   const {
     amountError,
     userBalance,
@@ -74,7 +74,8 @@ const Swap: FC<TransferProps> = (props) => {
       }
     };
     effect();
-  }, []);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [senderAmount]);
 
   return (
     <>
@@ -140,7 +141,7 @@ const Swap: FC<TransferProps> = (props) => {
                         spellCheck="false"
                         // value
                         value={senderAmount}
-                        onChange={(event) => {
+                        onChange={event => {
                           enforcer(
                             event.target.value.replace(/,/g, '.'),
                             false
@@ -228,7 +229,7 @@ const Swap: FC<TransferProps> = (props) => {
                         spellCheck="false"
                         // value
                         value={recipientAmount}
-                        onChange={(event) => {
+                        onChange={event => {
                           enforcer(event.target.value.replace(/,/g, '.'), true);
                         }}
                         readOnly={inputReadOnly ? true : false}

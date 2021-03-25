@@ -31,7 +31,7 @@ type ModalBodyProps = {
 
 export const ModalBody = styled(Box)<ModalBodyProps>`
   &&& {
-    padding: ${(props) => props.padding || '0.5rem 1.5rem'};
+    padding: ${props => props.padding || '0.5rem 1.5rem'};
     flex: 1 1 0%;
     overflow: auto;
   }
