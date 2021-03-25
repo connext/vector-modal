@@ -6,6 +6,8 @@ import {
   EngineEvents,
   ERC20Abi,
   FullChannelState,
+  TransferQuote,
+  WithdrawalQuote,
 } from '@connext/vector-types';
 import { getBalanceForAssetId, getRandomBytes32 } from '@connext/vector-utils';
 import { BigNumber, constants, utils, providers, Contract } from 'ethers';
@@ -83,6 +85,10 @@ export type ConnextModalProps = {
   onDepositTxCreated?: (txHash: string) => void;
   onWithdrawalTxCreated?: (txHash: string) => void;
   onFinished?: (amountWei: string) => void;
+  generateCallData?: (
+    quote: WithdrawalQuote,
+    node: BrowserNode
+  ) => Promise<{ callData?: string }>;
 };
 
 const getFeesDebounced = AwesomeDebouncePromise(getCrosschainFee, 200);
@@ -103,6 +109,7 @@ const ConnextModal: FC<ConnextModalProps> = ({
   iframeSrcOverride,
   withdrawCallTo,
   withdrawCallData,
+  generateCallData,
   onClose,
   onReady,
   onSwap,
@@ -199,6 +206,8 @@ const ConnextModal: FC<ConnextModalProps> = ({
   const [message, setMessage] = useState<string>();
   const [isLoad, setIsLoad] = useState<boolean>(false);
   const [showTimer, setShowTimer] = useState<boolean>(false);
+  const [transferQuote, setTransferQuote] = useState<TransferQuote>();
+  const [withdrawalQuote, setWithdrawalQuote] = useState<WithdrawalQuote>();
 
   // temp
   const [inputReadOnly, setInputReadOnly] = useState<boolean>(false);
@@ -364,7 +373,8 @@ const ConnextModal: FC<ConnextModalProps> = ({
         withdrawAssetId,
         routerPublicIdentifier,
         crossChainTransferId,
-        preImage
+        preImage,
+        transferQuote!
       );
       console.log('createFromAssetTransfer transferDeets: ', transferDeets);
     } catch (e) {
@@ -510,14 +520,16 @@ const ConnextModal: FC<ConnextModalProps> = ({
         withdrawAssetId,
         withdrawalAddress,
         routerPublicIdentifier,
+        withdrawalQuote!,
         withdrawCallTo,
-        withdrawCallData
+        withdrawCallData,
+        generateCallData
       );
     } catch (e) {
       handleScreen({
         state: ERROR_STATES.ERROR_TRANSFER,
         error: e,
-        message: 'Error in crossChainTransfer',
+        message: 'Error in withdrawToAsset',
       });
       return;
     }
@@ -674,6 +686,8 @@ const ConnextModal: FC<ConnextModalProps> = ({
           totalFee,
           senderAmount: _senderAmount,
           recipientAmount: _recipientAmount,
+          transferQuote: _transferQuote,
+          withdrawalQuote: _withdrawalQuote,
         } = await getFeesDebounced(
           node!,
           routerPublicIdentifier,
@@ -691,6 +705,8 @@ const ConnextModal: FC<ConnextModalProps> = ({
         fee = totalFee;
         senderAmount = BigNumber.from(_senderAmount);
         recipientAmount = BigNumber.from(_recipientAmount);
+        setTransferQuote(_transferQuote);
+        setWithdrawalQuote(_withdrawalQuote);
       } catch (e) {
         handleAmountError(err, receiveExactAmount);
         return;
