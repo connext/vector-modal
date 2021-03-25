@@ -305,7 +305,8 @@ export const createFromAssetTransfer = async (
   _toAssetId: string,
   routerPublicIdentifier: string,
   crossChainTransferId: string,
-  preImage: string
+  preImage: string,
+  quote: TransferQuote
 ): Promise<{ transferId: string; preImage: string }> => {
   const depositChannel = await getChannelForChain(
     node,
@@ -338,6 +339,7 @@ export const createFromAssetTransfer = async (
     },
     details: { expiry: '0', lockHash: createlockHash(preImage) },
     publicIdentifier: depositChannel.bobIdentifier,
+    quote,
   };
   console.log('transfer params', params);
   const ret = await node.conditionalTransfer(params);
@@ -540,9 +542,22 @@ export const withdrawToAsset = async (
   _toAssetId: string,
   recipientAddr: string,
   routerPublicIdentifier: string,
+  quote: WithdrawalQuote,
   withdrawCallTo?: string,
-  withdrawCallData?: string
+  withdrawCallData?: string,
+  generateCallData?: (
+    quote: WithdrawalQuote,
+    node: BrowserNode
+  ) => Promise<{ callData?: string }>
 ): Promise<{ withdrawalTx: string; withdrawalAmount: string }> => {
+  console.log('Starting withdrawal: ', {
+    toChainId,
+    _toAssetId,
+    recipientAddr,
+    routerPublicIdentifier,
+    withdrawCallTo,
+    withdrawCallData,
+  });
   const withdrawChannel = await getChannelForChain(
     node,
     routerPublicIdentifier,
@@ -555,6 +570,13 @@ export const withdrawToAsset = async (
     throw new Error('Asset not in receiver channel');
   }
 
+  let callData = withdrawCallData;
+  if (typeof generateCallData === 'function') {
+    console.log('Using generateCallData function');
+    const res = await generateCallData(quote, node);
+    callData = res.callData ? res.callData : withdrawCallData;
+  }
+
   const params: NodeParams.Withdraw = {
     amount: toWithdraw,
     assetId: toAssetId,
@@ -562,7 +584,8 @@ export const withdrawToAsset = async (
     publicIdentifier: withdrawChannel.bobIdentifier,
     recipient: recipientAddr,
     callTo: withdrawCallTo,
-    callData: withdrawCallData,
+    callData,
+    quote,
   };
   console.log('withdraw params', params);
   const [ret, payload] = await Promise.all([

@@ -9,6 +9,8 @@ import {
   ConnextSdk,
   BrowserNode,
   ERC20Abi,
+  TransferQuote,
+  WithdrawalQuote,
 } from '@connext/vector-sdk';
 import { BigNumber, constants, utils, providers, Contract } from 'ethers';
 import {
@@ -61,6 +63,10 @@ export type ConnextModalProps = {
   onSwap?: (inputSenderAmountWei: string, node: BrowserNode) => Promise<void>;
   onDepositTxCreated?: (txHash: string) => void;
   onFinished?: (txHash: string, amountWei: string) => void;
+  generateCallData?: (
+    quote: WithdrawalQuote,
+    node: BrowserNode
+  ) => Promise<{ callData?: string }>;
 };
 
 const ConnextModal: FC<ConnextModalProps> = ({
@@ -79,6 +85,7 @@ const ConnextModal: FC<ConnextModalProps> = ({
   iframeSrcOverride,
   withdrawCallTo,
   withdrawCallData,
+  generateCallData,
   onClose,
   onReady,
   onSwap,
@@ -108,6 +115,9 @@ const ConnextModal: FC<ConnextModalProps> = ({
     successWithdrawalAmount,
     setSuccessWithdrawalAmount,
   ] = useState<string>();
+
+  const [transferQuote, setTransferQuote] = useState<TransferQuote>();
+  const [withdrawalQuote, setWithdrawalQuote] = useState<WithdrawalQuote>();
 
   const [senderChain, setSenderChain] = useState<CHAIN_DETAIL>();
   const [receiverChain, setReceiverChain] = useState<CHAIN_DETAIL>();
@@ -236,6 +246,9 @@ const ConnextModal: FC<ConnextModalProps> = ({
         : setReceivedAmountUi(res.recipientAmount);
 
       if (res.totalFee) setTransferFeeUi(res.totalFee);
+
+      setTransferQuote(res.transferQuote);
+      setWithdrawalQuote(res.withdrawalQuote);
     } catch (e) {
       const message = 'Error Estimating Fees';
       console.log(message, e);
@@ -332,7 +345,7 @@ const ConnextModal: FC<ConnextModalProps> = ({
     });
 
     try {
-      await connextSdk!.transfer();
+      await connextSdk!.transfer({ transferQuote: transferQuote! });
     } catch (e) {
       console.log('Error at Transfer', e);
       throw e;
@@ -348,8 +361,10 @@ const ConnextModal: FC<ConnextModalProps> = ({
       await connextSdk!.withdraw({
         recipientAddress: withdrawalAddress,
         onFinished: onSuccess,
+        withdrawalQuote: withdrawalQuote!,
         withdrawCallTo: withdrawCallTo,
         withdrawCallData: withdrawCallData,
+        generateCallData: generateCallData,
       });
     } catch (e) {
       console.log('Error at withdraw', e);
