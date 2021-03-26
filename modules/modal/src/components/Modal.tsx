@@ -8,11 +8,10 @@ import {
   getUserBalance,
   ConnextSdk,
   BrowserNode,
-  ERC20Abi,
   TransferQuote,
   WithdrawalQuote,
 } from '@connext/vector-sdk';
-import { BigNumber, constants, utils, providers, Contract } from 'ethers';
+import { BigNumber, utils, providers } from 'ethers';
 import {
   ERROR_STATES,
   SCREEN_STATES,
@@ -115,9 +114,10 @@ const ConnextModal: FC<ConnextModalProps> = ({
     string | undefined
   >();
 
-  const [successWithdrawalAmount, setSuccessWithdrawalAmount] = useState<
-    string
-  >();
+  const [
+    successWithdrawalAmount,
+    setSuccessWithdrawalAmount,
+  ] = useState<string>();
 
   const [transferQuote, setTransferQuote] = useState<TransferQuote>();
   const [withdrawalQuote, setWithdrawalQuote] = useState<WithdrawalQuote>();
@@ -275,7 +275,7 @@ const ConnextModal: FC<ConnextModalProps> = ({
     if (onSwap) {
       try {
         console.log('Calling onSwap function');
-        await onSwap(transferAmountBn.toString(), connextSdk?.connextClient!);
+        await onSwap(transferAmountBn.toString(), connextSdk?.browserNode!);
       } catch (e) {
         console.log('onswap error', e);
         handleScreen({
@@ -295,33 +295,15 @@ const ConnextModal: FC<ConnextModalProps> = ({
     } else {
       // deposit
       try {
-        const signer = webProvider.getSigner();
-        const depositAddress = connextSdk!.senderChainChannelAddress;
-        console.log(depositAddress, transferAmountBn, depositAssetId);
-        const depositTx =
-          depositAssetId === constants.AddressZero
-            ? await signer.sendTransaction({
-                to: depositAddress!,
-                value: transferAmountBn,
-              })
-            : await new Contract(depositAssetId, ERC20Abi, signer).transfer(
-                depositAddress!,
-                transferAmountBn
-              );
-
-        console.log('depositTx', depositTx.hash);
-        if (onDepositTxCreated) {
-          onDepositTxCreated(depositTx.hash);
-        }
-        const receipt = await depositTx.wait(1);
-        console.log('deposit mined:', receipt.transactionHash);
+        await connextSdk!.deposit({
+          transferAmount: transferAmountUi!,
+          webProvider: webProvider!,
+          preTransferCheck: false,
+          onDeposited: onDepositTxCreated,
+        });
       } catch (e) {
         setIsLoad(false);
-        if (
-          e.message.includes(
-            'MetaMask Tx Signature: User denied transaction signature'
-          )
-        ) {
+        if (e.message.includes('User denied transaction signature')) {
           return;
         }
         handleScreen({
@@ -837,7 +819,7 @@ const ConnextModal: FC<ConnextModalProps> = ({
         return (
           <Recover
             senderChainInfo={senderChain!}
-            node={connextSdk?.connextClient!}
+            node={connextSdk?.browserNode!}
             depositAddress={connextSdk!.senderChainChannelAddress}
             handleOptions={handleOptions}
             handleBack={handleBack}
