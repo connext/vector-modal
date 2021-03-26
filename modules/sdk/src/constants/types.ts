@@ -61,6 +61,14 @@ export type EstimateFeeResponseSchema = {
   withdrawalQuote: WithdrawalQuote | undefined;
 };
 
+export type DepositParamsSchema = {
+  transferAmount: string;
+  webProvider: providers.Web3Provider;
+  preTransferCheck?: boolean;
+  // callback
+  onDeposited?: (txHash: string) => void;
+};
+
 export type WithdrawParamsSchema = {
   recipientAddress: string;
   withdrawalQuote?: WithdrawalQuote;

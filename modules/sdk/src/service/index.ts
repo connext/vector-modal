@@ -7,7 +7,7 @@ import {
 } from '@connext/vector-types';
 import { BrowserNode } from '@connext/vector-browser-node';
 import { getBalanceForAssetId, getRandomBytes32 } from '@connext/vector-utils';
-import { BigNumber, constants, utils } from 'ethers';
+import { BigNumber, Contract, constants, utils } from 'ethers';
 import AwesomeDebouncePromise from 'awesome-debounce-promise';
 import {
   CHAIN_DETAIL,
@@ -15,6 +15,7 @@ import {
   InitParamsSchema,
   EstimateFeeParamsSchema,
   EstimateFeeResponseSchema,
+  DepositParamsSchema,
   TransferParamsSchema,
   WithdrawParamsSchema,
   CrossChainSwapParamsSchema,
@@ -57,7 +58,7 @@ export class ConnextSdk {
   public recipientChainChannel?: FullChannelState;
   public senderChain?: CHAIN_DETAIL;
   public recipientChain?: CHAIN_DETAIL;
-  public connextClient: BrowserNode | undefined;
+  public browserNode: BrowserNode | undefined;
 
   private evts?: EvtContainer;
   private swapDefinition?: any;
@@ -130,17 +131,17 @@ export class ConnextSdk {
     try {
       // call isAlive if node set already (i.e. retry)
       if (
-        this.connextClient &&
+        this.browserNode &&
         this.senderChainChannelAddress &&
         this.recipientChainChannelAddress
       ) {
         console.log('node found, sending isAlive message');
         const [depositRes, withdrawRes] = await Promise.all([
-          this.connextClient.sendIsAliveMessage({
+          this.browserNode.sendIsAliveMessage({
             channelAddress: this.senderChainChannelAddress,
             skipCheckIn: false,
           }),
-          this.connextClient.sendIsAliveMessage({
+          this.browserNode.sendIsAliveMessage({
             channelAddress: this.recipientChainChannelAddress,
             skipCheckIn: false,
           }),
@@ -149,7 +150,7 @@ export class ConnextSdk {
       }
       // browser node object
       _node =
-        this.connextClient ??
+        this.browserNode ??
         (await connectNode(
           params.routerPublicIdentifier,
           senderChainInfo.chainId,
@@ -159,7 +160,7 @@ export class ConnextSdk {
           params.loginProvider,
           params.iframeSrcOverride
         ));
-      this.connextClient = _node;
+      this.browserNode = _node;
     } catch (e) {
       const message = 'Error initalizing Browser Node';
       console.log(e, message);
@@ -227,7 +228,7 @@ export class ConnextSdk {
   async checkPendingTransfer(): Promise<CheckPendingTransferResponseSchema> {
     try {
       await reconcileDeposit(
-        this.connextClient!,
+        this.browserNode!,
         this.senderChainChannelAddress,
         this.senderChain?.assetId!
       );
@@ -239,7 +240,7 @@ export class ConnextSdk {
         console.warn(
           'Channel is out of sync, restoring before other operations. The channel was likely used in another browser.'
         );
-        const restoreDepositChannelState = await this.connextClient!.restoreState(
+        const restoreDepositChannelState = await this.browserNode!.restoreState(
           {
             counterpartyIdentifier: this.routerPublicIdentifier,
             chainId: this.senderChain?.chainId!,
@@ -250,7 +251,7 @@ export class ConnextSdk {
           console.error(message, restoreDepositChannelState.getError());
           throw restoreDepositChannelState.getError();
         }
-        const restoreWithdrawChannelState = await this.connextClient!.restoreState(
+        const restoreWithdrawChannelState = await this.browserNode!.restoreState(
           {
             counterpartyIdentifier: this.routerPublicIdentifier,
             chainId: this.recipientChain?.chainId!,
@@ -263,7 +264,7 @@ export class ConnextSdk {
         }
         try {
           await reconcileDeposit(
-            this.connextClient!,
+            this.browserNode!,
             this.senderChainChannelAddress,
             this.senderChain?.assetId!
           );
@@ -282,7 +283,7 @@ export class ConnextSdk {
     // prune any existing receiver transfers
     try {
       const hangingResolutions = await cancelHangingToTransfers(
-        this.connextClient!,
+        this.browserNode!,
         this.evts![EngineEvents.CONDITIONAL_TRANSFER_CREATED],
         this.senderChain?.chainId!,
         this.recipientChain?.chainId!,
@@ -298,57 +299,57 @@ export class ConnextSdk {
 
     // get active transfers
     const [depositActive, withdrawActive] = await Promise.all([
-      this.connextClient!.getActiveTransfers({
+      this.browserNode!.getActiveTransfers({
         channelAddress: this.senderChainChannelAddress,
       }),
-      this.connextClient!.getActiveTransfers({
+      this.browserNode!.getActiveTransfers({
         channelAddress: this.recipientChainChannelAddress,
       }),
     ]);
     const depositHashlock = depositActive
       .getValue()
-      .filter(t => Object.keys(t.transferState).includes('lockHash'));
+      .filter((t) => Object.keys(t.transferState).includes('lockHash'));
     const withdrawHashlock = withdrawActive
       .getValue()
-      .filter(t => Object.keys(t.transferState).includes('lockHash'));
+      .filter((t) => Object.keys(t.transferState).includes('lockHash'));
     console.warn(
       'deposit active on init',
       depositHashlock.length,
       'ids:',
-      depositHashlock.map(t => t.transferId)
+      depositHashlock.map((t) => t.transferId)
     );
     console.warn(
       'withdraw active on init',
       withdrawHashlock.length,
       'ids:',
-      withdrawHashlock.map(t => t.transferId)
+      withdrawHashlock.map((t) => t.transferId)
     );
 
     // set a listener to check for transfers that may have been pushed after a refresh after the hanging transfers have already been canceled
-    this.evts!.CONDITIONAL_TRANSFER_CREATED.pipe(data => {
+    this.evts!.CONDITIONAL_TRANSFER_CREATED.pipe((data) => {
       return (
         data.transfer.responderIdentifier ===
-          this.connextClient!.publicIdentifier &&
+          this.browserNode!.publicIdentifier &&
         data.transfer.meta.routingId !== this.crossChainTransferId
       );
-    }).attach(async data => {
+    }).attach(async (data) => {
       console.warn('Cancelling transfer thats not active');
       const senderResolution = this.evts!.CONDITIONAL_TRANSFER_RESOLVED.pipe(
-        data =>
+        (data) =>
           data.transfer.meta.crossChainTransferId ===
             this.crossChainTransferId &&
           data.channelAddress === this.senderChainChannelAddress
       ).waitFor(45_000);
 
       const receiverResolution = this.evts!.CONDITIONAL_TRANSFER_RESOLVED.pipe(
-        data =>
+        (data) =>
           data.transfer.meta.crossChainTransferId ===
             this.crossChainTransferId &&
           data.channelAddress === this.recipientChainChannelAddress
       ).waitFor(45_000);
       try {
         await cancelToAssetTransfer(
-          this.connextClient!,
+          this.browserNode!,
           this.recipientChainChannelAddress,
           data.transfer.transferId
         );
@@ -373,7 +374,7 @@ export class ConnextSdk {
     try {
       console.log('Waiting for sender cancellations..');
       await waitForSenderCancels(
-        this.connextClient!,
+        this.browserNode!,
         this.evts![EngineEvents.CONDITIONAL_TRANSFER_RESOLVED],
         this.senderChainChannelAddress
       );
@@ -387,7 +388,7 @@ export class ConnextSdk {
     // After reconciling, get channel again
     try {
       this.senderChainChannel = await getChannelForChain(
-        this.connextClient!,
+        this.browserNode!,
         this.routerPublicIdentifier,
         this.senderChain?.chainId!
       );
@@ -487,7 +488,7 @@ export class ConnextSdk {
           transferQuote: _transferQuote,
           withdrawalQuote: _withdrawalQuote,
         } = await this.getFeesDebounced(
-          this.connextClient!,
+          this.browserNode!,
           this.routerPublicIdentifier,
           transferAmountBn,
           this.senderChain?.chainId!,
@@ -608,6 +609,65 @@ export class ConnextSdk {
     }
   }
 
+  async deposit(params: DepositParamsSchema) {
+    const {
+      transferAmount,
+      preTransferCheck = true,
+      webProvider,
+      onDeposited,
+    } = params;
+
+    if (preTransferCheck) {
+      try {
+        await this.preTransferCheck(transferAmount);
+      } catch (e) {
+        console.log('Error at preCheck', e);
+        throw e;
+      }
+    }
+
+    const transferAmountBn = BigNumber.from(
+      utils.parseUnits(transferAmount, this.senderChain?.assetDecimals!)
+    );
+    console.log(transferAmountBn);
+
+    try {
+      const signer = webProvider.getSigner();
+
+      const depositTx =
+        this.senderChain?.assetId! === constants.AddressZero
+          ? await signer.sendTransaction({
+              to: this.senderChainChannelAddress!,
+              value: transferAmountBn,
+            })
+          : await new Contract(
+              this.senderChain?.assetId!,
+              ERC20Abi,
+              signer
+            ).transfer(this.senderChainChannelAddress!, transferAmountBn);
+
+      const receipt = await depositTx.wait(1);
+      console.log('deposit mined:', receipt.transactionHash);
+
+      this.senderChain?.rpcProvider!
+        .waitForTransaction(depositTx.hash)
+        .then((receipt) => {
+          if (receipt.status === 0) {
+            // tx reverted
+            const message = 'Transaction reverted onchain';
+            console.error(message, receipt);
+            throw new Error(message);
+          }
+        });
+      if (onDeposited) {
+        onDeposited(depositTx.hash);
+      }
+    } catch (e) {
+      console.log('Error at deposit', e);
+      throw e;
+    }
+  }
+
   async transfer(params: TransferParamsSchema) {
     const { transferQuote } = params;
     const crossChainTransferId = getRandomBytes32();
@@ -620,7 +680,7 @@ export class ConnextSdk {
         .senderChainChannelAddress!} and ${this.senderChain?.assetId!}`
     );
     await reconcileDeposit(
-      this.connextClient!,
+      this.browserNode!,
       this.senderChainChannelAddress!,
       this.senderChain?.assetId!
     );
@@ -633,7 +693,7 @@ export class ConnextSdk {
         } ${crossChainTransferId}`
       );
       const transferDeets = await createFromAssetTransfer(
-        this.connextClient!,
+        this.browserNode!,
         this.senderChain?.chainId!,
         this.senderChain?.assetId!,
         this.recipientChain?.chainId!,
@@ -657,7 +717,7 @@ export class ConnextSdk {
     // listen for a sender-side cancellation, if it happens, short-circuit and show cancellation
     const senderCancel = this.evts![
       EngineEvents.CONDITIONAL_TRANSFER_RESOLVED
-    ].pipe(data => {
+    ].pipe((data) => {
       return (
         data.transfer.meta?.routingId === crossChainTransferId &&
         data.transfer.responderIdentifier === this.routerPublicIdentifier &&
@@ -667,7 +727,7 @@ export class ConnextSdk {
 
     const receiverCreate = this.evts![
       EngineEvents.CONDITIONAL_TRANSFER_CREATED
-    ].pipe(data => {
+    ].pipe((data) => {
       return (
         data.transfer.meta?.routingId === crossChainTransferId &&
         data.transfer.initiatorIdentifier === this.routerPublicIdentifier
@@ -703,7 +763,7 @@ export class ConnextSdk {
 
     const senderResolve = this.evts![
       EngineEvents.CONDITIONAL_TRANSFER_RESOLVED
-    ].pipe(data => {
+    ].pipe((data) => {
       return (
         data.transfer.meta?.routingId === crossChainTransferId &&
         data.transfer.responderIdentifier === this.routerPublicIdentifier
@@ -712,7 +772,7 @@ export class ConnextSdk {
 
     try {
       await resolveToAssetTransfer(
-        this.connextClient!,
+        this.browserNode!,
         this.recipientChain?.chainId!,
         preImage,
         crossChainTransferId,
@@ -747,7 +807,7 @@ export class ConnextSdk {
     let result;
     try {
       result = await withdrawToAsset(
-        this.connextClient!,
+        this.browserNode!,
         this.evts![EngineEvents.WITHDRAWAL_RESOLVED],
         this.recipientChain?.chainId!,
         this.recipientChain?.assetId!,
@@ -783,7 +843,7 @@ export class ConnextSdk {
     // check tx receipt for withdrawal tx
     this.recipientChain?.rpcProvider
       .waitForTransaction(result.withdrawalTx)
-      .then(receipt => {
+      .then((receipt) => {
         if (receipt.status === 0) {
           // tx reverted
           const message = 'Transaction reverted onchain';
