@@ -1,6 +1,6 @@
 // Add shims and polyfills
 // import '@webcomponents/webcomponentsjs/webcomponents-bundle.js';
-import ConnextModal from './components/Modal';
+import ConnextModal from "./components/Modal";
 export { ConnextModal };
 // import { define } from 'hybrids';
 // import WebModal from './components/WebModal';

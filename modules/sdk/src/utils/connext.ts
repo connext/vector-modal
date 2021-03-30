@@ -1,5 +1,5 @@
-import { BrowserNode, NonEIP712Message } from '@connext/vector-browser-node';
-import { ChannelMastercopy } from '@connext/vector-contracts';
+import { BrowserNode, NonEIP712Message } from "@connext/vector-browser-node";
+import { ChannelMastercopy } from "@connext/vector-contracts";
 import {
   ConditionalTransferCreatedPayload,
   ConditionalTransferResolvedPayload,
@@ -15,17 +15,12 @@ import {
   TransferQuote,
   AllowedSwap,
   WithdrawalResolvedPayload,
-} from '@connext/vector-types';
-import {
-  calculateExchangeWad,
-  createlockHash,
-  getBalanceForAssetId,
-  inverse,
-} from '@connext/vector-utils';
-import { providers, Contract, BigNumber, constants, utils } from 'ethers';
-import { Evt } from 'evt';
-import { getOnchainBalance } from './helpers';
-import { iframeSrc } from '../constants';
+} from "@connext/vector-types";
+import { calculateExchangeWad, createlockHash, getBalanceForAssetId, inverse } from "@connext/vector-utils";
+import { providers, Contract, BigNumber, constants, utils } from "ethers";
+import { Evt } from "evt";
+import { getOnchainBalance } from "./helpers";
+import { iframeSrc } from "../constants";
 
 export const connectNode = async (
   routerPublicIdentifier: string,
@@ -34,9 +29,9 @@ export const connectNode = async (
   depositChainProvider: string,
   withdrawChainProvider: string,
   loginProvider?: providers.Web3Provider,
-  iframeSrcOverride?: string
+  iframeSrcOverride?: string,
 ): Promise<BrowserNode> => {
-  console.log('Connect Node');
+  console.log("Connect Node");
   const browserNode = new BrowserNode({
     routerPublicIdentifier,
     iframeSrc: iframeSrcOverride ?? iframeSrc,
@@ -52,30 +47,28 @@ export const connectNode = async (
   let signer: providers.JsonRpcSigner | undefined;
   let signerAddress: string | undefined;
 
-  console.log('loginProvider: ', loginProvider);
+  console.log("loginProvider: ", loginProvider);
   if (!!loginProvider) {
-    console.log('Using login provider to log in');
+    console.log("Using login provider to log in");
     signer = loginProvider.getSigner();
-    console.log('signer: ', signer);
+    console.log("signer: ", signer);
     signerAddress = await signer.getAddress();
-    console.log('Login provider signerAddress: ', signerAddress);
+    console.log("Login provider signerAddress: ", signerAddress);
     signature = await loginProvider.getSigner().signMessage(NonEIP712Message);
   }
   try {
     await browserNode.init({ signature, signer: signerAddress });
   } catch (e) {
-    console.error('Error initializing Browser Node:', jsonifyError(e));
+    console.error("Error initializing Browser Node:", jsonifyError(e));
     error = e;
   }
-  const shouldAttemptRestore = (error?.context?.validationError ?? '').includes(
-    'Channel is already setup'
-  );
+  const shouldAttemptRestore = (error?.context?.validationError ?? "").includes("Channel is already setup");
   if (error && !shouldAttemptRestore) {
     throw error;
   }
 
   if (error && shouldAttemptRestore) {
-    console.warn('Attempting restore from router');
+    console.warn("Attempting restore from router");
     // restore state for depositChainId
     const [deposit, withdraw] = await Promise.all([
       browserNode.getStateChannelByParticipants({
@@ -88,9 +81,9 @@ export const connectNode = async (
       }),
     ]);
     if (deposit.isError || withdraw.isError) {
-      console.error('Error fetching deposit channel', deposit.getError());
-      console.error('Error fetching withdraw channel', withdraw.getError());
-      throw new Error('Could not retrieve channels');
+      console.error("Error fetching deposit channel", deposit.getError());
+      console.error("Error fetching withdraw channel", withdraw.getError());
+      throw new Error("Could not retrieve channels");
     }
     if (!deposit.getValue()) {
       const restoreDepositChannelState = await browserNode.restoreState({
@@ -98,7 +91,7 @@ export const connectNode = async (
         chainId: depositChainId,
       });
       if (restoreDepositChannelState.isError) {
-        console.error('Could not restore deposit state');
+        console.error("Could not restore deposit state");
         throw restoreDepositChannelState.getError();
       }
     }
@@ -110,19 +103,19 @@ export const connectNode = async (
         chainId: withdrawChainId,
       });
       if (restoreWithdrawChannelState.isError) {
-        console.error('Could not restore withdraw state');
+        console.error("Could not restore withdraw state");
         throw restoreWithdrawChannelState.getError();
       }
     }
-    console.warn('Restore complete, re-initing');
+    console.warn("Restore complete, re-initing");
     await browserNode.init();
   }
-  console.log('connection success');
+  console.log("connection success");
 
   const configRes = await browserNode.getConfig();
   if (!configRes[0]) throw new Error(`Error getConfig: node connection failed`);
 
-  console.log('browser node config: ', configRes[0]);
+  console.log("browser node config: ", configRes[0]);
 
   return browserNode;
 };
@@ -139,7 +132,7 @@ export const getCrosschainFee = async (
   receiverAssetDecimals: number,
   receiverChannelAddress: string,
   swapDefinition: AllowedSwap,
-  receiveExactAmount?: boolean
+  receiveExactAmount?: boolean,
 ): Promise<{
   withdrawalQuote: WithdrawalQuote;
   transferQuote: TransferQuote;
@@ -160,12 +153,7 @@ export const getCrosschainFee = async (
     // if input at recipient field
     // convert the input amount to senderAmount
     transferAmount = BigNumber.from(
-      calculateExchangeWad(
-        _transferAmount,
-        receiverAssetDecimals,
-        inverse(swap.hardcodedRate),
-        senderAssetDecimals
-      )
+      calculateExchangeWad(_transferAmount, receiverAssetDecimals, inverse(swap.hardcodedRate), senderAssetDecimals),
     );
   }
 
@@ -179,14 +167,12 @@ export const getCrosschainFee = async (
     chainId: senderChainId,
     receiveExactAmount,
   });
-  console.log('transferQuoteResult: ', transferQuoteResult.toJson());
+  console.log("transferQuoteResult: ", transferQuoteResult.toJson());
   if (transferQuoteResult.isError) {
     throw transferQuoteResult.getError();
   }
   const depositAssetTransferFee = transferQuoteResult.getValue().fee;
-  const depositAssetTransferAmount = BigNumber.from(
-    transferQuoteResult.getValue().amount
-  );
+  const depositAssetTransferAmount = BigNumber.from(transferQuoteResult.getValue().amount);
 
   // In the case where you want to receive an exact amount, the quote
   // returned would have an amount in it that is different than the
@@ -204,7 +190,7 @@ export const getCrosschainFee = async (
     channelAddress: receiverChannelAddress,
     assetId: receiverAssetId,
   });
-  console.log('withdrawQuoteRes: ', withdrawQuoteRes.toJson());
+  console.log("withdrawQuoteRes: ", withdrawQuoteRes.toJson());
   if (withdrawQuoteRes.isError) {
     throw withdrawQuoteRes.getError();
   }
@@ -215,12 +201,12 @@ export const getCrosschainFee = async (
     BigNumber.from(withdrawFee),
     receiverAssetDecimals,
     inverse(swap.hardcodedRate),
-    senderAssetDecimals
+    senderAssetDecimals,
   );
-  console.log('converted withdrawal fee', depositAssetWithdrawFee);
+  console.log("converted withdrawal fee", depositAssetWithdrawFee);
 
   const totalFee = depositAssetWithdrawFee.add(depositAssetTransferFee);
-  console.log('totalFee', totalFee);
+  console.log("totalFee", totalFee);
 
   let senderAmount: BigNumber;
   let recipientAmount: BigNumber;
@@ -232,7 +218,7 @@ export const getCrosschainFee = async (
       depositAssetTransferAmount,
       senderAssetDecimals,
       swap.hardcodedRate,
-      receiverAssetDecimals
+      receiverAssetDecimals,
     );
   } else {
     senderAmount = depositAssetTransferAmount;
@@ -240,7 +226,7 @@ export const getCrosschainFee = async (
       depositAssetTransferAmount.sub(totalFee),
       senderAssetDecimals,
       swap.hardcodedRate,
-      receiverAssetDecimals
+      receiverAssetDecimals,
     );
   }
 
@@ -262,28 +248,20 @@ export const getCrosschainFee = async (
 export const getTotalDepositsBob = async (
   channelAddress: string,
   assetId: string,
-  provider: providers.BaseProvider
+  provider: providers.BaseProvider,
 ): Promise<BigNumber> => {
   // see if contract was deployed
   const code = await provider.getCode(channelAddress);
-  if (code === '0x') {
+  if (code === "0x") {
     // channel not deployed, all $$ at addr is users
     return getOnchainBalance(provider, assetId, channelAddress);
   }
   // get from chain
-  return new Contract(
-    channelAddress,
-    ChannelMastercopy.abi,
-    provider
-  ).getTotalDepositsBob(assetId);
+  return new Contract(channelAddress, ChannelMastercopy.abi, provider).getTotalDepositsBob(assetId);
 };
 
 // throws results to be used in retryWithDelay fn
-export const reconcileDeposit = async (
-  node: BrowserNode,
-  channelAddress: string,
-  _assetId: string
-) => {
+export const reconcileDeposit = async (node: BrowserNode, channelAddress: string, _assetId: string) => {
   const ret = await node.reconcileDeposit({
     channelAddress,
     assetId: utils.getAddress(_assetId),
@@ -302,21 +280,15 @@ export const createFromAssetTransfer = async (
   routerPublicIdentifier: string,
   crossChainTransferId: string,
   preImage: string,
-  quote?: TransferQuote
+  quote?: TransferQuote,
 ): Promise<{ transferId: string; preImage: string }> => {
-  const depositChannel = await getChannelForChain(
-    node,
-    routerPublicIdentifier,
-    fromChainId
-  );
+  const depositChannel = await getChannelForChain(node, routerPublicIdentifier, fromChainId);
   const fromAssetId = utils.getAddress(_fromAssetId);
   const toAssetId = utils.getAddress(_toAssetId);
-  const toTransfer = getBalanceForAssetId(depositChannel, fromAssetId, 'bob');
-  if (toTransfer === '0') {
+  const toTransfer = getBalanceForAssetId(depositChannel, fromAssetId, "bob");
+  if (toTransfer === "0") {
     throw new Error(
-      `Asset (${fromAssetId}) not in channel, please deposit. Assets: ${depositChannel.assetIds.join(
-        ','
-      )}`
+      `Asset (${fromAssetId}) not in channel, please deposit. Assets: ${depositChannel.assetIds.join(",")}`,
     );
   }
   const params: NodeParams.ConditionalTransfer = {
@@ -333,11 +305,11 @@ export const createFromAssetTransfer = async (
       fromAssetId,
       toAssetId,
     },
-    details: { expiry: '0', lockHash: createlockHash(preImage) },
+    details: { expiry: "0", lockHash: createlockHash(preImage) },
     publicIdentifier: depositChannel.bobIdentifier,
     quote,
   };
-  console.log('transfer params', params);
+  console.log("transfer params", params);
   const ret = await node.conditionalTransfer(params);
   if (ret.isError) {
     throw ret.getError();
@@ -354,13 +326,9 @@ export const resolveToAssetTransfer = async (
   toChainId: number,
   preImage: string,
   crossChainTransferId: string,
-  routerPublicIdentifier: string
+  routerPublicIdentifier: string,
 ): Promise<{ transferId: string }> => {
-  const withdrawChannel = await getChannelForChain(
-    node,
-    routerPublicIdentifier,
-    toChainId
-  );
+  const withdrawChannel = await getChannelForChain(node, routerPublicIdentifier, toChainId);
 
   const transfer = await node.getTransferByRoutingId({
     channelAddress: withdrawChannel.channelAddress,
@@ -371,9 +339,7 @@ export const resolveToAssetTransfer = async (
     throw transfer.getError();
   }
   if (!transfer.getValue()) {
-    throw new Error(
-      `Cross-chain transfer not found in receiver channel: ${crossChainTransferId}`
-    );
+    throw new Error(`Cross-chain transfer not found in receiver channel: ${crossChainTransferId}`);
   }
   const params: NodeParams.ResolveTransfer = {
     publicIdentifier: withdrawChannel.bobIdentifier,
@@ -392,7 +358,7 @@ export const resolveToAssetTransfer = async (
 export const waitForSenderCancels = async (
   node: BrowserNode,
   evt: Evt<ConditionalTransferResolvedPayload>,
-  depositChannelAddress: string
+  depositChannelAddress: string,
 ) => {
   const active = await node.getActiveTransfers({
     channelAddress: depositChannelAddress,
@@ -400,25 +366,24 @@ export const waitForSenderCancels = async (
   if (active.isError) {
     throw active.getError();
   }
-  const hashlock = active.getValue().filter((t) => {
-    return Object.keys(t.transferState).includes('lockHash');
+  const hashlock = active.getValue().filter(t => {
+    return Object.keys(t.transferState).includes("lockHash");
   });
   await Promise.all(
-    hashlock.map(async (t) => {
+    hashlock.map(async t => {
       try {
-        console.log('Waiting for sender cancellation: ', t);
+        console.log("Waiting for sender cancellation: ", t);
         await evt.waitFor(
-          (data) =>
+          data =>
             data.transfer.transferId === t.transferId &&
             data.channelAddress === depositChannelAddress &&
-            Object.values(data.transfer.transferResolver)[0] ===
-              constants.HashZero,
-          300_000
+            Object.values(data.transfer.transferResolver)[0] === constants.HashZero,
+          300_000,
         );
       } catch (e) {
-        console.error('Timed out waiting for cancellation:', e);
+        console.error("Timed out waiting for cancellation:", e);
       }
-    })
+    }),
   );
   const final = await node.getActiveTransfers({
     channelAddress: depositChannelAddress,
@@ -426,18 +391,18 @@ export const waitForSenderCancels = async (
   if (final.isError) {
     throw final.getError();
   }
-  const remaining = final.getValue().filter((t) => {
-    return Object.keys(t.transferState).includes('lockHash');
+  const remaining = final.getValue().filter(t => {
+    return Object.keys(t.transferState).includes("lockHash");
   });
   if (remaining.length > 0) {
-    throw new Error('Hanging sender transfers');
+    throw new Error("Hanging sender transfers");
   }
 };
 
 export const cancelToAssetTransfer = async (
   node: BrowserNode,
   withdrawChannelAddess: string,
-  transferId: string
+  transferId: string,
 ): Promise<NodeResponses.ResolveTransfer> => {
   const params = {
     channelAddress: withdrawChannelAddess,
@@ -457,18 +422,10 @@ export const cancelHangingToTransfers = async (
   fromChainId: number,
   toChainId: number,
   _toAssetId: string,
-  routerPublicIdentifier: string
+  routerPublicIdentifier: string,
 ): Promise<(NodeResponses.ResolveTransfer | undefined)[]> => {
-  const depositChannel = await getChannelForChain(
-    node,
-    routerPublicIdentifier,
-    fromChainId
-  );
-  const withdrawChannel = await getChannelForChain(
-    node,
-    routerPublicIdentifier,
-    toChainId
-  );
+  const depositChannel = await getChannelForChain(node, routerPublicIdentifier, fromChainId);
+  const withdrawChannel = await getChannelForChain(node, routerPublicIdentifier, toChainId);
 
   const toAssetId = utils.getAddress(_toAssetId);
   const transfers = await node.getActiveTransfers({
@@ -479,23 +436,23 @@ export const cancelHangingToTransfers = async (
     throw transfers.getError();
   }
 
-  const toCancel = transfers.getValue().filter((t) => {
+  const toCancel = transfers.getValue().filter(t => {
     const amResponder = t.responderIdentifier === withdrawChannel.bobIdentifier;
     const correctAsset = t.assetId === toAssetId;
-    const isHashlock = Object.keys(t.transferState).includes('lockHash');
+    const isHashlock = Object.keys(t.transferState).includes("lockHash");
     const wasForwarded = !!t.meta?.routingId;
     return amResponder && correctAsset && isHashlock && wasForwarded;
   });
 
   // wait for all hanging transfers to cancel
   const hangingResolutions = (await Promise.all(
-    toCancel.map(async (transferToCancel) => {
+    toCancel.map(async transferToCancel => {
       try {
         console.warn(
-          'Cancelling hanging receiver transfer w/routingId:',
+          "Cancelling hanging receiver transfer w/routingId:",
           transferToCancel.meta!.routingId,
-          'and transferId:',
-          transferToCancel.transferId
+          "and transferId:",
+          transferToCancel.transferId,
         );
         const params: NodeParams.ResolveTransfer = {
           publicIdentifier: withdrawChannel.bobIdentifier,
@@ -507,26 +464,25 @@ export const cancelHangingToTransfers = async (
         const resolved = await new Promise(async (res, rej) => {
           const resolveRes = await node.resolveTransfer(params);
           if (resolveRes.isError) {
-            console.error('Failed to cancel transfer:', resolveRes.getError());
+            console.error("Failed to cancel transfer:", resolveRes.getError());
             return rej(resolveRes.getError()?.message);
           }
           return res(resolveRes.getValue());
         });
         // for sender transfer cancellation
         await evt.waitFor(
-          (data) =>
+          data =>
             data.transfer.meta.routingId === transferToCancel.meta!.routingId &&
             data.channelAddress === depositChannel.channelAddress &&
-            Object.values(data.transfer.transferResolver)[0] ===
-              constants.HashZero,
-          45_000
+            Object.values(data.transfer.transferResolver)[0] === constants.HashZero,
+          45_000,
         );
         return resolved;
       } catch (e) {
-        console.error('Error cancelling hanging', e);
+        console.error("Error cancelling hanging", e);
         return undefined;
       }
-    })
+    }),
   )) as (NodeResponses.ResolveTransfer | undefined)[];
   return hangingResolutions;
 };
@@ -541,12 +497,9 @@ export const withdrawToAsset = async (
   quote?: WithdrawalQuote,
   withdrawCallTo?: string,
   withdrawCallData?: string,
-  generateCallData?: (
-    quote: WithdrawalQuote,
-    node: BrowserNode
-  ) => Promise<{ callData?: string }>
+  generateCallData?: (quote: WithdrawalQuote, node: BrowserNode) => Promise<{ callData?: string }>,
 ): Promise<{ withdrawalTx: string; withdrawalAmount: string }> => {
-  console.log('Starting withdrawal: ', {
+  console.log("Starting withdrawal: ", {
     toChainId,
     _toAssetId,
     recipientAddr,
@@ -554,21 +507,17 @@ export const withdrawToAsset = async (
     withdrawCallTo,
     withdrawCallData,
   });
-  const withdrawChannel = await getChannelForChain(
-    node,
-    routerPublicIdentifier,
-    toChainId
-  );
+  const withdrawChannel = await getChannelForChain(node, routerPublicIdentifier, toChainId);
 
   const toAssetId = utils.getAddress(_toAssetId);
-  const toWithdraw = getBalanceForAssetId(withdrawChannel, toAssetId, 'bob');
-  if (toWithdraw === '0') {
-    throw new Error('Asset not in receiver channel');
+  const toWithdraw = getBalanceForAssetId(withdrawChannel, toAssetId, "bob");
+  if (toWithdraw === "0") {
+    throw new Error("Asset not in receiver channel");
   }
 
   let callData = withdrawCallData;
-  if (generateCallData && quote && typeof generateCallData === 'function') {
-    console.log('Using generateCallData function');
+  if (generateCallData && quote && typeof generateCallData === "function") {
+    console.log("Using generateCallData function");
     const res = await generateCallData(quote, node);
     callData = res.callData ? res.callData : withdrawCallData;
   }
@@ -583,14 +532,12 @@ export const withdrawToAsset = async (
     callData,
     quote,
   };
-  console.log('withdraw params', params);
+  console.log("withdraw params", params);
   const [ret, payload] = await Promise.all([
     node.withdraw(params),
     evt.waitFor(
-      (data) =>
-        data.channelAddress === withdrawChannel.channelAddress &&
-        data.recipient === recipientAddr,
-      60_000
+      data => data.channelAddress === withdrawChannel.channelAddress && data.recipient === recipientAddr,
+      60_000,
     ),
   ]);
   if (ret.isError) {
@@ -600,7 +547,7 @@ export const withdrawToAsset = async (
   console.log(ret.getValue());
   if (!transactionHash) {
     // TODO: prompt router to retry sending transaction
-    throw new Error('Router failed to withdraw');
+    throw new Error("Router failed to withdraw");
   }
 
   const result = {
@@ -618,13 +565,9 @@ export const verifyAndGetRouterSupports = async (
   toChainId: number,
   _toAssetId: string,
   ethProvider: providers.BaseProvider, // For `to` chain
-  routerPublicIdentifier: string
+  routerPublicIdentifier: string,
 ): Promise<any> => {
-  const withdrawChannel = await getChannelForChain(
-    node,
-    routerPublicIdentifier,
-    toChainId
-  );
+  const withdrawChannel = await getChannelForChain(node, routerPublicIdentifier, toChainId);
 
   const fromAssetId = utils.getAddress(_fromAssetId);
   const toAssetId = utils.getAddress(_toAssetId);
@@ -632,24 +575,21 @@ export const verifyAndGetRouterSupports = async (
     routerIdentifier: withdrawChannel.aliceIdentifier,
   });
   if (config.isError) {
-    console.error('Router config error:', config.getError()?.toJson());
-    throw new Error('Router config unavailable');
+    console.error("Router config error:", config.getError()?.toJson());
+    throw new Error("Router config unavailable");
   }
   const { supportedChains, allowedSwaps } = config.getValue();
-  console.log('Router supportedChains: ', supportedChains);
-  console.log('Router allowedSwaps: ', allowedSwaps);
-  if (
-    !supportedChains.includes(fromChainId) ||
-    !supportedChains.includes(toChainId)
-  ) {
+  console.log("Router supportedChains: ", supportedChains);
+  console.log("Router allowedSwaps: ", allowedSwaps);
+  if (!supportedChains.includes(fromChainId) || !supportedChains.includes(toChainId)) {
     throw new Error(`Router does not support chains`);
   }
   // let invertRate = false;
-  console.log('fromAssetId.toLowerCase(): ', fromAssetId.toLowerCase());
-  console.log('toAssetId.toLowerCase(): ', toAssetId.toLowerCase());
-  console.log('fromChainId: ', fromChainId);
-  console.log('toChainId: ', toChainId);
-  const swap = allowedSwaps.find((s) => {
+  console.log("fromAssetId.toLowerCase(): ", fromAssetId.toLowerCase());
+  console.log("toAssetId.toLowerCase(): ", toAssetId.toLowerCase());
+  console.log("fromChainId: ", fromChainId);
+  console.log("toChainId: ", toChainId);
+  const swap = allowedSwaps.find(s => {
     const noninverted =
       s.fromAssetId.toLowerCase() === fromAssetId.toLowerCase() &&
       s.fromChainId === fromChainId &&
@@ -658,18 +598,14 @@ export const verifyAndGetRouterSupports = async (
     return noninverted;
   });
   if (!swap) {
-    throw new Error('Swap is not supported by router');
+    throw new Error("Swap is not supported by router");
   }
 
   // Verify sufficient gas
-  const minGas = utils.parseEther('0.1');
-  const routerGasBudget = await getOnchainBalance(
-    ethProvider,
-    constants.AddressZero,
-    withdrawChannel.alice
-  );
+  const minGas = utils.parseEther("0.1");
+  const routerGasBudget = await getOnchainBalance(ethProvider, constants.AddressZero, withdrawChannel.alice);
   if (routerGasBudget.lt(minGas)) {
-    throw new Error('Router has insufficient gas funds');
+    throw new Error("Router has insufficient gas funds");
   }
   return swap;
 };
@@ -681,41 +617,25 @@ export const verifyRouterCapacityForTransfer = async (
   withdrawChannel: FullChannelState,
   transferAmount: BigNumber,
   swap: any,
-  fromAssetDecimals: number
+  fromAssetDecimals: number,
 ) => {
   console.log(`verifyRouterCapacityForTransfer for ${transferAmount}`);
-  const routerOnchain = await getOnchainBalance(
-    ethProvider,
-    toAssetId,
-    withdrawChannel.alice
-  );
-  const routerOffchain = BigNumber.from(
-    getBalanceForAssetId(withdrawChannel, toAssetId, 'alice')
-  );
-  const swappedAmount = calculateExchangeWad(
-    transferAmount,
-    fromAssetDecimals,
-    swap.hardcodedRate,
-    toAssetDecimals
-  );
-  console.log('transferAmount: ', transferAmount.toString());
-  console.log('swappedAmount: ', swappedAmount.toString());
-  console.log('routerOnchain: ', routerOnchain.toString());
-  console.log('routerOffchain: ', routerOffchain.toString());
+  const routerOnchain = await getOnchainBalance(ethProvider, toAssetId, withdrawChannel.alice);
+  const routerOffchain = BigNumber.from(getBalanceForAssetId(withdrawChannel, toAssetId, "alice"));
+  const swappedAmount = calculateExchangeWad(transferAmount, fromAssetDecimals, swap.hardcodedRate, toAssetDecimals);
+  console.log("transferAmount: ", transferAmount.toString());
+  console.log("swappedAmount: ", swappedAmount.toString());
+  console.log("routerOnchain: ", routerOnchain.toString());
+  console.log("routerOffchain: ", routerOffchain.toString());
   if (routerOffchain.gte(swappedAmount)) {
     return;
   }
 
   const routerBalanceFull = routerOnchain.add(routerOffchain);
-  console.log('routerBalanceFull: ', routerBalanceFull);
-  console.log(
-    'routerBalanceFull.lt(swappedAmount): ',
-    routerBalanceFull.lt(swappedAmount)
-  );
+  console.log("routerBalanceFull: ", routerBalanceFull);
+  console.log("routerBalanceFull.lt(swappedAmount): ", routerBalanceFull.lt(swappedAmount));
   if (routerBalanceFull.lt(swappedAmount)) {
-    throw new Error(
-      'Router has insufficient collateral, please try again later.'
-    );
+    throw new Error("Router has insufficient collateral, please try again later.");
   }
 };
 
@@ -734,24 +654,24 @@ export const createEvtContainer = (node: BrowserNode): EvtContainer => {
   const withdrawReconciled = Evt.create<WithdrawalReconciledPayload>();
   const withdrawResolved = Evt.create<WithdrawalResolvedPayload>();
 
-  node.on(EngineEvents.CONDITIONAL_TRANSFER_CREATED, (data) => {
-    console.log('EngineEvents.CONDITIONAL_TRANSFER_CREATED: ', data);
+  node.on(EngineEvents.CONDITIONAL_TRANSFER_CREATED, data => {
+    console.log("EngineEvents.CONDITIONAL_TRANSFER_CREATED: ", data);
     createdTransfer.post(data);
   });
-  node.on(EngineEvents.CONDITIONAL_TRANSFER_RESOLVED, (data) => {
-    console.log('EngineEvents.CONDITIONAL_TRANSFER_RESOLVED: ', data);
+  node.on(EngineEvents.CONDITIONAL_TRANSFER_RESOLVED, data => {
+    console.log("EngineEvents.CONDITIONAL_TRANSFER_RESOLVED: ", data);
     resolvedTransfer.post(data);
   });
-  node.on(EngineEvents.DEPOSIT_RECONCILED, (data) => {
-    console.log('EngineEvents.DEPOSIT_RECONCILED: ', data);
+  node.on(EngineEvents.DEPOSIT_RECONCILED, data => {
+    console.log("EngineEvents.DEPOSIT_RECONCILED: ", data);
     deposit.post(data);
   });
-  node.on(EngineEvents.WITHDRAWAL_RECONCILED, (data) => {
-    console.log('EngineEvents.WITHDRAWAL_RECONCILED: ', data);
+  node.on(EngineEvents.WITHDRAWAL_RECONCILED, data => {
+    console.log("EngineEvents.WITHDRAWAL_RECONCILED: ", data);
     withdrawReconciled.post(data);
   });
-  node.on(EngineEvents.WITHDRAWAL_RESOLVED, (data) => {
-    console.log('EngineEvents.WITHDRAWAL_RESOLVED: ', data);
+  node.on(EngineEvents.WITHDRAWAL_RESOLVED, data => {
+    console.log("EngineEvents.WITHDRAWAL_RESOLVED: ", data);
     withdrawResolved.post(data);
   });
   return {
@@ -766,7 +686,7 @@ export const createEvtContainer = (node: BrowserNode): EvtContainer => {
 export const getChannelForChain = async (
   node: BrowserNode,
   routerIdentifier: string,
-  chainId: number
+  chainId: number,
 ): Promise<FullChannelState> => {
   const depositChannelRes = await node.getStateChannelByParticipants({
     chainId,

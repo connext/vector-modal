@@ -1,5 +1,5 @@
-import React, { FC, useState, useEffect } from 'react';
-import { CHAIN_DETAIL } from '@connext/vector-sdk';
+import React, { FC, useState, useEffect } from "react";
+import { CHAIN_DETAIL } from "@connext/vector-sdk";
 import {
   ModalContent,
   ModalBody,
@@ -13,10 +13,10 @@ import {
   Spinner,
   CopyIcon,
   CheckCircleIcon,
-} from '../common';
-import { Header, Footer, NetworkBar } from '../static';
+} from "../common";
+import { Header, Footer, NetworkBar } from "../static";
 // @ts-ignore
-import QRCode from 'qrcode.react';
+import QRCode from "qrcode.react";
 
 interface SwapListenerProps {
   showTimer: Boolean;
@@ -47,7 +47,7 @@ const SwapListener: FC<SwapListenerProps> = props => {
   const formatTime = (val: number) => {
     let value = val.toString();
     if (value.length < 2) {
-      value = '0' + value;
+      value = "0" + value;
     }
 
     return value;
@@ -79,11 +79,7 @@ const SwapListener: FC<SwapListenerProps> = props => {
   return (
     <>
       <ModalContent id="modalContent">
-        <Header
-          title="Ready for transfer"
-          handleBack={handleBack}
-          options={options}
-        />
+        <Header title="Ready for transfer" handleBack={handleBack} options={options} />
         <ModalBody>
           <Stack column={true} spacing={5}>
             <Stack column={true} spacing={3}>
@@ -91,15 +87,8 @@ const SwapListener: FC<SwapListenerProps> = props => {
                 <Stack spacing={8}>
                   <Stack column={true} spacing={5}>
                     <Text fontSize="1rem" fontWeight="500">
-                      Send{' '}
-                      <span style={{ color: '#2964C5' }}>
-                        {senderChainInfo.assetName}
-                      </span>{' '}
-                      on{' '}
-                      <span style={{ color: '#2964C5' }}>
-                        {senderChainInfo.name}
-                      </span>{' '}
-                      to the QR or address below.
+                      Send <span style={{ color: "#2964C5" }}>{senderChainInfo.assetName}</span> on{" "}
+                      <span style={{ color: "#2964C5" }}>{senderChainInfo.name}</span> to the QR or address below.
                     </Text>
                     <Stack column={true} spacing={3}>
                       <Text fontSize="1rem">Awaiting your transfer...</Text>
@@ -108,18 +97,13 @@ const SwapListener: FC<SwapListenerProps> = props => {
                           <Spinner />
                         </Box>
                         <Text fontFamily="Roboto Mono">
-                          {formatTime(currentTimeMin)}:
-                          {formatTime(currentTimeSec)}
+                          {formatTime(currentTimeMin)}:{formatTime(currentTimeSec)}
                         </Text>
                       </Stack>
                     </Stack>
                   </Stack>
                   <Box colorScheme="white" borderRadius="15px">
-                    <QRCode
-                      value={senderChannelAddress}
-                      size={150}
-                      style={{ padding: '0.5rem' }}
-                    />
+                    <QRCode value={senderChannelAddress} size={150} style={{ padding: "0.5rem" }} />
                   </Box>
                 </Stack>
               </Box>
@@ -150,9 +134,7 @@ const SwapListener: FC<SwapListenerProps> = props => {
                     setTimeout(() => setCopiedAddress(false), 5000);
                   }}
                 >
-                  <IconBox width="1.5rem">
-                    {!copiedAddress ? <CopyIcon /> : <CheckCircleIcon />}
-                  </IconBox>
+                  <IconBox width="1.5rem">{!copiedAddress ? <CopyIcon /> : <CheckCircleIcon />}</IconBox>
                 </IconButton>
               </InputGroup>
             </Stack>

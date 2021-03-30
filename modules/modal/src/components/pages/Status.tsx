@@ -1,7 +1,7 @@
-import React, { FC } from 'react';
-import { CHAIN_DETAIL } from '@connext/vector-sdk';
-import { ModalContent, ModalBody, Text, Stack } from '../common';
-import { Header, Footer, NetworkBar } from '../static';
+import React, { FC } from "react";
+import { CHAIN_DETAIL } from "@connext/vector-sdk";
+import { ModalContent, ModalBody, Text, Stack } from "../common";
+import { Header, Footer, NetworkBar } from "../static";
 
 export interface StatusProps {
   title: string;
@@ -13,14 +13,7 @@ export interface StatusProps {
 }
 
 const Status: FC<StatusProps> = props => {
-  const {
-    title,
-    message,
-    senderChainInfo,
-    receiverChainInfo,
-    receiverAddress,
-    options,
-  } = props;
+  const { title, message, senderChainInfo, receiverChainInfo, receiverAddress, options } = props;
   return (
     <>
       <ModalContent id="modalContent">

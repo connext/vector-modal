@@ -1,37 +1,27 @@
-import { providers, BigNumber, constants, Contract, utils } from 'ethers';
-import { ERC20Abi, ChainInfo } from '@connext/vector-types';
-import {
-  getChainInfo,
-  getChainId,
-  getAssetDecimals,
-} from '@connext/vector-utils';
-import { CHAIN_DETAIL, AddEthereumChainParameter } from '../constants';
-import { delay } from '@connext/vector-utils';
+import { providers, BigNumber, constants, Contract, utils } from "ethers";
+import { ERC20Abi, ChainInfo } from "@connext/vector-types";
+import { getChainInfo, getChainId, getAssetDecimals } from "@connext/vector-utils";
+import { CHAIN_DETAIL, AddEthereumChainParameter } from "../constants";
+import { delay } from "@connext/vector-utils";
 
 export const hydrateProviders = (
   depositChainId: number,
   depositProviderUrl: string,
   withdrawChainId: number,
-  withdrawProviderUrl: string
+  withdrawProviderUrl: string,
 ): {
   [chainId: number]: providers.BaseProvider;
 } => {
   return {
-    [depositChainId]: new providers.JsonRpcProvider(
-      depositProviderUrl,
-      depositChainId
-    ),
-    [withdrawChainId]: new providers.JsonRpcProvider(
-      withdrawProviderUrl,
-      withdrawChainId
-    ),
+    [depositChainId]: new providers.JsonRpcProvider(depositProviderUrl, depositChainId),
+    [withdrawChainId]: new providers.JsonRpcProvider(withdrawProviderUrl, withdrawChainId),
   };
 };
 
 export const getOnchainBalance = async (
   ethProvider: providers.BaseProvider,
   assetId: string,
-  address: string
+  address: string,
 ): Promise<BigNumber> => {
   const balance =
     assetId === constants.AddressZero
@@ -40,10 +30,7 @@ export const getOnchainBalance = async (
   return balance;
 };
 
-export const retryWithDelay = async <T = any>(
-  fn: () => Promise<T>,
-  retries = 5
-): Promise<T> => {
+export const retryWithDelay = async <T = any>(fn: () => Promise<T>, retries = 5): Promise<T> => {
   let error: Error = new Error("Shouldn't happen");
   // eslint-disable-next-line
   for (const _ of Array(retries).fill(0)) {
@@ -52,29 +39,23 @@ export const retryWithDelay = async <T = any>(
       return res;
     } catch (e) {
       error = e;
-      console.warn(fn.name, 'failed, retrying. error:', e.message);
+      console.warn(fn.name, "failed, retrying. error:", e.message);
     }
     await delay(1500);
   }
   throw error;
 };
 
-export const getChain = async (
-  _chainId: number | undefined,
-  chainProvider: string,
-  _assetId: string
-) => {
+export const getChain = async (_chainId: number | undefined, chainProvider: string, _assetId: string) => {
   // Sender Chain Info
   const assetId = utils.getAddress(_assetId);
   let chainId = _chainId;
   if (!chainId) {
     try {
       chainId = await getChainId(chainProvider);
-      console.log('chain:', chainId);
+      console.log("chain:", chainId);
     } catch (e) {
-      throw new Error(
-        `Error getting chain Id from provider ${chainProvider}: ${e}`
-      );
+      throw new Error(`Error getting chain Id from provider ${chainProvider}: ${e}`);
     }
   }
 
@@ -85,7 +66,7 @@ export const getChain = async (
 
   const chain: ChainInfo = await getChainInfo(chainId);
   const chainName = chain.name;
-  const assetName = chain.assetId[assetId]?.symbol ?? 'Token';
+  const assetName = chain.assetId[assetId]?.symbol ?? "Token";
 
   const chainParams: AddEthereumChainParameter = {
     chainId: utils.hexValue(chain.chainId),
@@ -115,16 +96,12 @@ export const getChain = async (
 export const getUserBalance = async (
   injectedProvider: providers.Web3Provider,
   senderChainAssetId: string,
-  senderChainAssetDecimals: number
+  senderChainAssetDecimals: number,
 ): Promise<string> => {
   const userAddress = await injectedProvider!.getSigner().getAddress();
-  console.log('injected signer address', userAddress);
+  console.log("injected signer address", userAddress);
 
-  const balance = await getOnchainBalance(
-    injectedProvider,
-    senderChainAssetId,
-    userAddress
-  );
+  const balance = await getOnchainBalance(injectedProvider, senderChainAssetId, userAddress);
 
   const userBalance = utils.formatUnits(balance, senderChainAssetDecimals);
 
@@ -132,9 +109,9 @@ export const getUserBalance = async (
 };
 
 export const truncate = (str: string, maxDecimalDigits: number) => {
-  if (str.includes('.')) {
-    const parts = str.split('.');
-    return parts[0] + '.' + parts[1].slice(0, maxDecimalDigits);
+  if (str.includes(".")) {
+    const parts = str.split(".");
+    return parts[0] + "." + parts[1].slice(0, maxDecimalDigits);
   }
   return str;
 };

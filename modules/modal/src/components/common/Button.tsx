@@ -1,4 +1,4 @@
-import styled from 'styled-components';
+import styled from "styled-components";
 
 type ButtonProps = {
   size?: string;
@@ -14,24 +14,18 @@ type ButtonProps = {
 
 export const Button = styled.button<ButtonProps>`
   &&& {
-    height: ${props =>
-      props.height ||
-      props.theme.space[props.theme.sizes[props.size ?? 'md'].h]};
-    min-width: ${props =>
-      props.theme.space[props.theme.sizes[props.size ?? 'md'].minW]};
-    font-size: ${props =>
-      props.theme.fontSizes[props.theme.sizes[props.size ?? 'md'].fontSize]};
-    padding-left: ${props =>
-      props.theme.space[props.theme.sizes[props.size ?? 'md'].px]};
-    padding-right: ${props =>
-      props.theme.space[props.theme.sizes[props.size ?? 'md'].px]};
-    border: ${props => props.border || '1.5px #7b7b7b'};
-    border-style: ${props => props.borderStyle || 'solid'};
-    border-radius: ${props => props.borderRadius || '15px'};
-    background-color: ${props => props.colorScheme || 'white'};
-    color: ${props => props.color || 'inherit'};
-    text-transform: ${props => props.casing || 'capitalize'};
-    margin-right: ${props => props.marginRight || '0px'};
+    height: ${props => props.height || props.theme.space[props.theme.sizes[props.size ?? "md"].h]};
+    min-width: ${props => props.theme.space[props.theme.sizes[props.size ?? "md"].minW]};
+    font-size: ${props => props.theme.fontSizes[props.theme.sizes[props.size ?? "md"].fontSize]};
+    padding-left: ${props => props.theme.space[props.theme.sizes[props.size ?? "md"].px]};
+    padding-right: ${props => props.theme.space[props.theme.sizes[props.size ?? "md"].px]};
+    border: ${props => props.border || "1.5px #7b7b7b"};
+    border-style: ${props => props.borderStyle || "solid"};
+    border-radius: ${props => props.borderRadius || "15px"};
+    background-color: ${props => props.colorScheme || "white"};
+    color: ${props => props.color || "inherit"};
+    text-transform: ${props => props.casing || "capitalize"};
+    margin-right: ${props => props.marginRight || "0px"};
     font-weight: 400;
     font-style: normal;
     font-family: Roboto;

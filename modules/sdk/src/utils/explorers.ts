@@ -1,4 +1,4 @@
-import { constants } from 'ethers';
+import { constants } from "ethers";
 
 export const getExplorerLink = (chainId: number): string | undefined => {
   switch (chainId) {
@@ -30,24 +30,18 @@ export const getExplorerLink = (chainId: number): string | undefined => {
   return undefined;
 };
 
-export const getExplorerLinkForTx = (
-  chainId: number,
-  txHash: string
-): string => {
+export const getExplorerLinkForTx = (chainId: number, txHash: string): string => {
   const base = getExplorerLink(chainId);
   if (!base) {
-    return '#';
+    return "#";
   }
   return `${base}/tx/${txHash}`;
 };
 
-export const getExplorerLinkForAsset = (
-  chainId: number,
-  assetId: string
-): string => {
+export const getExplorerLinkForAsset = (chainId: number, assetId: string): string => {
   const base = getExplorerLink(chainId);
   if (!base) {
-    return '#';
+    return "#";
   }
   if (assetId === constants.AddressZero) {
     return base;

@@ -1,5 +1,5 @@
-import React from 'react';
-import styled from 'styled-components';
+import React from "react";
+import styled from "styled-components";
 
 // Icons
 
@@ -10,7 +10,7 @@ export const IconBox = styled.div<IconBoxProps>`
   border-width: 0px;
   border-style: solid;
   box-sizing: border-box;
-  width: ${props => props.width || '1.125rem'};
+  width: ${props => props.width || "1.125rem"};
   line-height: 1em;
   flex-shrink: 0;
   color: currentcolor;
@@ -83,21 +83,17 @@ export const IconButton = styled.button<IconButtonProps>`
   padding: 0px;
   border: 0px rgb(123, 123, 123);
   box-sizing: border-box;
-  background: ${props =>
-    props.isSelected ? 'rgb(226, 232, 240)' : 'transparent'};
+  background: ${props => (props.isSelected ? "rgb(226, 232, 240)" : "transparent")};
   overflow: visible;
   box-shadow: none !important;
   cursor: pointer;
   line-height: inherit;
   color: inherit;
-  cursor: ${props => (!props.isDisabled ? 'pointer' : 'not-allowed')};
-  opacity: ${props => (!props.isDisabled ? '1.0' : '0.4')};
+  cursor: ${props => (!props.isDisabled ? "pointer" : "not-allowed")};
+  opacity: ${props => (!props.isDisabled ? "1.0" : "0.4")};
 
   &:hover {
-    ${props =>
-      !props.isSelected && !props.isDisabled
-        ? 'background: rgb(237, 242, 247)'
-        : ''}
+    ${props => (!props.isSelected && !props.isDisabled ? "background: rgb(237, 242, 247)" : "")}
   }
 `;
 
@@ -113,7 +109,7 @@ export const IconContainer = styled.div<IconContainerProps>`
   font-style: normal;
   font-family: Roboto;
   text-transform: capitalize;
-  font-size: ${props => props.fontSize || '1rem'};
+  font-size: ${props => props.fontSize || "1rem"};
   border-width: 0px;
   border-style: solid;
   box-sizing: border-box;
@@ -126,17 +122,9 @@ export const IconContainer = styled.div<IconContainerProps>`
   display: block;
 `;
 
-export const CloseButton = ({
-  onClick,
-  isSelected,
-  isDisabled,
-}: IconButtonProps) => {
+export const CloseButton = ({ onClick, isSelected, isDisabled }: IconButtonProps) => {
   return (
-    <IconButton
-      onClick={!isDisabled ? onClick : () => {}}
-      isSelected={isSelected}
-      isDisabled={isDisabled}
-    >
+    <IconButton onClick={!isDisabled ? onClick : () => {}} isSelected={isSelected} isDisabled={isDisabled}>
       <IconContainer>
         <svg viewBox="0 0 24 24" focusable="false" aria-hidden="true">
           <path
@@ -149,23 +137,12 @@ export const CloseButton = ({
   );
 };
 
-export const BackButton = ({
-  onClick,
-  isSelected,
-  isDisabled,
-}: IconButtonProps) => {
+export const BackButton = ({ onClick, isSelected, isDisabled }: IconButtonProps) => {
   return (
-    <IconButton
-      onClick={!isDisabled ? onClick : () => {}}
-      isSelected={isSelected}
-      isDisabled={isDisabled}
-    >
+    <IconButton onClick={!isDisabled ? onClick : () => {}} isSelected={isSelected} isDisabled={isDisabled}>
       <IconContainer>
         <svg viewBox="0 0 24 24" focusable="false" aria-hidden="true">
-          <path
-            fill="currentColor"
-            d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z"
-          ></path>
+          <path fill="currentColor" d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z"></path>
         </svg>
       </IconContainer>
     </IconButton>

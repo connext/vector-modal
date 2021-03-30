@@ -1,5 +1,5 @@
-import styled from 'styled-components';
-import Box from './Box';
+import styled from "styled-components";
+import Box from "./Box";
 
 type StackProps = {
   column?: boolean;
@@ -32,15 +32,14 @@ export const Stack = styled(Box)<StackProps>`
     margin: ${props => props.margin};
     justify-content: ${props => props.justifyContent};
     align-items: ${props => props.alignItems};
-    margin-inline-start: ${props => props.marginInlineStart || '0px'};
-    flex-direction: ${props => (props.column ? 'column' : 'row')};
+    margin-inline-start: ${props => props.marginInlineStart || "0px"};
+    flex-direction: ${props => (props.column ? "column" : "row")};
     background-color: ${props => props.colorScheme};
     border-radius: ${props => props.borderRadius};
 
     & > * {
       &:not(:first-child) {
-        ${props =>
-          getStackStyles(props.column, props.theme.space[props.spacing ?? 0])}
+        ${props => getStackStyles(props.column, props.theme.space[props.spacing ?? 0])}
       }
     }
   }
