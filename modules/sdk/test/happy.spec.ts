@@ -1,8 +1,12 @@
-import { ConnextSdk, SetupParamsSchema } from '../src';
+import { BrowserNode, CHAIN_DETAIL, ConnextSdk, SetupParamsSchema } from '../src';
 import { expect } from 'chai';
 import Sinon from 'sinon';
 import { mkPublicIdentifier, mkAddress } from '@connext/vector-utils';
+import * as helpers from '../src/utils/helpers';
+import * as connextUtils from '../src/utils/connext';
+
 import { env } from './env';
+import { constants } from 'ethers';
 
 describe('@connext/vector-sdk', () => {
   const routerPublicIdentifier = mkPublicIdentifier('vectorA');
@@ -12,9 +16,15 @@ describe('@connext/vector-sdk', () => {
   const recipientChainProvider = env.chainProviders[1];
 
   let connext: ConnextSdk;
+  let getChainMock: Sinon.SinonStub;
+  let connectNodeMock: Sinon.SinonStub;
+  let browserNodeMock: Sinon.SinonStubbedInstance<BrowserNode>
 
   beforeEach(() => {
     connext = new ConnextSdk();
+    getChainMock = Sinon.stub(helpers, 'getChain');
+    browserNodeMock = Sinon.createStubInstance(BrowserNode)
+    connectNodeMock = Sinon.stub(connextUtils, "connectNode").resolves(browserNodeMock as any)
   });
 
   afterEach(() => Sinon.restore());
@@ -22,6 +32,19 @@ describe('@connext/vector-sdk', () => {
   it('happy case', () => {
     expect(connext.senderChainChannelAddress).to.be.a('string');
     expect(true).to.be.true;
+  });
+
+  it('setup function', async () => {
+    // sender chain
+    getChainMock.onFirstCall().resolves({
+      assetDecimals: 18,
+      assetId: constants.AddressZero,
+      assetName: "",
+      chainId: 5,
+      chainParams: {chainId,chainName,nativeCurrency},
+      chainProvider,
+      rpcProvider,
+    } as CHAIN_DETAIL);
   });
 
   it('init function', async () => {
@@ -42,6 +65,4 @@ describe('@connext/vector-sdk', () => {
       console.log(e);
     }
   });
-
-  
 });
