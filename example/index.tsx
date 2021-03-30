@@ -7,7 +7,7 @@ import { providers } from 'ethers';
 
 // Test key defaults to "rinkeby", live key defaults to "mainnet"
 
-import { ConnextModal } from '../src';
+import { ConnextModal } from '@connext/vector-modal';
 
 type LoginType = 'none' | 'metamask' | 'magic';
 const magic = new Magic('pk_test_D646A81EA4676AB2', {
@@ -87,9 +87,6 @@ function App() {
         showModal={showModal}
         onClose={() => setShowModal(false)}
         onReady={(params) => console.log('MODAL IS READY =======>', params)}
-        onWithdrawalTxCreated={(params) =>
-          console.log('withdrawal tx ==>', params)
-        }
         onFinished={(params) => console.log('On finish ==>', params)}
         // onSwap={(params) => {
         //   console.log('onSwap params: ', params);
