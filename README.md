@@ -1,17 +1,18 @@
-# TSDX Monorepo Example/Playground
+# Vector Monorepo Widget/SDK/Example
+
+## Documentation
+Docs are available [`here`](http://docs.connext.network)
 
 ## Usage
 
-This monorepo is setup for a dummy `@connext/` NPM organization. There are 2 modules by default:
+This monorepo is setup for `@connext/` NPM organization. There are 2 modules by default:
 
-- `@connext/vector-modal` - A placholder React component
-- `@connext/vector-sdk` - A utils modules
+- `@connext/vector-modal` - A React component for widget integration
+- `@connext/vector-sdk` - A SDK for custom integration
 
-Unlike other TSDX templates, the developer experience for this template is currently a bit more manual.
+## Local Development/Testing
 
-Your first order of business will be to search and replace `@connext` for the npm organization of your own.
-
-After that you can install all the dependencies in the root directory. Since the monorepo uses Lerna and Yarn Workspaces, npm CLI is not supported (only yarn).
+Since the monorepo uses Lerna and Yarn Workspaces, npm CLI is not supported (only yarn).
 
 ```sh
 yarn install
