@@ -63,7 +63,7 @@ export const getChain = async (
   _chainId: number | undefined,
   chainProvider: string,
   _assetId: string
-) => {
+): Promise<CHAIN_DETAIL> => {
   // Sender Chain Info
   const assetId = utils.getAddress(_assetId);
   let chainId = _chainId;
