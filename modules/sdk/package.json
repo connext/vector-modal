@@ -31,7 +31,6 @@
     "src"
   ],
   "dependencies": {
-    "tslib": "^2.0.0",
     "@connext/vector-browser-node": "0.2.1-beta.15",
     "@connext/vector-contracts": "0.2.1-beta.15",
     "@connext/vector-types": "0.2.1-beta.15",
@@ -43,7 +42,10 @@
   },
   "devDependencies": {
     "@size-limit/preset-small-lib": "^4.10.1",
+    "@types/chai": "^4.2.15",
+    "@types/sinon": "^9.0.11",
     "husky": "^5.2.0",
+    "sinon": "^10.0.0",
     "size-limit": "^4.10.1",
     "tsdx": "^0.14.1",
     "tslib": "^2.1.0",

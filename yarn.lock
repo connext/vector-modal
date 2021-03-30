@@ -1385,15 +1385,15 @@
   resolved "https://registry.yarnpkg.com/@connext/pure-evm-wasm/-/pure-evm-wasm-0.1.4.tgz#5cdca4463aaa649ea7740ebbe67ed05b8443ad0e"
   integrity sha512-BeNU9oH83vXKpnFEltr5D82nfmbd26uX/gp0jMR58H5FCGnXlZS/XyoU4yXsxytVU4wc56fQwirE0xYNiqs3vw==
 
-"@connext/vector-browser-node@0.2.1-beta.7":
-  version "0.2.1-beta.7"
-  resolved "https://registry.yarnpkg.com/@connext/vector-browser-node/-/vector-browser-node-0.2.1-beta.7.tgz#9a2313f83074dd758452d1bf18b7afc506e3795d"
-  integrity sha512-LQof0N47aShPKKbJnMSyK18TbljVDxPuld+QTkYiYKY6qvHIhYec4+XguN0ejhfmC/IE6Cyg1aAKhilpxxF+qQ==
+"@connext/vector-browser-node@0.2.1-beta.15":
+  version "0.2.1-beta.15"
+  resolved "https://registry.yarnpkg.com/@connext/vector-browser-node/-/vector-browser-node-0.2.1-beta.15.tgz#f3679360b3c964efeeafceec76ad3cc8d29c3e7f"
+  integrity sha512-yLv1/ZARnFtgfEhsVjvHEvw3Vr67GjcJkRVXHrlrH4U6fGpx7HePLqpp5VMfn4lbX2RLcmdyTVwsaAz1MsJBJA==
   dependencies:
-    "@connext/vector-contracts" "0.2.1-beta.7"
-    "@connext/vector-engine" "0.2.1-beta.7"
-    "@connext/vector-types" "0.2.1-beta.7"
-    "@connext/vector-utils" "0.2.1-beta.7"
+    "@connext/vector-contracts" "0.2.1-beta.15"
+    "@connext/vector-engine" "0.2.1-beta.15"
+    "@connext/vector-types" "0.2.1-beta.15"
+    "@connext/vector-utils" "0.2.1-beta.15"
     "@ethersproject/address" "5.0.10"
     "@ethersproject/bignumber" "5.0.14"
     "@ethersproject/constants" "5.0.9"
@@ -1407,14 +1407,14 @@
     pino "6.11.1"
     ts-nats "1.2.15"
 
-"@connext/vector-contracts@0.2.1-beta.7":
-  version "0.2.1-beta.7"
-  resolved "https://registry.yarnpkg.com/@connext/vector-contracts/-/vector-contracts-0.2.1-beta.7.tgz#4206836fab7ea1b28ae9038926f807fb09d70123"
-  integrity sha512-z3lbXX5jih1P9ABy/dCtYpb4+aSbSx8nFj8cyp4nNc8fFvhm7ENyhcaA202VO58t0GDdLxXQ+zrsQeDqoA5W4g==
+"@connext/vector-contracts@0.2.1-beta.15":
+  version "0.2.1-beta.15"
+  resolved "https://registry.yarnpkg.com/@connext/vector-contracts/-/vector-contracts-0.2.1-beta.15.tgz#34885f682fb21f16c9b1d046b96f5e53d2adf754"
+  integrity sha512-mRHBdvlSAvV1DeLGTy4ewDR8K2azBsWKvA0LKoHePyzXpCc3qIQKXa/AGC4Tqvp89oj+j91+pCGfrj8GoKYDQw==
   dependencies:
     "@connext/pure-evm-wasm" "0.1.4"
-    "@connext/vector-types" "0.2.1-beta.7"
-    "@connext/vector-utils" "0.2.1-beta.7"
+    "@connext/vector-types" "0.2.1-beta.15"
+    "@connext/vector-utils" "0.2.1-beta.15"
     "@ethersproject/abi" "5.0.12"
     "@ethersproject/abstract-provider" "5.0.9"
     "@ethersproject/abstract-signer" "5.0.13"
@@ -1439,15 +1439,15 @@
     pino "6.11.1"
     pino-pretty "4.6.0"
 
-"@connext/vector-engine@0.2.1-beta.7":
-  version "0.2.1-beta.7"
-  resolved "https://registry.yarnpkg.com/@connext/vector-engine/-/vector-engine-0.2.1-beta.7.tgz#9ce57be4c27a5ddb39e878ac9a89283b2eaa014b"
-  integrity sha512-ZKreTO6o81oUA4nJsv0/yG+dgzjm5GwNc84OLsqNMBRXqPQrWDE6gqd059LQu4Il/1JdLtrKJZAZ4i8SLyeW/A==
+"@connext/vector-engine@0.2.1-beta.15":
+  version "0.2.1-beta.15"
+  resolved "https://registry.yarnpkg.com/@connext/vector-engine/-/vector-engine-0.2.1-beta.15.tgz#63e9bdc0d71ad0651a78b106e9b24e7ee6cb086f"
+  integrity sha512-p5Sktaz2ttaNmSw8989WaOcFG4upY5+iYj/HU/ztIobt9wayr1ojQJj7RRA0PwhcRzA6D3DtOB38rwYYvTRdLQ==
   dependencies:
-    "@connext/vector-contracts" "0.2.1-beta.7"
-    "@connext/vector-protocol" "0.2.1-beta.7"
-    "@connext/vector-types" "0.2.1-beta.7"
-    "@connext/vector-utils" "0.2.1-beta.7"
+    "@connext/vector-contracts" "0.2.1-beta.15"
+    "@connext/vector-protocol" "0.2.1-beta.15"
+    "@connext/vector-types" "0.2.1-beta.15"
+    "@connext/vector-utils" "0.2.1-beta.15"
     "@ethersproject/address" "5.0.10"
     "@ethersproject/bignumber" "5.0.14"
     "@ethersproject/bytes" "5.0.10"
@@ -1460,14 +1460,14 @@
     pino "6.11.1"
     pino-pretty "4.6.0"
 
-"@connext/vector-protocol@0.2.1-beta.7":
-  version "0.2.1-beta.7"
-  resolved "https://registry.yarnpkg.com/@connext/vector-protocol/-/vector-protocol-0.2.1-beta.7.tgz#802f2f9e28bf27907a35167eceb07840c35511dc"
-  integrity sha512-6G9d8JVW9zEg3W9qJgVco8D5Xy0ns//j6D7DhAynrG+qb9k9EMaCiThURmMx6mSR9xsMoj249egYh1J+9vyFag==
+"@connext/vector-protocol@0.2.1-beta.15":
+  version "0.2.1-beta.15"
+  resolved "https://registry.yarnpkg.com/@connext/vector-protocol/-/vector-protocol-0.2.1-beta.15.tgz#a1567052ec5af3e8d174e5b234d70fee1f9deea6"
+  integrity sha512-LMTAvmFsfbeESR6oAbcbn1oCCY/+eeBeEKxkW530Zcrzq+bmyhQq3ygT+wAYRKF3LKd7MmzQtIg66Fi6Lpo9aw==
   dependencies:
-    "@connext/vector-contracts" "0.2.1-beta.7"
-    "@connext/vector-types" "0.2.1-beta.7"
-    "@connext/vector-utils" "0.2.1-beta.7"
+    "@connext/vector-contracts" "0.2.1-beta.15"
+    "@connext/vector-types" "0.2.1-beta.15"
+    "@connext/vector-utils" "0.2.1-beta.15"
     "@ethersproject/abi" "5.0.12"
     "@ethersproject/bignumber" "5.0.14"
     "@ethersproject/constants" "5.0.9"
@@ -1484,10 +1484,10 @@
     pino "6.11.1"
     tty "1.0.1"
 
-"@connext/vector-types@0.2.1-beta.7":
-  version "0.2.1-beta.7"
-  resolved "https://registry.yarnpkg.com/@connext/vector-types/-/vector-types-0.2.1-beta.7.tgz#56ec32751ea351ce65f806bcab3b5b910847e516"
-  integrity sha512-eTBb9f6cW4Z78LfLDVBZK+zJUlDA9ueHQn6jsG4DbZkYaH6Vft9mjZiDLHl/BxQ8mO25zojKu+nrwoW1/R8w6g==
+"@connext/vector-types@0.2.1-beta.15":
+  version "0.2.1-beta.15"
+  resolved "https://registry.yarnpkg.com/@connext/vector-types/-/vector-types-0.2.1-beta.15.tgz#8dff46d25aa7a01b6444b301586761dc5169a220"
+  integrity sha512-AY8OqXdAVvrXbvs8qEgyHh5rT4Bcw4kvHYi6PZlVYIneSRc67O/ZB35TrRkgsjWBT/bU/2b+8Xyx1taTwuWNdQ==
   dependencies:
     "@ethersproject/abstract-provider" "5.0.9"
     "@ethersproject/abstract-signer" "5.0.13"
@@ -1496,12 +1496,12 @@
     "@sinclair/typebox" "0.12.7"
     evt "1.9.12"
 
-"@connext/vector-utils@0.2.1-beta.7":
-  version "0.2.1-beta.7"
-  resolved "https://registry.yarnpkg.com/@connext/vector-utils/-/vector-utils-0.2.1-beta.7.tgz#53c03a5356e69b20a76252f563abb28cb4007540"
-  integrity sha512-7F48/8uvsbMvqNftLEqYzZUsgJ4QiCW5B+X7tU+t4mUy6kk7f1ZV0vUK5TSW3vdA7Dr67vWWP06P4WZTvwBzVA==
+"@connext/vector-utils@0.2.1-beta.15":
+  version "0.2.1-beta.15"
+  resolved "https://registry.yarnpkg.com/@connext/vector-utils/-/vector-utils-0.2.1-beta.15.tgz#030abf57e7d812505cb89cc5b79a1aa65628fa87"
+  integrity sha512-4U0qkS8EQMwu1FAuOlv0+NwJcBvvd6nSx8fdmW2XivyBWt08xSaKrPR8wRNlIXadV9rdmmiRdnB6XeaLruV74w==
   dependencies:
-    "@connext/vector-types" "0.2.1-beta.7"
+    "@connext/vector-types" "0.2.1-beta.15"
     "@ethereum-waffle/chai" "3.3.0"
     "@ethersproject/abi" "5.0.12"
     "@ethersproject/abstract-provider" "5.0.9"
@@ -3698,12 +3698,33 @@
   resolved "https://registry.yarnpkg.com/@sindresorhus/is/-/is-0.14.0.tgz#9fb3a3cf3132328151f353de4632e01e52102bea"
   integrity sha512-9NET910DNaIPngYnLLPeg+Ogzqsi9uM4mSboU5y6p8S5DzMTVEsJZrawi+BoDNUVBa2DhJqQYUFvMDfgU062LQ==
 
-"@sinonjs/commons@^1.7.0":
+"@sinonjs/commons@^1.6.0", "@sinonjs/commons@^1.7.0", "@sinonjs/commons@^1.8.1":
   version "1.8.2"
   resolved "https://registry.yarnpkg.com/@sinonjs/commons/-/commons-1.8.2.tgz#858f5c4b48d80778fde4b9d541f27edc0d56488b"
   integrity sha512-sruwd86RJHdsVf/AtBoijDmUqJp3B6hF/DGC23C+JaegnDHaZyewCjoVGTdg3J0uz3Zs7NnIT05OBOmML72lQw==
   dependencies:
     type-detect "4.0.8"
+
+"@sinonjs/fake-timers@^6.0.0", "@sinonjs/fake-timers@^6.0.1":
+  version "6.0.1"
+  resolved "https://registry.yarnpkg.com/@sinonjs/fake-timers/-/fake-timers-6.0.1.tgz#293674fccb3262ac782c7aadfdeca86b10c75c40"
+  integrity sha512-MZPUxrmFubI36XS1DI3qmI0YdN1gks62JtFZvxR67ljjSNCeK6U08Zx4msEWOXuofgqUt6zPHSi1H9fbjR/NRA==
+  dependencies:
+    "@sinonjs/commons" "^1.7.0"
+
+"@sinonjs/samsam@^5.3.1":
+  version "5.3.1"
+  resolved "https://registry.yarnpkg.com/@sinonjs/samsam/-/samsam-5.3.1.tgz#375a45fe6ed4e92fca2fb920e007c48232a6507f"
+  integrity sha512-1Hc0b1TtyfBu8ixF/tpfSHTVWKwCBLY4QJbkgnE7HcwyvT2xArDxb4K7dMgqRm3szI+LJbzmW/s4xxEhv6hwDg==
+  dependencies:
+    "@sinonjs/commons" "^1.6.0"
+    lodash.get "^4.4.2"
+    type-detect "^4.0.8"
+
+"@sinonjs/text-encoding@^0.7.1":
+  version "0.7.1"
+  resolved "https://registry.yarnpkg.com/@sinonjs/text-encoding/-/text-encoding-0.7.1.tgz#8da5c6530915653f3a1f38fd5f101d8c3f8079c5"
+  integrity sha512-+iTbntw2IZPb/anVDbypzfQa+ay64MW0Zo8aJ8gZPWMMK6/OubMVb6lUPMagqjOPnmtauXnFCACVl3O7ogjeqQ==
 
 "@size-limit/file@4.10.1":
   version "4.10.1"
@@ -3800,6 +3821,11 @@
   integrity sha512-QSSVYj7pYFN49kW77o2s9xTCwZ8F2xLbjLLSEVh8D2F4JUhZtPAGOFLTD+ffqksBx/u4cE/KImFjyhqCjn/LIA==
   dependencies:
     "@types/node" "*"
+
+"@types/chai@^4.2.15":
+  version "4.2.15"
+  resolved "https://registry.yarnpkg.com/@types/chai/-/chai-4.2.15.tgz#b7a6d263c2cecf44b6de9a051cf496249b154553"
+  integrity sha512-rYff6FI+ZTKAPkJUoyz7Udq3GaoDZnxYDEvdEdFZASiA7PoErltHezDishqQiSDWrGxvxmplH304jyzQmjp0AQ==
 
 "@types/debounce-promise@^3.1.1":
   version "3.1.3"
@@ -3993,7 +4019,14 @@
   dependencies:
     "@types/node" "*"
 
-"@types/sinonjs__fake-timers@^6.0.1":
+"@types/sinon@^9.0.11":
+  version "9.0.11"
+  resolved "https://registry.yarnpkg.com/@types/sinon/-/sinon-9.0.11.tgz#7af202dda5253a847b511c929d8b6dda170562eb"
+  integrity sha512-PwP4UY33SeeVKodNE37ZlOsR9cReypbMJOhZ7BVE0lB+Hix3efCOxiJWiE5Ia+yL9Cn2Ch72EjFTRze8RZsNtg==
+  dependencies:
+    "@types/sinonjs__fake-timers" "*"
+
+"@types/sinonjs__fake-timers@*", "@types/sinonjs__fake-timers@^6.0.1":
   version "6.0.2"
   resolved "https://registry.yarnpkg.com/@types/sinonjs__fake-timers/-/sinonjs__fake-timers-6.0.2.tgz#3a84cf5ec3249439015e14049bd3161419bf9eae"
   integrity sha512-dIPoZ3g5gcx9zZEszaxLSVTvMReD3xxyyDnQUjA6IYDG9Ba2AV0otMPs+77sG9ojB4Qr2N2Vk5RnKeuA0X/0bg==
@@ -7493,6 +7526,11 @@ diff@3.5.0:
   version "3.5.0"
   resolved "https://registry.yarnpkg.com/diff/-/diff-3.5.0.tgz#800c0dd1e0a8bfbc95835c202ad220fe317e5a12"
   integrity sha512-A46qtFgd+g7pDZinpnwiRJtxbC1hpgf0uzP3iG89scHk0AUC7A1TGxf5OiiOUv/JMZR8GOt8hL900hV0bOy5xA==
+
+diff@^4.0.2:
+  version "4.0.2"
+  resolved "https://registry.yarnpkg.com/diff/-/diff-4.0.2.tgz#60f3aecb89d5fae520c11aa19efc2bb982aade7d"
+  integrity sha512-58lmxKSA4BNyLz+HHMUzlOEpg09FV+ev6ZMe3vJihgdxzgcwZ8VoEEPmALCZG9LmqfVoNMMKpttIYTVG6uDY7A==
 
 diffie-hellman@^5.0.0:
   version "5.0.3"
@@ -11568,6 +11606,11 @@ jsprim@^1.2.2:
     array-includes "^3.1.2"
     object.assign "^4.1.2"
 
+just-extend@^4.0.2:
+  version "4.1.1"
+  resolved "https://registry.yarnpkg.com/just-extend/-/just-extend-4.1.1.tgz#158f1fdb01f128c411dc8b286a7b4837b3545282"
+  integrity sha512-aWgeGFW67BP3e5181Ep1Fv2v8z//iBJfrvyTnq8wG86vEESwmonn1zPBJ0VfmT9CJq2FIT0VsETtrNFm2a+SHA==
+
 jwa@^1.4.1:
   version "1.4.1"
   resolved "https://registry.yarnpkg.com/jwa/-/jwa-1.4.1.tgz#743c32985cb9e98655530d53641b66c8645b039a"
@@ -12033,6 +12076,11 @@ lodash.debounce@^4.0.8:
   version "4.0.8"
   resolved "https://registry.yarnpkg.com/lodash.debounce/-/lodash.debounce-4.0.8.tgz#82d79bff30a67c4005ffd5e2515300ad9ca4d7af"
   integrity sha1-gteb/zCmfEAF/9XiUVMArZyk168=
+
+lodash.get@^4.4.2:
+  version "4.4.2"
+  resolved "https://registry.yarnpkg.com/lodash.get/-/lodash.get-4.4.2.tgz#2d177f652fa31e939b4438d5341499dfa3825e99"
+  integrity sha1-LRd/ZS+jHpObRDjVNBSZ36OCXpk=
 
 lodash.includes@^4.3.0:
   version "4.3.0"
@@ -12955,6 +13003,17 @@ nice-try@^1.0.4:
   version "1.0.5"
   resolved "https://registry.yarnpkg.com/nice-try/-/nice-try-1.0.5.tgz#a3378a7696ce7d223e88fc9b764bd7ef1089e366"
   integrity sha512-1nh45deeb5olNY7eX82BkPO7SSxR5SSYJiPTrTdFUVYwAl8CKMA5N9PjTYkHiRjisVcxcQ1HXdLhx2qxxJzLNQ==
+
+nise@^4.1.0:
+  version "4.1.0"
+  resolved "https://registry.yarnpkg.com/nise/-/nise-4.1.0.tgz#8fb75a26e90b99202fa1e63f448f58efbcdedaf6"
+  integrity sha512-eQMEmGN/8arp0xsvGoQ+B1qvSkR73B1nWSCh7nOt5neMCtwcQVYQGdzQMhcNscktTsWB54xnlSQFzOAPJD8nXA==
+  dependencies:
+    "@sinonjs/commons" "^1.7.0"
+    "@sinonjs/fake-timers" "^6.0.0"
+    "@sinonjs/text-encoding" "^0.7.1"
+    just-extend "^4.0.2"
+    path-to-regexp "^1.7.0"
 
 no-case@^3.0.4:
   version "3.0.4"
@@ -13890,6 +13949,13 @@ path-to-regexp@0.1.7:
   version "0.1.7"
   resolved "https://registry.yarnpkg.com/path-to-regexp/-/path-to-regexp-0.1.7.tgz#df604178005f522f15eb4490e7247a1bfaa67f8c"
   integrity sha1-32BBeABfUi8V60SQ5yR6G/qmf4w=
+
+path-to-regexp@^1.7.0:
+  version "1.8.0"
+  resolved "https://registry.yarnpkg.com/path-to-regexp/-/path-to-regexp-1.8.0.tgz#887b3ba9d84393e87a0a0b9f4cb756198b53548a"
+  integrity sha512-n43JRhlUKUAlibEJhPeir1ncUID16QnEjNpwzNdO3Lm4ywrBpBZ5oLD0I6br9evr1Y9JTqwRtAh7JLoOzAQdVA==
+  dependencies:
+    isarray "0.0.1"
 
 path-type@^1.0.0:
   version "1.1.0"
@@ -15889,6 +15955,18 @@ simple-swizzle@^0.2.2:
   dependencies:
     is-arrayish "^0.3.1"
 
+sinon@^10.0.0:
+  version "10.0.0"
+  resolved "https://registry.yarnpkg.com/sinon/-/sinon-10.0.0.tgz#52279f97e35646ff73d23207d0307977c9b81430"
+  integrity sha512-XAn5DxtGVJBlBWYrcYKEhWCz7FLwZGdyvANRyK06419hyEpdT0dMc5A8Vcxg5SCGHc40CsqoKsc1bt1CbJPfNw==
+  dependencies:
+    "@sinonjs/commons" "^1.8.1"
+    "@sinonjs/fake-timers" "^6.0.1"
+    "@sinonjs/samsam" "^5.3.1"
+    diff "^4.0.2"
+    nise "^4.1.0"
+    supports-color "^7.1.0"
+
 sirv@^1.0.7:
   version "1.0.11"
   resolved "https://registry.yarnpkg.com/sirv/-/sirv-1.0.11.tgz#81c19a29202048507d6ec0d8ba8910fda52eb5a4"
@@ -17169,7 +17247,7 @@ type-check@~0.3.2:
   dependencies:
     prelude-ls "~1.1.2"
 
-type-detect@4.0.8, type-detect@^4.0.0, type-detect@^4.0.5:
+type-detect@4.0.8, type-detect@^4.0.0, type-detect@^4.0.5, type-detect@^4.0.8:
   version "4.0.8"
   resolved "https://registry.yarnpkg.com/type-detect/-/type-detect-4.0.8.tgz#7646fb5f18871cfbb7749e69bd39a6388eb7450c"
   integrity sha512-0fr/mIH1dlO+x7TlcMy+bIDqKPsw/70tVyeHW787goQjhmqaZe10uwLujubK9q9Lg6Fiho1KUKDYz0Z7k7g5/g==
