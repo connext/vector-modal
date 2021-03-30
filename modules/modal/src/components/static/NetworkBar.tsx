@@ -1,7 +1,7 @@
-import React, { FC } from 'react';
-import { CHAIN_DETAIL, getExplorerLinkForAsset } from '@connext/vector-sdk';
-import styled from 'styled-components';
-import { Stack, Box, Text, Link, InputGroup, Input } from '../common';
+import React, { FC } from "react";
+import { CHAIN_DETAIL, getExplorerLinkForAsset } from "@connext/vector-sdk";
+import styled from "styled-components";
+import { Stack, Box, Text, Link, InputGroup, Input } from "../common";
 
 interface NetworkBarProps {
   senderChainInfo: CHAIN_DETAIL;
@@ -27,13 +27,7 @@ const NetworkBar: FC<NetworkBarProps> = props => {
             >
               {senderChainInfo.name}
             </Text>
-            <Link
-              href={getExplorerLinkForAsset(
-                senderChainInfo.chainId,
-                senderChainInfo.assetId
-              )}
-              target="_blank"
-            >
+            <Link href={getExplorerLinkForAsset(senderChainInfo.chainId, senderChainInfo.assetId)} target="_blank">
               <Text
                 fontSize="1.25rem"
                 textTransform="uppercase"
@@ -46,11 +40,7 @@ const NetworkBar: FC<NetworkBarProps> = props => {
               </Text>
             </Link>
           </Box>
-          <img
-            src="https://cdn.connext.network/network_arrow.svg"
-            alt="arrow"
-            width="32"
-          />
+          <img src="https://cdn.connext.network/network_arrow.svg" alt="arrow" width="32" />
           <Box>
             <Text
               fontSize="0.75rem"
@@ -62,14 +52,8 @@ const NetworkBar: FC<NetworkBarProps> = props => {
               color="#2964C5"
             >
               {receiverChainInfo.name}
-            </Text>{' '}
-            <Link
-              href={getExplorerLinkForAsset(
-                receiverChainInfo.chainId,
-                receiverChainInfo.assetId
-              )}
-              target="_blank"
-            >
+            </Text>{" "}
+            <Link href={getExplorerLinkForAsset(receiverChainInfo.chainId, receiverChainInfo.assetId)} target="_blank">
               <Text
                 fontSize="1.25rem"
                 textTransform="uppercase"
@@ -86,12 +70,7 @@ const NetworkBar: FC<NetworkBarProps> = props => {
 
         {receiverAddress && (
           <Stack column={true} spacing={1}>
-            <Text
-              fontWeight="400"
-              fontSize="12px"
-              textTransform="capitalize"
-              color="#666666"
-            >
+            <Text fontWeight="400" fontSize="12px" textTransform="capitalize" color="#666666">
               Receiver Address
             </Text>
             <InputGroup>

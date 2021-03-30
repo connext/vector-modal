@@ -1,16 +1,8 @@
-import React, { FC } from 'react';
-import { CHAIN_DETAIL } from '@connext/vector-sdk';
-import {
-  ModalContent,
-  ModalBody,
-  Text,
-  Stack,
-  Box,
-  Button,
-  Link,
-} from '../common';
-import { ERROR_STATES, ErrorStates } from '../../constants';
-import { Header, Footer, NetworkBar } from '../static';
+import React, { FC } from "react";
+import { CHAIN_DETAIL } from "@connext/vector-sdk";
+import { ModalContent, ModalBody, Text, Stack, Box, Button, Link } from "../common";
+import { ERROR_STATES, ErrorStates } from "../../constants";
+import { Header, Footer, NetworkBar } from "../static";
 
 export interface ErrorProps {
   error: Error;
@@ -44,50 +36,27 @@ const Error: FC<ErrorProps> = props => {
   return (
     <>
       <ModalContent id="modalContent">
-        <Header
-          title={title}
-          warningIcon={true}
-          handleBack={handleBack}
-          options={options}
-        />
+        <Header title={title} warningIcon={true} handleBack={handleBack} options={options} />
 
         <ModalBody>
           <Stack column={true} spacing={5}>
             <Stack column={true} spacing={4}>
               <Stack column={true} spacing={2}>
                 <Stack column={true} spacing={1}>
-                  <Text
-                    fontSize="0.875rem"
-                    noOfLines={3}
-                    color="crimson"
-                    lineHeight="24px"
-                  >
+                  <Text fontSize="0.875rem" noOfLines={3} color="crimson" lineHeight="24px">
                     {error.message}
                   </Text>
                 </Stack>
                 <Box>
                   {state === ERROR_STATES.ERROR_TRANSFER && (
-                    <Text
-                      fontSize="0.875rem"
-                      lineHeight="24px"
-                      textTransform="initial"
-                    >
-                      An error occurred during the transfer. Your funds are
-                      preserved in the state channel and the tranfer can be
-                      re-attempted.
+                    <Text fontSize="0.875rem" lineHeight="24px" textTransform="initial">
+                      An error occurred during the transfer. Your funds are preserved in the state channel and the
+                      tranfer can be re-attempted.
                     </Text>
                   )}
-                  <Text
-                    fontSize="0.875rem"
-                    lineHeight="24px"
-                    textTransform="initial"
-                  >
-                    Support help can be found in the{' '}
-                    <Link
-                      href="https://discord.com/channels/454734546869551114"
-                      target="_blank"
-                      color="green"
-                    >
+                  <Text fontSize="0.875rem" lineHeight="24px" textTransform="initial">
+                    Support help can be found in the{" "}
+                    <Link href="https://discord.com/channels/454734546869551114" target="_blank" color="green">
                       community Discord here
                     </Link>
                     .

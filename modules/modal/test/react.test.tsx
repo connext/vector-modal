@@ -1,5 +1,5 @@
-describe('@connext/vector-modal', () => {
-  it('works', () => {
+describe("@connext/vector-modal", () => {
+  it("works", () => {
     expect(true).toBe(true);
   });
 });

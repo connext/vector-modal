@@ -1,12 +1,5 @@
-import React, { FC } from 'react';
-import {
-  Text,
-  Stack,
-  WarningIcon,
-  IconBox,
-  ModalHeader,
-  Spinner,
-} from '../common';
+import React, { FC } from "react";
+import { Text, Stack, WarningIcon, IconBox, ModalHeader, Spinner } from "../common";
 
 interface HeaderProps {
   title: string;
@@ -20,16 +13,7 @@ interface HeaderProps {
 }
 
 const Header: FC<HeaderProps> = props => {
-  const {
-    title,
-    subTitle,
-    warningIcon,
-    successIcon,
-    spinner,
-    onClose,
-    options,
-    handleBack,
-  } = props;
+  const { title, subTitle, warningIcon, successIcon, spinner, onClose, options, handleBack } = props;
   return (
     <>
       <ModalHeader>
@@ -40,12 +24,7 @@ const Header: FC<HeaderProps> = props => {
                 <WarningIcon />
               </IconBox>
             )}
-            {successIcon && (
-              <img
-                src="https://cdn.connext.network/success.svg"
-                alt="success"
-              />
-            )}
+            {successIcon && <img src="https://cdn.connext.network/success.svg" alt="success" />}
             {spinner && <Spinner />}
             <Text
               fontWeight="700"

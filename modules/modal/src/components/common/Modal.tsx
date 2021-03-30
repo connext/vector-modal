@@ -1,5 +1,5 @@
-import styled from 'styled-components';
-import Box from './Box';
+import styled from "styled-components";
+import Box from "./Box";
 
 export const ModalHeader = styled.header`
   &&& {
@@ -31,7 +31,7 @@ type ModalBodyProps = {
 
 export const ModalBody = styled(Box)<ModalBodyProps>`
   &&& {
-    padding: ${props => props.padding || '0.5rem 1.5rem'};
+    padding: ${props => props.padding || "0.5rem 1.5rem"};
     flex: 1 1 0%;
     overflow: auto;
   }
@@ -60,8 +60,7 @@ export const ModalContent = styled.section`
     margin-bottom: 3.75rem;
     z-index: 1400;
     max-height: calc(100vh - 7.5rem);
-    box-shadow: rgb(0 0 0 / 10%) 0px 10px 15px -3px,
-      rgb(0 0 0 / 5%) 0px 4px 6px -2px;
+    box-shadow: rgb(0 0 0 / 10%) 0px 10px 15px -3px, rgb(0 0 0 / 5%) 0px 4px 6px -2px;
     max-width: 28rem;
   }
 `;

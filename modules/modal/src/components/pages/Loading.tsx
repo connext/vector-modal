@@ -1,8 +1,8 @@
-import React, { FC, useRef, useEffect } from 'react';
-import { Rive, Layout } from 'rive-js';
-import styled from 'styled-components';
-import { ModalContent, ModalBody, Text, Stack } from '../common';
-import { Footer } from '../static';
+import React, { FC, useRef, useEffect } from "react";
+import { Rive, Layout } from "rive-js";
+import styled from "styled-components";
+import { ModalContent, ModalBody, Text, Stack } from "../common";
+import { Footer } from "../static";
 
 interface LoadingProps {
   message: string;
@@ -17,10 +17,7 @@ const Loading: FC<LoadingProps> = props => {
   useEffect(() => {
     const resize = () => {
       if (animationContainer.current && canvas.current) {
-        const {
-          width,
-          height,
-        } = animationContainer.current.getBoundingClientRect();
+        const { width, height } = animationContainer.current.getBoundingClientRect();
         console.log(width, height);
         canvas.current.width = 300;
         canvas.current.height = 130;
@@ -33,10 +30,10 @@ const Loading: FC<LoadingProps> = props => {
   // Start the animation
   useEffect(() => {
     const rive = new Rive({
-      src: 'https://cdn.connext.network/loading.riv',
+      src: "https://cdn.connext.network/loading.riv",
       canvas: canvas.current,
       autoplay: true,
-      layout: new Layout('cover', 'center'),
+      layout: new Layout("cover", "center"),
     });
 
     return () => rive?.stop();

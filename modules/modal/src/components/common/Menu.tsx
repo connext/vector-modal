@@ -1,6 +1,6 @@
-import React from 'react';
-import styled from 'styled-components';
-import { useState, useEffect } from 'react';
+import React from "react";
+import styled from "styled-components";
+import { useState, useEffect } from "react";
 
 /// NOTE: MenuListPositioner contains MenuListContainer. This arrangement is a temporary solution in
 /// reverse engineering previous framework UI.
@@ -21,11 +21,9 @@ const MenuListPositioner = styled.div<MenuListPositionerProps>`
   z-index: 1;
   position: absolute;
   inset: 0px auto auto 0px;
-  visibility: ${props => (props.hidden ? 'hidden' : 'visible')};
+  visibility: ${props => (props.hidden ? "hidden" : "visible")};
   transform: ${props =>
-    props.placement === 'bottom-start'
-      ? 'translate3d(372px, 72px, 0px)'
-      : 'translate3d(188px, 72px, 0px)'};
+    props.placement === "bottom-start" ? "translate3d(372px, 72px, 0px)" : "translate3d(188px, 72px, 0px)"};
 `;
 
 type MenuListProps = {
@@ -34,9 +32,8 @@ type MenuListProps = {
 };
 
 const MenuListContainer = styled.div<MenuListProps>`
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
-    'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
-    sans-serif;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Roboto", "Oxygen", "Ubuntu", "Cantarell", "Fira Sans",
+    "Droid Sans", "Helvetica Neue", sans-serif;
   -webkit-font-smoothing: antialiased;
   --removed-body-scroll-bar-size: 0px;
   font-size: 1.25rem;
@@ -53,18 +50,15 @@ const MenuListContainer = styled.div<MenuListProps>`
   border-radius: 0.375rem;
   border: 0px;
   transform-origin: left top;
-  opacity: ${props => (props.hidden ? '0' : '1')};
-  visibility: ${props => (props.hidden ? 'hidden' : 'visible')};
-  transform: ${props => (props.hidden ? 'scale(0.8) translateZ(0px)' : 'none')};
+  opacity: ${props => (props.hidden ? "0" : "1")};
+  visibility: ${props => (props.hidden ? "hidden" : "visible")};
+  transform: ${props => (props.hidden ? "scale(0.8) translateZ(0px)" : "none")};
 `;
 
 export const MenuList = ({ children, hidden }: MenuListProps) => {
   const { width } = useWindowDimensions();
   return (
-    <MenuListPositioner
-      hidden={hidden}
-      placement={width > 765 ? 'bottom-start' : 'bottom-end'}
-    >
+    <MenuListPositioner hidden={hidden} placement={width > 765 ? "bottom-start" : "bottom-end"}>
       <MenuListContainer hidden={hidden}>{children}</MenuListContainer>
     </MenuListPositioner>
   );
@@ -99,8 +93,8 @@ const MenuItemButton = styled.button<MenuItemProps>`
   box-shadow: none !important;
   line-height: inherit;
   color: inherit;
-  cursor: ${props => (!props.isDisabled ? 'pointer' : 'not-allowed')};
-  opacity: ${props => (!props.isDisabled ? '1.0' : '0.4')};
+  cursor: ${props => (!props.isDisabled ? "pointer" : "not-allowed")};
+  opacity: ${props => (!props.isDisabled ? "1.0" : "0.4")};
 `;
 
 export const MenuItem = ({ onClick, children, isDisabled }: MenuItemProps) => {
@@ -122,17 +116,15 @@ function getWindowDimensions() {
 }
 
 export default function useWindowDimensions() {
-  const [windowDimensions, setWindowDimensions] = useState(
-    getWindowDimensions()
-  );
+  const [windowDimensions, setWindowDimensions] = useState(getWindowDimensions());
 
   useEffect(() => {
     function handleResize() {
       setWindowDimensions(getWindowDimensions());
     }
 
-    window.addEventListener('resize', handleResize);
-    return () => window.removeEventListener('resize', handleResize);
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
   }, []);
 
   return windowDimensions;

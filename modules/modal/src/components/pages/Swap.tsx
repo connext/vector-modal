@@ -1,21 +1,10 @@
-import React, { FC, useEffect } from 'react';
-import { CHAIN_DETAIL, truncate } from '@connext/vector-sdk';
-import {
-  ModalContent,
-  ModalBody,
-  Text,
-  Stack,
-  Button,
-  InputGroup,
-  Input,
-} from '../common';
-import { Header, Footer, NetworkBar } from '../static';
+import React, { FC, useEffect } from "react";
+import { CHAIN_DETAIL, truncate } from "@connext/vector-sdk";
+import { ModalContent, ModalBody, Text, Stack, Button, InputGroup, Input } from "../common";
+import { Header, Footer, NetworkBar } from "../static";
 
 export interface TransferProps {
-  onUserInput: (
-    _input: string | undefined,
-    receiveExactAmount: boolean
-  ) => void;
+  onUserInput: (_input: string | undefined, receiveExactAmount: boolean) => void;
   swapRequest: () => void;
   options: () => void;
   isLoad: boolean;
@@ -50,13 +39,13 @@ const Swap: FC<TransferProps> = props => {
   } = props;
 
   function escapeRegExp(string: string): string {
-    return string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'); // $& means the whole matched string
+    return string.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"); // $& means the whole matched string
   }
 
   const inputRegex = RegExp(`^\\d*(?:\\\\[.])?\\d*$`); // match escaped "." characters via in a non-capturing group
 
   const enforcer = (currentInput: string, receiveExactAmount: boolean) => {
-    if (currentInput === '' || inputRegex.test(escapeRegExp(currentInput))) {
+    if (currentInput === "" || inputRegex.test(escapeRegExp(currentInput))) {
       onUserInput(currentInput, receiveExactAmount);
     }
   };
@@ -86,16 +75,9 @@ const Swap: FC<TransferProps> = props => {
             <Stack column={true} spacing={4}>
               <Stack column={true} spacing={5}>
                 {existingChannelBalance && (
-                  <Text
-                    flex="auto"
-                    fontSize="0.875rem"
-                    fontStyle="italic"
-                    textTransform="none"
-                    color="#333333"
-                  >
-                    You are adding more funds for Swap, your existing channel
-                    currently holds {truncate(existingChannelBalance!, 4)}{' '}
-                    {senderChainInfo.assetName}
+                  <Text flex="auto" fontSize="0.875rem" fontStyle="italic" textTransform="none" color="#333333">
+                    You are adding more funds for Swap, your existing channel currently holds{" "}
+                    {truncate(existingChannelBalance!, 4)} {senderChainInfo.assetName}
                   </Text>
                 )}
                 <Stack column={true} spacing={1}>
@@ -111,16 +93,11 @@ const Swap: FC<TransferProps> = props => {
                         textAlign="end"
                         color="#757575"
                       >
-                        Balance: {truncate(userBalance, 4)}{' '}
-                        {senderChainInfo.assetName}
+                        Balance: {truncate(userBalance, 4)} {senderChainInfo.assetName}
                       </Text>
                     )}
                   </Stack>
-                  <Stack
-                    colorScheme="white"
-                    alignItems="center"
-                    borderRadius="5px"
-                  >
+                  <Stack colorScheme="white" alignItems="center" borderRadius="5px">
                     <InputGroup flex="auto" colorScheme="white">
                       <Input
                         body="lg"
@@ -135,17 +112,14 @@ const Swap: FC<TransferProps> = props => {
                         // text-specific options
                         type="text"
                         pattern="^[0-9]*[.,]?[0-9]*$"
-                        placeholder={'0.0'}
+                        placeholder={"0.0"}
                         minLength={1}
                         maxLength={79}
                         spellCheck="false"
                         // value
                         value={senderAmount}
                         onChange={event => {
-                          enforcer(
-                            event.target.value.replace(/,/g, '.'),
-                            false
-                          );
+                          enforcer(event.target.value.replace(/,/g, "."), false);
                         }}
                         readOnly={inputReadOnly ? true : false}
                       />
@@ -184,31 +158,17 @@ const Swap: FC<TransferProps> = props => {
                 </Stack>
 
                 <Stack>
-                  <Text
-                    fontSize="0.875rem"
-                    fontWeight="700"
-                    flex="auto"
-                    color="#666666"
-                  >
+                  <Text fontSize="0.875rem" fontWeight="700" flex="auto" color="#666666">
                     Estimated Fees:
                   </Text>
-                  <Text
-                    fontSize="0.875rem"
-                    fontFamily="Roboto Mono"
-                    color="#666666"
-                    fontWeight="700"
-                  >
+                  <Text fontSize="0.875rem" fontFamily="Roboto Mono" color="#666666" fontWeight="700">
                     {truncate(feeQuote, 4)} {senderChainInfo.assetName}
                   </Text>
                 </Stack>
 
                 <Stack column={true} spacing={1}>
                   <Text fontSize="0.75rem">Recipient gets</Text>
-                  <Stack
-                    colorScheme="white"
-                    alignItems="center"
-                    borderRadius="5px"
-                  >
+                  <Stack colorScheme="white" alignItems="center" borderRadius="5px">
                     <InputGroup flex="auto" colorScheme="white">
                       <Input
                         body="lg"
@@ -223,14 +183,14 @@ const Swap: FC<TransferProps> = props => {
                         // text-specific options
                         type="text"
                         pattern="^[0-9]*[.,]?[0-9]*$"
-                        placeholder={'0.0'}
+                        placeholder={"0.0"}
                         minLength={1}
                         maxLength={79}
                         spellCheck="false"
                         // value
                         value={recipientAmount}
                         onChange={event => {
-                          enforcer(event.target.value.replace(/,/g, '.'), true);
+                          enforcer(event.target.value.replace(/,/g, "."), true);
                         }}
                         readOnly={inputReadOnly ? true : false}
                       />
@@ -248,12 +208,7 @@ const Swap: FC<TransferProps> = props => {
                 </Stack>
               </Stack>
               {!!amountError && (
-                <Text
-                  flex="auto"
-                  fontSize="0.75rem"
-                  textAlign="center"
-                  color="crimson"
-                >
+                <Text flex="auto" fontSize="0.75rem" textAlign="center" color="crimson">
                   {amountError}
                 </Text>
               )}
@@ -261,16 +216,10 @@ const Swap: FC<TransferProps> = props => {
               <Button
                 size="lg"
                 type="submit"
-                disabled={
-                  !!amountError || !senderAmount || isLoad ? true : false
-                }
+                disabled={!!amountError || !senderAmount || isLoad ? true : false}
                 onClick={handleSubmit}
               >
-                {isLoad
-                  ? 'Waiting For Transaction'
-                  : userBalance
-                  ? 'Swap'
-                  : 'Show me QR!'}
+                {isLoad ? "Waiting For Transaction" : userBalance ? "Swap" : "Show me QR!"}
               </Button>
             </Stack>
 

@@ -1,5 +1,5 @@
-import styled from 'styled-components';
-import Box from './Box';
+import styled from "styled-components";
+import Box from "./Box";
 
 type InputGroupProps = {
   colorScheme?: string;
@@ -11,12 +11,12 @@ export const InputGroup = styled(Box)<InputGroupProps>`
   &&& {
     width: 100%;
     display: flex;
-    font-family: 'Roboto Mono';
+    font-family: "Roboto Mono";
     font-style: normal;
     font-weight: 500;
     line-height: 20px;
-    background-color: ${props => props.colorScheme || '#dedede'};
-    border-radius: ${props => props.borderRadius || '5px'};
+    background-color: ${props => props.colorScheme || "#dedede"};
+    border-radius: ${props => props.borderRadius || "5px"};
     flex: ${props => props.flex};
     align-items: center;
   }
@@ -33,18 +33,10 @@ type InputProps = {
 
 export const Input = styled.input<InputProps>`
   &&& {
-    height: ${props =>
-      props.height ||
-      props.theme.space[props.theme.sizes[props.body ?? 'md'].h]};
-    font-size: ${props =>
-      props.fontSize ||
-      props.theme.fontSizes[props.theme.sizes[props.body ?? 'md'].fontSize]};
-    padding-left: ${props =>
-      props.paddingLeft ||
-      props.theme.space[props.theme.sizes[props.body ?? 'md'].px]};
-    padding-right: ${props =>
-      props.paddingRight ||
-      props.theme.space[props.theme.sizes[props.body ?? 'md'].px]};
+    height: ${props => props.height || props.theme.space[props.theme.sizes[props.body ?? "md"].h]};
+    font-size: ${props => props.fontSize || props.theme.fontSizes[props.theme.sizes[props.body ?? "md"].fontSize]};
+    padding-left: ${props => props.paddingLeft || props.theme.space[props.theme.sizes[props.body ?? "md"].px]};
+    padding-right: ${props => props.paddingRight || props.theme.space[props.theme.sizes[props.body ?? "md"].px]};
     flex: ${props => props.flex};
     width: 100%;
     min-width: 0px;
@@ -68,7 +60,7 @@ export const Input = styled.input<InputProps>`
     ::-webkit-search-decoration {
       -webkit-appearance: none;
     }
-    [type='number'] {
+    [type="number"] {
       -moz-appearance: textfield;
     }
     ::-webkit-outer-spin-button,

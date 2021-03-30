@@ -1,6 +1,6 @@
-import React, { FC, useEffect, useState } from 'react';
-import { ThemeProvider } from 'styled-components';
-import { Modal } from '@chakra-ui/react';
+import React, { FC, useEffect, useState } from "react";
+import { ThemeProvider } from "styled-components";
+import { Modal } from "@chakra-ui/react";
 import {
   CHAIN_DETAIL,
   getTotalDepositsBob,
@@ -10,33 +10,12 @@ import {
   BrowserNode,
   TransferQuote,
   WithdrawalQuote,
-} from '@connext/vector-sdk';
-import { BigNumber, utils, providers } from 'ethers';
-import {
-  ERROR_STATES,
-  SCREEN_STATES,
-  ScreenStates,
-  ErrorStates,
-} from '../constants';
-import {
-  theme,
-  Fonts,
-  ModalOverlay,
-  ModalContentContainer,
-  BackButton,
-  CloseButton,
-} from './common';
-import {
-  Loading,
-  Swap,
-  SwapListener,
-  Status,
-  ErrorScreen,
-  Success,
-  Recover,
-  ExistingBalance,
-} from './pages';
-import { Options } from './static';
+} from "@connext/vector-sdk";
+import { BigNumber, utils, providers } from "ethers";
+import { ERROR_STATES, SCREEN_STATES, ScreenStates, ErrorStates } from "../constants";
+import { theme, Fonts, ModalOverlay, ModalContentContainer, BackButton, CloseButton } from "./common";
+import { Loading, Swap, SwapListener, Status, ErrorScreen, Success, Recover, ExistingBalance } from "./pages";
+import { Options } from "./static";
 
 export type ConnextModalProps = {
   showModal: boolean;
@@ -55,17 +34,11 @@ export type ConnextModalProps = {
   withdrawCallTo?: string;
   withdrawCallData?: string;
   onClose: () => void;
-  onReady?: (params: {
-    depositChannelAddress: string;
-    withdrawChannelAddress: string;
-  }) => any;
+  onReady?: (params: { depositChannelAddress: string; withdrawChannelAddress: string }) => any;
   onSwap?: (inputSenderAmountWei: string, node: BrowserNode) => Promise<void>;
   onDepositTxCreated?: (txHash: string) => void;
   onFinished?: (txHash: string, amountWei: string) => void;
-  generateCallData?: (
-    quote: WithdrawalQuote,
-    node: BrowserNode
-  ) => Promise<{ callData?: string }>;
+  generateCallData?: (quote: WithdrawalQuote, node: BrowserNode) => Promise<{ callData?: string }>;
 };
 
 const ConnextModal: FC<ConnextModalProps> = ({
@@ -94,30 +67,19 @@ const ConnextModal: FC<ConnextModalProps> = ({
   const depositAssetId = utils.getAddress(_depositAssetId);
   const withdrawAssetId = utils.getAddress(_withdrawAssetId);
 
-  const [webProvider, setWebProvider] = useState<
-    undefined | providers.Web3Provider
-  >();
+  const [webProvider, setWebProvider] = useState<undefined | providers.Web3Provider>();
 
   const loginProvider: undefined | providers.Web3Provider = !!_loginProvider
     ? new providers.Web3Provider(_loginProvider)
     : undefined;
 
-  const [transferAmountUi, setTransferAmountUi] = useState<
-    string | undefined
-  >();
-  const [receivedAmountUi, setReceivedAmountUi] = useState<
-    string | undefined
-  >();
-  const [transferFeeUi, setTransferFeeUi] = useState<string>('--');
+  const [transferAmountUi, setTransferAmountUi] = useState<string | undefined>();
+  const [receivedAmountUi, setReceivedAmountUi] = useState<string | undefined>();
+  const [transferFeeUi, setTransferFeeUi] = useState<string>("--");
 
-  const [existingChannelBalanceUi, setExistingChannelBalanceUi] = useState<
-    string | undefined
-  >();
+  const [existingChannelBalanceUi, setExistingChannelBalanceUi] = useState<string | undefined>();
 
-  const [
-    successWithdrawalAmount,
-    setSuccessWithdrawalAmount,
-  ] = useState<string>();
+  const [successWithdrawalAmount, setSuccessWithdrawalAmount] = useState<string>();
 
   const [transferQuote, setTransferQuote] = useState<TransferQuote>();
   const [withdrawalQuote, setWithdrawalQuote] = useState<WithdrawalQuote>();
@@ -136,13 +98,9 @@ const ConnextModal: FC<ConnextModalProps> = ({
 
   const [listener, setListener] = useState<NodeJS.Timeout>();
 
-  const [screenState, setScreenState] = useState<ScreenStates>(
-    SCREEN_STATES.LOADING
-  );
+  const [screenState, setScreenState] = useState<ScreenStates>(SCREEN_STATES.LOADING);
 
-  const [lastScreenState, setLastScreenState] = useState<
-    ScreenStates | undefined
-  >();
+  const [lastScreenState, setLastScreenState] = useState<ScreenStates | undefined>();
 
   const [title, setTitle] = useState<string>();
   const [message, setMessage] = useState<string>();
@@ -152,11 +110,7 @@ const ConnextModal: FC<ConnextModalProps> = ({
   // temp
   const [inputReadOnly, setInputReadOnly] = useState<boolean>(false);
 
-  const onSuccess = (
-    txHash: string,
-    amountUi?: string,
-    amountBn?: BigNumber
-  ) => {
+  const onSuccess = (txHash: string, amountUi?: string, amountBn?: BigNumber) => {
     console.log(txHash, amountUi, amountBn);
     setWithdrawTx(txHash);
     setSuccessWithdrawalAmount(amountUi!);
@@ -174,20 +128,20 @@ const ConnextModal: FC<ConnextModalProps> = ({
       initialDeposits = await getTotalDepositsBob(
         connextSdk?.senderChainChannelAddress!,
         senderChain!.assetId!,
-        senderChain!.rpcProvider!
+        senderChain!.rpcProvider!,
       );
     } catch (e) {
       handleScreen({
         state: ERROR_STATES.ERROR_TRANSFER,
         error: e,
-        message: 'Error getting total deposits',
+        message: "Error getting total deposits",
       });
       return;
     }
     console.log(
       `Starting balance on ${senderChain?.chainId!} for ${
         connextSdk!.senderChainChannelAddress
-      } of asset ${depositAssetId}: ${initialDeposits.toString()}`
+      } of asset ${depositAssetId}: ${initialDeposits.toString()}`,
     );
 
     let depositListener = setInterval(async () => {
@@ -196,7 +150,7 @@ const ConnextModal: FC<ConnextModalProps> = ({
         updatedDeposits = await getTotalDepositsBob(
           connextSdk!.senderChainChannelAddress,
           depositAssetId,
-          senderChain!.rpcProvider!
+          senderChain!.rpcProvider!,
         );
       } catch (e) {
         console.warn(`Error fetching balance: ${e.message}`);
@@ -205,7 +159,7 @@ const ConnextModal: FC<ConnextModalProps> = ({
       console.log(
         `Updated balance on ${senderChain?.chainId!} for ${
           connextSdk!.senderChainChannelAddress
-        } of asset ${depositAssetId}: ${updatedDeposits.toString()}`
+        } of asset ${depositAssetId}: ${updatedDeposits.toString()}`,
       );
 
       if (updatedDeposits.lt(initialDeposits)) {
@@ -221,14 +175,9 @@ const ConnextModal: FC<ConnextModalProps> = ({
     setListener(depositListener);
   };
 
-  const handleSwapCheck = async (
-    _input: string | undefined,
-    receiveExactAmount: boolean
-  ) => {
+  const handleSwapCheck = async (_input: string | undefined, receiveExactAmount: boolean) => {
     const input = _input ? _input.trim() : undefined;
-    receiveExactAmount
-      ? setReceivedAmountUi(input)
-      : setTransferAmountUi(input);
+    receiveExactAmount ? setReceivedAmountUi(input) : setTransferAmountUi(input);
 
     try {
       const res = await connextSdk!.estimateFees({
@@ -239,9 +188,7 @@ const ConnextModal: FC<ConnextModalProps> = ({
       console.log(res);
       setAmountError(res.error);
 
-      receiveExactAmount
-        ? setTransferAmountUi(res.senderAmount)
-        : setReceivedAmountUi(res.recipientAmount);
+      receiveExactAmount ? setTransferAmountUi(res.senderAmount) : setReceivedAmountUi(res.recipientAmount);
 
       if (res.totalFee) setTransferFeeUi(res.totalFee);
 
@@ -250,7 +197,7 @@ const ConnextModal: FC<ConnextModalProps> = ({
         setWithdrawalQuote(res.withdrawalQuote);
       }
     } catch (e) {
-      const message = 'Error Estimating Fees';
+      const message = "Error Estimating Fees";
       console.log(message, e);
       setAmountError(e.message);
     }
@@ -262,26 +209,26 @@ const ConnextModal: FC<ConnextModalProps> = ({
     try {
       await connextSdk!.preTransferCheck(receivedAmountUi!);
     } catch (e) {
-      console.log('Error at preCheck', e);
+      console.log("Error at preCheck", e);
       setIsLoad(false);
       setAmountError(e.message);
       return;
     }
 
     const transferAmountBn: BigNumber = BigNumber.from(
-      utils.parseUnits(transferAmountUi!, senderChain?.assetDecimals!)
+      utils.parseUnits(transferAmountUi!, senderChain?.assetDecimals!),
     );
 
     if (onSwap) {
       try {
-        console.log('Calling onSwap function');
+        console.log("Calling onSwap function");
         await onSwap(transferAmountBn.toString(), connextSdk?.browserNode!);
       } catch (e) {
-        console.log('onswap error', e);
+        console.log("onswap error", e);
         handleScreen({
           state: ERROR_STATES.ERROR_TRANSFER,
           error: e,
-          message: 'Error calling onSwap',
+          message: "Error calling onSwap",
         });
         return;
       }
@@ -303,13 +250,13 @@ const ConnextModal: FC<ConnextModalProps> = ({
         });
       } catch (e) {
         setIsLoad(false);
-        if (e.message.includes('User denied transaction signature')) {
+        if (e.message.includes("User denied transaction signature")) {
           return;
         }
         handleScreen({
           state: ERROR_STATES.ERROR_TRANSFER,
           error: e,
-          message: 'Error in injected provider deposit: ',
+          message: "Error in injected provider deposit: ",
         });
         return;
       }
@@ -322,14 +269,14 @@ const ConnextModal: FC<ConnextModalProps> = ({
   const handleSwap = async () => {
     handleScreen({
       state: SCREEN_STATES.STATUS,
-      title: 'transferring',
+      title: "transferring",
       message: `Transferring ${senderChain?.assetName!}. This step can take some time if the chain is congested`,
     });
 
     try {
       await connextSdk!.transfer({ transferQuote: transferQuote! });
     } catch (e) {
-      const message = 'Error at Transfer';
+      const message = "Error at Transfer";
       console.log(e, message);
       handleScreen({
         state: ERROR_STATES.ERROR_TRANSFER,
@@ -341,7 +288,7 @@ const ConnextModal: FC<ConnextModalProps> = ({
 
     handleScreen({
       state: SCREEN_STATES.STATUS,
-      title: 'withdrawing',
+      title: "withdrawing",
       message: `withdrawing ${senderChain?.assetName} to ${receiverChain?.name}. This step can take some time if the chain is congested`,
     });
 
@@ -355,7 +302,7 @@ const ConnextModal: FC<ConnextModalProps> = ({
         generateCallData: generateCallData,
       });
     } catch (e) {
-      const message = 'Error at withdraw';
+      const message = "Error at withdraw";
       console.log(e, message);
       handleScreen({
         state: ERROR_STATES.ERROR_TRANSFER,
@@ -373,19 +320,17 @@ const ConnextModal: FC<ConnextModalProps> = ({
     setWebProvider(undefined);
     setInputReadOnly(false);
     setIsLoad(false);
-    setTransferFeeUi('--');
-    setExistingChannelBalanceUi('');
-    setReceivedAmountUi('');
+    setTransferFeeUi("--");
+    setExistingChannelBalanceUi("");
+    setReceivedAmountUi("");
     setUserBalance(undefined);
     setError(undefined);
   };
 
   const setup = async () => {
     // set web provider
-    setMessage('getting chains info...');
-    const injectedProvider:
-      | undefined
-      | providers.Web3Provider = !!_injectedProvider
+    setMessage("getting chains info...");
+    const injectedProvider: undefined | providers.Web3Provider = !!_injectedProvider
       ? new providers.Web3Provider(_injectedProvider)
       : undefined;
 
@@ -394,14 +339,10 @@ const ConnextModal: FC<ConnextModalProps> = ({
     // get chain info
     let senderChainInfo: CHAIN_DETAIL;
     try {
-      senderChainInfo = await getChain(
-        _depositChainId,
-        depositChainProvider,
-        depositAssetId
-      );
+      senderChainInfo = await getChain(_depositChainId, depositChainProvider, depositAssetId);
       setSenderChain(senderChainInfo);
     } catch (e) {
-      const message = 'Failed to fetch sender chain info';
+      const message = "Failed to fetch sender chain info";
       console.log(e, message);
       handleScreen({
         state: ERROR_STATES.ERROR_SETUP,
@@ -413,14 +354,10 @@ const ConnextModal: FC<ConnextModalProps> = ({
 
     let receiverChainInfo: CHAIN_DETAIL;
     try {
-      receiverChainInfo = await getChain(
-        _withdrawChainId,
-        withdrawChainProvider,
-        withdrawAssetId
-      );
+      receiverChainInfo = await getChain(_withdrawChainId, withdrawChainProvider, withdrawAssetId);
       setReceiverChain(receiverChainInfo);
     } catch (e) {
-      const message = 'Failed to fetch receiver chain info';
+      const message = "Failed to fetch receiver chain info";
       console.log(e, message);
       handleScreen({
         state: ERROR_STATES.ERROR_SETUP,
@@ -436,7 +373,7 @@ const ConnextModal: FC<ConnextModalProps> = ({
         setInputReadOnly(true);
         setTransferAmountUi(_transferAmount);
       } catch (e) {
-        const message = 'Error with transferAmount param';
+        const message = "Error with transferAmount param";
         console.log(e, message);
         handleScreen({
           state: ERROR_STATES.ERROR_SETUP,
@@ -467,7 +404,7 @@ const ConnextModal: FC<ConnextModalProps> = ({
           handleScreen({
             state: _state,
             error: new Error(message),
-            title: 'Switch Network',
+            title: "Switch Network",
             message: message,
           });
           return;
@@ -476,7 +413,7 @@ const ConnextModal: FC<ConnextModalProps> = ({
         const _userBalance = await getUserBalance(
           injectedProvider,
           senderChainInfo.assetId,
-          senderChainInfo.assetDecimals
+          senderChainInfo.assetDecimals,
         );
         setUserBalance(_userBalance);
       } catch (e) {
@@ -491,7 +428,7 @@ const ConnextModal: FC<ConnextModalProps> = ({
       }
     }
 
-    setMessage('Setting up channels...');
+    setMessage("Setting up channels...");
 
     let connextSdk = new ConnextSdk();
     try {
@@ -508,17 +445,17 @@ const ConnextModal: FC<ConnextModalProps> = ({
       });
       setConnextSdk(connextSdk);
     } catch (e) {
-      if (e.message.includes('localStorage not available in this window')) {
+      if (e.message.includes("localStorage not available in this window")) {
         alert(
-          'Please disable shields or ad blockers and try again. Connext requires cross-site cookies to store your channel states.'
+          "Please disable shields or ad blockers and try again. Connext requires cross-site cookies to store your channel states.",
         );
       }
       if (e.message.includes("Failed to read the 'localStorage'")) {
         alert(
-          'Please disable shields or ad blockers or allow third party cookies in your browser and try again. Connext requires cross-site cookies to store your channel states.'
+          "Please disable shields or ad blockers or allow third party cookies in your browser and try again. Connext requires cross-site cookies to store your channel states.",
         );
       }
-      const message = 'Error initalizing';
+      const message = "Error initalizing";
       console.log(e, message);
       handleScreen({
         state: ERROR_STATES.ERROR_SETUP,
@@ -535,12 +472,12 @@ const ConnextModal: FC<ConnextModalProps> = ({
       });
     }
 
-    setMessage('Looking for pending Transfers...');
+    setMessage("Looking for pending Transfers...");
     let response;
     try {
       response = await connextSdk!.checkPendingTransfer();
     } catch (e) {
-      const message = 'Failed at Pending Tranfer Check';
+      const message = "Failed at Pending Tranfer Check";
       console.log(e, message);
       handleScreen({
         state: ERROR_STATES.ERROR_SETUP,
@@ -552,24 +489,14 @@ const ConnextModal: FC<ConnextModalProps> = ({
 
     console.log(response);
 
-    const offChainDepositAssetBalance =
-      response.offChainSenderChainAssetBalanceBn;
-    const offChainWithdrawAssetBalance =
-      response.offChainRecipientChainAssetBalanceBn;
-    if (
-      offChainDepositAssetBalance.gt(0) &&
-      offChainWithdrawAssetBalance.gt(0)
-    ) {
-      console.warn(
-        'Balance exists in both channels, transferring first, then withdrawing'
-      );
+    const offChainDepositAssetBalance = response.offChainSenderChainAssetBalanceBn;
+    const offChainWithdrawAssetBalance = response.offChainRecipientChainAssetBalanceBn;
+    if (offChainDepositAssetBalance.gt(0) && offChainWithdrawAssetBalance.gt(0)) {
+      console.warn("Balance exists in both channels, transferring first, then withdrawing");
     }
     // if offChainDepositAssetBalance > 0
     if (offChainDepositAssetBalance.gt(0)) {
-      const existingBalance = utils.formatUnits(
-        offChainDepositAssetBalance,
-        senderChainInfo?.assetDecimals!
-      );
+      const existingBalance = utils.formatUnits(offChainDepositAssetBalance, senderChainInfo?.assetDecimals!);
 
       setExistingChannelBalanceUi(existingBalance);
       handleScreen({
@@ -582,7 +509,7 @@ const ConnextModal: FC<ConnextModalProps> = ({
       // then go to withdraw screen with transfer amount == balance
       handleScreen({
         state: SCREEN_STATES.STATUS,
-        title: 'withdrawing',
+        title: "withdrawing",
         message: `withdrawing ${senderChain?.assetName} to ${receiverChain?.name}. This step can take some time if the chain is congested`,
       });
 
@@ -596,7 +523,7 @@ const ConnextModal: FC<ConnextModalProps> = ({
           generateCallData: generateCallData,
         });
       } catch (e) {
-        const message = 'Error at withdraw';
+        const message = "Error at withdraw";
         console.log(e, message);
         handleScreen({
           state: ERROR_STATES.ERROR_TRANSFER,
@@ -631,13 +558,7 @@ const ConnextModal: FC<ConnextModalProps> = ({
   }, [showModal]);
 
   const handleOptions = () => {
-    return (
-      <Options
-        state={screenState}
-        onClose={handleClose}
-        handleRecoveryButton={handleRecoveryButton}
-      />
-    );
+    return <Options state={screenState} onClose={handleClose} handleRecoveryButton={handleRecoveryButton} />;
   };
 
   const handleBack = () => {
@@ -645,11 +566,7 @@ const ConnextModal: FC<ConnextModalProps> = ({
       <BackButton
         isDisabled={
           !lastScreenState ||
-          [
-            SCREEN_STATES.LOADING,
-            SCREEN_STATES.STATUS,
-            ...Object.values(ERROR_STATES),
-          ].includes(lastScreenState as any)
+          [SCREEN_STATES.LOADING, SCREEN_STATES.STATUS, ...Object.values(ERROR_STATES)].includes(lastScreenState as any)
             ? true
             : false
         }
@@ -669,20 +586,14 @@ const ConnextModal: FC<ConnextModalProps> = ({
   const handleCloseButton = () => {
     return (
       <CloseButton
-        isDisabled={
-          [SCREEN_STATES.LOADING, SCREEN_STATES.STATUS].includes(
-            screenState as any
-          )
-            ? true
-            : false
-        }
+        isDisabled={[SCREEN_STATES.LOADING, SCREEN_STATES.STATUS].includes(screenState as any) ? true : false}
         onClick={onClose}
       />
     );
   };
 
   const handleRecoveryButton = () => {
-    console.log('click on recovery button', screenState);
+    console.log("click on recovery button", screenState);
     switch (screenState) {
       case SCREEN_STATES.RECOVERY:
         handleScreen({ state: SCREEN_STATES.SWAP });
@@ -698,7 +609,7 @@ const ConnextModal: FC<ConnextModalProps> = ({
     console.log(senderChain?.chainParams!);
     // @ts-ignore
     await ethereum.request({
-      method: 'wallet_addEthereumChain',
+      method: "wallet_addEthereumChain",
       params: [senderChain?.chainParams!],
     });
 
@@ -706,7 +617,7 @@ const ConnextModal: FC<ConnextModalProps> = ({
   };
 
   const continueButton = async () => {
-    setExistingChannelBalanceUi('');
+    setExistingChannelBalanceUi("");
     handleSwap();
   };
 
@@ -748,11 +659,7 @@ const ConnextModal: FC<ConnextModalProps> = ({
 
       default:
         console.log(pMessage);
-        const _title = pTitle
-          ? pTitle
-          : state === ERROR_STATES.ERROR_TRANSFER
-          ? 'Transfer Error'
-          : 'Setup Error';
+        const _title = pTitle ? pTitle : state === ERROR_STATES.ERROR_TRANSFER ? "Transfer Error" : "Setup Error";
 
         setTitle(_title);
         setError(pError);
@@ -815,7 +722,7 @@ const ConnextModal: FC<ConnextModalProps> = ({
         );
 
       case SCREEN_STATES.RECOVERY:
-        console.log('return recovery');
+        console.log("return recovery");
         return (
           <Recover
             senderChainInfo={senderChain!}
@@ -856,7 +763,7 @@ const ConnextModal: FC<ConnextModalProps> = ({
       default:
         return (
           <ErrorScreen
-            error={error ?? new Error('unknown')}
+            error={error ?? new Error("unknown")}
             title={title!}
             retry={init}
             switchNetwork={switchNetwork}
@@ -887,9 +794,7 @@ const ConnextModal: FC<ConnextModalProps> = ({
           isCentered
         >
           <ModalOverlay />
-          <ModalContentContainer>
-            {activeScreen(screenState)}
-          </ModalContentContainer>
+          <ModalContentContainer>{activeScreen(screenState)}</ModalContentContainer>
         </Modal>
       </ThemeProvider>
     </>
