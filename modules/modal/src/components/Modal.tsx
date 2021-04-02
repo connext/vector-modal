@@ -1,6 +1,6 @@
 import React, { FC, useEffect, useState } from "react";
-import { ThemeProvider } from "styled-components";
-import { Modal } from "@chakra-ui/react";
+import styled, { ThemeProvider } from "styled-components";
+import Modal, { ModalProvider, BaseModalBackground } from "styled-react-modal";
 import {
   CHAIN_DETAIL,
   getTotalDepositsBob,
@@ -9,7 +9,6 @@ import {
   ConnextSdk,
   BrowserNode,
   TransferQuote,
-  WithdrawalQuote,
 } from "@connext/vector-sdk";
 import { BigNumber, utils, providers } from "ethers";
 import { ERROR_STATES, SCREEN_STATES, ScreenStates, ErrorStates } from "../constants";
@@ -38,7 +37,7 @@ export type ConnextModalProps = {
   onSwap?: (inputSenderAmountWei: string, node: BrowserNode) => Promise<void>;
   onDepositTxCreated?: (txHash: string) => void;
   onFinished?: (txHash: string, amountWei: string) => void;
-  generateCallData?: (quote: WithdrawalQuote, node: BrowserNode) => Promise<{ callData?: string }>;
+  generateCallData?: (toWithdraw: string, toAssetId: string, node: BrowserNode) => Promise<{ callData?: string }>;
 };
 
 const ConnextModal: FC<ConnextModalProps> = ({
@@ -67,6 +66,7 @@ const ConnextModal: FC<ConnextModalProps> = ({
   const depositAssetId = utils.getAddress(_depositAssetId);
   const withdrawAssetId = utils.getAddress(_withdrawAssetId);
 
+  // const [opacity, setOpacity] = useState(0);
   const [webProvider, setWebProvider] = useState<undefined | providers.Web3Provider>();
 
   const loginProvider: undefined | providers.Web3Provider = !!_loginProvider
@@ -82,7 +82,6 @@ const ConnextModal: FC<ConnextModalProps> = ({
   const [successWithdrawalAmount, setSuccessWithdrawalAmount] = useState<string>();
 
   const [transferQuote, setTransferQuote] = useState<TransferQuote>();
-  const [withdrawalQuote, setWithdrawalQuote] = useState<WithdrawalQuote>();
 
   const [senderChain, setSenderChain] = useState<CHAIN_DETAIL>();
   const [receiverChain, setReceiverChain] = useState<CHAIN_DETAIL>();
@@ -181,7 +180,7 @@ const ConnextModal: FC<ConnextModalProps> = ({
 
     try {
       const res = await connextSdk!.estimateFees({
-        input: input,
+        transferAmount: input,
         isRecipientAssetInput: receiveExactAmount,
         userBalanceWei: userBalance,
       });
@@ -194,7 +193,6 @@ const ConnextModal: FC<ConnextModalProps> = ({
 
       if (!existingChannelBalanceUi) {
         setTransferQuote(res.transferQuote);
-        setWithdrawalQuote(res.withdrawalQuote);
       }
     } catch (e) {
       const message = "Error Estimating Fees";
@@ -225,6 +223,8 @@ const ConnextModal: FC<ConnextModalProps> = ({
         await onSwap(transferAmountBn.toString(), connextSdk?.browserNode!);
       } catch (e) {
         console.log("onswap error", e);
+        setIsLoad(false);
+
         handleScreen({
           state: ERROR_STATES.ERROR_TRANSFER,
           error: e,
@@ -232,14 +232,11 @@ const ConnextModal: FC<ConnextModalProps> = ({
         });
         return;
       }
-    }
 
-    if (!webProvider) {
-      console.log(`Starting block listener`);
-      // display QR
       setIsLoad(false);
-      await depositListenerAndTransfer();
-    } else {
+
+      await handleSwap();
+    } else if (webProvider) {
       // deposit
       try {
         await connextSdk!.deposit({
@@ -263,6 +260,11 @@ const ConnextModal: FC<ConnextModalProps> = ({
       setIsLoad(false);
 
       await handleSwap();
+    } else {
+      console.log(`Starting block listener`);
+      // display QR
+      setIsLoad(false);
+      await depositListenerAndTransfer();
     }
   };
 
@@ -296,7 +298,6 @@ const ConnextModal: FC<ConnextModalProps> = ({
       await connextSdk!.withdraw({
         recipientAddress: withdrawalAddress,
         onFinished: onSuccess,
-        withdrawalQuote: withdrawalQuote!,
         withdrawalCallTo: withdrawCallTo,
         withdrawalCallData: withdrawCallData,
         generateCallData: generateCallData,
@@ -517,7 +518,6 @@ const ConnextModal: FC<ConnextModalProps> = ({
         await connextSdk!.withdraw({
           recipientAddress: withdrawalAddress,
           onFinished: onSuccess,
-          withdrawalQuote: withdrawalQuote!,
           withdrawalCallTo: withdrawCallTo,
           withdrawalCallData: withdrawCallData,
           generateCallData: generateCallData,
@@ -766,6 +766,8 @@ const ConnextModal: FC<ConnextModalProps> = ({
             error={error ?? new Error("unknown")}
             title={title!}
             retry={init}
+            senderChannelAddress={connextSdk ? connextSdk.senderChainChannelAddress : ""}
+            recipientChannelAddress={connextSdk ? connextSdk.recipientChainChannelAddress : ""}
             switchNetwork={switchNetwork}
             state={state}
             senderChainInfo={senderChain!}
@@ -783,22 +785,36 @@ const ConnextModal: FC<ConnextModalProps> = ({
     <>
       <ThemeProvider theme={theme}>
         <Fonts />
-        <Modal
-          id="modal"
-          closeOnOverlayClick={false}
-          closeOnEsc={false}
-          isOpen={showModal}
-          size="md"
-          onClose={handleClose}
-          scrollBehavior="inside"
-          isCentered
-        >
-          <ModalOverlay />
-          <ModalContentContainer>{activeScreen(screenState)}</ModalContentContainer>
-        </Modal>
+        <ModalProvider backgroundComponent={FadingBackground}>
+          <StyledModal
+            isOpen={showModal}
+            allowScroll={true}
+            // afterOpen={afterOpen}
+            beforeClose={handleClose}
+            // opacity={opacity}
+            // backgroundProps={{ opacity }}
+            // size="md"
+            // scrollBehavior="inside"
+            // isCentered
+          >
+            <ModalOverlay />
+            <ModalContentContainer>{activeScreen(screenState)}</ModalContentContainer>
+          </StyledModal>
+        </ModalProvider>
       </ThemeProvider>
     </>
   );
 };
 
 export default ConnextModal;
+
+const StyledModal = Modal.styled`
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: white;
+  transition : all 0.3s ease-in-out;`;
+
+const FadingBackground = styled(BaseModalBackground)`
+  transition: all 0.3s ease-in-out;
+`;

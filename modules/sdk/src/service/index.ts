@@ -1,4 +1,4 @@
-import { EngineEvents, FullChannelState, ERC20Abi, TransferQuote, WithdrawalQuote } from "@connext/vector-types";
+import { EngineEvents, FullChannelState, ERC20Abi, TransferQuote } from "@connext/vector-types";
 import { BrowserNode } from "@connext/vector-browser-node";
 import { getBalanceForAssetId, getRandomBytes32 } from "@connext/vector-utils";
 import { BigNumber, Contract, constants, utils } from "ethers";
@@ -34,7 +34,7 @@ import {
   cancelToAssetTransfer,
 } from "../utils";
 
-export { BrowserNode, ERC20Abi, FullChannelState, getBalanceForAssetId, TransferQuote, WithdrawalQuote };
+export { BrowserNode, ERC20Abi, FullChannelState, getBalanceForAssetId, TransferQuote };
 
 export class ConnextSdk {
   public routerPublicIdentifier = "";
@@ -370,32 +370,30 @@ export class ConnextSdk {
   }
 
   async estimateFees(params: EstimateFeeParamsSchema): Promise<EstimateFeeResponseSchema> {
-    const { input: _input, isRecipientAssetInput, userBalanceWei } = params;
+    const { transferAmount: _transferAmount, isRecipientAssetInput, userBalanceWei } = params;
 
-    const input = _input ? _input.trim() : undefined;
+    const transferAmount = _transferAmount ? _transferAmount.trim() : undefined;
     let err: string | undefined = undefined;
 
-    if (!input) {
+    if (!transferAmount) {
       return {
         error: err,
         senderAmount: "",
         recipientAmount: "",
         totalFee: undefined,
         transferQuote: undefined,
-        withdrawalQuote: undefined,
       };
     }
 
-    let senderAmountUi: string | undefined = isRecipientAssetInput ? "" : input;
-    let recipientAmountUi: string | undefined = isRecipientAssetInput ? input : "";
+    let senderAmountUi: string | undefined = isRecipientAssetInput ? "" : transferAmount;
+    let recipientAmountUi: string | undefined = isRecipientAssetInput ? transferAmount : "";
     let totalFee: string | undefined = undefined;
     let transferQuote: TransferQuote | undefined = undefined;
-    let withdrawalQuote: WithdrawalQuote | undefined = undefined;
 
     try {
       const transferAmountBn = BigNumber.from(
         utils.parseUnits(
-          input,
+          transferAmount,
           isRecipientAssetInput ? this.recipientChain?.assetDecimals! : this.senderChain?.assetDecimals!,
         ),
       );
@@ -408,7 +406,6 @@ export class ConnextSdk {
           recipientAmount: recipientAmountUi,
           totalFee: totalFee,
           transferQuote: transferQuote,
-          withdrawalQuote: withdrawalQuote,
         };
       }
 
@@ -421,7 +418,6 @@ export class ConnextSdk {
           senderAmount: _senderAmount,
           recipientAmount: _recipientAmount,
           transferQuote: _transferQuote,
-          withdrawalQuote: _withdrawalQuote,
         } = await this.getFeesDebounced(
           this.browserNode!,
           this.routerPublicIdentifier,
@@ -432,7 +428,6 @@ export class ConnextSdk {
           this.recipientChain?.chainId!,
           this.recipientChain?.assetId!,
           this.recipientChain?.assetDecimals!,
-          this.recipientChainChannelAddress,
           this.swapDefinition!,
           isRecipientAssetInput,
         );
@@ -440,7 +435,6 @@ export class ConnextSdk {
         senderAmountBn = BigNumber.from(_senderAmount);
         recipientAmountBn = BigNumber.from(_recipientAmount);
         transferQuote = _transferQuote;
-        withdrawalQuote = _withdrawalQuote;
       } catch (e) {
         return {
           error: e.message,
@@ -448,7 +442,6 @@ export class ConnextSdk {
           recipientAmount: recipientAmountUi,
           totalFee: totalFee,
           transferQuote: transferQuote,
-          withdrawalQuote: withdrawalQuote,
         };
       }
 
@@ -463,7 +456,6 @@ export class ConnextSdk {
           recipientAmount: recipientAmountUi,
           totalFee: totalFee,
           transferQuote: transferQuote,
-          withdrawalQuote: withdrawalQuote,
         };
       }
 
@@ -485,7 +477,6 @@ export class ConnextSdk {
             recipientAmount: recipientAmountUi,
             totalFee: totalFee,
             transferQuote: transferQuote,
-            withdrawalQuote: withdrawalQuote,
           };
         }
       }
@@ -499,17 +490,18 @@ export class ConnextSdk {
       recipientAmount: recipientAmountUi,
       totalFee: totalFee,
       transferQuote: transferQuote,
-      withdrawalQuote: withdrawalQuote,
     };
   }
 
-  async preTransferCheck(input: string) {
-    if (!input) {
+  async preTransferCheck(transferAmount: string) {
+    if (!transferAmount) {
       const message = "Transfer Amount is undefined";
       console.log(message);
       throw new Error(message);
     }
-    const transferAmountBn: BigNumber = BigNumber.from(utils.parseUnits(input, this.senderChain?.assetDecimals!));
+    const transferAmountBn: BigNumber = BigNumber.from(
+      utils.parseUnits(transferAmount, this.senderChain?.assetDecimals!),
+    );
 
     if (transferAmountBn.isZero()) {
       const message = "Transfer amount cannot be 0";
@@ -563,10 +555,10 @@ export class ConnextSdk {
               transferAmountBn,
             );
 
-      const receipt = await depositTx.wait(1);
+      const receipt = await depositTx.wait();
       console.log("deposit mined:", receipt.transactionHash);
 
-      this.senderChain?.rpcProvider!.waitForTransaction(depositTx.hash).then(receipt => {
+      this.senderChain?.rpcProvider!.waitForTransaction(depositTx.hash, 2).then(receipt => {
         if (receipt.status === 0) {
           // tx reverted
           const message = "Transaction reverted onchain";
@@ -682,14 +674,7 @@ export class ConnextSdk {
   }
 
   async withdraw(params: WithdrawParamsSchema) {
-    const {
-      recipientAddress,
-      onFinished,
-      withdrawalQuote,
-      withdrawalCallTo,
-      withdrawalCallData,
-      generateCallData,
-    } = params;
+    const { recipientAddress, onFinished, withdrawalCallTo, withdrawalCallData, generateCallData } = params;
     // now go to withdrawal screen
     let result;
     try {
@@ -700,7 +685,6 @@ export class ConnextSdk {
         this.recipientChain?.assetId!,
         recipientAddress,
         this.routerPublicIdentifier,
-        withdrawalQuote,
         withdrawalCallTo,
         withdrawalCallData,
         generateCallData,
@@ -736,7 +720,6 @@ export class ConnextSdk {
       recipientAddress,
       onFinished,
       transferQuote,
-      withdrawalQuote,
       withdrawalCallTo,
       withdrawalCallData,
       generateCallData,
@@ -753,7 +736,6 @@ export class ConnextSdk {
       await this.withdraw({
         recipientAddress: recipientAddress,
         onFinished: onFinished,
-        withdrawalQuote: withdrawalQuote,
         withdrawalCallTo: withdrawalCallTo,
         withdrawalCallData: withdrawalCallData,
         generateCallData: generateCallData,
