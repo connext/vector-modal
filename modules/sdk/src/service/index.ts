@@ -370,12 +370,12 @@ export class ConnextSdk {
   }
 
   async estimateFees(params: EstimateFeeParamsSchema): Promise<EstimateFeeResponseSchema> {
-    const { input: _input, isRecipientAssetInput, userBalanceWei } = params;
+    const { transferAmount: _transferAmount, isRecipientAssetInput, userBalanceWei } = params;
 
-    const input = _input ? _input.trim() : undefined;
+    const transferAmount = _transferAmount ? _transferAmount.trim() : undefined;
     let err: string | undefined = undefined;
 
-    if (!input) {
+    if (!transferAmount) {
       return {
         error: err,
         senderAmount: "",
@@ -385,15 +385,15 @@ export class ConnextSdk {
       };
     }
 
-    let senderAmountUi: string | undefined = isRecipientAssetInput ? "" : input;
-    let recipientAmountUi: string | undefined = isRecipientAssetInput ? input : "";
+    let senderAmountUi: string | undefined = isRecipientAssetInput ? "" : transferAmount;
+    let recipientAmountUi: string | undefined = isRecipientAssetInput ? transferAmount : "";
     let totalFee: string | undefined = undefined;
     let transferQuote: TransferQuote | undefined = undefined;
 
     try {
       const transferAmountBn = BigNumber.from(
         utils.parseUnits(
-          input,
+          transferAmount,
           isRecipientAssetInput ? this.recipientChain?.assetDecimals! : this.senderChain?.assetDecimals!,
         ),
       );
@@ -493,13 +493,15 @@ export class ConnextSdk {
     };
   }
 
-  async preTransferCheck(input: string) {
-    if (!input) {
+  async preTransferCheck(transferAmount: string) {
+    if (!transferAmount) {
       const message = "Transfer Amount is undefined";
       console.log(message);
       throw new Error(message);
     }
-    const transferAmountBn: BigNumber = BigNumber.from(utils.parseUnits(input, this.senderChain?.assetDecimals!));
+    const transferAmountBn: BigNumber = BigNumber.from(
+      utils.parseUnits(transferAmount, this.senderChain?.assetDecimals!),
+    );
 
     if (transferAmountBn.isZero()) {
       const message = "Transfer amount cannot be 0";
