@@ -11,7 +11,6 @@ import {
   TransferNames,
   WithdrawalReconciledPayload,
   jsonifyError,
-  WithdrawalQuote,
   TransferQuote,
   AllowedSwap,
   WithdrawalResolvedPayload,
@@ -130,11 +129,9 @@ export const getCrosschainFee = async (
   receiverChainId: number,
   receiverAssetId: string,
   receiverAssetDecimals: number,
-  receiverChannelAddress: string,
   swapDefinition: AllowedSwap,
   receiveExactAmount?: boolean,
 ): Promise<{
-  withdrawalQuote: WithdrawalQuote;
   transferQuote: TransferQuote;
   totalFee: BigNumber;
   senderAmount: string;
@@ -174,46 +171,13 @@ export const getCrosschainFee = async (
   const depositAssetTransferFee = transferQuoteResult.getValue().fee;
   const depositAssetTransferAmount = BigNumber.from(transferQuoteResult.getValue().amount);
 
-  // In the case where you want to receive an exact amount, the quote
-  // returned would have an amount in it that is different than the
-  // original `amount` provided (i.e. so when fee is deducted, you get
-  // the original amount)
-  const swappedAmount = depositAssetTransferAmount.lte(depositAssetTransferFee)
-    ? BigNumber.from(0)
-    : depositAssetTransferAmount.sub(depositAssetTransferFee);
-
-  // Get the withdraw quote
-  // NOTE: you can include the `receiveExactAmount` flag here as well to get
-  // an amount you should withdraw, but how youre doing it is also fine.
-  const withdrawQuoteRes = await node.getWithdrawalQuote({
-    amount: swappedAmount.toString(),
-    channelAddress: receiverChannelAddress,
-    assetId: receiverAssetId,
-  });
-  console.log("withdrawQuoteRes: ", withdrawQuoteRes.toJson());
-  if (withdrawQuoteRes.isError) {
-    throw withdrawQuoteRes.getError();
-  }
-  const withdrawFee = withdrawQuoteRes.getValue().fee;
-
-  // Get the withdraw fee in deposit asset units
-  const depositAssetWithdrawFee = calculateExchangeWad(
-    BigNumber.from(withdrawFee),
-    receiverAssetDecimals,
-    inverse(swap.hardcodedRate),
-    senderAssetDecimals,
-  );
-  console.log("converted withdrawal fee", depositAssetWithdrawFee);
-
-  const totalFee = depositAssetWithdrawFee.add(depositAssetTransferFee);
+  const totalFee = BigNumber.from(depositAssetTransferFee);
   console.log("totalFee", totalFee);
 
-  let senderAmount: BigNumber;
   let recipientAmount: BigNumber;
 
+  const senderAmount: BigNumber = depositAssetTransferAmount;
   if (receiveExactAmount) {
-    senderAmount = depositAssetTransferAmount.add(depositAssetWithdrawFee);
-
     recipientAmount = calculateExchangeWad(
       depositAssetTransferAmount,
       senderAssetDecimals,
@@ -221,7 +185,6 @@ export const getCrosschainFee = async (
       receiverAssetDecimals,
     );
   } else {
-    senderAmount = depositAssetTransferAmount;
     recipientAmount = calculateExchangeWad(
       depositAssetTransferAmount.sub(totalFee),
       senderAssetDecimals,
@@ -240,7 +203,6 @@ export const getCrosschainFee = async (
     totalFee: totalFee,
     senderAmount: senderAmount.toString(),
     recipientAmount: recipientAmount.toString(),
-    withdrawalQuote: withdrawQuoteRes.getValue(),
     transferQuote: transferQuoteResult.getValue(),
   };
 };
@@ -366,15 +328,15 @@ export const waitForSenderCancels = async (
   if (active.isError) {
     throw active.getError();
   }
-  const hashlock = active.getValue().filter(t => {
+  const hashlock = active.getValue().filter((t) => {
     return Object.keys(t.transferState).includes("lockHash");
   });
   await Promise.all(
-    hashlock.map(async t => {
+    hashlock.map(async (t) => {
       try {
         console.log("Waiting for sender cancellation: ", t);
         await evt.waitFor(
-          data =>
+          (data) =>
             data.transfer.transferId === t.transferId &&
             data.channelAddress === depositChannelAddress &&
             Object.values(data.transfer.transferResolver)[0] === constants.HashZero,
@@ -391,7 +353,7 @@ export const waitForSenderCancels = async (
   if (final.isError) {
     throw final.getError();
   }
-  const remaining = final.getValue().filter(t => {
+  const remaining = final.getValue().filter((t) => {
     return Object.keys(t.transferState).includes("lockHash");
   });
   if (remaining.length > 0) {
@@ -436,7 +398,7 @@ export const cancelHangingToTransfers = async (
     throw transfers.getError();
   }
 
-  const toCancel = transfers.getValue().filter(t => {
+  const toCancel = transfers.getValue().filter((t) => {
     const amResponder = t.responderIdentifier === withdrawChannel.bobIdentifier;
     const correctAsset = t.assetId === toAssetId;
     const isHashlock = Object.keys(t.transferState).includes("lockHash");
@@ -446,7 +408,7 @@ export const cancelHangingToTransfers = async (
 
   // wait for all hanging transfers to cancel
   const hangingResolutions = (await Promise.all(
-    toCancel.map(async transferToCancel => {
+    toCancel.map(async (transferToCancel) => {
       try {
         console.warn(
           "Cancelling hanging receiver transfer w/routingId:",
@@ -471,7 +433,7 @@ export const cancelHangingToTransfers = async (
         });
         // for sender transfer cancellation
         await evt.waitFor(
-          data =>
+          (data) =>
             data.transfer.meta.routingId === transferToCancel.meta!.routingId &&
             data.channelAddress === depositChannel.channelAddress &&
             Object.values(data.transfer.transferResolver)[0] === constants.HashZero,
@@ -494,10 +456,9 @@ export const withdrawToAsset = async (
   _toAssetId: string,
   recipientAddr: string,
   routerPublicIdentifier: string,
-  quote?: WithdrawalQuote,
   withdrawCallTo?: string,
   withdrawCallData?: string,
-  generateCallData?: (quote: WithdrawalQuote, node: BrowserNode) => Promise<{ callData?: string }>,
+  generateCallData?: (node: BrowserNode) => Promise<{ callData?: string }>,
 ): Promise<{ withdrawalTx: string; withdrawalAmount: string }> => {
   console.log("Starting withdrawal: ", {
     toChainId,
@@ -516,9 +477,9 @@ export const withdrawToAsset = async (
   }
 
   let callData = withdrawCallData;
-  if (generateCallData && quote && typeof generateCallData === "function") {
+  if (generateCallData && typeof generateCallData === "function") {
     console.log("Using generateCallData function");
-    const res = await generateCallData(quote, node);
+    const res = await generateCallData(node);
     callData = res.callData ? res.callData : withdrawCallData;
   }
 
@@ -530,13 +491,12 @@ export const withdrawToAsset = async (
     recipient: recipientAddr,
     callTo: withdrawCallTo,
     callData,
-    quote,
   };
   console.log("withdraw params", params);
   const [ret, payload] = await Promise.all([
     node.withdraw(params),
     evt.waitFor(
-      data => data.channelAddress === withdrawChannel.channelAddress && data.recipient === recipientAddr,
+      (data) => data.channelAddress === withdrawChannel.channelAddress && data.recipient === recipientAddr,
       60_000,
     ),
   ]);
@@ -589,7 +549,7 @@ export const verifyAndGetRouterSupports = async (
   console.log("toAssetId.toLowerCase(): ", toAssetId.toLowerCase());
   console.log("fromChainId: ", fromChainId);
   console.log("toChainId: ", toChainId);
-  const swap = allowedSwaps.find(s => {
+  const swap = allowedSwaps.find((s) => {
     const noninverted =
       s.fromAssetId.toLowerCase() === fromAssetId.toLowerCase() &&
       s.fromChainId === fromChainId &&
@@ -654,23 +614,23 @@ export const createEvtContainer = (node: BrowserNode): EvtContainer => {
   const withdrawReconciled = Evt.create<WithdrawalReconciledPayload>();
   const withdrawResolved = Evt.create<WithdrawalResolvedPayload>();
 
-  node.on(EngineEvents.CONDITIONAL_TRANSFER_CREATED, data => {
+  node.on(EngineEvents.CONDITIONAL_TRANSFER_CREATED, (data) => {
     console.log("EngineEvents.CONDITIONAL_TRANSFER_CREATED: ", data);
     createdTransfer.post(data);
   });
-  node.on(EngineEvents.CONDITIONAL_TRANSFER_RESOLVED, data => {
+  node.on(EngineEvents.CONDITIONAL_TRANSFER_RESOLVED, (data) => {
     console.log("EngineEvents.CONDITIONAL_TRANSFER_RESOLVED: ", data);
     resolvedTransfer.post(data);
   });
-  node.on(EngineEvents.DEPOSIT_RECONCILED, data => {
+  node.on(EngineEvents.DEPOSIT_RECONCILED, (data) => {
     console.log("EngineEvents.DEPOSIT_RECONCILED: ", data);
     deposit.post(data);
   });
-  node.on(EngineEvents.WITHDRAWAL_RECONCILED, data => {
+  node.on(EngineEvents.WITHDRAWAL_RECONCILED, (data) => {
     console.log("EngineEvents.WITHDRAWAL_RECONCILED: ", data);
     withdrawReconciled.post(data);
   });
-  node.on(EngineEvents.WITHDRAWAL_RESOLVED, data => {
+  node.on(EngineEvents.WITHDRAWAL_RESOLVED, (data) => {
     console.log("EngineEvents.WITHDRAWAL_RESOLVED: ", data);
     withdrawResolved.post(data);
   });
