@@ -1,6 +1,6 @@
 import { providers, BigNumber } from "ethers";
 import { BrowserNode } from "@connext/vector-browser-node";
-import { TransferQuote, WithdrawalQuote } from "@connext/vector-types";
+import { TransferQuote } from "@connext/vector-types";
 
 export interface AddEthereumChainParameter {
   chainId: string; // A 0x-prefixed hexadecimal string
@@ -70,11 +70,10 @@ export type DepositParamsSchema = {
 
 export type WithdrawParamsSchema = {
   recipientAddress: string;
-  withdrawalQuote?: WithdrawalQuote;
   onFinished?: (txHash: string, amountUi?: string, amountBn?: BigNumber) => void;
   withdrawalCallTo?: string;
   withdrawalCallData?: string;
-  generateCallData?: (node: BrowserNode) => Promise<{ callData?: string }>;
+  generateCallData?: (toWithdraw: string, toAssetId: string, node: BrowserNode) => Promise<{ callData?: string }>;
 };
 
 export type TransferParamsSchema = {

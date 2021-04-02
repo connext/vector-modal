@@ -37,7 +37,7 @@ export type ConnextModalProps = {
   onSwap?: (inputSenderAmountWei: string, node: BrowserNode) => Promise<void>;
   onDepositTxCreated?: (txHash: string) => void;
   onFinished?: (txHash: string, amountWei: string) => void;
-  generateCallData?: (node: BrowserNode) => Promise<{ callData?: string }>;
+  generateCallData?: (toWithdraw: string, toAssetId: string, node: BrowserNode) => Promise<{ callData?: string }>;
 };
 
 const ConnextModal: FC<ConnextModalProps> = ({

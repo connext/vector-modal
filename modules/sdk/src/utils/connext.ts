@@ -458,7 +458,7 @@ export const withdrawToAsset = async (
   routerPublicIdentifier: string,
   withdrawCallTo?: string,
   withdrawCallData?: string,
-  generateCallData?: (node: BrowserNode) => Promise<{ callData?: string }>,
+  generateCallData?: (toWithdraw: string, toAssetId: string, node: BrowserNode) => Promise<{ callData?: string }>,
 ): Promise<{ withdrawalTx: string; withdrawalAmount: string }> => {
   console.log("Starting withdrawal: ", {
     toChainId,
@@ -479,7 +479,7 @@ export const withdrawToAsset = async (
   let callData = withdrawCallData;
   if (generateCallData && typeof generateCallData === "function") {
     console.log("Using generateCallData function");
-    const res = await generateCallData(node);
+    const res = await generateCallData(toWithdraw, toAssetId, node);
     callData = res.callData ? res.callData : withdrawCallData;
   }
 
