@@ -58,7 +58,6 @@ export type EstimateFeeResponseSchema = {
   recipientAmount: string | undefined;
   totalFee: string | undefined;
   transferQuote: TransferQuote | undefined;
-  withdrawalQuote: WithdrawalQuote | undefined;
 };
 
 export type DepositParamsSchema = {
@@ -75,7 +74,7 @@ export type WithdrawParamsSchema = {
   onFinished?: (txHash: string, amountUi?: string, amountBn?: BigNumber) => void;
   withdrawalCallTo?: string;
   withdrawalCallData?: string;
-  generateCallData?: (quote: WithdrawalQuote, node: BrowserNode) => Promise<{ callData?: string }>;
+  generateCallData?: (node: BrowserNode) => Promise<{ callData?: string }>;
 };
 
 export type TransferParamsSchema = {
