@@ -20,7 +20,7 @@ export interface TransferProps {
   userBalance?: string;
 }
 
-const Swap: FC<TransferProps> = props => {
+const Swap: FC<TransferProps> = (props) => {
   const {
     amountError,
     userBalance,
@@ -118,7 +118,7 @@ const Swap: FC<TransferProps> = props => {
                         spellCheck="false"
                         // value
                         value={senderAmount}
-                        onChange={event => {
+                        onChange={(event) => {
                           enforcer(event.target.value.replace(/,/g, "."), false);
                         }}
                         readOnly={inputReadOnly ? true : false}
@@ -189,7 +189,7 @@ const Swap: FC<TransferProps> = props => {
                         spellCheck="false"
                         // value
                         value={recipientAmount}
-                        onChange={event => {
+                        onChange={(event) => {
                           enforcer(event.target.value.replace(/,/g, "."), true);
                         }}
                         readOnly={inputReadOnly ? true : false}
@@ -219,7 +219,7 @@ const Swap: FC<TransferProps> = props => {
                 disabled={!!amountError || !senderAmount || isLoad ? true : false}
                 onClick={handleSubmit}
               >
-                {isLoad ? "Waiting For Transaction" : userBalance ? "Swap" : "Show me QR!"}
+                {isLoad ? "Waiting For Transaction" : "Swap"}
               </Button>
             </Stack>
 
