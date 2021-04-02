@@ -3,10 +3,10 @@
   "version": "1.0.4-beta.1",
   "license": "MIT",
   "author": "connext",
-  "description": "TODO: @connext",
+  "description": "widget for cross-chain swap",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/mono/mono.git",
+    "url": "git+https://github.com/vector-modal.git",
     "directory": "modules/modal"
   },
   "scripts": {
