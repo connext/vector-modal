@@ -28,7 +28,7 @@
     "react-dom": "^16.8.0"
   },
   "dependencies": {
-    "@connext/vector-sdk": "^0.0.1-beta.2",
+    "@connext/vector-sdk": "^0.0.1-beta.3",
     "ethers": "^5.1.0",
     "hybrids": "^5.0.0",
     "qrcode.react": "^1.0.1",
