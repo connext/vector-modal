@@ -180,7 +180,7 @@ const ConnextModal: FC<ConnextModalProps> = ({
 
     try {
       const res = await connextSdk!.estimateFees({
-        input: input,
+        transferAmount: input,
         isRecipientAssetInput: receiveExactAmount,
         userBalanceWei: userBalance,
       });
