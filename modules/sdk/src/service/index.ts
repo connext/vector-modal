@@ -556,7 +556,7 @@ export class ConnextSdk {
       const receipt = await depositTx.wait();
       console.log("deposit mined:", receipt.transactionHash);
 
-      this.senderChain?.rpcProvider!.waitForTransaction(depositTx.hash).then((receipt) => {
+      this.senderChain?.rpcProvider!.waitForTransaction(depositTx.hash, 2).then((receipt) => {
         if (receipt.status === 0) {
           // tx reverted
           const message = "Transaction reverted onchain";
