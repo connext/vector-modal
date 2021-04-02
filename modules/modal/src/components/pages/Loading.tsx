@@ -8,7 +8,7 @@ interface LoadingProps {
   message: string;
 }
 
-const Loading: FC<LoadingProps> = (props) => {
+const Loading: FC<LoadingProps> = props => {
   const { message } = props;
   const canvas = useRef<HTMLCanvasElement>(null);
   const animationContainer = useRef<HTMLDivElement>(null);
