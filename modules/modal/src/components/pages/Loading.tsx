@@ -29,7 +29,7 @@ const Loading: FC<LoadingProps> = props => {
   // Start the animation
   useEffect(() => {
     const rive = Rive.new({
-      src: "https://cdn.connext.network/loading.riv",
+      src: "https://cdn.connext.network/loading_darkBg.riv",
       canvas: canvas.current,
       // animation: animation,
       autoplay: true,
@@ -42,7 +42,7 @@ const Loading: FC<LoadingProps> = props => {
     <>
       <ModalContent>
         <ModalBody padding="1rem">
-          <Stack column={true} spacing={5} alignItems="center">
+          <Stack column={true} alignItems="center">
             <AppLogo ref={animationContainer}>
               <canvas ref={canvas} />
             </AppLogo>
