@@ -526,7 +526,7 @@ export const verifyAndGetRouterSupports = async (
   _toAssetId: string,
   ethProvider: providers.BaseProvider, // For `to` chain
   routerPublicIdentifier: string,
-): Promise<any> => {
+): Promise<AllowedSwap> => {
   const withdrawChannel = await getChannelForChain(node, routerPublicIdentifier, toChainId);
 
   const fromAssetId = utils.getAddress(_fromAssetId);

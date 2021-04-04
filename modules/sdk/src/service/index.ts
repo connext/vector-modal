@@ -82,7 +82,7 @@ export class ConnextSdk {
     }
   }
 
-  async setup(params: SetupParamsSchema) {
+  async setup(params: SetupParamsSchema): Promise<void> {
     this.routerPublicIdentifier = params.routerPublicIdentifier;
 
     let senderChainInfo: CHAIN_DETAIL;
