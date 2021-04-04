@@ -11,7 +11,6 @@ import {
   TransferNames,
   WithdrawalReconciledPayload,
   jsonifyError,
-  WithdrawalQuote,
   TransferQuote,
   AllowedSwap,
   WithdrawalResolvedPayload,
@@ -130,11 +129,9 @@ export const getCrosschainFee = async (
   receiverChainId: number,
   receiverAssetId: string,
   receiverAssetDecimals: number,
-  receiverChannelAddress: string,
   swapDefinition: AllowedSwap,
   receiveExactAmount?: boolean,
 ): Promise<{
-  withdrawalQuote: WithdrawalQuote;
   transferQuote: TransferQuote;
   totalFee: BigNumber;
   senderAmount: string;
@@ -174,46 +171,13 @@ export const getCrosschainFee = async (
   const depositAssetTransferFee = transferQuoteResult.getValue().fee;
   const depositAssetTransferAmount = BigNumber.from(transferQuoteResult.getValue().amount);
 
-  // In the case where you want to receive an exact amount, the quote
-  // returned would have an amount in it that is different than the
-  // original `amount` provided (i.e. so when fee is deducted, you get
-  // the original amount)
-  const swappedAmount = depositAssetTransferAmount.lte(depositAssetTransferFee)
-    ? BigNumber.from(0)
-    : depositAssetTransferAmount.sub(depositAssetTransferFee);
-
-  // Get the withdraw quote
-  // NOTE: you can include the `receiveExactAmount` flag here as well to get
-  // an amount you should withdraw, but how youre doing it is also fine.
-  const withdrawQuoteRes = await node.getWithdrawalQuote({
-    amount: swappedAmount.toString(),
-    channelAddress: receiverChannelAddress,
-    assetId: receiverAssetId,
-  });
-  console.log("withdrawQuoteRes: ", withdrawQuoteRes.toJson());
-  if (withdrawQuoteRes.isError) {
-    throw withdrawQuoteRes.getError();
-  }
-  const withdrawFee = withdrawQuoteRes.getValue().fee;
-
-  // Get the withdraw fee in deposit asset units
-  const depositAssetWithdrawFee = calculateExchangeWad(
-    BigNumber.from(withdrawFee),
-    receiverAssetDecimals,
-    inverse(swap.hardcodedRate),
-    senderAssetDecimals,
-  );
-  console.log("converted withdrawal fee", depositAssetWithdrawFee);
-
-  const totalFee = depositAssetWithdrawFee.add(depositAssetTransferFee);
+  const totalFee = BigNumber.from(depositAssetTransferFee);
   console.log("totalFee", totalFee);
 
-  let senderAmount: BigNumber;
   let recipientAmount: BigNumber;
 
+  const senderAmount: BigNumber = depositAssetTransferAmount;
   if (receiveExactAmount) {
-    senderAmount = depositAssetTransferAmount.add(depositAssetWithdrawFee);
-
     recipientAmount = calculateExchangeWad(
       depositAssetTransferAmount,
       senderAssetDecimals,
@@ -221,7 +185,6 @@ export const getCrosschainFee = async (
       receiverAssetDecimals,
     );
   } else {
-    senderAmount = depositAssetTransferAmount;
     recipientAmount = calculateExchangeWad(
       depositAssetTransferAmount.sub(totalFee),
       senderAssetDecimals,
@@ -240,7 +203,6 @@ export const getCrosschainFee = async (
     totalFee: totalFee,
     senderAmount: senderAmount.toString(),
     recipientAmount: recipientAmount.toString(),
-    withdrawalQuote: withdrawQuoteRes.getValue(),
     transferQuote: transferQuoteResult.getValue(),
   };
 };
@@ -494,10 +456,9 @@ export const withdrawToAsset = async (
   _toAssetId: string,
   recipientAddr: string,
   routerPublicIdentifier: string,
-  quote?: WithdrawalQuote,
   withdrawCallTo?: string,
   withdrawCallData?: string,
-  generateCallData?: (quote: WithdrawalQuote, node: BrowserNode) => Promise<{ callData?: string }>,
+  generateCallData?: (toWithdraw: string, toAssetId: string, node: BrowserNode) => Promise<{ callData?: string }>,
 ): Promise<{ withdrawalTx: string; withdrawalAmount: string }> => {
   console.log("Starting withdrawal: ", {
     toChainId,
@@ -516,9 +477,9 @@ export const withdrawToAsset = async (
   }
 
   let callData = withdrawCallData;
-  if (generateCallData && quote && typeof generateCallData === "function") {
+  if (generateCallData && typeof generateCallData === "function") {
     console.log("Using generateCallData function");
-    const res = await generateCallData(quote, node);
+    const res = await generateCallData(toWithdraw, toAssetId, node);
     callData = res.callData ? res.callData : withdrawCallData;
   }
 
@@ -530,7 +491,6 @@ export const withdrawToAsset = async (
     recipient: recipientAddr,
     callTo: withdrawCallTo,
     callData,
-    quote,
   };
   console.log("withdraw params", params);
   const [ret, payload] = await Promise.all([
