@@ -1,9 +1,8 @@
 import { BrowserNode, CHAIN_DETAIL, ConnextSdk } from "../src";
 import { utils, providers } from "ethers";
-import { expect } from "chai";
 import Sinon, { createStubInstance } from "sinon";
 import { AllowedSwap, Result } from "@connext/vector-types";
-import { createTestChannelState, mkPublicIdentifier } from "@connext/vector-utils";
+import { createTestChannelState, mkPublicIdentifier, expect } from "@connext/vector-utils";
 import * as helpers from "../src/utils/helpers";
 import * as connextUtils from "../src/utils/connext";
 
@@ -50,26 +49,20 @@ describe("service", () => {
     createEvtContainerMock = Sinon.stub(connextUtils, "createEvtContainer");
     getChannelForChainMock = Sinon.stub(connextUtils, "getChannelForChain");
     verifyAndGetRouterSupportsMock = Sinon.stub(connextUtils, "verifyAndGetRouterSupports");
+
+    browserNodeMock.sendIsAliveMessage.resolves(Result.ok({ channelAddress: constants.AddressZero }));
+    connext.browserNode = browserNodeMock as any;
   });
 
   afterEach(() => Sinon.restore());
 
   describe("setup", () => {
-    it("should throw an error if sender chain doesnt exist", async () => {});
-    it("should throw an error if receiver chain doesnt exist", async () => {});
-    it("should throw an error if sender channel doesnt exist", async () => {});
-    it("should throw an error if receiver channel doesnt exist", async () => {});
-    it("should throw an error if browser node cant connect", async () => {});
-    it("should throw an error if verify router supports errors", async () => {});
-    it.only("should set up with browser node already part of class", async () => {
-      const senderChain = generateChainDetail();
-      const receiverChain = generateChainDetail({ chainId: 12 });
-      const senderChannel = createTestChannelState("create");
-      const receiverChannel = createTestChannelState("create");
-      browserNodeMock.sendIsAliveMessage.resolves(Result.ok({ channelAddress: constants.AddressZero }));
+    const senderChain = generateChainDetail();
+    const receiverChain = generateChainDetail({ chainId: 12 });
+    const senderChannel = createTestChannelState("create");
+    const receiverChannel = createTestChannelState("create");
 
-      connext.browserNode = browserNodeMock as any;
-
+    beforeEach(async () => {
       getChainMock.onFirstCall().resolves(senderChain);
       getChainMock.onSecondCall().resolves(receiverChain);
 
@@ -77,7 +70,32 @@ describe("service", () => {
       createEvtContainerMock.resolves({});
       getChannelForChainMock.onFirstCall().resolves(senderChannel.channel);
       getChannelForChainMock.onSecondCall().resolves(receiverChannel.channel);
+    });
 
+    it.only("should throw an error if sender chain doesnt exist", async () => {
+      getChainMock.onFirstCall().rejects();
+
+      try {
+        await connext.setup({
+          loginProvider: {},
+          senderAssetId: senderChain.assetId,
+          senderChainProvider: senderChain.chainProvider,
+          recipientAssetId: receiverChain.assetId,
+          recipientChainProvider: receiverChain.chainProvider,
+          routerPublicIdentifier,
+        });
+      } catch (e) {
+        expect(e).to.be.ok;
+      }
+    });
+
+    it("should throw an error if receiver chain doesnt exist", async () => {});
+    it("should throw an error if sender channel doesnt exist", async () => {});
+    it("should throw an error if receiver channel doesnt exist", async () => {});
+    it("should throw an error if browser node cant connect", async () => {});
+    it("should throw an error if verify router supports errors", async () => {});
+
+    it("should set up with browser node already part of class", async () => {
       verifyAndGetRouterSupportsMock.resolves({
         fromAssetId: senderChain.assetId,
         fromChainId: senderChain.chainId,
