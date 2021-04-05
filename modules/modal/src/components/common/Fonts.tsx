@@ -1,9 +1,6 @@
-import React from "react";
-import { Global } from "@emotion/react";
+import { createGlobalStyle } from "styled-components";
 
-export const Fonts = () => (
-  <Global
-    styles={`
+export const Fonts = createGlobalStyle`
       /* latin-ext */
       @font-face {
         font-family: 'Cooper Hewitt';
@@ -54,6 +51,4 @@ export const Fonts = () => (
         font-weight: 400;
         src: url(https://cdn.connext.network/fonts/roboto_mono/RobotoMono-Regular.ttf);
       }
-      `}
-  />
-);
+      `;

@@ -219,7 +219,7 @@ const Swap: FC<TransferProps> = props => {
                 disabled={!!amountError || !senderAmount || isLoad ? true : false}
                 onClick={handleSubmit}
               >
-                {isLoad ? "Waiting For Transaction" : userBalance ? "Swap" : "Show me QR!"}
+                {isLoad ? "Waiting For Transaction" : "Swap"}
               </Button>
             </Stack>
 

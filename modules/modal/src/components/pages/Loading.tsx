@@ -17,10 +17,9 @@ const Loading: FC<LoadingProps> = props => {
   useEffect(() => {
     const resize = () => {
       if (animationContainer.current && canvas.current) {
-        const { width, height } = animationContainer.current.getBoundingClientRect();
-        console.log(width, height);
-        canvas.current.width = 300;
-        canvas.current.height = 130;
+        const { width: w, height: h } = animationContainer.current.getBoundingClientRect();
+        canvas.current.width = w;
+        canvas.current.height = h;
       }
     };
 
@@ -29,20 +28,21 @@ const Loading: FC<LoadingProps> = props => {
 
   // Start the animation
   useEffect(() => {
-    const rive = new Rive({
-      src: "https://cdn.connext.network/loading.riv",
+    const rive = Rive.new({
+      src: "https://cdn.connext.network/loading_darkBg.riv",
       canvas: canvas.current,
+      // animation: animation,
       autoplay: true,
       layout: new Layout("cover", "center"),
     });
 
-    return () => rive?.stop();
+    return () => rive.stop();
   }, []);
   return (
     <>
       <ModalContent>
         <ModalBody padding="1rem">
-          <Stack column={true} spacing={5} alignItems="center">
+          <Stack column={true} alignItems="center">
             <AppLogo ref={animationContainer}>
               <canvas ref={canvas} />
             </AppLogo>

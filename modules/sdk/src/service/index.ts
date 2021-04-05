@@ -1,11 +1,4 @@
-import {
-  EngineEvents,
-  FullChannelState,
-  ERC20Abi,
-  TransferQuote,
-  WithdrawalQuote,
-  ChainInfo,
-} from "@connext/vector-types";
+import { EngineEvents, FullChannelState, ERC20Abi, TransferQuote, ChainInfo } from "@connext/vector-types";
 import { BrowserNode } from "@connext/vector-browser-node";
 import { getBalanceForAssetId, getRandomBytes32, getAssetDecimals, getChainInfo } from "@connext/vector-utils";
 import { BigNumber, Contract, constants, utils } from "ethers";
@@ -43,7 +36,7 @@ import {
   cancelToAssetTransfer,
 } from "../utils";
 
-export { BrowserNode, ERC20Abi, FullChannelState, getBalanceForAssetId, TransferQuote, WithdrawalQuote };
+export { BrowserNode, ERC20Abi, FullChannelState, getBalanceForAssetId, TransferQuote };
 
 export class ConnextSdk {
   public routerPublicIdentifier = "";
@@ -358,7 +351,7 @@ export class ConnextSdk {
 
   async estimateFees(params: EstimateFeeParamsSchema): Promise<EstimateFeeResponseSchema> {
     const {
-      input: _input,
+      transferAmount: _transferAmount,
       senderAssetId: _senderAssetId,
       recipientAssetId: _recipientAssetId,
       isRecipientAssetInput,
@@ -416,29 +409,30 @@ export class ConnextSdk {
       }
     }
 
-    const input = _input ? _input.trim() : undefined;
+    const transferAmount = _transferAmount ? _transferAmount.trim() : undefined;
     let err: string | undefined = undefined;
 
-    if (!input) {
+    if (!transferAmount) {
       return {
         error: err,
         senderAmount: "",
         recipientAmount: "",
         totalFee: undefined,
         transferQuote: undefined,
-        withdrawalQuote: undefined,
       };
     }
 
-    let senderAmountUi: string | undefined = isRecipientAssetInput ? "" : input;
-    let recipientAmountUi: string | undefined = isRecipientAssetInput ? input : "";
+    let senderAmountUi: string | undefined = isRecipientAssetInput ? "" : transferAmount;
+    let recipientAmountUi: string | undefined = isRecipientAssetInput ? transferAmount : "";
     let totalFee: string | undefined = undefined;
     let transferQuote: TransferQuote | undefined = undefined;
-    let withdrawalQuote: WithdrawalQuote | undefined = undefined;
 
     try {
       const transferAmountBn = BigNumber.from(
-        utils.parseUnits(input, isRecipientAssetInput ? this.recipientAsset?.decimals! : this.senderAsset?.decimals!),
+        utils.parseUnits(
+          transferAmount,
+          isRecipientAssetInput ? this.recipientAsset?.decimals! : this.senderAsset?.decimals!,
+        ),
       );
 
       if (transferAmountBn.isZero()) {
@@ -449,7 +443,6 @@ export class ConnextSdk {
           recipientAmount: recipientAmountUi,
           totalFee: totalFee,
           transferQuote: transferQuote,
-          withdrawalQuote: withdrawalQuote,
         };
       }
 
@@ -462,7 +455,6 @@ export class ConnextSdk {
           senderAmount: _senderAmount,
           recipientAmount: _recipientAmount,
           transferQuote: _transferQuote,
-          withdrawalQuote: _withdrawalQuote,
         } = await this.getFeesDebounced(
           this.browserNode!,
           this.routerPublicIdentifier,
@@ -473,7 +465,6 @@ export class ConnextSdk {
           this.recipientChain?.chainId!,
           this.recipientAsset?.assetId!,
           this.recipientAsset?.decimals!,
-          this.recipientChainChannelAddress,
           this.swapDefinition!,
           isRecipientAssetInput,
         );
@@ -481,7 +472,6 @@ export class ConnextSdk {
         senderAmountBn = BigNumber.from(_senderAmount);
         recipientAmountBn = BigNumber.from(_recipientAmount);
         transferQuote = _transferQuote;
-        withdrawalQuote = _withdrawalQuote;
       } catch (e) {
         return {
           error: e.message,
@@ -489,7 +479,6 @@ export class ConnextSdk {
           recipientAmount: recipientAmountUi,
           totalFee: totalFee,
           transferQuote: transferQuote,
-          withdrawalQuote: withdrawalQuote,
         };
       }
 
@@ -504,7 +493,6 @@ export class ConnextSdk {
           recipientAmount: recipientAmountUi,
           totalFee: totalFee,
           transferQuote: transferQuote,
-          withdrawalQuote: withdrawalQuote,
         };
       }
 
@@ -526,7 +514,6 @@ export class ConnextSdk {
             recipientAmount: recipientAmountUi,
             totalFee: totalFee,
             transferQuote: transferQuote,
-            withdrawalQuote: withdrawalQuote,
           };
         }
       }
@@ -540,24 +527,23 @@ export class ConnextSdk {
       recipientAmount: recipientAmountUi,
       totalFee: totalFee,
       transferQuote: transferQuote,
-      withdrawalQuote: withdrawalQuote,
     };
   }
 
   async preTransferCheck(params: preTransferCheckParamsSchema) {
-    const { input, senderAssetId: _senderAssetId, recipientAssetId: _recipientAssetId } = params;
+    const { transferAmount, senderAssetId: _senderAssetId, recipientAssetId: _recipientAssetId } = params;
 
     const senderAssetId = utils.getAddress(_senderAssetId);
     const recipientAssetId = utils.getAddress(_recipientAssetId);
     const senderAssetDecimals = await getAssetDecimals(senderAssetId, this.senderChain?.rpcProvider!);
     const recipientAssetDecimals = await getAssetDecimals(recipientAssetId, this.recipientChain?.rpcProvider!);
 
-    if (!input) {
+    if (!transferAmount) {
       const message = "Transfer Amount is undefined";
       console.log(message);
       throw new Error(message);
     }
-    const transferAmountBn: BigNumber = BigNumber.from(utils.parseUnits(input, senderAssetDecimals));
+    const transferAmountBn: BigNumber = BigNumber.from(utils.parseUnits(transferAmount, senderAssetDecimals));
 
     if (transferAmountBn.isZero()) {
       const message = "Transfer amount cannot be 0";
@@ -618,7 +604,7 @@ export class ConnextSdk {
 
     if (preTransferCheck) {
       try {
-        await this.preTransferCheck({ input: transferAmount, senderAssetId, recipientAssetId });
+        await this.preTransferCheck({ transferAmount, senderAssetId, recipientAssetId });
       } catch (e) {
         console.log("Error at preCheck", e);
         throw e;
@@ -642,10 +628,10 @@ export class ConnextSdk {
               transferAmountBn,
             );
 
-      const receipt = await depositTx.wait(1);
+      const receipt = await depositTx.wait();
       console.log("deposit mined:", receipt.transactionHash);
 
-      this.senderChain?.rpcProvider!.waitForTransaction(depositTx.hash).then((receipt) => {
+      this.senderChain?.rpcProvider!.waitForTransaction(depositTx.hash, 2).then((receipt) => {
         if (receipt.status === 0) {
           // tx reverted
           const message = "Transaction reverted onchain";
@@ -768,7 +754,6 @@ export class ConnextSdk {
       recipientAddress,
       recipientAssetId: _recipientAssetId,
       onFinished,
-      withdrawalQuote,
       withdrawalCallTo,
       withdrawalCallData,
       generateCallData,
@@ -786,7 +771,6 @@ export class ConnextSdk {
         recipientAssetId,
         recipientAddress,
         this.routerPublicIdentifier,
-        withdrawalQuote,
         withdrawalCallTo,
         withdrawalCallData,
         generateCallData,
@@ -823,7 +807,6 @@ export class ConnextSdk {
       recipientAssetId: _recipientAssetId,
       onFinished,
       transferQuote,
-      withdrawalQuote,
       withdrawalCallTo,
       withdrawalCallData,
       generateCallData,
@@ -844,7 +827,6 @@ export class ConnextSdk {
         recipientAddress,
         recipientAssetId,
         onFinished,
-        withdrawalQuote,
         withdrawalCallTo,
         withdrawalCallData,
         generateCallData,
