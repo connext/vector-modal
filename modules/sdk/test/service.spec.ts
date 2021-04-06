@@ -16,12 +16,12 @@ const generateChainDetail = (overrides: Partial<CHAIN_DETAIL> = {}): CHAIN_DETAI
     rpcProvider: overrides.rpcProvider ?? createStubInstance(providers.JsonRpcProvider),
     assetDecimals: overrides.assetDecimals ?? 18,
     assetId: overrides.assetId ?? constants.AddressZero,
-    assetName: overrides.assetName ?? "TToken",
+    assetName: overrides.assetName ?? "test token",
     chainParams: {
       chainId: utils.hexValue(overrides.chainId ?? 5),
-      chainName: "test network",
+      chainName: overrides.name ?? "test network",
       nativeCurrency: {
-        name: "test token",
+        name: overrides.assetName ?? "test token",
         symbol: "test",
         decimals: 18,
       },
@@ -85,6 +85,7 @@ describe("service", () => {
           routerPublicIdentifier,
         });
       } catch (e) {
+        expect(e).to.be.instanceOf(Error);
         expect(e).to.be.ok;
       }
     });
