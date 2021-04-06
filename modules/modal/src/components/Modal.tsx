@@ -191,9 +191,7 @@ const ConnextModal: FC<ConnextModalProps> = ({
 
       if (res.totalFee) setTransferFeeUi(res.totalFee);
 
-      if (!existingChannelBalanceUi) {
-        setTransferQuote(res.transferQuote);
-      }
+      existingChannelBalanceUi ? setTransferQuote(undefined) : setTransferQuote(res.transferQuote);
     } catch (e) {
       const message = "Error Estimating Fees";
       console.log(message, e);
@@ -276,7 +274,7 @@ const ConnextModal: FC<ConnextModalProps> = ({
     });
 
     try {
-      await connextSdk!.transfer({ transferQuote: transferQuote! });
+      await connextSdk!.transfer({ transferQuote: transferQuote });
     } catch (e) {
       const message = "Error at Transfer";
       console.log(e, message);
@@ -323,6 +321,7 @@ const ConnextModal: FC<ConnextModalProps> = ({
     setIsLoad(false);
     setTransferFeeUi("--");
     setExistingChannelBalanceUi("");
+    setTransferQuote(undefined);
     setReceivedAmountUi("");
     setUserBalance(undefined);
     setError(undefined);
