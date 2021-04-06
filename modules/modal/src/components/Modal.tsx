@@ -8,7 +8,6 @@ import {
   getUserBalance,
   ConnextSdk,
   BrowserNode,
-  TransferQuote,
 } from "@connext/vector-sdk";
 import { BigNumber, utils, providers } from "ethers";
 import { ERROR_STATES, SCREEN_STATES, ScreenStates, ErrorStates } from "../constants";
@@ -80,8 +79,6 @@ const ConnextModal: FC<ConnextModalProps> = ({
   const [existingChannelBalanceUi, setExistingChannelBalanceUi] = useState<string | undefined>();
 
   const [successWithdrawalAmount, setSuccessWithdrawalAmount] = useState<string>();
-
-  const [transferQuote, setTransferQuote] = useState<TransferQuote>();
 
   const [senderChain, setSenderChain] = useState<CHAIN_DETAIL>();
   const [receiverChain, setReceiverChain] = useState<CHAIN_DETAIL>();
@@ -190,10 +187,6 @@ const ConnextModal: FC<ConnextModalProps> = ({
       receiveExactAmount ? setTransferAmountUi(res.senderAmount) : setReceivedAmountUi(res.recipientAmount);
 
       if (res.totalFee) setTransferFeeUi(res.totalFee);
-
-      if (!existingChannelBalanceUi) {
-        setTransferQuote(res.transferQuote);
-      }
     } catch (e) {
       const message = "Error Estimating Fees";
       console.log(message, e);
@@ -276,7 +269,7 @@ const ConnextModal: FC<ConnextModalProps> = ({
     });
 
     try {
-      await connextSdk!.transfer({ transferQuote: transferQuote! });
+      await connextSdk!.transfer({});
     } catch (e) {
       const message = "Error at Transfer";
       console.log(e, message);
