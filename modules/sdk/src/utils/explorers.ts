@@ -14,6 +14,13 @@ export const getExplorerLink = (chainId: number): string | undefined => {
     case 42: {
       return `https://kovan.etherscan.io`;
     }
+    case 56: {
+      return `https://bscscan.com`;
+    }
+
+    case 128: {
+      return `https://scan.hecochain.com/`;
+    }
     case 137: {
       return `https://explorer-mainnet.maticvigil.com`;
     }
