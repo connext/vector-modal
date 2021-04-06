@@ -272,37 +272,37 @@ export class ConnextSdk {
         channelAddress: this.recipientChainChannelAddress,
       }),
     ]);
-    const depositHashlock = depositActive.getValue().filter((t) => Object.keys(t.transferState).includes("lockHash"));
-    const withdrawHashlock = withdrawActive.getValue().filter((t) => Object.keys(t.transferState).includes("lockHash"));
+    const depositHashlock = depositActive.getValue().filter(t => Object.keys(t.transferState).includes("lockHash"));
+    const withdrawHashlock = withdrawActive.getValue().filter(t => Object.keys(t.transferState).includes("lockHash"));
     console.warn(
       "deposit active on init",
       depositHashlock.length,
       "ids:",
-      depositHashlock.map((t) => t.transferId),
+      depositHashlock.map(t => t.transferId),
     );
     console.warn(
       "withdraw active on init",
       withdrawHashlock.length,
       "ids:",
-      withdrawHashlock.map((t) => t.transferId),
+      withdrawHashlock.map(t => t.transferId),
     );
 
     // set a listener to check for transfers that may have been pushed after a refresh after the hanging transfers have already been canceled
-    this.evts!.CONDITIONAL_TRANSFER_CREATED.pipe((data) => {
+    this.evts!.CONDITIONAL_TRANSFER_CREATED.pipe(data => {
       return (
         data.transfer.responderIdentifier === this.browserNode!.publicIdentifier &&
         data.transfer.meta.routingId !== this.crossChainTransferId
       );
-    }).attach(async (data) => {
+    }).attach(async data => {
       console.warn("Cancelling transfer thats not active");
       const senderResolution = this.evts!.CONDITIONAL_TRANSFER_RESOLVED.pipe(
-        (data) =>
+        data =>
           data.transfer.meta.crossChainTransferId === this.crossChainTransferId &&
           data.channelAddress === this.senderChainChannelAddress,
       ).waitFor(45_000);
 
       const receiverResolution = this.evts!.CONDITIONAL_TRANSFER_RESOLVED.pipe(
-        (data) =>
+        data =>
           data.transfer.meta.crossChainTransferId === this.crossChainTransferId &&
           data.channelAddress === this.recipientChainChannelAddress,
       ).waitFor(45_000);
@@ -564,7 +564,7 @@ export class ConnextSdk {
       const receipt = await depositTx.wait();
       console.log("deposit mined:", receipt.transactionHash);
 
-      this.senderChain?.rpcProvider!.waitForTransaction(depositTx.hash, 2).then((receipt) => {
+      this.senderChain?.rpcProvider!.waitForTransaction(depositTx.hash, 2).then(receipt => {
         if (receipt.status === 0) {
           // tx reverted
           const message = "Transaction reverted onchain";
@@ -620,7 +620,7 @@ export class ConnextSdk {
     }
 
     // listen for a sender-side cancellation, if it happens, short-circuit and show cancellation
-    const senderCancel = this.evts![EngineEvents.CONDITIONAL_TRANSFER_RESOLVED].pipe((data) => {
+    const senderCancel = this.evts![EngineEvents.CONDITIONAL_TRANSFER_RESOLVED].pipe(data => {
       return (
         data.transfer.meta?.routingId === crossChainTransferId &&
         data.transfer.responderIdentifier === this.routerPublicIdentifier &&
@@ -628,7 +628,7 @@ export class ConnextSdk {
       );
     }).waitFor(500_000);
 
-    const receiverCreate = this.evts![EngineEvents.CONDITIONAL_TRANSFER_CREATED].pipe((data) => {
+    const receiverCreate = this.evts![EngineEvents.CONDITIONAL_TRANSFER_CREATED].pipe(data => {
       return (
         data.transfer.meta?.routingId === crossChainTransferId &&
         data.transfer.initiatorIdentifier === this.routerPublicIdentifier
@@ -651,7 +651,7 @@ export class ConnextSdk {
       throw e;
     }
 
-    const senderResolve = this.evts![EngineEvents.CONDITIONAL_TRANSFER_RESOLVED].pipe((data) => {
+    const senderResolve = this.evts![EngineEvents.CONDITIONAL_TRANSFER_RESOLVED].pipe(data => {
       return (
         data.transfer.meta?.routingId === crossChainTransferId &&
         data.transfer.responderIdentifier === this.routerPublicIdentifier
@@ -711,7 +711,7 @@ export class ConnextSdk {
     }
 
     // check tx receipt for withdrawal tx
-    this.recipientChain?.rpcProvider.waitForTransaction(result.withdrawalTx).then((receipt) => {
+    this.recipientChain?.rpcProvider.waitForTransaction(result.withdrawalTx).then(receipt => {
       if (receipt.status === 0) {
         // tx reverted
         const message = "Transaction reverted onchain";
