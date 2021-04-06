@@ -228,7 +228,8 @@ const ConnextModal: FC<ConnextModalProps> = ({
 
       setIsLoad(false);
 
-      await handleSwap();
+      console.log(`Starting block listener`);
+      await depositListenerAndTransfer();
     } else if (webProvider) {
       // deposit
       try {
