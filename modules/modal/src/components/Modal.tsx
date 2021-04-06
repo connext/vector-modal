@@ -439,12 +439,11 @@ const ConnextModal: FC<ConnextModalProps> = ({
       });
       setConnextSdk(connextSdk);
     } catch (e) {
-      if (e.message.includes("localStorage not available in this window")) {
-        alert(
-          "Please disable shields or ad blockers and try again. Connext requires cross-site cookies to store your channel states.",
-        );
-      }
-      if (e.message.includes("Failed to read the 'localStorage'")) {
+      if (
+        e.message.includes("localStorage not available in this window") ||
+        e.message.includes("Failed to read the 'localStorage'") ||
+        e.message.includes("The user denied permission to access the database")
+      ) {
         alert(
           "Please disable shields or ad blockers or allow third party cookies in your browser and try again. Connext requires cross-site cookies to store your channel states.",
         );
