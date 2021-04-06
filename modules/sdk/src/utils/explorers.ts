@@ -17,7 +17,6 @@ export const getExplorerLink = (chainId: number): string | undefined => {
     case 56: {
       return `https://bscscan.com`;
     }
-
     case 128: {
       return `https://scan.hecochain.com/`;
     }
