@@ -353,23 +353,21 @@ export class ConnextSdk {
       throw e;
     }
 
-    let _offChainSenderChainAssetBalanceBn: BigNumber = BigNumber.from(0);
-    let _offChainRecipientChainAssetBalanceBn: BigNumber = BigNumber.from(0);
     try {
       const {
-        offChainSenderChainAssetBalanceBn: _offChainSenderChainAssetBalanceBn,
-        offChainRecipientChainAssetBalanceBn: _offChainRecipientChainAssetBalanceBn,
+        offChainSenderChainAssetBalanceBn,
+        offChainRecipientChainAssetBalanceBn,
       } = await this.getOffChainChannelBalance();
+
+      return {
+        offChainSenderChainAssetBalanceBn,
+        offChainRecipientChainAssetBalanceBn,
+      };
     } catch (e) {
       const message = "Error at Off chain channel balance";
       console.log(e, message);
       throw e;
     }
-
-    return {
-      offChainSenderChainAssetBalanceBn: _offChainSenderChainAssetBalanceBn,
-      offChainRecipientChainAssetBalanceBn: _offChainRecipientChainAssetBalanceBn,
-    };
   }
 
   async getOffChainChannelBalance(): Promise<{
