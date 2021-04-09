@@ -72,8 +72,9 @@ describe("service", () => {
       getChannelForChainMock.onSecondCall().resolves(receiverChannel.channel);
     });
 
-    it.only("should throw an error if sender chain doesnt exist", async () => {
-      getChainMock.onFirstCall().rejects();
+    it("should throw an error if sender chain doesnt exist", async () => {
+      const errorMessage = "sender chain does not exist";
+      getChainMock.onFirstCall().rejects(new Error(errorMessage));
 
       try {
         await connext.setup({
@@ -85,16 +86,142 @@ describe("service", () => {
           routerPublicIdentifier,
         });
       } catch (e) {
-        expect(e).to.be.instanceOf(Error);
+        expect(e.message).to.be.deep.eq(errorMessage);
         expect(e).to.be.ok;
       }
+
+      expect(connext.routerPublicIdentifier).to.be.deep.eq(routerPublicIdentifier);
+      expect(connext.senderChain).to.be.undefined;
     });
 
-    it("should throw an error if receiver chain doesnt exist", async () => {});
-    it("should throw an error if sender channel doesnt exist", async () => {});
-    it("should throw an error if receiver channel doesnt exist", async () => {});
-    it("should throw an error if browser node cant connect", async () => {});
-    it("should throw an error if verify router supports errors", async () => {});
+    it("should throw an error if receiver chain doesnt exist", async () => {
+      const errorMessage = "receiver chain does not exist";
+      getChainMock.onSecondCall().rejects(new Error(errorMessage));
+
+      try {
+        await connext.setup({
+          loginProvider: {},
+          senderAssetId: senderChain.assetId,
+          senderChainProvider: senderChain.chainProvider,
+          recipientAssetId: receiverChain.assetId,
+          recipientChainProvider: receiverChain.chainProvider,
+          routerPublicIdentifier,
+        });
+      } catch (e) {
+        expect(e.message).to.be.deep.eq(errorMessage);
+        expect(e).to.be.ok;
+      }
+
+      expect(connext.routerPublicIdentifier).to.be.deep.eq(routerPublicIdentifier);
+      expect(connext.senderChain).to.be.deep.eq(senderChain);
+      expect(connext.recipientChain).to.be.undefined;
+    });
+
+    it("should throw an error if browser node can't connect", async () => {
+      const errorMessage = "browser node can't connect";
+      connectNodeMock.rejects(new Error(errorMessage));
+
+      try {
+        await connext.setup({
+          loginProvider: {},
+          senderAssetId: senderChain.assetId,
+          senderChainProvider: senderChain.chainProvider,
+          recipientAssetId: receiverChain.assetId,
+          recipientChainProvider: receiverChain.chainProvider,
+          routerPublicIdentifier,
+        });
+      } catch (e) {
+        expect(e.message).to.be.deep.eq(errorMessage);
+        expect(e).to.be.ok;
+      }
+
+      expect(connext.routerPublicIdentifier).to.be.deep.eq(routerPublicIdentifier);
+      expect(connext.senderChain).to.be.deep.eq(senderChain);
+      expect(connext.recipientChain).to.be.deep.eq(receiverChain);
+      expect(connext.browserNode).to.be.empty;
+    });
+
+    it("should throw an error if sender channel doesnt exist", async () => {
+      const errorMessage = "sender channel does not exist";
+      getChannelForChainMock.onFirstCall().rejects(new Error(errorMessage));
+
+      try {
+        await connext.setup({
+          loginProvider: {},
+          senderAssetId: senderChain.assetId,
+          senderChainProvider: senderChain.chainProvider,
+          recipientAssetId: receiverChain.assetId,
+          recipientChainProvider: receiverChain.chainProvider,
+          routerPublicIdentifier,
+        });
+      } catch (e) {
+        expect(e.message).to.be.deep.eq(errorMessage);
+        expect(e).to.be.ok;
+      }
+
+      expect(connext.routerPublicIdentifier).to.be.deep.eq(routerPublicIdentifier);
+      expect(connext.senderChain).to.be.deep.eq(senderChain);
+      expect(connext.recipientChain).to.be.deep.eq(receiverChain);
+      expect(connext.browserNode).to.be.deep.eq(browserNodeMock);
+      expect(connext.senderChainChannel).to.be.undefined;
+      expect(connext.senderChainChannelAddress).to.be.eq("");
+    });
+
+    it("should throw an error if receiver channel doesnt exist", async () => {
+      const errorMessage = "receiver channel does not exist";
+      getChannelForChainMock.onSecondCall().rejects(new Error(errorMessage));
+
+      try {
+        await connext.setup({
+          loginProvider: {},
+          senderAssetId: senderChain.assetId,
+          senderChainProvider: senderChain.chainProvider,
+          recipientAssetId: receiverChain.assetId,
+          recipientChainProvider: receiverChain.chainProvider,
+          routerPublicIdentifier,
+        });
+      } catch (e) {
+        expect(e.message).to.be.deep.eq(errorMessage);
+        expect(e).to.be.ok;
+      }
+
+      expect(connext.routerPublicIdentifier).to.be.deep.eq(routerPublicIdentifier);
+      expect(connext.senderChain).to.be.deep.eq(senderChain);
+      expect(connext.recipientChain).to.be.deep.eq(receiverChain);
+      expect(connext.browserNode).to.be.deep.eq(browserNodeMock);
+      expect(connext.senderChainChannelAddress).to.be.deep.eq(senderChannel.channel.latestUpdate.channelAddress);
+      expect(connext.senderChainChannel).to.be.deep.eq(senderChannel.channel);
+      expect(connext.recipientChainChannelAddress).to.be.eq("");
+      expect(connext.recipientChainChannel).to.be.undefined;
+    });
+
+    it("should throw an error if verify router supports errors", async () => {
+      const errorMessage = "Error in verifyRouterSupports";
+      verifyAndGetRouterSupportsMock.rejects(new Error(errorMessage));
+
+      try {
+        await connext.setup({
+          loginProvider: {},
+          senderAssetId: senderChain.assetId,
+          senderChainProvider: senderChain.chainProvider,
+          recipientAssetId: receiverChain.assetId,
+          recipientChainProvider: receiverChain.chainProvider,
+          routerPublicIdentifier,
+        });
+      } catch (e) {
+        expect(e.message).to.be.deep.eq(errorMessage);
+        expect(e).to.be.ok;
+      }
+
+      expect(connext.routerPublicIdentifier).to.be.deep.eq(routerPublicIdentifier);
+      expect(connext.senderChain).to.be.deep.eq(senderChain);
+      expect(connext.recipientChain).to.be.deep.eq(receiverChain);
+      expect(connext.browserNode).to.be.deep.eq(browserNodeMock);
+      expect(connext.senderChainChannelAddress).to.be.deep.eq(senderChannel.channel.latestUpdate.channelAddress);
+      expect(connext.recipientChainChannelAddress).to.be.deep.eq(receiverChannel.channel.latestUpdate.channelAddress);
+      expect(connext.senderChainChannel).to.be.deep.eq(senderChannel.channel);
+      expect(connext.recipientChainChannel).to.be.deep.eq(receiverChannel.channel);
+    });
 
     it("should set up with browser node already part of class", async () => {
       verifyAndGetRouterSupportsMock.resolves({
@@ -116,25 +243,24 @@ describe("service", () => {
       });
       console.log("res: ", res);
       expect(res).to.be.undefined;
+      expect(connext.routerPublicIdentifier).to.be.deep.eq(routerPublicIdentifier);
+      expect(connext.senderChain).to.be.deep.eq(senderChain);
+      expect(connext.recipientChain).to.be.deep.eq(receiverChain);
+      expect(connext.browserNode).to.be.deep.eq(browserNodeMock);
+      expect(connext.senderChainChannelAddress).to.be.deep.eq(senderChannel.channel.latestUpdate.channelAddress);
+      expect(connext.recipientChainChannelAddress).to.be.deep.eq(receiverChannel.channel.latestUpdate.channelAddress);
+      expect(connext.senderChainChannel).to.be.deep.eq(senderChannel.channel);
+      expect(connext.recipientChainChannel).to.be.deep.eq(receiverChannel.channel);
     });
+
+    // ToDo
+    it.skip("should throw an error if loginProvider is undefined", async () => {});
+    it.skip("should throw an error if createEvtContainer errors", async () => {});
+    it.skip("should throw an error if senderChainProvider is undefined", async () => {});
+    it.skip("should throw an error if senderAssetId is undefined", async () => {});
+    it.skip("should throw an error if recipientChainProvider is undefined", async () => {});
+    it.skip("should throw an error if recipientAssetId is undefined", async () => {});
   });
 
-  //   it('init function', async () => {
-  //     const setParams: SetupParamsSchema = {
-  //       routerPublicIdentifier: routerPublicIdentifier,
-  //       loginProvider: loginProvider,
-  //       senderChainProvider: senderChainProvider,
-  //       senderAssetId: senderAssetId,
-  //       recipientChainProvider: recipientChainProvider,
-  //       recipientAssetId: recipientAssetId,
-  //       senderChainId: senderChainId,
-  //       recipientChainId: recipientChainId,
-  //     };
-
-  //     try {
-  //       await connext.init(setParams);
-  //     } catch (e) {
-  //       console.log(e);
-  //     }
-  //   });
+  describe("estimateFees", () => {});
 });
