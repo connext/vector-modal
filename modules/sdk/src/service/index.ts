@@ -45,7 +45,7 @@ export class ConnextSdk {
   public recipientChainChannel?: FullChannelState;
   public senderChain?: CHAIN_DETAIL;
   public recipientChain?: CHAIN_DETAIL;
-  public browserNode: BrowserNode | undefined;
+  public browserNode?: BrowserNode;
 
   private evts?: EvtContainer;
   private swapDefinition?: any;
@@ -167,6 +167,7 @@ export class ConnextSdk {
       throw e;
     }
     const senderChainChannelAddress = senderChainChannel!.channelAddress;
+    this.senderChainChannel = senderChainChannel;
     this.senderChainChannelAddress = senderChainChannelAddress;
 
     let recipientChainChannel: FullChannelState;
