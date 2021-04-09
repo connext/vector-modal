@@ -689,8 +689,8 @@ export class ConnextSdk {
       );
     } catch (e) {
       const message = "Error in resolveToAssetTransfer";
-      console.log(message);
-      throw new Error(message);
+      console.log(e, message);
+      throw e;
     }
 
     try {

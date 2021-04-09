@@ -439,6 +439,7 @@ const ConnextModal: FC<ConnextModalProps> = ({
       });
       setConnextSdk(connextSdk);
     } catch (e) {
+      let _error = e;
       if (
         e.message.includes("localStorage not available in this window") ||
         e.message.includes("Failed to read the 'localStorage'") ||
@@ -447,12 +448,15 @@ const ConnextModal: FC<ConnextModalProps> = ({
         alert(
           "Please disable shields or ad blockers or allow third party cookies in your browser and try again. Connext requires cross-site cookies to store your channel states.",
         );
+        _error = new Error(
+          "Please disable shields or ad blockers or allow third party cookies in your browser and try again. Connext requires cross-site cookies to store your channel states.",
+        );
       }
       const message = "Error initalizing";
-      console.log(e, message);
+      console.log(_error, message);
       handleScreen({
         state: ERROR_STATES.ERROR_SETUP,
-        error: e,
+        error: _error,
         message: e.message,
       });
       return;
