@@ -306,8 +306,14 @@ export class ConnextSdk {
           data.transfer.meta.crossChainTransferId === this.crossChainTransferId &&
           data.channelAddress === this.recipientChainChannelAddress,
       ).waitFor(45_000);
+
       try {
-        await cancelToAssetTransfer(this.browserNode!, this.recipientChainChannelAddress, data.transfer.transferId);
+        await cancelToAssetTransfer(
+          this.browserNode!,
+          this.recipientChainChannelAddress,
+          data.transfer.transferId,
+          `Widget: Canceling transfer for non-existent preimage`,
+        );
       } catch (e) {
         const message = "Error in cancelToAssetTransfer";
         console.log(e, message);

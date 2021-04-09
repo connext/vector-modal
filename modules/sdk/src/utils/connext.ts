@@ -54,9 +54,13 @@ export const connectNode = async (
     signerAddress = await signer.getAddress();
     console.log("Login provider signerAddress: ", signerAddress);
     signature = await loginProvider.getSigner().signMessage(NonEIP712Message);
+    console.log("signature: ", signature);
   }
   try {
-    await browserNode.init({ signature, signer: signerAddress });
+    await browserNode.init({
+      signature,
+      signer: signerAddress,
+    });
   } catch (e) {
     console.error("Error initializing Browser Node:", jsonifyError(e));
     error = e;
@@ -370,11 +374,15 @@ export const cancelToAssetTransfer = async (
   node: BrowserNode,
   withdrawChannelAddess: string,
   transferId: string,
+  cancellationReason: string,
 ): Promise<NodeResponses.ResolveTransfer> => {
   const params = {
     channelAddress: withdrawChannelAddess,
     transferId: transferId,
     transferResolver: { preImage: constants.HashZero },
+    meta: {
+      cancellationReason,
+    },
   };
   const ret = await node.resolveTransfer(params);
   if (ret.isError) {
