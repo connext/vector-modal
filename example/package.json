@@ -12,7 +12,7 @@
     "magic-sdk": "^4.1.1"
   },
   "alias": {
-    "@connext/vector-modal": "../modules/modal",
+    "@connext/vector-modal": "../modules/widget",
     "react": "../node_modules/react",
     "react-dom": "../node_modules/react-dom/profiling",
     "scheduler/tracing": "../node_modules/scheduler/tracing-profiling"
