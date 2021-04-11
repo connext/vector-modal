@@ -20,25 +20,32 @@ export interface CHAIN_DETAIL {
   chainId: number;
   chainProvider: string;
   rpcProvider: providers.JsonRpcProvider;
-  assetName: string;
-  assetId: string;
-  assetDecimals: number;
   chainParams: AddEthereumChainParameter;
+}
+
+export interface ASSET_DETAIL {
+  name: string;
+  assetId: string;
+  decimals: number;
 }
 
 export type SetupParamsSchema = {
   routerPublicIdentifier: string; // "vectorA876de..."
   loginProvider: any;
   senderChainProvider: string;
-  senderAssetId: string;
   recipientChainProvider: string;
-  recipientAssetId: string;
   senderChainId?: number;
   recipientChainId?: number;
   iframeSrcOverride?: string;
 };
 
 export type InitParamsSchema = SetupParamsSchema;
+
+export type preTransferCheckParamsSchema = {
+  transferAmount: string;
+  senderAssetId: string;
+  recipientAssetId: string;
+};
 
 export type CheckPendingTransferResponseSchema = {
   offChainSenderChainAssetBalanceBn: BigNumber;
@@ -48,6 +55,8 @@ export type CheckPendingTransferResponseSchema = {
 export type InitResponseSchema = CheckPendingTransferResponseSchema;
 export type EstimateFeeParamsSchema = {
   transferAmount: string | undefined;
+  senderAssetId: string;
+  recipientAssetId: string;
   isRecipientAssetInput?: boolean;
   userBalanceWei?: string;
 };
@@ -63,6 +72,8 @@ export type EstimateFeeResponseSchema = {
 export type DepositParamsSchema = {
   transferAmount: string;
   webProvider: providers.Web3Provider;
+  senderAssetId: string;
+  recipientAssetId: string;
   preTransferCheck?: boolean;
   // callback
   onDeposited?: (txHash: string) => void;
@@ -70,6 +81,7 @@ export type DepositParamsSchema = {
 
 export type WithdrawParamsSchema = {
   recipientAddress: string;
+  recipientAssetId: string;
   onFinished?: (txHash: string, amountUi?: string, amountBn?: BigNumber) => void;
   withdrawalCallTo?: string;
   withdrawalCallData?: string;
@@ -78,6 +90,8 @@ export type WithdrawParamsSchema = {
 
 export type TransferParamsSchema = {
   transferQuote?: TransferQuote;
+  senderAssetId: string;
+  recipientAssetId: string;
   // Callbacks
   onTransferred?: () => void;
 };

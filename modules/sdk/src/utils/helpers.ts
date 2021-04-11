@@ -46,9 +46,9 @@ export const retryWithDelay = async <T = any>(fn: () => Promise<T>, retries = 5)
   throw error;
 };
 
-export const getChain = async (_chainId: number | undefined, chainProvider: string, _assetId: string) => {
+export const getChain = async (_chainId: number | undefined, chainProvider: string) => {
   // Sender Chain Info
-  const assetId = utils.getAddress(_assetId);
+
   let chainId = _chainId;
   if (!chainId) {
     try {
@@ -61,12 +61,8 @@ export const getChain = async (_chainId: number | undefined, chainProvider: stri
 
   const rpcProvider = new providers.JsonRpcProvider(chainProvider, chainId);
 
-  // get decimals for deposit asset
-  const assetDecimals = await getAssetDecimals(assetId, rpcProvider);
-
   const chain: ChainInfo = await getChainInfo(chainId);
   const chainName = chain.name;
-  const assetName = chain.assetId[assetId]?.symbol ?? "Token";
 
   const chainParams: AddEthereumChainParameter = {
     chainId: utils.hexValue(chain.chainId),
@@ -84,9 +80,6 @@ export const getChain = async (_chainId: number | undefined, chainProvider: stri
     chainId: chainId,
     chainProvider: chainProvider,
     rpcProvider: rpcProvider,
-    assetName: assetName,
-    assetId: assetId,
-    assetDecimals: assetDecimals,
     chainParams: chainParams,
   };
 
