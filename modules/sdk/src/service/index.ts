@@ -84,6 +84,7 @@ export class ConnextSdk {
 
   async setup(params: SetupParamsSchema) {
     this.routerPublicIdentifier = params.routerPublicIdentifier;
+    this.crossChainTransferId = getRandomBytes32();
 
     let senderChainInfo: CHAIN_DETAIL;
     try {
@@ -589,10 +590,7 @@ export class ConnextSdk {
 
   async transfer(params: TransferParamsSchema) {
     const { transferQuote } = params;
-    const crossChainTransferId = getRandomBytes32();
     const preImage = getRandomBytes32();
-
-    this.crossChainTransferId = crossChainTransferId;
 
     console.log(`Calling reconcileDeposit with ${this.senderChainChannelAddress!} and ${this.senderChain?.assetId!}`);
     await reconcileDeposit(this.browserNode!, this.senderChainChannelAddress!, this.senderChain?.assetId!);
@@ -601,7 +599,7 @@ export class ConnextSdk {
       console.log(
         `Calling createFromAssetTransfer ${this.senderChain?.chainId!} ${this.senderChain?.assetId!} ${
           this.recipientChain?.chainId
-        } ${this.recipientChain?.assetId} ${crossChainTransferId}`,
+        } ${this.recipientChain?.assetId} ${this.crossChainTransferId}`,
       );
       const transferDeets = await createFromAssetTransfer(
         this.browserNode!,
@@ -610,7 +608,7 @@ export class ConnextSdk {
         this.recipientChain?.chainId!,
         this.recipientChain?.assetId!,
         this.routerPublicIdentifier,
-        crossChainTransferId,
+        this.crossChainTransferId,
         preImage,
         transferQuote,
       );
@@ -628,7 +626,7 @@ export class ConnextSdk {
     // listen for a sender-side cancellation, if it happens, short-circuit and show cancellation
     const senderCancel = this.evts![EngineEvents.CONDITIONAL_TRANSFER_RESOLVED].pipe(data => {
       return (
-        data.transfer.meta?.routingId === crossChainTransferId &&
+        data.transfer.meta?.routingId === this.crossChainTransferId &&
         data.transfer.responderIdentifier === this.routerPublicIdentifier &&
         Object.values(data.transfer.transferResolver)[0] === constants.HashZero
       );
@@ -636,7 +634,7 @@ export class ConnextSdk {
 
     const receiverCreate = this.evts![EngineEvents.CONDITIONAL_TRANSFER_CREATED].pipe(data => {
       return (
-        data.transfer.meta?.routingId === crossChainTransferId &&
+        data.transfer.meta?.routingId === this.crossChainTransferId &&
         data.transfer.initiatorIdentifier === this.routerPublicIdentifier
       );
     }).waitFor(500_000);
@@ -659,7 +657,7 @@ export class ConnextSdk {
 
     const senderResolve = this.evts![EngineEvents.CONDITIONAL_TRANSFER_RESOLVED].pipe(data => {
       return (
-        data.transfer.meta?.routingId === crossChainTransferId &&
+        data.transfer.meta?.routingId === this.crossChainTransferId &&
         data.transfer.responderIdentifier === this.routerPublicIdentifier
       );
     }).waitFor(45_000);
@@ -669,7 +667,7 @@ export class ConnextSdk {
         this.browserNode!,
         this.recipientChain?.chainId!,
         preImage,
-        crossChainTransferId,
+        this.crossChainTransferId,
         this.routerPublicIdentifier,
       );
     } catch (e) {
