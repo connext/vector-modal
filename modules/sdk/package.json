@@ -1,6 +1,6 @@
 {
   "name": "@connext/vector-sdk",
-  "version": "0.0.1-beta.5",
+  "version": "0.0.1-beta.6",
   "description": "> TODO: description",
   "author": "sanchaymittal <sanchaymittal@gmail.com>",
   "homepage": "https://github.com/connext/vector-modal#readme",
@@ -31,10 +31,10 @@
     "src"
   ],
   "dependencies": {
-    "@connext/vector-browser-node": "0.2.2-beta.5",
-    "@connext/vector-contracts": "0.2.2-beta.5",
-    "@connext/vector-types": "0.2.2-beta.5",
-    "@connext/vector-utils": "0.2.2-beta.5",
+    "@connext/vector-browser-node": "0.2.2-beta.6",
+    "@connext/vector-contracts": "0.2.2-beta.6",
+    "@connext/vector-types": "0.2.2-beta.6",
+    "@connext/vector-utils": "0.2.2-beta.6",
     "awesome-debounce-promise": "^2.1.0",
     "ethers": "^5.1.0",
     "evt": "1.9.12",
