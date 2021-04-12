@@ -7,6 +7,7 @@ import * as helpers from "../src/utils/helpers";
 import * as connextUtils from "../src/utils/connext";
 
 import { constants } from "ethers";
+import { describe } from "mocha";
 
 const generateChainDetail = (overrides: Partial<CHAIN_DETAIL> = {}): CHAIN_DETAIL => {
   return {
@@ -223,6 +224,35 @@ describe("service", () => {
       expect(connext.recipientChainChannel).to.be.deep.eq(receiverChannel.channel);
     });
 
+    it("should throw an error if loginProvider is undefined", async () => {
+      verifyAndGetRouterSupportsMock.resolves({
+        fromAssetId: senderChain.assetId,
+        fromChainId: senderChain.chainId,
+        hardcodedRate: "1",
+        priceType: "hardcoded",
+        toAssetId: receiverChain.assetId,
+        toChainId: receiverChain.chainId,
+      } as AllowedSwap);
+
+      try {
+        await connext.setup({
+          loginProvider: undefined,
+          senderAssetId: senderChain.assetId,
+          senderChainProvider: senderChain.chainProvider,
+          recipientAssetId: receiverChain.assetId,
+          recipientChainProvider: receiverChain.chainProvider,
+          routerPublicIdentifier,
+        });
+      } catch (e) {
+        expect(e.message).to.be.deep.eq("Error loginProvider is undefined");
+        expect(e).to.be.ok;
+      }
+
+      expect(connext.routerPublicIdentifier).to.be.deep.eq(routerPublicIdentifier);
+      expect(connext.senderChain).to.be.deep.eq(senderChain);
+      expect(connext.recipientChain).to.be.deep.eq(receiverChain);
+    });
+
     it("should set up with browser node already part of class", async () => {
       verifyAndGetRouterSupportsMock.resolves({
         fromAssetId: senderChain.assetId,
@@ -254,7 +284,6 @@ describe("service", () => {
     });
 
     // ToDo
-    it.skip("should throw an error if loginProvider is undefined", async () => {});
     it.skip("should throw an error if createEvtContainer errors", async () => {});
     it.skip("should throw an error if senderChainProvider is undefined", async () => {});
     it.skip("should throw an error if senderAssetId is undefined", async () => {});
@@ -262,5 +291,22 @@ describe("service", () => {
     it.skip("should throw an error if recipientAssetId is undefined", async () => {});
   });
 
-  describe("estimateFees", () => {});
+  describe("estimateFees", () => {
+    it.skip("should return undefined if transferAmount is undefined", async () => {});
+    it.skip("should trim if transferAmount is alphabets or special characters", async () => {});
+    it.skip("should return helper text 'Transfer amount cannot be 0' if transferAmount is zero", async () => {});
+    it.skip("should return fees if transferAmount is numeric string", async () => {});
+    it.skip("should return helper text 'Not enough amount to pay fees' if transferAmount is lower than fees estimateFees", async () => {});
+    it.skip("should return helper text 'Transfer amount exceeds user balance' if transferAmount is lower than fees userBalance", async () => {});
+  });
+
+  describe("preTransferCheck", () => {
+    it.skip("should error 'Transfer Amount is undefined' if transferAmount is undefiend", async () => {});
+    it.skip("should error 'Transfer amount cannot be 0' if transferAmount is zero", async () => {});
+    it.skip("should error if transferAmount is greater than the router's liquidity", async () => {});
+  });
+
+  describe("deposit", () => {
+    
+  });
 });
