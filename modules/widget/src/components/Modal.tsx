@@ -8,8 +8,8 @@ import {
   getUserBalance,
   ConnextSdk,
   BrowserNode,
+  VectorError,
 } from "@connext/vector-sdk";
-import { VectorError } from "@connext/vector-types";
 import { BigNumber, utils, providers } from "ethers";
 
 import { ERROR_STATES, SCREEN_STATES, ScreenStates, ErrorStates } from "../constants";

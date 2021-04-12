@@ -995,18 +995,6 @@
     "@sinclair/typebox" "0.12.7"
     evt "1.9.12"
 
-"@connext/vector-types@^0.2.2-beta.7":
-  version "0.2.2-beta.7"
-  resolved "https://registry.yarnpkg.com/@connext/vector-types/-/vector-types-0.2.2-beta.7.tgz#ab6f1a93bd030a3a2963987767526796b69d409d"
-  integrity sha512-Vg6kAsrdu3gj8dkDgEDHaXPaZNbNdn7LUSQwxw9YDjZmb9+m390ak0R5tCDPTFebzHr/uiu7DT2VZ4W8DB8u+Q==
-  dependencies:
-    "@ethersproject/abstract-provider" "5.1.0"
-    "@ethersproject/abstract-signer" "5.1.0"
-    "@ethersproject/bignumber" "5.1.0"
-    "@ethersproject/providers" "5.1.0"
-    "@sinclair/typebox" "0.12.7"
-    evt "1.9.12"
-
 "@connext/vector-utils@0.2.2-beta.6":
   version "0.2.2-beta.6"
   resolved "https://registry.yarnpkg.com/@connext/vector-utils/-/vector-utils-0.2.2-beta.6.tgz#953e95d0a4ec719ad2d98c086613e4b3388716b2"

@@ -29,7 +29,6 @@
   },
   "dependencies": {
     "@connext/vector-sdk": "^0.0.1-beta.6",
-    "@connext/vector-types": "^0.2.2-beta.7",
     "ethers": "^5.1.0",
     "hybrids": "^5.0.0",
     "qrcode.react": "^1.0.1",
