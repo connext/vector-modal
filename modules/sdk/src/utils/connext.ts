@@ -19,6 +19,8 @@ import {
 import { calculateExchangeWad, createlockHash, getBalanceForAssetId, inverse } from "@connext/vector-utils";
 import { providers, Contract, BigNumber, constants, utils } from "ethers";
 import { Evt } from "evt";
+import detectEthereumProvider from "@metamask/detect-provider";
+
 import { getOnchainBalance } from "./helpers";
 import { iframeSrc } from "../constants";
 
@@ -47,16 +49,26 @@ export const connectNode = async (
   let signer: providers.JsonRpcSigner | undefined;
   let signerAddress: string | undefined;
 
-  console.log("loginProvider: ", loginProvider);
-  if (!!loginProvider) {
-    console.log("Using login provider to log in");
+  // if eth provider is detected, don't pass in a sig, and the iframe will get the user's sig
+  const provider = (await detectEthereumProvider()) as any;
+  if (provider) {
+    if (provider !== (window as any).ethereum) {
+      throw new Error("Detected multiple wallets");
+    }
+  }
+  // otherwise use unsafe dApp based signer
+  else {
+    if (!loginProvider) {
+      throw new Error("Ethereum provider not detected and login provider not provided");
+    }
+    console.warn("Using login provider to log in");
     signer = loginProvider.getSigner();
-    console.log("signer: ", signer);
     signerAddress = await signer.getAddress();
-    console.log("Login provider signerAddress: ", signerAddress);
+    console.log("signerAddress: ", signerAddress);
     signature = await loginProvider.getSigner().signMessage(NonEIP712Message);
     console.log("signature: ", signature);
   }
+
   try {
     await browserNode.init({
       signature,

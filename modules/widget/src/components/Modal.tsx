@@ -8,8 +8,10 @@ import {
   getUserBalance,
   ConnextSdk,
   BrowserNode,
+  VectorError,
 } from "@connext/vector-sdk";
 import { BigNumber, utils, providers } from "ethers";
+
 import { ERROR_STATES, SCREEN_STATES, ScreenStates, ErrorStates } from "../constants";
 import { theme, Fonts, ModalOverlay, ModalContentContainer, BackButton, CloseButton } from "./common";
 import { Loading, Swap, SwapListener, Status, ErrorScreen, Success, Recover, ExistingBalance } from "./pages";
@@ -654,11 +656,12 @@ const ConnextModal: FC<ConnextModalProps> = ({
         break;
 
       default:
-        console.log(pMessage);
+        console.error("pMessage: ", pMessage);
         const _title = pTitle ? pTitle : state === ERROR_STATES.ERROR_TRANSFER ? "Transfer Error" : "Setup Error";
 
+        const _pError = (pError as VectorError).context?.validationError ?? pError;
         setTitle(_title);
-        setError(pError);
+        setError(_pError);
         break;
     }
     setScreenState((prevState: ScreenStates) => {
