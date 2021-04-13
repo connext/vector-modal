@@ -2,6 +2,7 @@ import { EngineEvents, FullChannelState, ERC20Abi, TransferQuote, VectorError } 
 import { BrowserNode } from "@connext/vector-browser-node";
 import { getBalanceForAssetId, getRandomBytes32 } from "@connext/vector-utils";
 import { BigNumber, Contract, constants, utils } from "ethers";
+
 import {
   CHAIN_DETAIL,
   SetupParamsSchema,
@@ -31,6 +32,7 @@ import {
   resolveToAssetTransfer,
   withdrawToAsset,
   cancelToAssetTransfer,
+  sendTransaction,
 } from "../utils";
 
 export { BrowserNode, ERC20Abi, FullChannelState, getBalanceForAssetId, TransferQuote, VectorError };
@@ -277,37 +279,37 @@ export class ConnextSdk {
         channelAddress: this.recipientChainChannelAddress,
       }),
     ]);
-    const depositHashlock = depositActive.getValue().filter((t) => Object.keys(t.transferState).includes("lockHash"));
-    const withdrawHashlock = withdrawActive.getValue().filter((t) => Object.keys(t.transferState).includes("lockHash"));
+    const depositHashlock = depositActive.getValue().filter(t => Object.keys(t.transferState).includes("lockHash"));
+    const withdrawHashlock = withdrawActive.getValue().filter(t => Object.keys(t.transferState).includes("lockHash"));
     console.warn(
       "deposit active on init",
       depositHashlock.length,
       "ids:",
-      depositHashlock.map((t) => t.transferId),
+      depositHashlock.map(t => t.transferId),
     );
     console.warn(
       "withdraw active on init",
       withdrawHashlock.length,
       "ids:",
-      withdrawHashlock.map((t) => t.transferId),
+      withdrawHashlock.map(t => t.transferId),
     );
 
     // set a listener to check for transfers that may have been pushed after a refresh after the hanging transfers have already been canceled
-    this.evts!.CONDITIONAL_TRANSFER_CREATED.pipe((data) => {
+    this.evts!.CONDITIONAL_TRANSFER_CREATED.pipe(data => {
       return (
         data.transfer.responderIdentifier === this.browserNode!.publicIdentifier &&
         data.transfer.meta.routingId !== this.crossChainTransferId
       );
-    }).attach(async (data) => {
+    }).attach(async data => {
       console.warn("Cancelling transfer thats not active");
       const senderResolution = this.evts!.CONDITIONAL_TRANSFER_RESOLVED.pipe(
-        (data) =>
+        data =>
           data.transfer.meta.crossChainTransferId === this.crossChainTransferId &&
           data.channelAddress === this.senderChainChannelAddress,
       ).waitFor(45_000);
 
       const receiverResolution = this.evts!.CONDITIONAL_TRANSFER_RESOLVED.pipe(
-        (data) =>
+        data =>
           data.transfer.meta.crossChainTransferId === this.crossChainTransferId &&
           data.channelAddress === this.recipientChainChannelAddress,
       ).waitFor(45_000);
@@ -408,7 +410,7 @@ export class ConnextSdk {
   }
 
   async estimateFees(params: EstimateFeeParamsSchema): Promise<EstimateFeeResponseSchema> {
-    const { transferAmount: _transferAmount, isRecipientAssetInput, userBalanceWei } = params;
+    const { transferAmount: _transferAmount, isRecipientAssetInput, userBalance } = params;
 
     const transferAmount = _transferAmount ? _transferAmount.trim() : undefined;
     let err: string | undefined = undefined;
@@ -505,8 +507,9 @@ export class ConnextSdk {
         console.log("receivedUi: ", recipientAmountUi);
       }
 
-      if (userBalanceWei) {
-        const userBalanceBn = BigNumber.from(utils.parseUnits(userBalanceWei, this.senderChain?.assetDecimals!));
+      if (userBalance) {
+        const userBalanceBn = BigNumber.from(utils.parseUnits(userBalance, this.senderChain?.assetDecimals!));
+        console.log(senderAmountBn.toString(), userBalance, userBalanceBn.toString());
         if (senderAmountBn.gt(userBalanceBn)) {
           err = "Transfer amount exceeds user balance";
           return {
@@ -582,21 +585,16 @@ export class ConnextSdk {
     try {
       const signer = webProvider.getSigner();
 
-      const depositTx =
-        this.senderChain?.assetId! === constants.AddressZero
-          ? await signer.sendTransaction({
-              to: this.senderChainChannelAddress!,
-              value: transferAmountBn,
-            })
-          : await new Contract(this.senderChain?.assetId!, ERC20Abi, signer).transfer(
-              this.senderChainChannelAddress!,
-              transferAmountBn,
-            );
+      const depositTx = await sendTransaction(
+        this.senderChainChannelAddress!,
+        this.senderChain?.assetId!,
+        transferAmountBn,
+        signer,
+      );
 
-      const receipt = await depositTx.wait();
-      console.log("deposit mined:", receipt.transactionHash);
+      console.log("deposit mined:", depositTx.hash);
 
-      this.senderChain?.rpcProvider!.waitForTransaction(depositTx.hash, 2).then((receipt) => {
+      signer.provider.waitForTransaction(depositTx.hash, 2).then(receipt => {
         if (receipt.status === 0) {
           // tx reverted
           const message = "Transaction reverted onchain";
@@ -649,7 +647,7 @@ export class ConnextSdk {
     }
 
     // listen for a sender-side cancellation, if it happens, short-circuit and show cancellation
-    const senderCancel = this.evts![EngineEvents.CONDITIONAL_TRANSFER_RESOLVED].pipe((data) => {
+    const senderCancel = this.evts![EngineEvents.CONDITIONAL_TRANSFER_RESOLVED].pipe(data => {
       return (
         data.transfer.meta?.routingId === this.crossChainTransferId &&
         data.transfer.responderIdentifier === this.routerPublicIdentifier &&
@@ -657,7 +655,7 @@ export class ConnextSdk {
       );
     }).waitFor(500_000);
 
-    const receiverCreate = this.evts![EngineEvents.CONDITIONAL_TRANSFER_CREATED].pipe((data) => {
+    const receiverCreate = this.evts![EngineEvents.CONDITIONAL_TRANSFER_CREATED].pipe(data => {
       return (
         data.transfer.meta?.routingId === this.crossChainTransferId &&
         data.transfer.initiatorIdentifier === this.routerPublicIdentifier
@@ -680,7 +678,7 @@ export class ConnextSdk {
       throw e;
     }
 
-    const senderResolve = this.evts![EngineEvents.CONDITIONAL_TRANSFER_RESOLVED].pipe((data) => {
+    const senderResolve = this.evts![EngineEvents.CONDITIONAL_TRANSFER_RESOLVED].pipe(data => {
       return (
         data.transfer.meta?.routingId === this.crossChainTransferId &&
         data.transfer.responderIdentifier === this.routerPublicIdentifier
@@ -736,7 +734,7 @@ export class ConnextSdk {
     console.log(successWithdrawalUi);
 
     // check tx receipt for withdrawal tx
-    this.recipientChain?.rpcProvider.waitForTransaction(result.withdrawalTx).then((receipt) => {
+    this.recipientChain?.rpcProvider.waitForTransaction(result.withdrawalTx).then(receipt => {
       if (receipt.status === 0) {
         // tx reverted
         const message = "Transaction reverted onchain";

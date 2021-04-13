@@ -15,14 +15,16 @@ import {
   TransferQuote,
   AllowedSwap,
   WithdrawalResolvedPayload,
+  ERC20Abi,
 } from "@connext/vector-types";
 import { calculateExchangeWad, createlockHash, getBalanceForAssetId, inverse } from "@connext/vector-utils";
 import { providers, Contract, BigNumber, constants, utils } from "ethers";
 import { Evt } from "evt";
 import detectEthereumProvider from "@metamask/detect-provider";
 
-import { getOnchainBalance } from "./helpers";
 import { iframeSrc } from "../constants";
+
+import { getOnchainBalance } from "./helpers";
 
 export const connectNode = async (
   routerPublicIdentifier: string,
@@ -688,4 +690,21 @@ export const getChannelForChain = async (
     throw new Error(`Could not find channel on ${chainId}`);
   }
   return channel as FullChannelState;
+};
+
+export const sendTransaction = async (
+  depositAddress: string,
+  assetId: string,
+  transferAmountBn: BigNumber,
+  signer: providers.JsonRpcSigner,
+): Promise<providers.TransactionResponse> => {
+  const tx =
+    assetId === constants.AddressZero
+      ? await signer.sendTransaction({
+          to: depositAddress,
+          value: transferAmountBn,
+        })
+      : await new Contract(assetId, ERC20Abi, signer).transfer(depositAddress, transferAmountBn);
+
+  return tx;
 };
