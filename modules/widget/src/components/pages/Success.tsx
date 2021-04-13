@@ -1,5 +1,6 @@
 import React, { FC } from "react";
 import { ChainDetail, getExplorerLinkForTx, truncate } from "@connext/vector-sdk";
+
 import { ModalContent, ModalBody, Text, Stack, Box, Button } from "../common";
 import { Header, Footer, NetworkBar } from "../static";
 

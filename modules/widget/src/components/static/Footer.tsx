@@ -1,5 +1,6 @@
 import React, { FC } from "react";
 import styled from "styled-components";
+
 import { Text } from "../common";
 
 const ModalFooter = styled.div`

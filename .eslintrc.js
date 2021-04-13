@@ -14,6 +14,8 @@ module.exports = {
   },
   rules: {
     "@typescript-eslint/no-empty-interface": ["off"],
+    "@typescript-eslint/ban-ts-ignore": ["off"],
+    "@typescript-eslint/explicit-function-return-type": ["off"],
     "@typescript-eslint/no-empty-function": ["off"],
     "@typescript-eslint/no-unused-expressions": ["off"],
     "@typescript-eslint/no-non-null-assertion": ["off"],

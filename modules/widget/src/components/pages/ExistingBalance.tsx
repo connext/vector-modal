@@ -1,5 +1,6 @@
 import React, { FC } from "react";
 import { ChainDetail, truncate } from "@connext/vector-sdk";
+
 import { ModalContent, ModalBody, Text, Stack, Button } from "../common";
 import { Header, Footer, NetworkBar } from "../static";
 

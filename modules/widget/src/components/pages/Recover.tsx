@@ -1,9 +1,11 @@
 import React, { FC, useState } from "react";
 import { BigNumber, constants } from "ethers";
 import { ChainDetail, BrowserNode, FullChannelState, getBalanceForAssetId } from "@connext/vector-sdk";
+
 import { ModalContent, ModalBody, Text, Stack, Box, Button, InputGroup, Input } from "../common";
 import { ERROR_STATES } from "../../constants";
 import { Header, Footer } from "../static";
+
 import Success from "./Success";
 import ErrorScreen from "./ErrorScreen";
 import Loading from "./Loading";

@@ -1,6 +1,5 @@
-import React from "react";
+import React, { useState, useEffect } from "react";
 import styled from "styled-components";
-import { useState, useEffect } from "react";
 
 /// NOTE: MenuListPositioner contains MenuListContainer. This arrangement is a temporary solution in
 /// reverse engineering previous framework UI.

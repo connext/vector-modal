@@ -1,5 +1,6 @@
 import React, { FC, useState } from "react";
 import { ChainDetail } from "@connext/vector-sdk";
+
 import {
   ModalContent,
   ModalBody,

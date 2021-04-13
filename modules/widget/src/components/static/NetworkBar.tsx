@@ -1,6 +1,7 @@
 import React, { FC } from "react";
 import { ChainDetail, getExplorerLinkForAsset } from "@connext/vector-sdk";
 import styled from "styled-components";
+
 import { Stack, Box, Text, Link, InputGroup, Input } from "../common";
 
 interface NetworkBarProps {

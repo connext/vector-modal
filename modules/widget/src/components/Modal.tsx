@@ -13,6 +13,7 @@ import {
 import { BigNumber, utils, providers } from "ethers";
 
 import { ERROR_STATES, SCREEN_STATES, ScreenStates, ErrorStates } from "../constants";
+
 import { theme, Fonts, ModalOverlay, ModalContentContainer, BackButton, CloseButton } from "./common";
 import { Loading, Swap, SwapListener, Status, ErrorScreen, Success, Recover, ExistingBalance } from "./pages";
 import { Options } from "./static";
@@ -108,7 +109,7 @@ const ConnextModal: FC<ConnextModalProps> = ({
   // temp
   const [inputReadOnly, setInputReadOnly] = useState<boolean>(false);
 
-  const onSuccess = (txHash: string, amountUi?: string, amountBn?: BigNumber) => {
+  const onSuccess = (txHash: string, amountUi?: string, amountBn?: BigNumber): void => {
     console.log(txHash, amountUi, amountBn);
     setWithdrawTx(txHash);
     setSuccessWithdrawalAmount(amountUi!);
@@ -118,7 +119,7 @@ const ConnextModal: FC<ConnextModalProps> = ({
     }
   };
 
-  const depositListenerAndTransfer = async () => {
+  const depositListenerAndTransfer = async (): Promise<void> => {
     handleScreen({ state: SCREEN_STATES.LISTENER });
     setShowTimer(true);
     let initialDeposits: BigNumber;
@@ -142,7 +143,7 @@ const ConnextModal: FC<ConnextModalProps> = ({
       } of asset ${depositAssetId}: ${initialDeposits.toString()}`,
     );
 
-    let depositListener = setInterval(async () => {
+    const depositListener = setInterval(async () => {
       let updatedDeposits: BigNumber;
       try {
         updatedDeposits = await getTotalDepositsBob(
@@ -173,7 +174,7 @@ const ConnextModal: FC<ConnextModalProps> = ({
     setListener(depositListener);
   };
 
-  const handleSwapCheck = async (_input: string | undefined, receiveExactAmount: boolean) => {
+  const handleSwapCheck = async (_input: string | undefined, receiveExactAmount: boolean): Promise<void> => {
     const input = _input ? _input.trim() : undefined;
     receiveExactAmount ? setReceivedAmountUi(input) : setTransferAmountUi(input);
 
@@ -181,7 +182,7 @@ const ConnextModal: FC<ConnextModalProps> = ({
       const res = await connextSdk!.estimateFees({
         transferAmount: input,
         isRecipientAssetInput: receiveExactAmount,
-        userBalanceWei: userBalance,
+        userBalance: userBalance,
       });
       console.log(res);
       setAmountError(res.error);
@@ -196,7 +197,7 @@ const ConnextModal: FC<ConnextModalProps> = ({
     }
   };
 
-  const handleSwapRequest = async () => {
+  const handleSwapRequest = async (): Promise<void> => {
     setIsLoad(true);
 
     try {
@@ -263,7 +264,7 @@ const ConnextModal: FC<ConnextModalProps> = ({
     }
   };
 
-  const handleSwap = async () => {
+  const handleSwap = async (): Promise<void> => {
     handleScreen({
       state: SCREEN_STATES.STATUS,
       title: "transferring",
@@ -311,7 +312,7 @@ const ConnextModal: FC<ConnextModalProps> = ({
     handleScreen({ state: SCREEN_STATES.SUCCESS });
   };
 
-  const stateReset = () => {
+  const stateReset = (): void => {
     handleScreen({ state: SCREEN_STATES.LOADING });
     setWebProvider(undefined);
     setInputReadOnly(false);
@@ -323,7 +324,7 @@ const ConnextModal: FC<ConnextModalProps> = ({
     setError(undefined);
   };
 
-  const setup = async () => {
+  const setup = async (): Promise<void> => {
     // set web provider
     setMessage("getting chains info...");
     const injectedProvider: undefined | providers.Web3Provider = !!_injectedProvider
@@ -426,7 +427,7 @@ const ConnextModal: FC<ConnextModalProps> = ({
 
     setMessage("Setting up channels...");
 
-    let connextSdk = new ConnextSdk();
+    const connextSdk = new ConnextSdk();
     try {
       await connextSdk.setup({
         routerPublicIdentifier,
