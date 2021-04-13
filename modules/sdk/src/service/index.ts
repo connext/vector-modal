@@ -1,7 +1,7 @@
 import { EngineEvents, FullChannelState, ERC20Abi, TransferQuote, VectorError } from "@connext/vector-types";
 import { BrowserNode } from "@connext/vector-browser-node";
 import { getBalanceForAssetId, getRandomBytes32 } from "@connext/vector-utils";
-import { BigNumber, Contract, constants, utils } from "ethers";
+import { BigNumber, constants, utils } from "ethers";
 
 import {
   ChainDetail,
@@ -534,7 +534,7 @@ export class ConnextSdk {
     };
   }
 
-  async preTransferCheck(transferAmount: string) {
+  async preTransferCheck(transferAmount: string): Promise<void> {
     if (!transferAmount) {
       const message = "Transfer Amount is undefined";
       console.log(message);
@@ -567,7 +567,7 @@ export class ConnextSdk {
     }
   }
 
-  async deposit(params: DepositParamsSchema) {
+  async deposit(params: DepositParamsSchema): Promise<void> {
     const { transferAmount, preTransferCheck = true, webProvider, onDeposited } = params;
 
     if (preTransferCheck) {
@@ -611,7 +611,7 @@ export class ConnextSdk {
     }
   }
 
-  async transfer(params: TransferParamsSchema) {
+  async transfer(params: TransferParamsSchema): Promise<void> {
     const { transferQuote } = params;
     const preImage = getRandomBytes32();
 
@@ -706,7 +706,7 @@ export class ConnextSdk {
     }
   }
 
-  async withdraw(params: WithdrawParamsSchema) {
+  async withdraw(params: WithdrawParamsSchema): Promise<void> {
     const { recipientAddress, onFinished, withdrawalCallTo, withdrawalCallData, generateCallData } = params;
     // now go to withdrawal screen
     let result;
@@ -748,7 +748,7 @@ export class ConnextSdk {
     }
   }
 
-  async crossChainSwap(params: CrossChainSwapParamsSchema) {
+  async crossChainSwap(params: CrossChainSwapParamsSchema): Promise<void> {
     const {
       recipientAddress,
       onFinished,

@@ -315,7 +315,7 @@ describe("service", () => {
   describe("estimateFees", () => {
     const senderChain = generateChainDetail();
     const receiverChain = generateChainDetail({ chainId: 12 });
-    const senderChannel = createTestChannelState("create");
+    // const senderChannel = createTestChannelState("create");
     const receiverChannel = createTestChannelState("create");
     const ResTransferQuote = {
       routerIdentifier: routerPublicIdentifier,
@@ -561,7 +561,7 @@ describe("service", () => {
     it.skip("should error if transaction is failed or reverted", async () => {});
   });
 
-  describe("crossChainSwap", () => async () => {
+  describe("crossChainSwap", async () => {
     it.skip("should throw an error if transfer errors", async () => {});
     it.skip("should throw an error if withdraw errors", async () => {});
   });

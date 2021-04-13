@@ -249,7 +249,7 @@ export const getTotalDepositsBob = async (
 };
 
 // throws results to be used in retryWithDelay fn
-export const reconcileDeposit = async (node: BrowserNode, channelAddress: string, _assetId: string) => {
+export const reconcileDeposit = async (node: BrowserNode, channelAddress: string, _assetId: string): Promise<void> => {
   const ret = await node.reconcileDeposit({
     channelAddress,
     assetId: utils.getAddress(_assetId),
@@ -347,7 +347,7 @@ export const waitForSenderCancels = async (
   node: BrowserNode,
   evt: Evt<ConditionalTransferResolvedPayload>,
   depositChannelAddress: string,
-) => {
+): Promise<void> => {
   const active = await node.getActiveTransfers({
     channelAddress: depositChannelAddress,
   });
@@ -608,7 +608,7 @@ export const verifyRouterCapacityForTransfer = async (
   transferAmount: BigNumber,
   swap: any,
   fromAssetDecimals: number,
-) => {
+): Promise<void> => {
   console.log(`verifyRouterCapacityForTransfer for ${transferAmount}`);
   const routerOnchain = await getOnchainBalance(ethProvider, toAssetId, withdrawChannel.alice);
   const routerOffchain = BigNumber.from(getBalanceForAssetId(withdrawChannel, toAssetId, "alice"));
