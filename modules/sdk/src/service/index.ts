@@ -2,7 +2,6 @@ import { EngineEvents, FullChannelState, ERC20Abi, TransferQuote } from "@connex
 import { BrowserNode } from "@connext/vector-browser-node";
 import { getBalanceForAssetId, getRandomBytes32 } from "@connext/vector-utils";
 import { BigNumber, Contract, constants, utils } from "ethers";
-import AwesomeDebouncePromise from "awesome-debounce-promise";
 import {
   CHAIN_DETAIL,
   SetupParamsSchema,
@@ -26,7 +25,7 @@ import {
   reconcileDeposit,
   cancelHangingToTransfers,
   waitForSenderCancels,
-  getCrosschainFee,
+  getFeesDebounced,
   verifyRouterCapacityForTransfer,
   createFromAssetTransfer,
   resolveToAssetTransfer,
@@ -49,8 +48,6 @@ export class ConnextSdk {
 
   private evts?: EvtContainer;
   private swapDefinition?: any;
-
-  private getFeesDebounced = AwesomeDebouncePromise(getCrosschainFee, 200);
 
   async init(params: InitParamsSchema): Promise<InitResponseSchema> {
     try {
@@ -155,8 +152,14 @@ export class ConnextSdk {
 
     console.log("INITIALIZED BROWSER NODE");
 
-    const _evts = this.evts ?? createEvtContainer(_node);
-    this.evts = _evts;
+    try {
+      const _evts = this.evts ?? createEvtContainer(_node);
+      this.evts = _evts;
+    } catch (e) {
+      const message = "Error while creating evt container";
+      console.log(e, message);
+      throw e;
+    }
 
     let senderChainChannel: FullChannelState;
     try {
@@ -453,7 +456,7 @@ export class ConnextSdk {
           senderAmount: _senderAmount,
           recipientAmount: _recipientAmount,
           transferQuote: _transferQuote,
-        } = await this.getFeesDebounced(
+        } = await getFeesDebounced(
           this.browserNode!,
           this.routerPublicIdentifier,
           transferAmountBn,
@@ -732,10 +735,6 @@ export class ConnextSdk {
 
     console.log(successWithdrawalUi);
 
-    if (onFinished) {
-      onFinished(result.withdrawalTx, successWithdrawalUi, BigNumber.from(result.withdrawalAmount));
-    }
-
     // check tx receipt for withdrawal tx
     this.recipientChain?.rpcProvider.waitForTransaction(result.withdrawalTx).then((receipt) => {
       if (receipt.status === 0) {
@@ -745,6 +744,10 @@ export class ConnextSdk {
         throw new Error(message);
       }
     });
+
+    if (onFinished) {
+      onFinished(result.withdrawalTx, successWithdrawalUi, BigNumber.from(result.withdrawalAmount));
+    }
   }
 
   async crossChainSwap(params: CrossChainSwapParamsSchema) {
