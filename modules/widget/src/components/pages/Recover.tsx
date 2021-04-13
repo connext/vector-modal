@@ -1,6 +1,6 @@
 import React, { FC, useState } from "react";
 import { BigNumber, constants } from "ethers";
-import { CHAIN_DETAIL, BrowserNode, FullChannelState, getBalanceForAssetId } from "@connext/vector-sdk";
+import { ChainDetail, BrowserNode, FullChannelState, getBalanceForAssetId } from "@connext/vector-sdk";
 import { ModalContent, ModalBody, Text, Stack, Box, Button, InputGroup, Input } from "../common";
 import { ERROR_STATES } from "../../constants";
 import { Header, Footer } from "../static";
@@ -12,7 +12,7 @@ export interface RecoveryProps {
   handleBack: () => void;
   handleCloseButton: () => void;
   handleOptions: () => void;
-  senderChainInfo: CHAIN_DETAIL;
+  senderChainInfo: ChainDetail;
   node: BrowserNode;
   depositAddress?: string;
 }

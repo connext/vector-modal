@@ -1,5 +1,5 @@
 import React, { FC, useEffect } from "react";
-import { CHAIN_DETAIL, truncate } from "@connext/vector-sdk";
+import { ChainDetail, truncate } from "@connext/vector-sdk";
 import { ModalContent, ModalBody, Text, Stack, Button, InputGroup, Input } from "../common";
 import { Header, Footer, NetworkBar } from "../static";
 
@@ -9,8 +9,8 @@ export interface TransferProps {
   options: () => void;
   isLoad: boolean;
   inputReadOnly: boolean;
-  senderChainInfo: CHAIN_DETAIL;
-  receiverChainInfo: CHAIN_DETAIL;
+  senderChainInfo: ChainDetail;
+  receiverChainInfo: ChainDetail;
   receiverAddress: string;
   senderAmount: string | undefined;
   recipientAmount: string | undefined;

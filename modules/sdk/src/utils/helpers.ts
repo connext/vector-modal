@@ -1,8 +1,8 @@
 import { providers, BigNumber, constants, Contract, utils } from "ethers";
 import { ERC20Abi, ChainInfo } from "@connext/vector-types";
-import { getChainInfo, getChainId, getAssetDecimals } from "@connext/vector-utils";
-import { CHAIN_DETAIL, AddEthereumChainParameter } from "../constants";
-import { delay } from "@connext/vector-utils";
+import { getChainInfo, getChainId, getAssetDecimals, delay } from "@connext/vector-utils";
+
+import { ChainDetail, AddEthereumChainParameter } from "../constants";
 
 export const hydrateProviders = (
   depositChainId: number,
@@ -50,7 +50,7 @@ export const getChain = async (
   _chainId: number | undefined,
   chainProvider: string,
   _assetId: string,
-): Promise<CHAIN_DETAIL> => {
+): Promise<ChainDetail> => {
   // Sender Chain Info
   const assetId = utils.getAddress(_assetId);
   let chainId = _chainId;
@@ -83,7 +83,7 @@ export const getChain = async (
     rpcUrls: chain.rpc,
   };
 
-  const chainInfo: CHAIN_DETAIL = {
+  const chainInfo: ChainDetail = {
     name: chainName,
     chainId: chainId,
     chainProvider: chainProvider,

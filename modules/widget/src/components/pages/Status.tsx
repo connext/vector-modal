@@ -1,13 +1,13 @@
 import React, { FC } from "react";
-import { CHAIN_DETAIL } from "@connext/vector-sdk";
+import { ChainDetail } from "@connext/vector-sdk";
 import { ModalContent, ModalBody, Text, Stack } from "../common";
 import { Header, Footer, NetworkBar } from "../static";
 
 export interface StatusProps {
   title: string;
   message: string;
-  senderChainInfo: CHAIN_DETAIL;
-  receiverChainInfo: CHAIN_DETAIL;
+  senderChainInfo: ChainDetail;
+  receiverChainInfo: ChainDetail;
   receiverAddress: string;
   options: () => void;
 }

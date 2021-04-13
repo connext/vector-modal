@@ -1,13 +1,13 @@
 import React, { FC } from "react";
-import { CHAIN_DETAIL, getExplorerLinkForTx, truncate } from "@connext/vector-sdk";
+import { ChainDetail, getExplorerLinkForTx, truncate } from "@connext/vector-sdk";
 import { ModalContent, ModalBody, Text, Stack, Box, Button } from "../common";
 import { Header, Footer, NetworkBar } from "../static";
 
 export interface SuccessProps {
   amount: string;
   transactionId: string;
-  senderChainInfo?: CHAIN_DETAIL;
-  receiverChainInfo: CHAIN_DETAIL;
+  senderChainInfo?: ChainDetail;
+  receiverChainInfo: ChainDetail;
   receiverAddress: string;
   onClose: () => void;
   options: () => void;

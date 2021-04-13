@@ -5,9 +5,9 @@ import { createTestChannelState, mkPublicIdentifier, expect, mkBytes32, getRando
 
 import * as helpers from "../src/utils/helpers";
 import * as connextUtils from "../src/utils/connext";
-import { BrowserNode, CHAIN_DETAIL, ConnextSdk } from "../src";
+import { BrowserNode, ChainDetail, ConnextSdk } from "../src";
 
-const generateChainDetail = (overrides: Partial<CHAIN_DETAIL> = {}): CHAIN_DETAIL => {
+const generateChainDetail = (overrides: Partial<ChainDetail> = {}): ChainDetail => {
   return {
     name: overrides.name ?? "test network",
     chainId: overrides.chainId ?? 5,

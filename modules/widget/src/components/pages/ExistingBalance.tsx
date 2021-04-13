@@ -1,12 +1,12 @@
 import React, { FC } from "react";
-import { CHAIN_DETAIL, truncate } from "@connext/vector-sdk";
+import { ChainDetail, truncate } from "@connext/vector-sdk";
 import { ModalContent, ModalBody, Text, Stack, Button } from "../common";
 import { Header, Footer, NetworkBar } from "../static";
 
 export interface ExistingBalanceProps {
   existingChannelBalance: string;
-  senderChainInfo: CHAIN_DETAIL;
-  receiverChainInfo: CHAIN_DETAIL;
+  senderChainInfo: ChainDetail;
+  receiverChainInfo: ChainDetail;
   receiverAddress: string;
   addMoreFunds: () => void;
   continueButton: () => void;

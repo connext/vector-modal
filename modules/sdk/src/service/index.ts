@@ -4,7 +4,7 @@ import { getBalanceForAssetId, getRandomBytes32 } from "@connext/vector-utils";
 import { BigNumber, Contract, constants, utils } from "ethers";
 
 import {
-  CHAIN_DETAIL,
+  ChainDetail,
   SetupParamsSchema,
   InitParamsSchema,
   EstimateFeeParamsSchema,
@@ -44,8 +44,8 @@ export class ConnextSdk {
   public crossChainTransferId = "";
   public senderChainChannel?: FullChannelState;
   public recipientChainChannel?: FullChannelState;
-  public senderChain?: CHAIN_DETAIL;
-  public recipientChain?: CHAIN_DETAIL;
+  public senderChain?: ChainDetail;
+  public recipientChain?: ChainDetail;
   public browserNode?: BrowserNode;
 
   private evts?: EvtContainer;
@@ -85,7 +85,7 @@ export class ConnextSdk {
     this.routerPublicIdentifier = params.routerPublicIdentifier;
     this.crossChainTransferId = getRandomBytes32();
 
-    let senderChainInfo: CHAIN_DETAIL;
+    let senderChainInfo: ChainDetail;
     try {
       senderChainInfo = await getChain(params.senderChainId, params.senderChainProvider, params.senderAssetId);
       this.senderChain = senderChainInfo;
@@ -95,7 +95,7 @@ export class ConnextSdk {
       throw e;
     }
 
-    let recipientChainInfo: CHAIN_DETAIL;
+    let recipientChainInfo: ChainDetail;
     try {
       recipientChainInfo = await getChain(
         params.recipientChainId,

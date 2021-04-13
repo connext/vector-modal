@@ -15,7 +15,7 @@ export interface AddEthereumChainParameter {
   iconUrls?: string[]; // Currently ignored.
 }
 
-export interface CHAIN_DETAIL {
+export interface ChainDetail {
   name: string;
   chainId: number;
   chainProvider: string;

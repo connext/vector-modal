@@ -1,5 +1,5 @@
 import React, { FC, useState, useEffect } from "react";
-import { CHAIN_DETAIL } from "@connext/vector-sdk";
+import { ChainDetail } from "@connext/vector-sdk";
 import {
   ModalContent,
   ModalBody,
@@ -23,8 +23,8 @@ interface SwapListenerProps {
   options: () => void;
   handleBack: () => void;
   senderChannelAddress: string;
-  senderChainInfo: CHAIN_DETAIL;
-  receiverChainInfo: CHAIN_DETAIL;
+  senderChainInfo: ChainDetail;
+  receiverChainInfo: ChainDetail;
   receiverAddress: string;
 }
 
