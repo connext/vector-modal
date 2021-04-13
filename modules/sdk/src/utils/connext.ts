@@ -1,5 +1,6 @@
 import { BrowserNode, NonEIP712Message } from "@connext/vector-browser-node";
 import { ChannelMastercopy } from "@connext/vector-contracts";
+import AwesomeDebouncePromise from "awesome-debounce-promise";
 import {
   ConditionalTransferCreatedPayload,
   ConditionalTransferResolvedPayload,
@@ -215,6 +216,8 @@ export const getCrosschainFee = async (
     transferQuote: transferQuoteResult.getValue(),
   };
 };
+
+export const getFeesDebounced = AwesomeDebouncePromise(getCrosschainFee, 200);
 
 export const getTotalDepositsBob = async (
   channelAddress: string,
