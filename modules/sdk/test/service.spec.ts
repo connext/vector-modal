@@ -1,12 +1,11 @@
-import { BrowserNode, CHAIN_DETAIL, ConnextSdk } from "../src";
-import { utils, providers, BigNumber } from "ethers";
+import { utils, providers, BigNumber, constants } from "ethers";
 import Sinon, { createStubInstance } from "sinon";
 import { AllowedSwap, Result } from "@connext/vector-types";
-import { createTestChannelState, mkPublicIdentifier, expect } from "@connext/vector-utils";
+import { createTestChannelState, mkPublicIdentifier, expect, mkBytes32, getRandomBytes32 } from "@connext/vector-utils";
+
 import * as helpers from "../src/utils/helpers";
 import * as connextUtils from "../src/utils/connext";
-
-import { constants } from "ethers";
+import { BrowserNode, CHAIN_DETAIL, ConnextSdk } from "../src";
 
 const generateChainDetail = (overrides: Partial<CHAIN_DETAIL> = {}): CHAIN_DETAIL => {
   return {
@@ -38,6 +37,8 @@ let getChannelForChainMock: Sinon.SinonStub;
 let getFeesDebouncedMock: Sinon.SinonStub;
 let browserNodeMock: Sinon.SinonStubbedInstance<BrowserNode>;
 let verifyAndGetRouterSupportsMock: Sinon.SinonStub;
+let verifyRouterCapacityForTransferMock: Sinon.SinonStub;
+let sendTransactionMock: Sinon.SinonStub;
 
 describe("service", () => {
   const routerPublicIdentifier = mkPublicIdentifier("vectorRRR");
@@ -50,6 +51,8 @@ describe("service", () => {
     createEvtContainerMock = Sinon.stub(connextUtils, "createEvtContainer");
     getChannelForChainMock = Sinon.stub(connextUtils, "getChannelForChain");
     verifyAndGetRouterSupportsMock = Sinon.stub(connextUtils, "verifyAndGetRouterSupports");
+    verifyRouterCapacityForTransferMock = Sinon.stub(connextUtils, "verifyRouterCapacityForTransfer");
+    sendTransactionMock = Sinon.stub(connextUtils, "sendTransaction");
     getFeesDebouncedMock = Sinon.stub(connextUtils, "getFeesDebounced");
 
     browserNodeMock.sendIsAliveMessage.resolves(Result.ok({ channelAddress: constants.AddressZero }));
@@ -329,7 +332,7 @@ describe("service", () => {
     };
 
     it("should return undefined if transferAmount is undefined", async () => {
-      var res = await connext.estimateFees({ transferAmount: undefined });
+      const res = await connext.estimateFees({ transferAmount: undefined });
 
       expect(res.error).to.be.undefined;
       expect(res.senderAmount).to.be.empty;
@@ -339,14 +342,14 @@ describe("service", () => {
     });
 
     it("should error 'Invalid amount' if transferAmount is not numeric", async () => {
-      var res = await connext.estimateFees({ transferAmount: "a1" });
+      const res = await connext.estimateFees({ transferAmount: "a1" });
 
       console.log(res);
       expect(res.error).to.be.deep.eq("Invalid amount");
     });
 
     it("should return helper text 'Transfer amount cannot be 0' if transferAmount is zero", async () => {
-      var res = await connext.estimateFees({ transferAmount: "0" });
+      const res = await connext.estimateFees({ transferAmount: "0" });
 
       console.log(res);
       expect(res.error).to.be.deep.eq("Transfer amount cannot be 0");
@@ -363,7 +366,7 @@ describe("service", () => {
         senderAmount: BigNumber.from("1000000000000000000"),
         recipientAmount: BigNumber.from("500000000000000000"),
       });
-      var res = await connext.estimateFees({ transferAmount: "1" });
+      const res = await connext.estimateFees({ transferAmount: "1" });
 
       console.log(res);
       expect(res.error).to.be.undefined;
@@ -380,7 +383,7 @@ describe("service", () => {
         senderAmount: BigNumber.from("100000000000000000"),
         recipientAmount: BigNumber.from("0"),
       });
-      var res = await connext.estimateFees({ transferAmount: "0.1" });
+      const res = await connext.estimateFees({ transferAmount: "0.1" });
 
       console.log(res);
       expect(res.error).to.be.eq("Not enough amount to pay fees");
@@ -390,32 +393,171 @@ describe("service", () => {
       expect(res.transferQuote).to.be.eq(ResTransferQuote);
     });
 
-    it("should return helper text 'Transfer amount exceeds user balance' if transferAmount is lower than fees userBalance", async () => {});
+    it("should return helper text 'Transfer amount exceeds user balance' if transferAmount is lower than fees userBalance", async () => {
+      getFeesDebouncedMock.resolves({
+        transferQuote: ResTransferQuote,
+        totalFee: BigNumber.from("500000000000000000"),
+        senderAmount: BigNumber.from("1000000000000000000"),
+        recipientAmount: BigNumber.from("500000000000000000"),
+      });
+      const res = await connext.estimateFees({ transferAmount: "1", userBalance: "0.5" });
+
+      console.log(res);
+      expect(res.error).to.be.eq("Transfer amount exceeds user balance");
+      expect(res.senderAmount).to.be.deep.eq("1");
+      expect(res.recipientAmount).to.be.eq("0.5");
+      expect(res.totalFee).to.be.be.eq("0.5");
+      expect(res.transferQuote).to.be.eq(ResTransferQuote);
+    });
   });
 
   describe("preTransferCheck", () => {
-    it.skip("should error 'Transfer Amount is undefined' if transferAmount is undefiend", async () => {});
-    it.skip("should error 'Transfer amount cannot be 0' if transferAmount is zero", async () => {});
-    it.skip("should error if transferAmount is greater than the router's liquidity", async () => {});
+    it("should error 'Transfer Amount is undefined' if transferAmount is undefiend", async () => {
+      try {
+        await connext.preTransferCheck("");
+      } catch (e) {
+        expect(e.message).to.be.eq("Transfer Amount is undefined");
+      }
+    });
+    it("should error 'Transfer amount cannot be 0' if transferAmount is zero", async () => {
+      try {
+        await connext.preTransferCheck("0");
+      } catch (e) {
+        expect(e.message).to.be.eq("Transfer amount cannot be 0");
+      }
+    });
+
+    it("should error if verifyRouterCapacityForTransfer errors", async () => {
+      const errorMessage = "verifyRouterCapacityForTransfer errors";
+      verifyRouterCapacityForTransferMock.rejects(new Error(errorMessage));
+      try {
+        await connext.preTransferCheck("1");
+      } catch (e) {
+        expect(e).to.be.ok;
+        expect(e.message).to.be.eq(errorMessage);
+      }
+    });
+
+    it("should run if verifyRouterCapacityForTransfer resolves", async () => {
+      verifyRouterCapacityForTransferMock.resolves();
+
+      const res = await connext.preTransferCheck("1");
+
+      expect(res).to.be.undefined;
+    });
   });
 
   describe("deposit", () => {
-    it.skip("should error webProvider is undefined", async () => {});
-    it.skip("should error if init or setup function is not called", async () => {});
-    it.skip("should error if transaction is failed or reverted", async () => {});
-    it.skip("should be able to deposit ERC20", async () => {});
-    it.skip("should be able to deposit ETH", async () => {});
+    it.skip("should error if transaction is failed or reverted", async () => {
+      verifyRouterCapacityForTransferMock.resolves();
+
+      const webProviderMock = createStubInstance(providers.Web3Provider);
+      // let signerMock = createStubInstance(providers.JsonRpcSigner);
+      const providerMock = createStubInstance(providers.JsonRpcProvider);
+
+      const signerMock = new providers.JsonRpcSigner({}, providerMock);
+
+      webProviderMock.getSigner.resolves(signerMock);
+      const hash = mkBytes32("0xa");
+
+      sendTransactionMock.resolves({
+        hash,
+        wait: () =>
+          Promise.resolve({
+            transactionHash: hash,
+          } as any),
+      } as any);
+
+      signerMock.provider.waitForTransaction.resolves({ status: 0 } as any);
+
+      try {
+        await connext.deposit({ transferAmount: "1", webProvider: webProviderMock });
+      } catch (e) {
+        expect(e).to.be.ok;
+        expect(e.message).to.be.deep.eq("Transaction reverted onchain");
+      }
+    });
   });
 
   describe("transfer", () => {
-    it.skip("should error if init or setup function is not called", async () => {});
-    it.skip("should throw an error if reconcileDeposit errors", async () => {});
-    it.skip("should throw an error if createFromAssetTransfer errors", async () => {});
-    it.skip("should throw an error if resolveToAssetTransfer errors", async () => {});
+    let reconcileDepositMock: Sinon.SinonStub;
+    let createFromAssetTransferMock: Sinon.SinonStub;
+    let resolveToAssetTransferMock: Sinon.SinonStub;
+
+    beforeEach(() => {
+      reconcileDepositMock = Sinon.stub(connextUtils, "reconcileDeposit");
+      createFromAssetTransferMock = Sinon.stub(connextUtils, "createFromAssetTransfer");
+      resolveToAssetTransferMock = Sinon.stub(connextUtils, "resolveToAssetTransfer");
+    });
+
+    afterEach(() => Sinon.restore());
+
+    it("should throw an error if reconcileDeposit errors", async () => {
+      const errorMessage = "reconcileDeposit errors";
+      reconcileDepositMock.rejects(new Error(errorMessage));
+
+      try {
+        await connext.transfer({});
+      } catch (e) {
+        expect(e).to.be.ok;
+        expect(e.message).to.be.deep.eq(errorMessage);
+      }
+    });
+
+    it("should throw an error if createFromAssetTransfer errors", async () => {
+      const errorMessage = "createFromAssetTransfer errors";
+      reconcileDepositMock.resolves();
+      createFromAssetTransferMock.rejects(new Error(errorMessage));
+
+      try {
+        await connext.transfer({});
+      } catch (e) {
+        expect(e).to.be.ok;
+        expect(e.message).to.be.deep.eq(errorMessage);
+      }
+    });
+
+    // TODO: Add test for events
+    // Add events mock
+    it.skip("should throw an error if resolveToAssetTransfer errors", async () => {
+      const transferId = getRandomBytes32();
+      const preImage = getRandomBytes32();
+
+      const errorMessage = "resolveToAssetTransfer errors";
+      reconcileDepositMock.resolves();
+      createFromAssetTransferMock.resolves({ transferId, preImage });
+
+      resolveToAssetTransferMock.rejects(new Error(errorMessage));
+
+      try {
+        await connext.transfer({});
+      } catch (e) {
+        expect(e).to.be.ok;
+        expect(e.message).to.be.deep.eq(errorMessage);
+      }
+    });
   });
 
   describe("withdraw", () => {
-    it.skip("should throw an error if withdrawToAsset errors", async () => {});
+    let withdrawToAssetMock: Sinon.SinonStub;
+
+    beforeEach(() => {
+      withdrawToAssetMock = Sinon.stub(connextUtils, "withdrawToAsset");
+    });
+
+    afterEach(() => Sinon.restore());
+
+    it.skip("should throw an error if withdrawToAsset errors", async () => {
+      const errorMessage = "withdrawToAsset errors";
+      withdrawToAssetMock.rejects(new Error(errorMessage));
+
+      try {
+        await connext.withdraw({ recipientAddress: "0xa" });
+      } catch (e) {
+        expect(e).to.be.ok;
+        expect(e.message).to.be.deep.eq(errorMessage);
+      }
+    });
     it.skip("should error if transaction is failed or reverted", async () => {});
   });
 
