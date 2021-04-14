@@ -692,7 +692,7 @@ export const getChannelForChain = async (
   return channel as FullChannelState;
 };
 
-export const sendTransaction = async (
+export const onchainTransfer = async (
   depositAddress: string,
   assetId: string,
   transferAmountBn: BigNumber,

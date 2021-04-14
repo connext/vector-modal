@@ -32,7 +32,7 @@ import {
   resolveToAssetTransfer,
   withdrawToAsset,
   cancelToAssetTransfer,
-  sendTransaction,
+  onchainTransfer,
 } from "../utils";
 
 export { BrowserNode, ERC20Abi, FullChannelState, getBalanceForAssetId, TransferQuote, VectorError };
@@ -585,7 +585,7 @@ export class ConnextSdk {
     try {
       const signer = webProvider.getSigner();
 
-      const depositTx = await sendTransaction(
+      const depositTx = await onchainTransfer(
         this.senderChainChannelAddress!,
         this.senderChain?.assetId!,
         transferAmountBn,

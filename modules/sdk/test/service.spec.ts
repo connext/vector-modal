@@ -52,7 +52,7 @@ describe("service", () => {
     getChannelForChainMock = Sinon.stub(connextUtils, "getChannelForChain");
     verifyAndGetRouterSupportsMock = Sinon.stub(connextUtils, "verifyAndGetRouterSupports");
     verifyRouterCapacityForTransferMock = Sinon.stub(connextUtils, "verifyRouterCapacityForTransfer");
-    sendTransactionMock = Sinon.stub(connextUtils, "sendTransaction");
+    sendTransactionMock = Sinon.stub(connextUtils, "onchainTransfer");
     getFeesDebouncedMock = Sinon.stub(connextUtils, "getFeesDebounced");
 
     browserNodeMock.sendIsAliveMessage.resolves(Result.ok({ channelAddress: constants.AddressZero }));
