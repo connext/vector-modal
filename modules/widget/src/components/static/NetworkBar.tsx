@@ -1,11 +1,12 @@
 import React, { FC } from "react";
-import { CHAIN_DETAIL, getExplorerLinkForAsset } from "@connext/vector-sdk";
+import { ChainDetail, getExplorerLinkForAsset } from "@connext/vector-sdk";
 import styled from "styled-components";
+
 import { Stack, Box, Text, Link, InputGroup, Input } from "../common";
 
 interface NetworkBarProps {
-  senderChainInfo: CHAIN_DETAIL;
-  receiverChainInfo: CHAIN_DETAIL;
+  senderChainInfo: ChainDetail;
+  receiverChainInfo: ChainDetail;
   receiverAddress?: string;
 }
 const NetworkBar: FC<NetworkBarProps> = props => {

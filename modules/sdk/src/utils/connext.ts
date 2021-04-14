@@ -1,5 +1,6 @@
 import { BrowserNode, NonEIP712Message } from "@connext/vector-browser-node";
 import { ChannelMastercopy } from "@connext/vector-contracts";
+import AwesomeDebouncePromise from "awesome-debounce-promise";
 import {
   ConditionalTransferCreatedPayload,
   ConditionalTransferResolvedPayload,
@@ -14,14 +15,16 @@ import {
   TransferQuote,
   AllowedSwap,
   WithdrawalResolvedPayload,
+  ERC20Abi,
 } from "@connext/vector-types";
 import { calculateExchangeWad, createlockHash, getBalanceForAssetId, inverse } from "@connext/vector-utils";
 import { providers, Contract, BigNumber, constants, utils } from "ethers";
 import { Evt } from "evt";
 import detectEthereumProvider from "@metamask/detect-provider";
 
-import { getOnchainBalance } from "./helpers";
 import { iframeSrc } from "../constants";
+
+import { getOnchainBalance } from "./helpers";
 
 export const connectNode = async (
   routerPublicIdentifier: string,
@@ -228,6 +231,8 @@ export const getCrosschainFee = async (
   };
 };
 
+export const getFeesDebounced = AwesomeDebouncePromise(getCrosschainFee, 200);
+
 export const getTotalDepositsBob = async (
   channelAddress: string,
   assetId: string,
@@ -244,7 +249,7 @@ export const getTotalDepositsBob = async (
 };
 
 // throws results to be used in retryWithDelay fn
-export const reconcileDeposit = async (node: BrowserNode, channelAddress: string, _assetId: string) => {
+export const reconcileDeposit = async (node: BrowserNode, channelAddress: string, _assetId: string): Promise<void> => {
   const ret = await node.reconcileDeposit({
     channelAddress,
     assetId: utils.getAddress(_assetId),
@@ -342,7 +347,7 @@ export const waitForSenderCancels = async (
   node: BrowserNode,
   evt: Evt<ConditionalTransferResolvedPayload>,
   depositChannelAddress: string,
-) => {
+): Promise<void> => {
   const active = await node.getActiveTransfers({
     channelAddress: depositChannelAddress,
   });
@@ -551,7 +556,7 @@ export const verifyAndGetRouterSupports = async (
   _toAssetId: string,
   ethProvider: providers.BaseProvider, // For `to` chain
   routerPublicIdentifier: string,
-): Promise<any> => {
+): Promise<AllowedSwap> => {
   const withdrawChannel = await getChannelForChain(node, routerPublicIdentifier, toChainId);
 
   const fromAssetId = utils.getAddress(_fromAssetId);
@@ -603,7 +608,7 @@ export const verifyRouterCapacityForTransfer = async (
   transferAmount: BigNumber,
   swap: any,
   fromAssetDecimals: number,
-) => {
+): Promise<void> => {
   console.log(`verifyRouterCapacityForTransfer for ${transferAmount}`);
   const routerOnchain = await getOnchainBalance(ethProvider, toAssetId, withdrawChannel.alice);
   const routerOffchain = BigNumber.from(getBalanceForAssetId(withdrawChannel, toAssetId, "alice"));
@@ -685,4 +690,21 @@ export const getChannelForChain = async (
     throw new Error(`Could not find channel on ${chainId}`);
   }
   return channel as FullChannelState;
+};
+
+export const onchainTransfer = async (
+  depositAddress: string,
+  assetId: string,
+  transferAmountBn: BigNumber,
+  signer: providers.JsonRpcSigner,
+): Promise<providers.TransactionResponse> => {
+  const tx =
+    assetId === constants.AddressZero
+      ? await signer.sendTransaction({
+          to: depositAddress,
+          value: transferAmountBn,
+        })
+      : await new Contract(assetId, ERC20Abi, signer).transfer(depositAddress, transferAmountBn);
+
+  return tx;
 };

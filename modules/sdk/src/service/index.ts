@@ -1,10 +1,10 @@
 import { EngineEvents, FullChannelState, ERC20Abi, TransferQuote, VectorError } from "@connext/vector-types";
 import { BrowserNode } from "@connext/vector-browser-node";
 import { getBalanceForAssetId, getRandomBytes32 } from "@connext/vector-utils";
-import { BigNumber, Contract, constants, utils } from "ethers";
-import AwesomeDebouncePromise from "awesome-debounce-promise";
+import { BigNumber, constants, utils } from "ethers";
+
 import {
-  CHAIN_DETAIL,
+  ChainDetail,
   SetupParamsSchema,
   InitParamsSchema,
   EstimateFeeParamsSchema,
@@ -26,12 +26,13 @@ import {
   reconcileDeposit,
   cancelHangingToTransfers,
   waitForSenderCancels,
-  getCrosschainFee,
+  getFeesDebounced,
   verifyRouterCapacityForTransfer,
   createFromAssetTransfer,
   resolveToAssetTransfer,
   withdrawToAsset,
   cancelToAssetTransfer,
+  onchainTransfer,
 } from "../utils";
 
 export { BrowserNode, ERC20Abi, FullChannelState, getBalanceForAssetId, TransferQuote, VectorError };
@@ -43,14 +44,12 @@ export class ConnextSdk {
   public crossChainTransferId = "";
   public senderChainChannel?: FullChannelState;
   public recipientChainChannel?: FullChannelState;
-  public senderChain?: CHAIN_DETAIL;
-  public recipientChain?: CHAIN_DETAIL;
-  public browserNode: BrowserNode | undefined;
+  public senderChain?: ChainDetail;
+  public recipientChain?: ChainDetail;
+  public browserNode?: BrowserNode;
 
   private evts?: EvtContainer;
   private swapDefinition?: any;
-
-  private getFeesDebounced = AwesomeDebouncePromise(getCrosschainFee, 200);
 
   async init(params: InitParamsSchema): Promise<InitResponseSchema> {
     try {
@@ -82,11 +81,11 @@ export class ConnextSdk {
     }
   }
 
-  async setup(params: SetupParamsSchema) {
+  async setup(params: SetupParamsSchema): Promise<void> {
     this.routerPublicIdentifier = params.routerPublicIdentifier;
     this.crossChainTransferId = getRandomBytes32();
 
-    let senderChainInfo: CHAIN_DETAIL;
+    let senderChainInfo: ChainDetail;
     try {
       senderChainInfo = await getChain(params.senderChainId, params.senderChainProvider, params.senderAssetId);
       this.senderChain = senderChainInfo;
@@ -96,7 +95,7 @@ export class ConnextSdk {
       throw e;
     }
 
-    let recipientChainInfo: CHAIN_DETAIL;
+    let recipientChainInfo: ChainDetail;
     try {
       recipientChainInfo = await getChain(
         params.recipientChainId,
@@ -155,8 +154,14 @@ export class ConnextSdk {
 
     console.log("INITIALIZED BROWSER NODE");
 
-    const _evts = this.evts ?? createEvtContainer(_node);
-    this.evts = _evts;
+    try {
+      const _evts = this.evts ?? createEvtContainer(_node);
+      this.evts = _evts;
+    } catch (e) {
+      const message = "Error while creating evt container";
+      console.log(e, message);
+      throw e;
+    }
 
     let senderChainChannel: FullChannelState;
     try {
@@ -168,6 +173,7 @@ export class ConnextSdk {
       throw e;
     }
     const senderChainChannelAddress = senderChainChannel!.channelAddress;
+    this.senderChainChannel = senderChainChannel;
     this.senderChainChannelAddress = senderChainChannelAddress;
 
     let recipientChainChannel: FullChannelState;
@@ -360,8 +366,29 @@ export class ConnextSdk {
       throw e;
     }
 
+    try {
+      const {
+        offChainSenderChainAssetBalanceBn,
+        offChainRecipientChainAssetBalanceBn,
+      } = await this.getOffChainChannelBalance();
+
+      return {
+        offChainSenderChainAssetBalanceBn,
+        offChainRecipientChainAssetBalanceBn,
+      };
+    } catch (e) {
+      const message = "Error at Off chain channel balance";
+      console.log(e, message);
+      throw e;
+    }
+  }
+
+  async getOffChainChannelBalance(): Promise<{
+    offChainSenderChainAssetBalanceBn: BigNumber;
+    offChainRecipientChainAssetBalanceBn: BigNumber;
+  }> {
     const offChainSenderChainAssetBalance = BigNumber.from(
-      getBalanceForAssetId(this.senderChainChannel, this.senderChain?.assetId!, "bob"),
+      getBalanceForAssetId(this.senderChainChannel!, this.senderChain?.assetId!, "bob"),
     );
     console.log(
       `Offchain balance for ${this.senderChainChannelAddress} of asset ${this.senderChain
@@ -383,7 +410,7 @@ export class ConnextSdk {
   }
 
   async estimateFees(params: EstimateFeeParamsSchema): Promise<EstimateFeeResponseSchema> {
-    const { transferAmount: _transferAmount, isRecipientAssetInput, userBalanceWei } = params;
+    const { transferAmount: _transferAmount, isRecipientAssetInput, userBalance } = params;
 
     const transferAmount = _transferAmount ? _transferAmount.trim() : undefined;
     let err: string | undefined = undefined;
@@ -431,7 +458,7 @@ export class ConnextSdk {
           senderAmount: _senderAmount,
           recipientAmount: _recipientAmount,
           transferQuote: _transferQuote,
-        } = await this.getFeesDebounced(
+        } = await getFeesDebounced(
           this.browserNode!,
           this.routerPublicIdentifier,
           transferAmountBn,
@@ -480,8 +507,9 @@ export class ConnextSdk {
         console.log("receivedUi: ", recipientAmountUi);
       }
 
-      if (userBalanceWei) {
-        const userBalanceBn = BigNumber.from(utils.parseUnits(userBalanceWei, this.senderChain?.assetDecimals!));
+      if (userBalance) {
+        const userBalanceBn = BigNumber.from(utils.parseUnits(userBalance, this.senderChain?.assetDecimals!));
+        console.log(senderAmountBn.toString(), userBalance, userBalanceBn.toString());
         if (senderAmountBn.gt(userBalanceBn)) {
           err = "Transfer amount exceeds user balance";
           return {
@@ -506,7 +534,7 @@ export class ConnextSdk {
     };
   }
 
-  async preTransferCheck(transferAmount: string) {
+  async preTransferCheck(transferAmount: string): Promise<void> {
     if (!transferAmount) {
       const message = "Transfer Amount is undefined";
       console.log(message);
@@ -539,7 +567,7 @@ export class ConnextSdk {
     }
   }
 
-  async deposit(params: DepositParamsSchema) {
+  async deposit(params: DepositParamsSchema): Promise<void> {
     const { transferAmount, preTransferCheck = true, webProvider, onDeposited } = params;
 
     if (preTransferCheck) {
@@ -557,21 +585,16 @@ export class ConnextSdk {
     try {
       const signer = webProvider.getSigner();
 
-      const depositTx =
-        this.senderChain?.assetId! === constants.AddressZero
-          ? await signer.sendTransaction({
-              to: this.senderChainChannelAddress!,
-              value: transferAmountBn,
-            })
-          : await new Contract(this.senderChain?.assetId!, ERC20Abi, signer).transfer(
-              this.senderChainChannelAddress!,
-              transferAmountBn,
-            );
+      const depositTx = await onchainTransfer(
+        this.senderChainChannelAddress!,
+        this.senderChain?.assetId!,
+        transferAmountBn,
+        signer,
+      );
 
-      const receipt = await depositTx.wait();
-      console.log("deposit mined:", receipt.transactionHash);
+      console.log("deposit mined:", depositTx.hash);
 
-      this.senderChain?.rpcProvider!.waitForTransaction(depositTx.hash, 2).then(receipt => {
+      signer.provider.waitForTransaction(depositTx.hash, 2).then(receipt => {
         if (receipt.status === 0) {
           // tx reverted
           const message = "Transaction reverted onchain";
@@ -588,7 +611,7 @@ export class ConnextSdk {
     }
   }
 
-  async transfer(params: TransferParamsSchema) {
+  async transfer(params: TransferParamsSchema): Promise<void> {
     const { transferQuote } = params;
     const preImage = getRandomBytes32();
 
@@ -683,7 +706,7 @@ export class ConnextSdk {
     }
   }
 
-  async withdraw(params: WithdrawParamsSchema) {
+  async withdraw(params: WithdrawParamsSchema): Promise<void> {
     const { recipientAddress, onFinished, withdrawalCallTo, withdrawalCallData, generateCallData } = params;
     // now go to withdrawal screen
     let result;
@@ -710,10 +733,6 @@ export class ConnextSdk {
 
     console.log(successWithdrawalUi);
 
-    if (onFinished) {
-      onFinished(result.withdrawalTx, successWithdrawalUi, BigNumber.from(result.withdrawalAmount));
-    }
-
     // check tx receipt for withdrawal tx
     this.recipientChain?.rpcProvider.waitForTransaction(result.withdrawalTx).then(receipt => {
       if (receipt.status === 0) {
@@ -723,9 +742,13 @@ export class ConnextSdk {
         throw new Error(message);
       }
     });
+
+    if (onFinished) {
+      onFinished(result.withdrawalTx, successWithdrawalUi, BigNumber.from(result.withdrawalAmount));
+    }
   }
 
-  async crossChainSwap(params: CrossChainSwapParamsSchema) {
+  async crossChainSwap(params: CrossChainSwapParamsSchema): Promise<void> {
     const {
       recipientAddress,
       onFinished,

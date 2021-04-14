@@ -1,4 +1,5 @@
 import React, { FC, useState } from "react";
+
 import { MenuList, MenuItem, MenuButton } from "../common";
 import { ScreenStates, SCREEN_STATES, ERROR_STATES } from "../../constants";
 
@@ -9,7 +10,7 @@ interface OptionsProps {
 }
 
 const Options: FC<OptionsProps> = props => {
-  const [isListOpen, setIsListOpen] = useState<Boolean>(false);
+  const [isListOpen, setIsListOpen] = useState<boolean>(false);
   const { state, onClose, handleRecoveryButton } = props;
   return (
     <>

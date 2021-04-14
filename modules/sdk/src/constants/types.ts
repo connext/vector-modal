@@ -15,7 +15,7 @@ export interface AddEthereumChainParameter {
   iconUrls?: string[]; // Currently ignored.
 }
 
-export interface CHAIN_DETAIL {
+export interface ChainDetail {
   name: string;
   chainId: number;
   chainProvider: string;
@@ -49,7 +49,7 @@ export type InitResponseSchema = CheckPendingTransferResponseSchema;
 export type EstimateFeeParamsSchema = {
   transferAmount: string | undefined;
   isRecipientAssetInput?: boolean;
-  userBalanceWei?: string;
+  userBalance?: string;
 };
 
 export type EstimateFeeResponseSchema = {

@@ -8,5 +8,6 @@ package-lock.json
 yarn.lock
 !/yarn.lock
 
+.nyc_output
 .yalc
 yalc.lock

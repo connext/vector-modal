@@ -1,8 +1,8 @@
 import { providers, BigNumber, constants, Contract, utils } from "ethers";
 import { ERC20Abi, ChainInfo } from "@connext/vector-types";
-import { getChainInfo, getChainId, getAssetDecimals } from "@connext/vector-utils";
-import { CHAIN_DETAIL, AddEthereumChainParameter } from "../constants";
-import { delay } from "@connext/vector-utils";
+import { getChainInfo, getChainId, getAssetDecimals, delay } from "@connext/vector-utils";
+
+import { ChainDetail, AddEthereumChainParameter } from "../constants";
 
 export const hydrateProviders = (
   depositChainId: number,
@@ -46,7 +46,11 @@ export const retryWithDelay = async <T = any>(fn: () => Promise<T>, retries = 5)
   throw error;
 };
 
-export const getChain = async (_chainId: number | undefined, chainProvider: string, _assetId: string) => {
+export const getChain = async (
+  _chainId: number | undefined,
+  chainProvider: string,
+  _assetId: string,
+): Promise<ChainDetail> => {
   // Sender Chain Info
   const assetId = utils.getAddress(_assetId);
   let chainId = _chainId;
@@ -79,7 +83,7 @@ export const getChain = async (_chainId: number | undefined, chainProvider: stri
     rpcUrls: chain.rpc,
   };
 
-  const chainInfo: CHAIN_DETAIL = {
+  const chainInfo: ChainDetail = {
     name: chainName,
     chainId: chainId,
     chainProvider: chainProvider,
@@ -108,7 +112,7 @@ export const getUserBalance = async (
   return userBalance;
 };
 
-export const truncate = (str: string, maxDecimalDigits: number) => {
+export const truncate = (str: string, maxDecimalDigits: number): string => {
   if (str.includes(".")) {
     const parts = str.split(".");
     return parts[0] + "." + parts[1].slice(0, maxDecimalDigits);

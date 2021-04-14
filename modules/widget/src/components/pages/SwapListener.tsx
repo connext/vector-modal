@@ -1,5 +1,7 @@
 import React, { FC, useState, useEffect } from "react";
-import { CHAIN_DETAIL } from "@connext/vector-sdk";
+import { ChainDetail } from "@connext/vector-sdk";
+import QRCode from "qrcode.react";
+
 import {
   ModalContent,
   ModalBody,
@@ -16,15 +18,14 @@ import {
 } from "../common";
 import { Header, Footer, NetworkBar } from "../static";
 // @ts-ignore
-import QRCode from "qrcode.react";
 
 interface SwapListenerProps {
-  showTimer: Boolean;
+  showTimer: boolean;
   options: () => void;
   handleBack: () => void;
   senderChannelAddress: string;
-  senderChainInfo: CHAIN_DETAIL;
-  receiverChainInfo: CHAIN_DETAIL;
+  senderChainInfo: ChainDetail;
+  receiverChainInfo: ChainDetail;
   receiverAddress: string;
 }
 
@@ -39,7 +40,7 @@ const SwapListener: FC<SwapListenerProps> = props => {
     handleBack,
   } = props;
   const [copiedAddress, setCopiedAddress] = useState<boolean>(false);
-  const [running, setRunning] = useState<Boolean>(false);
+  const [running, setRunning] = useState<boolean>(false);
   const [currentTimeSec, setCurrentTimeSec] = useState<number>(0);
   const [currentTimeMin, setCurrentTimeMin] = useState<number>(0);
   const [watchInterval, setWatchInterval] = useState<NodeJS.Timeout>();
@@ -57,7 +58,7 @@ const SwapListener: FC<SwapListenerProps> = props => {
     if (showTimer) {
       if (!running) {
         setRunning(true);
-        let watch = setInterval(() => {
+        const watch = setInterval(() => {
           setCurrentTimeSec(prevSec => {
             if (prevSec >= 60) {
               setCurrentTimeMin(prevMin => prevMin + 1);

@@ -1,5 +1,6 @@
 import React, { FC, useState } from "react";
-import { CHAIN_DETAIL } from "@connext/vector-sdk";
+import { ChainDetail } from "@connext/vector-sdk";
+
 import {
   ModalContent,
   ModalBody,
@@ -26,8 +27,8 @@ export interface ErrorProps {
   handleRecoveryButton?: () => void;
   options: () => void;
   handleBack: () => void;
-  senderChainInfo?: CHAIN_DETAIL;
-  receiverChainInfo: CHAIN_DETAIL;
+  senderChainInfo?: ChainDetail;
+  receiverChainInfo: ChainDetail;
   receiverAddress: string;
   state: ErrorStates;
 }

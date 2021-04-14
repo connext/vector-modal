@@ -18,7 +18,7 @@
   "scripts": {
     "start": "tsdx watch --tsconfig tsconfig.build.json --verbose --noClean",
     "build": "tsdx build --tsconfig tsconfig.build.json",
-    "test": "tsdx test",
+    "test": "nyc ts-mocha --check-leaks --exit --timeout 60000 'test/**/*.spec.ts'",
     "lint": "tsdx lint",
     "prepublish": "yarn build"
   },
@@ -43,10 +43,21 @@
   },
   "devDependencies": {
     "@size-limit/preset-small-lib": "^4.10.2",
+    "@types/chai": "^4.2.15",
+    "@types/chai-as-promised": "7.1.3",
+    "@types/chai-subset": "1.3.3",
+    "@types/mocha": "8.2.1",
+    "@types/sinon": "^9.0.11",
     "husky": "^6.0.0",
+    "sinon": "^10.0.0",
+    "mocha": "8.3.0",
+    "chai": "4.3.1",
+    "chai-as-promised": "7.1.1",
+    "nyc": "15.1.0",
     "size-limit": "^4.10.2",
     "tsdx": "^0.14.1",
     "tslib": "^2.2.0",
+    "ts-mocha": "8.0.0",
     "typescript": "^4.2.4"
   },
   "publishConfig": {

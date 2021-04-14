@@ -1,6 +1,7 @@
 import React, { FC, useRef, useEffect } from "react";
 import { Rive, Layout } from "rive-js";
 import styled from "styled-components";
+
 import { ModalContent, ModalBody, Text, Stack } from "../common";
 import { Footer } from "../static";
 
