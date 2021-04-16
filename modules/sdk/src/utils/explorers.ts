@@ -52,5 +52,9 @@ export const getExplorerLinkForAsset = (chainId: number, assetId: string): strin
   if (assetId === constants.AddressZero) {
     return base;
   }
+  // BlockScout uses 'tokens' and not 'token'
+  if (chainId === 137 || chainId === 80001) {
+    return `${base}/tokens/${assetId}`;
+  }
   return `${base}/token/${assetId}`;
 };
