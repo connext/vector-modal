@@ -2,31 +2,29 @@ import React, { FC } from "react";
 import { ChainDetail, getExplorerLinkForTx, truncate } from "@connext/vector-sdk";
 
 import { ModalContent, ModalBody, Text, Stack, Box, Button } from "../common";
-import { Header, Footer, NetworkBar } from "../static";
+import { Header, Footer } from "../static";
 
 export interface SuccessProps {
   amount: string;
   transactionId: string;
-  senderChainInfo?: ChainDetail;
-  receiverChainInfo: ChainDetail;
-  receiverAddress: string;
+  senderChainInfo: ChainDetail;
   onClose: () => void;
   options: () => void;
 }
 
-const Success: FC<SuccessProps> = props => {
-  const { amount, transactionId, senderChainInfo, receiverChainInfo, receiverAddress, onClose, options } = props;
+const RecoverSuccess: FC<SuccessProps> = props => {
+  const { amount, transactionId, senderChainInfo, onClose, options } = props;
   return (
     <>
       <ModalContent id="modalContent">
-        <Header title="Success" successIcon={true} options={options} onClose={onClose} />
+        <Header title="Recover Success" successIcon={true} options={options} onClose={onClose} />
         <ModalBody>
           <Stack column={true} spacing={7}>
             <Box>
               <Stack column={true} spacing={2}>
                 <Stack>
                   <Text fontSize="1.5rem" fontFamily="Cooper Hewitt" fontWeight="700" lineHeight="30px" flex="auto">
-                    {truncate(amount, 6)} {receiverChainInfo.assetName}
+                    {truncate(amount, 6)} {senderChainInfo.assetName}
                   </Text>
                   <Button
                     size="sm"
@@ -36,26 +34,16 @@ const Success: FC<SuccessProps> = props => {
                     borderStyle="none"
                     color="white"
                     casing="uppercase"
-                    onClick={() =>
-                      window.open(getExplorerLinkForTx(receiverChainInfo.chainId, transactionId), "_blank")
-                    }
+                    onClick={() => window.open(getExplorerLinkForTx(senderChainInfo.chainId, transactionId), "_blank")}
                   >
                     view tx
                   </Button>
                 </Stack>
                 <Box>
-                  <Text fontSize="1rem">{`Now available on ${receiverChainInfo.name}.`}</Text>
+                  <Text fontSize="1rem">{`Now available on ${senderChainInfo.name}.`}</Text>
                 </Box>
               </Stack>
             </Box>
-
-            {senderChainInfo && receiverChainInfo && (
-              <NetworkBar
-                senderChainInfo={senderChainInfo}
-                receiverChainInfo={receiverChainInfo}
-                receiverAddress={receiverAddress}
-              />
-            )}
           </Stack>
         </ModalBody>
         <Footer />
@@ -64,4 +52,4 @@ const Success: FC<SuccessProps> = props => {
   );
 };
 
-export default Success;
+export default RecoverSuccess;

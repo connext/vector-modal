@@ -163,7 +163,7 @@ const Swap: FC<TransferProps> = props => {
                     Estimated Fees:
                   </Text>
                   <Text fontSize="0.875rem" fontFamily="Roboto Mono" color="#666666" fontWeight="700">
-                    {truncate(feeQuote, 4)} {senderChainInfo.assetName}
+                    {truncate(feeQuote, 6)} {senderChainInfo.assetName}
                   </Text>
                 </Stack>
 

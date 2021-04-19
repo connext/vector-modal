@@ -15,6 +15,7 @@ import {
   CrossChainSwapParamsSchema,
   CheckPendingTransferResponseSchema,
   InitResponseSchema,
+  RecoverParamsSchema,
 } from "../constants";
 import {
   getChain,
@@ -779,5 +780,74 @@ export class ConnextSdk {
     }
 
     console.log("Successfully Swap");
+  }
+
+  async recover(params: RecoverParamsSchema): Promise<void> {
+    const { assetId, recipientAddress, onRecover } = params;
+
+    try {
+      await reconcileDeposit(this.browserNode!, this.senderChainChannelAddress, assetId);
+    } catch (e) {
+      const message = "Error in reconcileDeposit";
+      console.error(message, e);
+      throw e;
+    }
+
+    let updatedChannel: FullChannelState;
+    try {
+      updatedChannel = await getChannelForChain(
+        this.browserNode!,
+        this.routerPublicIdentifier,
+        this.senderChain?.chainId!,
+      );
+    } catch (e) {
+      const message = "Could not get sender channel";
+      console.log(e, message);
+      throw e;
+    }
+
+    const endingBalanceBn = BigNumber.from(getBalanceForAssetId(updatedChannel, assetId, "bob"));
+    if (endingBalanceBn.isZero()) {
+      const message = "No balance found to recover";
+      console.error(message);
+      throw new Error(message);
+    }
+    console.log(`Found ${endingBalanceBn.toString()} of ${assetId}, attempting withdrawal`);
+
+    let result;
+    try {
+      result = await withdrawToAsset(
+        this.browserNode!,
+        this.evts![EngineEvents.WITHDRAWAL_RESOLVED],
+        this.senderChain?.chainId!,
+        this.senderChain?.assetId!,
+        recipientAddress,
+        this.routerPublicIdentifier,
+      );
+    } catch (e) {
+      console.log(e);
+      throw e;
+    }
+    // display tx hash through explorer -> handles by the event.
+    console.log("Recovery Withdraw: ", result);
+
+    const successRecoverUi = utils.formatUnits(result.withdrawalAmount, this.senderChain?.assetDecimals!);
+
+    console.log(successRecoverUi);
+
+    // check tx receipt for withdrawal tx
+    this.senderChain?.rpcProvider.waitForTransaction(result.withdrawalTx).then(receipt => {
+      if (receipt.status === 0) {
+        // tx reverted
+        const message = "Transaction reverted onchain";
+        console.error(message, receipt);
+        throw new Error(message);
+      }
+    });
+
+    if (onRecover) {
+      onRecover(result.withdrawalTx, successRecoverUi, BigNumber.from(result.withdrawalAmount));
+    }
+    console.log("Successfully Recover");
   }
 }
