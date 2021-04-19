@@ -68,6 +68,12 @@ export type DepositParamsSchema = {
   onDeposited?: (txHash: string) => void;
 };
 
+export type TransferParamsSchema = {
+  transferQuote?: TransferQuote;
+  // Callbacks
+  onTransferred?: () => void;
+};
+
 export type WithdrawParamsSchema = {
   recipientAddress: string;
   onFinished?: (txHash: string, amountUi?: string, amountBn?: BigNumber) => void;
@@ -76,10 +82,11 @@ export type WithdrawParamsSchema = {
   generateCallData?: (toWithdraw: string, toAssetId: string, node: BrowserNode) => Promise<{ callData?: string }>;
 };
 
-export type TransferParamsSchema = {
-  transferQuote?: TransferQuote;
-  // Callbacks
-  onTransferred?: () => void;
-};
-
 export type CrossChainSwapParamsSchema = WithdrawParamsSchema & TransferParamsSchema;
+
+export type RecoverParamsSchema = {
+  assetId: string;
+  recipientAddress: string;
+  // Callbacks
+  onRecover?: (txHash: string, amountUi?: string, amountBn?: BigNumber) => void;
+};
