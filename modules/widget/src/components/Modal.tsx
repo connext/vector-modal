@@ -117,6 +117,8 @@ const ConnextModal: FC<ConnextModalProps> = ({
     if (onFinished) {
       onFinished(txHash, amountBn!.toString());
     }
+
+    handleScreen({ state: SCREEN_STATES.SUCCESS });
   };
 
   const depositListenerAndTransfer = async (): Promise<void> => {
@@ -308,8 +310,6 @@ const ConnextModal: FC<ConnextModalProps> = ({
       });
       return;
     }
-
-    handleScreen({ state: SCREEN_STATES.SUCCESS });
   };
 
   const stateReset = (): void => {
@@ -531,8 +531,6 @@ const ConnextModal: FC<ConnextModalProps> = ({
         });
         return;
       }
-
-      handleScreen({ state: SCREEN_STATES.SUCCESS });
     }
 
     // if both are zero, register listener and display
@@ -601,6 +599,26 @@ const ConnextModal: FC<ConnextModalProps> = ({
       default:
         handleScreen({ state: SCREEN_STATES.RECOVERY });
         return;
+    }
+  };
+
+  const handleRecover = async (assetId: string, recipientAddress: string) => {
+    try {
+      await connextSdk!.recover({
+        assetId: assetId,
+        recipientAddress: recipientAddress,
+        onRecover: onSuccess,
+      });
+    } catch (e) {
+      const message = e.message;
+      console.log(e, message);
+      handleScreen({
+        state: ERROR_STATES.ERROR_TRANSFER,
+        error: e,
+        title: "Recovery Error",
+        message: message,
+      });
+      return;
     }
   };
 
@@ -734,16 +752,7 @@ const ConnextModal: FC<ConnextModalProps> = ({
 
       case SCREEN_STATES.RECOVERY:
         console.log("return recovery");
-        return (
-          <Recover
-            senderChainInfo={senderChain!}
-            node={connextSdk?.browserNode!}
-            depositAddress={connextSdk!.senderChainChannelAddress}
-            handleOptions={handleOptions}
-            handleBack={handleBack}
-            handleCloseButton={handleCloseButton}
-          />
-        );
+        return <Recover recover={handleRecover} handleOptions={handleOptions} handleBack={handleBack} />;
 
       case SCREEN_STATES.LISTENER:
         return (
