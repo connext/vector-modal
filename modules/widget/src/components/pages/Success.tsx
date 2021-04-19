@@ -26,7 +26,7 @@ const Success: FC<SuccessProps> = props => {
               <Stack column={true} spacing={2}>
                 <Stack>
                   <Text fontSize="1.5rem" fontFamily="Cooper Hewitt" fontWeight="700" lineHeight="30px" flex="auto">
-                    {truncate(amount, 4)} {receiverChainInfo.assetName}
+                    {truncate(amount, 6)} {receiverChainInfo.assetName}
                   </Text>
                   <Button
                     size="sm"
