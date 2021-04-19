@@ -15,7 +15,18 @@ import { BigNumber, utils, providers } from "ethers";
 import { ERROR_STATES, SCREEN_STATES, ScreenStates, ErrorStates } from "../constants";
 
 import { theme, Fonts, ModalOverlay, ModalContentContainer, BackButton, CloseButton } from "./common";
-import { Loading, Swap, SwapListener, Status, ErrorScreen, Success, Recover, ExistingBalance } from "./pages";
+import {
+  Loading,
+  Swap,
+  SwapListener,
+  Status,
+  ErrorScreen,
+  Success,
+  ExistingBalance,
+  Recover,
+  RecoverErrorScreen,
+  RecoverSuccess,
+} from "./pages";
 import { Options } from "./static";
 
 export type ConnextModalProps = {
@@ -86,6 +97,7 @@ const ConnextModal: FC<ConnextModalProps> = ({
   const [senderChain, setSenderChain] = useState<ChainDetail>();
   const [receiverChain, setReceiverChain] = useState<ChainDetail>();
 
+  const [userAddress, setUserAddress] = useState<string>();
   const [userBalance, setUserBalance] = useState<string>();
 
   const [withdrawTx, setWithdrawTx] = useState<string>();
@@ -118,7 +130,11 @@ const ConnextModal: FC<ConnextModalProps> = ({
       onFinished(txHash, amountBn!.toString());
     }
 
-    handleScreen({ state: SCREEN_STATES.SUCCESS });
+    if (screenState === SCREEN_STATES.RECOVER) {
+      handleScreen({ state: SCREEN_STATES.RECOVER_SUCCESS });
+    } else {
+      handleScreen({ state: SCREEN_STATES.SUCCESS });
+    }
   };
 
   const depositListenerAndTransfer = async (): Promise<void> => {
@@ -321,6 +337,7 @@ const ConnextModal: FC<ConnextModalProps> = ({
     setExistingChannelBalanceUi("");
     setReceivedAmountUi("");
     setUserBalance(undefined);
+    setUserAddress(undefined);
     setError(undefined);
   };
 
@@ -406,6 +423,11 @@ const ConnextModal: FC<ConnextModalProps> = ({
           });
           return;
         }
+
+        const signer = injectedProvider.getSigner();
+        const address = await signer.getAddress();
+
+        setUserAddress(address);
 
         const _userBalance = await getUserBalance(
           injectedProvider,
@@ -590,19 +612,24 @@ const ConnextModal: FC<ConnextModalProps> = ({
   };
 
   const handleRecoveryButton = () => {
-    console.log("click on recovery button", screenState);
     switch (screenState) {
-      case SCREEN_STATES.RECOVERY:
+      case SCREEN_STATES.RECOVER:
         handleScreen({ state: SCREEN_STATES.SWAP });
         return;
 
       default:
-        handleScreen({ state: SCREEN_STATES.RECOVERY });
+        handleScreen({ state: SCREEN_STATES.RECOVER });
         return;
     }
   };
 
   const handleRecover = async (assetId: string, recipientAddress: string) => {
+    handleScreen({
+      state: SCREEN_STATES.STATUS,
+      title: "Recovering",
+      message: `Recovering... This step can take some time if the chain is congested`,
+    });
+
     try {
       await connextSdk!.recover({
         assetId: assetId,
@@ -613,9 +640,8 @@ const ConnextModal: FC<ConnextModalProps> = ({
       const message = e.message;
       console.log(e, message);
       handleScreen({
-        state: ERROR_STATES.ERROR_TRANSFER,
+        state: ERROR_STATES.ERROR_RECOVER,
         error: e,
-        title: "Recovery Error",
         message: message,
       });
       return;
@@ -674,7 +700,7 @@ const ConnextModal: FC<ConnextModalProps> = ({
       case SCREEN_STATES.SUCCESS:
         break;
 
-      case SCREEN_STATES.RECOVERY:
+      case SCREEN_STATES.RECOVER:
         break;
 
       case SCREEN_STATES.LISTENER:
@@ -683,6 +709,9 @@ const ConnextModal: FC<ConnextModalProps> = ({
       case SCREEN_STATES.STATUS:
         setTitle(pTitle);
         setMessage(pMessage);
+        break;
+
+      case SCREEN_STATES.RECOVER_SUCCESS:
         break;
 
       default:
@@ -714,6 +743,7 @@ const ConnextModal: FC<ConnextModalProps> = ({
             senderChainInfo={senderChain!}
             receiverChainInfo={receiverChain!}
             receiverAddress={withdrawalAddress}
+            showNetworkBar={lastScreenState === SCREEN_STATES.RECOVER ? false : true}
             options={handleOptions}
           />
         );
@@ -750,9 +780,38 @@ const ConnextModal: FC<ConnextModalProps> = ({
           />
         );
 
-      case SCREEN_STATES.RECOVERY:
-        console.log("return recovery");
-        return <Recover recover={handleRecover} handleOptions={handleOptions} handleBack={handleBack} />;
+      case SCREEN_STATES.RECOVER:
+        return (
+          <Recover
+            recover={handleRecover}
+            handleOptions={handleOptions}
+            handleBack={handleBack}
+            userAddress={userAddress}
+          />
+        );
+
+      case SCREEN_STATES.RECOVER_SUCCESS:
+        return (
+          <RecoverSuccess
+            amount={successWithdrawalAmount!}
+            transactionId={withdrawTx!}
+            senderChainInfo={senderChain!}
+            onClose={handleCloseButton}
+            options={handleOptions}
+          />
+        );
+
+      case SCREEN_STATES.ERROR_RECOVER:
+        return (
+          <RecoverErrorScreen
+            error={error ?? new Error("unknown")}
+            senderChannelAddress={connextSdk ? connextSdk.senderChainChannelAddress : ""}
+            recipientChannelAddress={connextSdk ? connextSdk.recipientChainChannelAddress : ""}
+            options={handleOptions}
+            handleBack={handleBack}
+            handleRecoveryButton={handleRecoveryButton}
+          />
+        );
 
       case SCREEN_STATES.LISTENER:
         return (
