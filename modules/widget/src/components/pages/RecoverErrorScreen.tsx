@@ -13,7 +13,6 @@ import {
   CheckCircleIcon,
   Button,
 } from "../common";
-
 import { Header, Footer } from "../static";
 
 export interface ErrorProps {
