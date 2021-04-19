@@ -66,8 +66,8 @@ export const connectNode = async (
     console.warn("Using login provider to log in");
     signer = loginProvider.getSigner();
     signerAddress = await signer.getAddress();
+    signature = await signer.signMessage(NonEIP712Message);
     console.log("signerAddress: ", signerAddress);
-    signature = await loginProvider.getSigner().signMessage(NonEIP712Message);
     console.log("signature: ", signature);
   }
 
@@ -77,8 +77,29 @@ export const connectNode = async (
       signer: signerAddress,
     });
   } catch (e) {
-    console.error("Error initializing Browser Node:", jsonifyError(e));
-    error = e;
+    // in some cases the iframe is not able to properly sign (i.e. MM mobile... for that case fall back to unsafe sig)
+    if ((e.message ?? "").toLowerCase().includes("no signature provided")) {
+      // first choice is detected provider
+      const _provider = provider || loginProvider;
+      console.warn("Could not sign in iframe, signing in dapp");
+      const _signer = _provider.getSigner();
+      signerAddress = await _signer.getAddress();
+      signature = await _signer.getSigner().signMessage(NonEIP712Message);
+      console.log("signerAddress: ", signerAddress);
+      console.log("signature: ", signature);
+      try {
+        await browserNode.init({
+          signature,
+          signer: signerAddress,
+        });
+      } catch (e) {
+        console.error("Error initializing Browser Node:", jsonifyError(e));
+        error = e;
+      }
+    } else {
+      console.error("Error initializing Browser Node:", jsonifyError(e));
+      error = e;
+    }
   }
   const shouldAttemptRestore = (error?.context?.validationError ?? "").includes("Channel is already setup");
   if (error && !shouldAttemptRestore) {
@@ -257,6 +278,25 @@ export const reconcileDeposit = async (node: BrowserNode, channelAddress: string
   if (ret.isError) {
     throw ret.getError();
   }
+};
+
+export const getChannelForChain = async (
+  node: BrowserNode,
+  routerIdentifier: string,
+  chainId: number,
+): Promise<FullChannelState> => {
+  const depositChannelRes = await node.getStateChannelByParticipants({
+    chainId,
+    counterparty: routerIdentifier,
+  });
+  if (depositChannelRes.isError) {
+    throw depositChannelRes.getError();
+  }
+  const channel = depositChannelRes.getValue();
+  if (!channel) {
+    throw new Error(`Could not find channel on ${chainId}`);
+  }
+  return channel as FullChannelState;
 };
 
 export const createFromAssetTransfer = async (
@@ -671,25 +711,6 @@ export const createEvtContainer = (node: BrowserNode): EvtContainer => {
     [EngineEvents.WITHDRAWAL_RECONCILED]: withdrawReconciled,
     [EngineEvents.WITHDRAWAL_RESOLVED]: withdrawResolved,
   };
-};
-
-export const getChannelForChain = async (
-  node: BrowserNode,
-  routerIdentifier: string,
-  chainId: number,
-): Promise<FullChannelState> => {
-  const depositChannelRes = await node.getStateChannelByParticipants({
-    chainId,
-    counterparty: routerIdentifier,
-  });
-  if (depositChannelRes.isError) {
-    throw depositChannelRes.getError();
-  }
-  const channel = depositChannelRes.getValue();
-  if (!channel) {
-    throw new Error(`Could not find channel on ${chainId}`);
-  }
-  return channel as FullChannelState;
 };
 
 export const onchainTransfer = async (
