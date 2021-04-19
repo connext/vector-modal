@@ -119,3 +119,8 @@ export const truncate = (str: string, maxDecimalDigits: number): string => {
   }
   return str;
 };
+
+export const isValidAddress = (input: string): boolean => {
+  const valid = input.match(/0x[0-9a-fA-F]{40}/);
+  return !!valid;
+};
