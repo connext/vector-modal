@@ -27,7 +27,7 @@ const Options: FC<OptionsProps> = props => {
                 : false
             }
           >
-            {state === SCREEN_STATES.RECOVERY ? "Home" : "Recovery"}
+            {state === SCREEN_STATES.RECOVER ? "Home" : "Recovery"}
           </MenuItem>
           <MenuItem onClick={() => window.open("https://discord.com/channels/454734546869551114", "_blank")}>
             Support
