@@ -8,24 +8,20 @@ export interface RecoveryProps {
   recover: (assetId: string, recipientAddress: string) => void;
   handleBack: () => void;
   handleOptions: () => void;
+  userAddress?: string;
 }
 
 const Recover: FC<RecoveryProps> = props => {
-  const { recover, handleBack, handleOptions } = props;
+  const { recover, handleBack, handleOptions, userAddress } = props;
 
   const [recoverTokenAddress, setRecoverTokenAddress] = useState(constants.AddressZero);
   const [recoverTokenAddressError, setRecoverTokenAddressError] = useState(false);
   const [recoverWithdrawalAddress, setRecoverWithdrawalAddress] = useState("");
   const [recoverWithdrawalAddressError, setRecoverWithdrawalAddressError] = useState(false);
-  const [isLoad, setIsLoad] = useState<boolean>(false);
-
-  const stateReset = (): void => {
-    setIsLoad(false);
-  };
 
   useEffect(() => {
-    stateReset();
-  });
+    if (userAddress) setRecoverWithdrawalAddress(userAddress);
+  }, [userAddress]);
 
   return (
     <>
@@ -100,15 +96,12 @@ const Recover: FC<RecoveryProps> = props => {
                     recoverWithdrawalAddressError ||
                     recoverTokenAddressError ||
                     !recoverTokenAddress ||
-                    !recoverWithdrawalAddress ||
-                    isLoad
+                    !recoverWithdrawalAddress
                       ? true
                       : false
                   }
-                  onClick={async () => {
-                    setIsLoad(true);
-                    await recover(recoverTokenAddress, recoverWithdrawalAddress);
-                    setIsLoad(false);
+                  onClick={() => {
+                    recover(recoverTokenAddress, recoverWithdrawalAddress);
                   }}
                 >
                   Recover
