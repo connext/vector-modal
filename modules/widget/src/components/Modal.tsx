@@ -616,6 +616,17 @@ const ConnextModal: FC<ConnextModalProps> = ({
   };
 
   const continueButton = async () => {
+    try {
+      await connextSdk!.preTransferCheck(existingChannelBalanceUi!);
+    } catch (e) {
+      console.log("Error at preCheck", e);
+      handleScreen({
+        state: ERROR_STATES.ERROR_TRANSFER,
+        error: e,
+        message: message,
+      });
+      return;
+    }
     setExistingChannelBalanceUi("");
     handleSwap();
   };
