@@ -15,6 +15,7 @@ import {
   CrossChainSwapParamsSchema,
   CheckPendingTransferResponseSchema,
   InitResponseSchema,
+  RecoverParamsSchema,
 } from "../constants";
 import {
   getChain,
@@ -779,5 +780,46 @@ export class ConnextSdk {
     }
 
     console.log("Successfully Swap");
+  }
+
+  async recover(params: RecoverParamsSchema): Promise<void> {
+    const { assetId, recipientAddress, onRecover } = params;
+
+    try {
+      await reconcileDeposit(this.browserNode!, this.senderChainChannelAddress, assetId);
+    } catch (e) {
+      const message = "Error in reconcileDeposit";
+      console.error(message, e);
+      throw e;
+    }
+
+    const updatedChannel = await this.browserNode!.getStateChannel({
+      channelAddress: this.senderChainChannelAddress,
+    });
+    if (updatedChannel.isError || !updatedChannel.getValue()) {
+      const message = "Channel not found";
+      console.error(message);
+      throw new Error(message);
+    }
+    const endingBalance = getBalanceForAssetId(updatedChannel.getValue() as FullChannelState, assetId, "bob");
+
+    const endingBalanceBn = BigNumber.from(endingBalance);
+    if (endingBalanceBn.isZero()) {
+      const message = "No balance found to recover";
+      console.error(message);
+      throw new Error(message);
+    }
+    console.log(`Found ${endingBalanceBn.toString()} of ${assetId}, attempting withdrawal`);
+
+    try {
+      await this.withdraw({
+        recipientAddress: recipientAddress,
+        onFinished: onRecover,
+      });
+    } catch (e) {
+      console.log("Error at withdraw", e);
+      throw e;
+    }
+    console.log("Successfully Recover");
   }
 }
