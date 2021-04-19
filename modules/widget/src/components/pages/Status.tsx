@@ -3,18 +3,18 @@ import { ChainDetail } from "@connext/vector-sdk";
 
 import { ModalContent, ModalBody, Text, Stack } from "../common";
 import { Header, Footer, NetworkBar } from "../static";
-
 export interface StatusProps {
   title: string;
   message: string;
   senderChainInfo: ChainDetail;
   receiverChainInfo: ChainDetail;
   receiverAddress: string;
+  showNetworkBar?: boolean;
   options: () => void;
 }
 
 const Status: FC<StatusProps> = props => {
-  const { title, message, senderChainInfo, receiverChainInfo, receiverAddress, options } = props;
+  const { title, message, senderChainInfo, receiverChainInfo, receiverAddress, options, showNetworkBar = true } = props;
   return (
     <>
       <ModalContent id="modalContent">
@@ -28,11 +28,13 @@ const Status: FC<StatusProps> = props => {
               </Text>
             </Stack>
 
-            <NetworkBar
-              senderChainInfo={senderChainInfo}
-              receiverChainInfo={receiverChainInfo}
-              receiverAddress={receiverAddress}
-            />
+            {showNetworkBar && (
+              <NetworkBar
+                senderChainInfo={senderChainInfo}
+                receiverChainInfo={receiverChainInfo}
+                receiverAddress={receiverAddress}
+              />
+            )}
           </Stack>
         </ModalBody>
         <Footer />
