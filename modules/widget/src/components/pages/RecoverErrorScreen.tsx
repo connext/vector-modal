@@ -68,7 +68,7 @@ const RecoverError: FC<ErrorProps> = props => {
                     FAQ
                   </Link>{" "}
                   Or{" "}
-                  <Link href="https://discord.com/channels/454734546869551114" target="_blank" color="green">
+                  <Link href="https://discord.gg/AGpyHSbYCe" target="_blank" color="green">
                     community Discord
                   </Link>
                   .

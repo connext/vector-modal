@@ -29,7 +29,7 @@ const Options: FC<OptionsProps> = props => {
           >
             {state === SCREEN_STATES.RECOVER ? "Home" : "Recovery"}
           </MenuItem>
-          <MenuItem onClick={() => window.open("https://discord.com/channels/454734546869551114", "_blank")}>
+          <MenuItem onClick={() => window.open("https://discord.gg/AGpyHSbYCe", "_blank")}>
             Support
           </MenuItem>
           <MenuItem
