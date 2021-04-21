@@ -8,13 +8,14 @@ export interface RecoveryProps {
   recover: (assetId: string, recipientAddress: string) => void;
   handleBack: () => void;
   handleOptions: () => void;
+  tokenAddress?: string;
   userAddress?: string;
 }
 
 const Recover: FC<RecoveryProps> = props => {
-  const { recover, handleBack, handleOptions, userAddress } = props;
+  const { recover, handleBack, handleOptions, userAddress, tokenAddress } = props;
 
-  const [recoverTokenAddress, setRecoverTokenAddress] = useState(constants.AddressZero);
+  const [recoverTokenAddress, setRecoverTokenAddress] = useState(tokenAddress ?? constants.AddressZero);
   const [recoverTokenAddressError, setRecoverTokenAddressError] = useState(false);
   const [recoverWithdrawalAddress, setRecoverWithdrawalAddress] = useState("");
   const [recoverWithdrawalAddressError, setRecoverWithdrawalAddressError] = useState(false);
@@ -30,8 +31,7 @@ const Recover: FC<RecoveryProps> = props => {
         <ModalBody>
           <Stack column={true} spacing={5}>
             <Text fontSize="1rem" lineHeight="24px">
-              Uh oh! Send the wrong asset to the deposit address? Fill out the details below to attempt recovery of your
-              assets from the state channels.
+              Uh oh! Fill out the details below to attempt recovery of your assets from the state channels.
             </Text>
             <Box>
               <Stack column={true} spacing={5}>
