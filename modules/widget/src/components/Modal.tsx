@@ -787,6 +787,7 @@ const ConnextModal: FC<ConnextModalProps> = ({
             handleOptions={handleOptions}
             handleBack={handleBack}
             userAddress={userAddress}
+            tokenAddress={senderChain?.assetId}
           />
         );
 
