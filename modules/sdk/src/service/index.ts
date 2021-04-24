@@ -595,6 +595,9 @@ export class ConnextSdk {
 
       console.log("deposit mined:", depositTx.hash);
 
+      const receipt = await depositTx.wait(2);
+      console.log("deposit mined:", receipt.transactionHash);
+
       signer.provider.waitForTransaction(depositTx.hash, 2).then(receipt => {
         if (receipt.status === 0) {
           // tx reverted
