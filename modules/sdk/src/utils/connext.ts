@@ -93,12 +93,6 @@ export const connectNode = async (
     console.error("Error initializing Browser Node:", jsonifyError(e));
     error = e;
   }
-
-  const counterpartyFailure = (error?.message ?? "").includes("Counterparty failed to apply update");
-  if (error && counterpartyFailure && error?.context?.counterpartyError) {
-    throw error?.context?.counterpartyError;
-  }
-
   const shouldAttemptRestore = (error?.context?.validationError ?? "").includes("Channel is already setup");
   if (error && !shouldAttemptRestore) {
     throw error;
