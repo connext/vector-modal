@@ -29,9 +29,7 @@ const Options: FC<OptionsProps> = props => {
           >
             {state === SCREEN_STATES.RECOVER ? "Home" : "Recovery"}
           </MenuItem>
-          <MenuItem onClick={() => window.open("https://discord.gg/AGpyHSbYCe", "_blank")}>
-            Support
-          </MenuItem>
+          <MenuItem onClick={() => window.open("https://discord.gg/AGpyHSbYCe", "_blank")}>Support</MenuItem>
           <MenuItem
             isDisabled={[SCREEN_STATES.LOADING, SCREEN_STATES.STATUS].includes(state as any) ? true : false}
             onClick={onClose}
