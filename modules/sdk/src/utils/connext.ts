@@ -71,6 +71,18 @@ export const connectNode = async (
     console.log("signature: ", signature);
   }
 
+  // in some cases the iframe is not able to properly sign (i.e. MM mobile... for that case fall back to unsafe sig)
+  if (!signature) {
+    // first choice is detected provider
+    const _provider = provider || loginProvider;
+    console.warn("Could not sign in iframe, signing in dapp");
+    const _signer = _provider.getSigner();
+    signerAddress = await _signer.getAddress();
+    signature = await _signer.getSigner().signMessage(NonEIP712Message);
+    console.log("signerAddress: ", signerAddress);
+    console.log("signature: ", signature);
+  }
+
   try {
     await browserNode.init({
       signature,
@@ -78,29 +90,15 @@ export const connectNode = async (
     });
   } catch (e) {
     // in some cases the iframe is not able to properly sign (i.e. MM mobile... for that case fall back to unsafe sig)
-    if ((e.message ?? "").toLowerCase().includes("no signature provided")) {
-      // first choice is detected provider
-      const _provider = provider || loginProvider;
-      console.warn("Could not sign in iframe, signing in dapp");
-      const _signer = _provider.getSigner();
-      signerAddress = await _signer.getAddress();
-      signature = await _signer.getSigner().signMessage(NonEIP712Message);
-      console.log("signerAddress: ", signerAddress);
-      console.log("signature: ", signature);
-      try {
-        await browserNode.init({
-          signature,
-          signer: signerAddress,
-        });
-      } catch (e) {
-        console.error("Error initializing Browser Node:", jsonifyError(e));
-        error = e;
-      }
-    } else {
-      console.error("Error initializing Browser Node:", jsonifyError(e));
-      error = e;
-    }
+    console.error("Error initializing Browser Node:", jsonifyError(e));
+    error = e;
   }
+
+  const counterpartyFailure = (error?.message ?? "").includes("Counterparty failed to apply update");
+  if (error && counterpartyFailure && error?.context?.counterpartyError) {
+    throw error?.context?.counterpartyError;
+  }
+
   const shouldAttemptRestore = (error?.context?.validationError ?? "").includes("Channel is already setup");
   if (error && !shouldAttemptRestore) {
     throw error;
