@@ -1,5 +1,5 @@
 import React, { FC, useState } from "react";
-import { ChainDetail } from "@connext/vector-sdk";
+import { ChainDetail, VectorError } from "@connext/vector-sdk";
 
 import {
   ModalContent,
@@ -61,7 +61,7 @@ const Error: FC<ErrorProps> = props => {
               <Stack column={true} spacing={2}>
                 <Stack>
                   <Text fontSize="0.875rem" flex="auto" noOfLines={3} color="crimson" lineHeight="24px">
-                    {error.message}
+                    {(error as VectorError)?.context?.counterpartyError ?? error.message}
                   </Text>
                   <IconButton
                     aria-label="Clipboard"
