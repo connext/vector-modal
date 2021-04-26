@@ -14,7 +14,9 @@ import { formatUnits, parseUnits } from "@ethersproject/units";
 import { BigNumber } from "@ethersproject/bignumber";
 import { getAddress } from "@ethersproject/address";
 import { Web3Provider } from "@ethersproject/providers";
+
 import { ERROR_STATES, SCREEN_STATES, ScreenStates, ErrorStates } from "../constants";
+
 import { theme, Fonts, ModalOverlay, ModalContentContainer, BackButton, CloseButton } from "./common";
 import {
   Loading,
