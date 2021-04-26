@@ -3,7 +3,7 @@ import "regenerator-runtime/runtime";
 import * as React from "react";
 import * as ReactDOM from "react-dom";
 import { Magic } from "magic-sdk";
-import { providers } from "ethers";
+import { Web3Provider } from "@ethersproject/providers";
 
 // Test key defaults to "rinkeby", live key defaults to "mainnet"
 
@@ -16,12 +16,12 @@ const magic = new Magic("pk_test_D646A81EA4676AB2", {
 
 function App() {
   const [showModal, setShowModal] = React.useState(false);
-  const [loginProvider, _setLoginProvider] = React.useState<providers.Web3Provider>();
+  const [loginProvider, _setLoginProvider] = React.useState<Web3Provider>();
   const [loginType, setLoginType] = React.useState<LoginType>("none");
   const [transferAmount, setTransferAmount] = React.useState<string>();
 
   const setLoginProvider = async (loginType: LoginType) => {
-    let provider: providers.Web3Provider | undefined;
+    let provider: Web3Provider | undefined;
     if (loginType === "metamask") {
       if (!(window as any).ethereum) {
         throw new Error("Web3 not available");
@@ -35,12 +35,12 @@ function App() {
 
   const handleLoginProvider = async () => {
     if (loginType === "metamask") {
-      const provider = new providers.Web3Provider(loginProvider as any);
+      const provider = new Web3Provider(loginProvider as any);
       const accounts = await provider.send("eth_requestAccounts", []);
       console.log("accounts: ", accounts);
     } else if (loginType === "magic") {
       await magic.auth.loginWithMagicLink({ email: "rksethuram9@gmail.com" });
-      const provider = new providers.Web3Provider(loginProvider as any);
+      const provider = new Web3Provider(loginProvider as any);
       const signer = provider.getSigner();
       const address = await signer.getAddress();
       console.log("address: ", address);

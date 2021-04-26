@@ -10,10 +10,11 @@ import {
   BrowserNode,
   VectorError,
 } from "@connext/vector-sdk";
-import { BigNumber, utils, providers } from "ethers";
-
+import { formatUnits, parseUnits } from "@ethersproject/units";
+import { BigNumber } from "@ethersproject/bignumber";
+import { getAddress } from "@ethersproject/address";
+import { Web3Provider } from "@ethersproject/providers";
 import { ERROR_STATES, SCREEN_STATES, ScreenStates, ErrorStates } from "../constants";
-
 import { theme, Fonts, ModalOverlay, ModalContentContainer, BackButton, CloseButton } from "./common";
 import {
   Loading,
@@ -76,15 +77,13 @@ const ConnextModal: FC<ConnextModalProps> = ({
   onDepositTxCreated,
   onFinished,
 }) => {
-  const depositAssetId = utils.getAddress(_depositAssetId);
-  const withdrawAssetId = utils.getAddress(_withdrawAssetId);
+  const depositAssetId = getAddress(_depositAssetId);
+  const withdrawAssetId = getAddress(_withdrawAssetId);
 
   // const [opacity, setOpacity] = useState(0);
-  const [webProvider, setWebProvider] = useState<undefined | providers.Web3Provider>();
+  const [webProvider, setWebProvider] = useState<undefined | Web3Provider>();
 
-  const loginProvider: undefined | providers.Web3Provider = !!_loginProvider
-    ? new providers.Web3Provider(_loginProvider)
-    : undefined;
+  const loginProvider: undefined | Web3Provider = !!_loginProvider ? new Web3Provider(_loginProvider) : undefined;
 
   const [transferAmountUi, setTransferAmountUi] = useState<string | undefined>();
   const [receivedAmountUi, setReceivedAmountUi] = useState<string | undefined>();
@@ -227,9 +226,7 @@ const ConnextModal: FC<ConnextModalProps> = ({
       return;
     }
 
-    const transferAmountBn: BigNumber = BigNumber.from(
-      utils.parseUnits(transferAmountUi!, senderChain?.assetDecimals!),
-    );
+    const transferAmountBn: BigNumber = BigNumber.from(parseUnits(transferAmountUi!, senderChain?.assetDecimals!));
 
     if (onSwap) {
       try {
@@ -344,8 +341,8 @@ const ConnextModal: FC<ConnextModalProps> = ({
   const setup = async (): Promise<void> => {
     // set web provider
     setMessage("getting chains info...");
-    const injectedProvider: undefined | providers.Web3Provider = !!_injectedProvider
-      ? new providers.Web3Provider(_injectedProvider)
+    const injectedProvider: undefined | Web3Provider = !!_injectedProvider
+      ? new Web3Provider(_injectedProvider)
       : undefined;
 
     setWebProvider(injectedProvider);
@@ -518,7 +515,7 @@ const ConnextModal: FC<ConnextModalProps> = ({
     }
     // if offChainDepositAssetBalance > 0
     if (offChainDepositAssetBalance.gt(0)) {
-      const existingBalance = utils.formatUnits(offChainDepositAssetBalance, senderChainInfo?.assetDecimals!);
+      const existingBalance = formatUnits(offChainDepositAssetBalance, senderChainInfo?.assetDecimals!);
 
       setExistingChannelBalanceUi(existingBalance);
       handleScreen({

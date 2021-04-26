@@ -1,7 +1,9 @@
 import { EngineEvents, FullChannelState, ERC20Abi, TransferQuote, VectorError } from "@connext/vector-types";
 import { BrowserNode } from "@connext/vector-browser-node";
 import { getBalanceForAssetId, getRandomBytes32 } from "@connext/vector-utils";
-import { BigNumber, constants, utils } from "ethers";
+import { parseUnits, formatUnits } from "@ethersproject/units";
+import { BigNumber } from "@ethersproject/bignumber";
+import { HashZero } from "@ethersproject/constants";
 
 import {
   ChainDetail,
@@ -433,7 +435,7 @@ export class ConnextSdk {
 
     try {
       const transferAmountBn = BigNumber.from(
-        utils.parseUnits(
+        parseUnits(
           transferAmount,
           isRecipientAssetInput ? this.recipientChain?.assetDecimals! : this.senderChain?.assetDecimals!,
         ),
@@ -486,7 +488,7 @@ export class ConnextSdk {
         };
       }
 
-      totalFee = utils.formatUnits(feeBn, this.senderChain?.assetDecimals!);
+      totalFee = formatUnits(feeBn, this.senderChain?.assetDecimals!);
       console.log("feeUi: ", totalFee);
 
       if (BigNumber.from(recipientAmountBn).lte(0)) {
@@ -501,15 +503,15 @@ export class ConnextSdk {
       }
 
       if (isRecipientAssetInput) {
-        senderAmountUi = utils.formatUnits(senderAmountBn, this.senderChain?.assetDecimals!);
+        senderAmountUi = formatUnits(senderAmountBn, this.senderChain?.assetDecimals!);
         console.log("senderUi: ", senderAmountUi);
       } else {
-        recipientAmountUi = utils.formatUnits(recipientAmountBn, this.recipientChain?.assetDecimals!);
+        recipientAmountUi = formatUnits(recipientAmountBn, this.recipientChain?.assetDecimals!);
         console.log("receivedUi: ", recipientAmountUi);
       }
 
       if (userBalance) {
-        const userBalanceBn = BigNumber.from(utils.parseUnits(userBalance, this.senderChain?.assetDecimals!));
+        const userBalanceBn = BigNumber.from(parseUnits(userBalance, this.senderChain?.assetDecimals!));
         console.log(senderAmountBn.toString(), userBalance, userBalanceBn.toString());
         if (senderAmountBn.gt(userBalanceBn)) {
           err = "Transfer amount exceeds user balance";
@@ -541,9 +543,7 @@ export class ConnextSdk {
       console.log(message);
       throw new Error(message);
     }
-    const transferAmountBn: BigNumber = BigNumber.from(
-      utils.parseUnits(transferAmount, this.senderChain?.assetDecimals!),
-    );
+    const transferAmountBn: BigNumber = BigNumber.from(parseUnits(transferAmount, this.senderChain?.assetDecimals!));
 
     if (transferAmountBn.isZero()) {
       const message = "Transfer amount cannot be 0";
@@ -580,7 +580,7 @@ export class ConnextSdk {
       }
     }
 
-    const transferAmountBn = BigNumber.from(utils.parseUnits(transferAmount, this.senderChain?.assetDecimals!));
+    const transferAmountBn = BigNumber.from(parseUnits(transferAmount, this.senderChain?.assetDecimals!));
     console.log(transferAmountBn);
 
     try {
@@ -655,7 +655,7 @@ export class ConnextSdk {
       return (
         data.transfer.meta?.routingId === this.crossChainTransferId &&
         data.transfer.responderIdentifier === this.routerPublicIdentifier &&
-        Object.values(data.transfer.transferResolver)[0] === constants.HashZero
+        Object.values(data.transfer.transferResolver)[0] === HashZero
       );
     }).waitFor(500_000);
 
@@ -671,7 +671,7 @@ export class ConnextSdk {
     try {
       const senderCanceledOrReceiverCreated = await Promise.race([senderCancel, receiverCreate]);
       console.log("Received senderCanceledOrReceiverCreated: ", senderCanceledOrReceiverCreated);
-      if (Object.values(senderCanceledOrReceiverCreated.transfer.transferResolver ?? {})[0] === constants.HashZero) {
+      if (Object.values(senderCanceledOrReceiverCreated.transfer.transferResolver ?? {})[0] === HashZero) {
         const message = "Transfer was cancelled";
         console.log(message);
         throw new Error(message);
@@ -733,7 +733,7 @@ export class ConnextSdk {
     // display tx hash through explorer -> handles by the event.
     console.log("crossChainTransfer: ", result);
 
-    const successWithdrawalUi = utils.formatUnits(result.withdrawalAmount, this.recipientChain?.assetDecimals!);
+    const successWithdrawalUi = formatUnits(result.withdrawalAmount, this.recipientChain?.assetDecimals!);
 
     console.log(successWithdrawalUi);
 
@@ -834,7 +834,7 @@ export class ConnextSdk {
     // display tx hash through explorer -> handles by the event.
     console.log("Recovery Withdraw: ", result);
 
-    const successRecoverUi = utils.formatUnits(result.withdrawalAmount, this.senderChain?.assetDecimals!);
+    const successRecoverUi = formatUnits(result.withdrawalAmount, this.senderChain?.assetDecimals!);
 
     console.log(successRecoverUi);
 
