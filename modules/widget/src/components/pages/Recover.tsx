@@ -1,5 +1,5 @@
 import React, { FC, useState, useEffect } from "react";
-import { constants } from "ethers";
+import { AddressZero } from "@ethersproject/constants";
 import { isValidAddress } from "@connext/vector-sdk";
 
 import { ModalContent, ModalBody, Text, Stack, Box, Button, InputGroup, Input } from "../common";
@@ -15,7 +15,7 @@ export interface RecoveryProps {
 const Recover: FC<RecoveryProps> = props => {
   const { recover, handleBack, handleOptions, userAddress, tokenAddress } = props;
 
-  const [recoverTokenAddress, setRecoverTokenAddress] = useState(tokenAddress ?? constants.AddressZero);
+  const [recoverTokenAddress, setRecoverTokenAddress] = useState(tokenAddress ?? AddressZero);
   const [recoverTokenAddressError, setRecoverTokenAddressError] = useState(false);
   const [recoverWithdrawalAddress, setRecoverWithdrawalAddress] = useState("");
   const [recoverWithdrawalAddressError, setRecoverWithdrawalAddressError] = useState(false);

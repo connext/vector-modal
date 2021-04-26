@@ -1,4 +1,10 @@
-import { providers, BigNumber, constants, Contract, utils } from "ethers";
+import { formatUnits } from "@ethersproject/units";
+import { BigNumber } from "@ethersproject/bignumber";
+import { getAddress } from "@ethersproject/address";
+import { hexValue } from "@ethersproject/bytes";
+import { BaseProvider, JsonRpcProvider, Web3Provider } from "@ethersproject/providers";
+import { Contract } from "@ethersproject/contracts";
+import { AddressZero } from "@ethersproject/constants";
 import { ERC20Abi, ChainInfo } from "@connext/vector-types";
 import { getChainInfo, getChainId, getAssetDecimals, delay } from "@connext/vector-utils";
 
@@ -10,21 +16,21 @@ export const hydrateProviders = (
   withdrawChainId: number,
   withdrawProviderUrl: string,
 ): {
-  [chainId: number]: providers.BaseProvider;
+  [chainId: number]: BaseProvider;
 } => {
   return {
-    [depositChainId]: new providers.JsonRpcProvider(depositProviderUrl, depositChainId),
-    [withdrawChainId]: new providers.JsonRpcProvider(withdrawProviderUrl, withdrawChainId),
+    [depositChainId]: new JsonRpcProvider(depositProviderUrl, depositChainId),
+    [withdrawChainId]: new JsonRpcProvider(withdrawProviderUrl, withdrawChainId),
   };
 };
 
 export const getOnchainBalance = async (
-  ethProvider: providers.BaseProvider,
+  ethProvider: BaseProvider,
   assetId: string,
   address: string,
 ): Promise<BigNumber> => {
   const balance =
-    assetId === constants.AddressZero
+    assetId === AddressZero
       ? await ethProvider.getBalance(address)
       : await new Contract(assetId, ERC20Abi, ethProvider).balanceOf(address);
   return balance;
@@ -52,7 +58,7 @@ export const getChain = async (
   _assetId: string,
 ): Promise<ChainDetail> => {
   // Sender Chain Info
-  const assetId = utils.getAddress(_assetId);
+  const assetId = getAddress(_assetId);
   let chainId = _chainId;
   if (!chainId) {
     try {
@@ -63,7 +69,7 @@ export const getChain = async (
     }
   }
 
-  const rpcProvider = new providers.JsonRpcProvider(chainProvider, chainId);
+  const rpcProvider = new JsonRpcProvider(chainProvider, chainId);
 
   // get decimals for deposit asset
   const assetDecimals = await getAssetDecimals(assetId, rpcProvider);
@@ -73,7 +79,7 @@ export const getChain = async (
   const assetName = chain.assetId[assetId]?.symbol ?? "Token";
 
   const chainParams: AddEthereumChainParameter = {
-    chainId: utils.hexValue(chain.chainId),
+    chainId: hexValue(chain.chainId),
     chainName: chain.name,
     nativeCurrency: {
       name: chain.nativeCurrency.name,
@@ -98,7 +104,7 @@ export const getChain = async (
 };
 
 export const getUserBalance = async (
-  injectedProvider: providers.Web3Provider,
+  injectedProvider: Web3Provider,
   senderChainAssetId: string,
   senderChainAssetDecimals: number,
 ): Promise<string> => {
@@ -107,7 +113,7 @@ export const getUserBalance = async (
 
   const balance = await getOnchainBalance(injectedProvider, senderChainAssetId, userAddress);
 
-  const userBalance = utils.formatUnits(balance, senderChainAssetDecimals);
+  const userBalance = formatUnits(balance, senderChainAssetDecimals);
 
   return userBalance;
 };

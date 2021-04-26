@@ -1,4 +1,7 @@
-import { utils, providers, BigNumber, constants } from "ethers";
+import { BigNumber } from "@ethersproject/bignumber";
+import { hexValue } from "@ethersproject/bytes";
+import { JsonRpcProvider, Web3Provider, JsonRpcSigner } from "@ethersproject/providers";
+import { AddressZero } from "@ethersproject/constants";
 import Sinon, { createStubInstance } from "sinon";
 import { AllowedSwap, Result } from "@connext/vector-types";
 import { createTestChannelState, mkPublicIdentifier, expect, mkBytes32, getRandomBytes32 } from "@connext/vector-utils";
@@ -12,12 +15,12 @@ const generateChainDetail = (overrides: Partial<ChainDetail> = {}): ChainDetail 
     name: overrides.name ?? "test network",
     chainId: overrides.chainId ?? 5,
     chainProvider: overrides.chainProvider ?? "http://dummyprovider",
-    rpcProvider: overrides.rpcProvider ?? createStubInstance(providers.JsonRpcProvider),
+    rpcProvider: overrides.rpcProvider ?? createStubInstance(JsonRpcProvider),
     assetDecimals: overrides.assetDecimals ?? 18,
-    assetId: overrides.assetId ?? constants.AddressZero,
+    assetId: overrides.assetId ?? AddressZero,
     assetName: overrides.assetName ?? "test token",
     chainParams: {
-      chainId: utils.hexValue(overrides.chainId ?? 5),
+      chainId: hexValue(overrides.chainId ?? 5),
       chainName: overrides.name ?? "test network",
       nativeCurrency: {
         name: overrides.assetName ?? "test token",
@@ -55,7 +58,7 @@ describe("service", () => {
     sendTransactionMock = Sinon.stub(connextUtils, "onchainTransfer");
     getFeesDebouncedMock = Sinon.stub(connextUtils, "getFeesDebounced");
 
-    browserNodeMock.sendIsAliveMessage.resolves(Result.ok({ channelAddress: constants.AddressZero }));
+    browserNodeMock.sendIsAliveMessage.resolves(Result.ok({ channelAddress: AddressZero }));
     connext.browserNode = browserNodeMock as any;
   });
 
@@ -451,11 +454,11 @@ describe("service", () => {
     it.skip("should error if transaction is failed or reverted", async () => {
       verifyRouterCapacityForTransferMock.resolves();
 
-      const webProviderMock = createStubInstance(providers.Web3Provider);
+      const webProviderMock = createStubInstance(Web3Provider);
       // let signerMock = createStubInstance(providers.JsonRpcSigner);
-      const providerMock = createStubInstance(providers.JsonRpcProvider);
+      const providerMock = createStubInstance(JsonRpcProvider);
 
-      const signerMock = new providers.JsonRpcSigner({}, providerMock);
+      const signerMock = new JsonRpcSigner({}, providerMock);
 
       webProviderMock.getSigner.resolves(signerMock);
       const hash = mkBytes32("0xa");

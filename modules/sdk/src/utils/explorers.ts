@@ -1,4 +1,4 @@
-import { constants } from "ethers";
+import { AddressZero } from "@ethersproject/constants";
 
 export const getExplorerLink = (chainId: number): string | undefined => {
   switch (chainId) {
@@ -49,7 +49,7 @@ export const getExplorerLinkForAsset = (chainId: number, assetId: string): strin
   if (!base) {
     return "#";
   }
-  if (assetId === constants.AddressZero) {
+  if (assetId === AddressZero) {
     return base;
   }
   // BlockScout uses 'tokens' and not 'token'

@@ -1,4 +1,5 @@
-import { providers, BigNumber } from "ethers";
+import { BigNumber } from "@ethersproject/bignumber";
+import { Web3Provider, JsonRpcProvider } from "@ethersproject/providers";
 import { BrowserNode } from "@connext/vector-browser-node";
 import { TransferQuote } from "@connext/vector-types";
 
@@ -19,7 +20,7 @@ export interface ChainDetail {
   name: string;
   chainId: number;
   chainProvider: string;
-  rpcProvider: providers.JsonRpcProvider;
+  rpcProvider: JsonRpcProvider;
   assetName: string;
   assetId: string;
   assetDecimals: number;
@@ -62,7 +63,7 @@ export type EstimateFeeResponseSchema = {
 
 export type DepositParamsSchema = {
   transferAmount: string;
-  webProvider: providers.Web3Provider;
+  webProvider: Web3Provider;
   preTransferCheck?: boolean;
   // callback
   onDeposited?: (txHash: string) => void;

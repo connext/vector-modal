@@ -18,7 +18,12 @@ import {
   ERC20Abi,
 } from "@connext/vector-types";
 import { calculateExchangeWad, createlockHash, getBalanceForAssetId, inverse } from "@connext/vector-utils";
-import { providers, Contract, BigNumber, constants, utils } from "ethers";
+import { getAddress } from "@ethersproject/address";
+import { parseEther } from "@ethersproject/units";
+import { Contract } from "@ethersproject/contracts";
+import { BigNumber } from "@ethersproject/bignumber";
+import { HashZero, AddressZero } from "@ethersproject/constants";
+import { Web3Provider, JsonRpcSigner, BaseProvider, TransactionResponse } from "@ethersproject/providers";
 import { Evt } from "evt";
 import detectEthereumProvider from "@metamask/detect-provider";
 
@@ -32,7 +37,7 @@ export const connectNode = async (
   withdrawChainId: number,
   depositChainProvider: string,
   withdrawChainProvider: string,
-  loginProvider?: providers.Web3Provider,
+  loginProvider?: Web3Provider,
   iframeSrcOverride?: string,
 ): Promise<BrowserNode> => {
   console.log("Connect Node");
@@ -48,7 +53,7 @@ export const connectNode = async (
 
   let error: any | undefined = undefined;
   let signature: string | undefined;
-  let signer: providers.JsonRpcSigner | undefined;
+  let signer: JsonRpcSigner | undefined;
   let signerAddress: string | undefined;
 
   // if eth provider is detected, don't pass in a sig, and the iframe will get the user's sig
@@ -249,7 +254,7 @@ export const getFeesDebounced = AwesomeDebouncePromise(getCrosschainFee, 200);
 export const getTotalDepositsBob = async (
   channelAddress: string,
   assetId: string,
-  provider: providers.BaseProvider,
+  provider: BaseProvider,
 ): Promise<BigNumber> => {
   // see if contract was deployed
   const code = await provider.getCode(channelAddress);
@@ -265,7 +270,7 @@ export const getTotalDepositsBob = async (
 export const reconcileDeposit = async (node: BrowserNode, channelAddress: string, _assetId: string): Promise<void> => {
   const ret = await node.reconcileDeposit({
     channelAddress,
-    assetId: utils.getAddress(_assetId),
+    assetId: getAddress(_assetId),
   });
   if (ret.isError) {
     throw ret.getError();
@@ -303,8 +308,8 @@ export const createFromAssetTransfer = async (
   quote?: TransferQuote,
 ): Promise<{ transferId: string; preImage: string }> => {
   const depositChannel = await getChannelForChain(node, routerPublicIdentifier, fromChainId);
-  const fromAssetId = utils.getAddress(_fromAssetId);
-  const toAssetId = utils.getAddress(_toAssetId);
+  const fromAssetId = getAddress(_fromAssetId);
+  const toAssetId = getAddress(_toAssetId);
   const toTransfer = getBalanceForAssetId(depositChannel, fromAssetId, "bob");
   if (toTransfer === "0") {
     throw new Error(
@@ -397,7 +402,7 @@ export const waitForSenderCancels = async (
           data =>
             data.transfer.transferId === t.transferId &&
             data.channelAddress === depositChannelAddress &&
-            Object.values(data.transfer.transferResolver)[0] === constants.HashZero,
+            Object.values(data.transfer.transferResolver)[0] === HashZero,
           300_000,
         );
       } catch (e) {
@@ -428,7 +433,7 @@ export const cancelToAssetTransfer = async (
   const params = {
     channelAddress: withdrawChannelAddess,
     transferId: transferId,
-    transferResolver: { preImage: constants.HashZero },
+    transferResolver: { preImage: HashZero },
     meta: {
       cancellationReason,
     },
@@ -451,7 +456,7 @@ export const cancelHangingToTransfers = async (
   const depositChannel = await getChannelForChain(node, routerPublicIdentifier, fromChainId);
   const withdrawChannel = await getChannelForChain(node, routerPublicIdentifier, toChainId);
 
-  const toAssetId = utils.getAddress(_toAssetId);
+  const toAssetId = getAddress(_toAssetId);
   const transfers = await node.getActiveTransfers({
     publicIdentifier: withdrawChannel.bobIdentifier,
     channelAddress: withdrawChannel.channelAddress,
@@ -482,7 +487,7 @@ export const cancelHangingToTransfers = async (
           publicIdentifier: withdrawChannel.bobIdentifier,
           channelAddress: withdrawChannel.channelAddress,
           transferId: transferToCancel.transferId,
-          transferResolver: { preImage: constants.HashZero },
+          transferResolver: { preImage: HashZero },
         };
         // for receiver transfer cancellatino
         const resolved = await new Promise(async (res, rej) => {
@@ -498,7 +503,7 @@ export const cancelHangingToTransfers = async (
           data =>
             data.transfer.meta.routingId === transferToCancel.meta!.routingId &&
             data.channelAddress === depositChannel.channelAddress &&
-            Object.values(data.transfer.transferResolver)[0] === constants.HashZero,
+            Object.values(data.transfer.transferResolver)[0] === HashZero,
           45_000,
         );
         return resolved;
@@ -532,7 +537,7 @@ export const withdrawToAsset = async (
   });
   const withdrawChannel = await getChannelForChain(node, routerPublicIdentifier, toChainId);
 
-  const toAssetId = utils.getAddress(_toAssetId);
+  const toAssetId = getAddress(_toAssetId);
   const toWithdraw = getBalanceForAssetId(withdrawChannel, toAssetId, "bob");
   if (toWithdraw === "0") {
     throw new Error("Asset not in receiver channel");
@@ -586,13 +591,13 @@ export const verifyAndGetRouterSupports = async (
   _fromAssetId: string,
   toChainId: number,
   _toAssetId: string,
-  ethProvider: providers.BaseProvider, // For `to` chain
+  ethProvider: BaseProvider, // For `to` chain
   routerPublicIdentifier: string,
 ): Promise<AllowedSwap> => {
   const withdrawChannel = await getChannelForChain(node, routerPublicIdentifier, toChainId);
 
-  const fromAssetId = utils.getAddress(_fromAssetId);
-  const toAssetId = utils.getAddress(_toAssetId);
+  const fromAssetId = getAddress(_fromAssetId);
+  const toAssetId = getAddress(_toAssetId);
   const config = await node.getRouterConfig({
     routerIdentifier: withdrawChannel.aliceIdentifier,
   });
@@ -624,8 +629,8 @@ export const verifyAndGetRouterSupports = async (
   }
 
   // Verify sufficient gas
-  const minGas = utils.parseEther("0.1");
-  const routerGasBudget = await getOnchainBalance(ethProvider, constants.AddressZero, withdrawChannel.alice);
+  const minGas = parseEther("0.1");
+  const routerGasBudget = await getOnchainBalance(ethProvider, AddressZero, withdrawChannel.alice);
   if (routerGasBudget.lt(minGas)) {
     throw new Error("Router has insufficient gas funds");
   }
@@ -633,7 +638,7 @@ export const verifyAndGetRouterSupports = async (
 };
 
 export const verifyRouterCapacityForTransfer = async (
-  ethProvider: providers.BaseProvider,
+  ethProvider: BaseProvider,
   toAssetId: string,
   toAssetDecimals: number,
   withdrawChannel: FullChannelState,
@@ -709,10 +714,10 @@ export const onchainTransfer = async (
   depositAddress: string,
   assetId: string,
   transferAmountBn: BigNumber,
-  signer: providers.JsonRpcSigner,
-): Promise<providers.TransactionResponse> => {
+  signer: JsonRpcSigner,
+): Promise<TransactionResponse> => {
   const tx =
-    assetId === constants.AddressZero
+    assetId === AddressZero
       ? await signer.sendTransaction({
           to: depositAddress,
           value: transferAmountBn,
