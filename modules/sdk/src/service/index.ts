@@ -619,7 +619,7 @@ export class ConnextSdk {
     const { transferQuote } = params;
     const preImage = getRandomBytes32();
 
-    if (!transferQuote) {
+    if (!transferQuote || Object.keys(transferQuote).length === 0) {
       throw new Error("transfer quote is undefined");
     }
 
