@@ -46,7 +46,7 @@ export type ConnextModalProps = {
   withdrawalAddress: string;
   transferAmount?: string;
   injectedProvider?: any;
-  loginProvider: any;
+  loginProvider?: any;
   iframeSrcOverride?: string;
   withdrawCallTo?: string;
   withdrawCallData?: string;
