@@ -613,6 +613,10 @@ export class ConnextSdk {
     const { transferQuote } = params;
     const preImage = getRandomBytes32();
 
+    if (!transferQuote || Object.keys(transferQuote).length === 0) {
+      throw new Error("transfer quote is undefined");
+    }
+
     console.log(`Calling reconcileDeposit with ${this.senderChainChannelAddress!} and ${this.senderChain?.assetId!}`);
     await reconcileDeposit(this.browserNode!, this.senderChainChannelAddress!, this.senderChain?.assetId!);
 
