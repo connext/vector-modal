@@ -70,7 +70,7 @@ export type DepositParamsSchema = {
 };
 
 export type TransferParamsSchema = {
-  transferQuote: TransferQuote;
+  transferQuote?: TransferQuote;
   // Callbacks
   onTransferred?: () => void;
 };
