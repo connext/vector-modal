@@ -8,7 +8,7 @@ import { createTestChannelState, mkPublicIdentifier, expect, mkBytes32, getRando
 
 import * as helpers from "../src/utils/helpers";
 import * as connextUtils from "../src/utils/connext";
-import { BrowserNode, ChainDetail, ConnextSdk } from "../src";
+import { BrowserNode, ChainDetail, ConnextSdk, TransferQuote, TransferQuote } from "../src";
 
 const generateChainDetail = (overrides: Partial<ChainDetail> = {}): ChainDetail => {
   return {
@@ -32,6 +32,25 @@ const generateChainDetail = (overrides: Partial<ChainDetail> = {}): ChainDetail 
   };
 };
 
+const routerPublicIdentifier = mkPublicIdentifier("vectorRRR");
+const senderChain = generateChainDetail();
+const receiverChain = generateChainDetail({ chainId: 12 });
+// const senderChannel = createTestChannelState("create");
+const receiverChannel = createTestChannelState("create");
+const transferQuote = {
+  routerIdentifier: routerPublicIdentifier,
+  amount: "1000000000000000000",
+  assetId: senderChain.assetId,
+  chainId: senderChain.chainId,
+  recipient: receiverChannel.channel.bobIdentifier,
+  recipientChainId: receiverChain.chainId,
+  recipientAssetId: receiverChain.assetId,
+  fee: "500000000000000000",
+  expiry: "1618308505485",
+  signature:
+    "0xa36cfa752b57e4f35d9af5c8aab4a78dfc336edfb635850e1df2c99c558604b46d0e8686de9590db6f18a500e36014d00acb31b0f738dab2574180805db64fdc1b",
+};
+
 let connext: ConnextSdk;
 let getChainMock: Sinon.SinonStub;
 let connectNodeMock: Sinon.SinonStub;
@@ -44,8 +63,6 @@ let verifyRouterCapacityForTransferMock: Sinon.SinonStub;
 let sendTransactionMock: Sinon.SinonStub;
 
 describe("service", () => {
-  const routerPublicIdentifier = mkPublicIdentifier("vectorRRR");
-
   beforeEach(() => {
     connext = new ConnextSdk();
     getChainMock = Sinon.stub(helpers, "getChain");
@@ -316,24 +333,7 @@ describe("service", () => {
   });
 
   describe("estimateFees", () => {
-    const senderChain = generateChainDetail();
-    const receiverChain = generateChainDetail({ chainId: 12 });
-    // const senderChannel = createTestChannelState("create");
-    const receiverChannel = createTestChannelState("create");
-    const ResTransferQuote = {
-      routerIdentifier: routerPublicIdentifier,
-      amount: "1000000000000000000",
-      assetId: senderChain.assetId,
-      chainId: senderChain.chainId,
-      recipient: receiverChannel.channel.bobIdentifier,
-      recipientChainId: receiverChain.chainId,
-      recipientAssetId: receiverChain.assetId,
-      fee: "500000000000000000",
-      expiry: "1618308505485",
-      signature:
-        "0xa36cfa752b57e4f35d9af5c8aab4a78dfc336edfb635850e1df2c99c558604b46d0e8686de9590db6f18a500e36014d00acb31b0f738dab2574180805db64fdc1b",
-    };
-
+    const ResTransferQuote = transferQuote;
     it("should return undefined if transferAmount is undefined", async () => {
       const res = await connext.estimateFees({ transferAmount: undefined });
 
@@ -495,12 +495,24 @@ describe("service", () => {
 
     afterEach(() => Sinon.restore());
 
+    it("should throw an error if transferQuote is undefined", async () => {
+      const errorMessage = "transfer quote is undefined";
+
+      try {
+        await connext.transfer({ transferQuote: {} as TransferQuote });
+      } catch (e) {
+        console.log(e);
+        expect(e).to.be.ok;
+        expect(e.message).to.be.deep.eq(errorMessage);
+      }
+    });
+
     it("should throw an error if reconcileDeposit errors", async () => {
       const errorMessage = "reconcileDeposit errors";
       reconcileDepositMock.rejects(new Error(errorMessage));
 
       try {
-        await connext.transfer({});
+        await connext.transfer({ transferQuote: transferQuote });
       } catch (e) {
         expect(e).to.be.ok;
         expect(e.message).to.be.deep.eq(errorMessage);
@@ -513,7 +525,7 @@ describe("service", () => {
       createFromAssetTransferMock.rejects(new Error(errorMessage));
 
       try {
-        await connext.transfer({});
+        await connext.transfer({ transferQuote: transferQuote });
       } catch (e) {
         expect(e).to.be.ok;
         expect(e.message).to.be.deep.eq(errorMessage);

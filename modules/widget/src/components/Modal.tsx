@@ -5,6 +5,8 @@ import {
   ChainDetail,
   getTotalDepositsBob,
   getChain,
+  truncate,
+  TransferQuote,
   getUserBalance,
   ConnextSdk,
   BrowserNode,
@@ -89,7 +91,8 @@ const ConnextModal: FC<ConnextModalProps> = ({
 
   const [transferAmountUi, setTransferAmountUi] = useState<string | undefined>();
   const [receivedAmountUi, setReceivedAmountUi] = useState<string | undefined>();
-  const [transferFeeUi, setTransferFeeUi] = useState<string>("--");
+  const [transferFeeUi, setTransferFeeUi] = useState<string>();
+  const [swapRate, setSwapRate] = useState<string>();
 
   const [existingChannelBalanceUi, setExistingChannelBalanceUi] = useState<string | undefined>();
 
@@ -113,6 +116,8 @@ const ConnextModal: FC<ConnextModalProps> = ({
   const [screenState, setScreenState] = useState<ScreenStates>(SCREEN_STATES.LOADING);
 
   const [lastScreenState, setLastScreenState] = useState<ScreenStates | undefined>();
+
+  const [transferQuote, setTransferQuote] = useState<TransferQuote>();
 
   const [title, setTitle] = useState<string>();
   const [message, setMessage] = useState<string>();
@@ -193,26 +198,58 @@ const ConnextModal: FC<ConnextModalProps> = ({
     setListener(depositListener);
   };
 
-  const handleSwapCheck = async (_input: string | undefined, receiveExactAmount: boolean): Promise<void> => {
+  const handleSwapCheck = async (
+    _input: string | undefined,
+    receiveExactAmount: boolean,
+  ): Promise<TransferQuote | undefined> => {
     const input = _input ? _input.trim() : undefined;
+    setReceivedAmountUi(undefined);
+    setSwapRate(undefined);
+    setTransferFeeUi(undefined);
     receiveExactAmount ? setReceivedAmountUi(input) : setTransferAmountUi(input);
+
+    if (!input) {
+      setAmountError(undefined);
+      return;
+    }
+
+    let transferAmountBn = BigNumber.from(parseUnits(input, senderChain?.assetDecimals!));
+
+    if (existingChannelBalanceUi) {
+      const existingBalanceBn = BigNumber.from(parseUnits(existingChannelBalanceUi, senderChain?.assetDecimals!));
+      transferAmountBn = transferAmountBn.add(existingBalanceBn);
+    }
+
+    const transferAmount = formatUnits(transferAmountBn, senderChain?.assetDecimals!);
 
     try {
       const res = await connextSdk!.estimateFees({
-        transferAmount: input,
+        transferAmount: transferAmount,
         isRecipientAssetInput: receiveExactAmount,
         userBalance: userBalance,
       });
       console.log(res);
       setAmountError(res.error);
-
-      receiveExactAmount ? setTransferAmountUi(res.senderAmount) : setReceivedAmountUi(res.recipientAmount);
+      setTransferQuote(res.transferQuote);
+      receiveExactAmount
+        ? setTransferAmountUi(res.senderAmount)
+        : setReceivedAmountUi(truncate(res.recipientAmount!, 5));
 
       if (res.totalFee) setTransferFeeUi(res.totalFee);
+
+      if (res.recipientAmount) {
+        const tA = parseFloat(transferAmount);
+        const rA = parseFloat(res.recipientAmount);
+
+        const _swapRate = tA / rA;
+        setSwapRate(_swapRate.toString());
+      }
+      return res.transferQuote;
     } catch (e) {
       const message = "Error Estimating Fees";
       console.log(message, e);
       setAmountError(e.message);
+      return;
     }
   };
 
@@ -220,6 +257,7 @@ const ConnextModal: FC<ConnextModalProps> = ({
     setIsLoad(true);
 
     try {
+      console.log(receivedAmountUi);
       await connextSdk!.preTransferCheck(receivedAmountUi!);
     } catch (e) {
       console.log("Error at preCheck", e);
@@ -229,6 +267,12 @@ const ConnextModal: FC<ConnextModalProps> = ({
     }
 
     const transferAmountBn: BigNumber = BigNumber.from(parseUnits(transferAmountUi!, senderChain?.assetDecimals!));
+
+    if (transferAmountBn.isZero() && existingChannelBalanceUi) {
+      setIsLoad(false);
+      handleSwap();
+      return;
+    }
 
     if (onSwap) {
       try {
@@ -248,7 +292,7 @@ const ConnextModal: FC<ConnextModalProps> = ({
 
       setIsLoad(false);
 
-      await handleSwap();
+      handleSwap();
     } else if (webProvider) {
       // deposit
       try {
@@ -272,24 +316,26 @@ const ConnextModal: FC<ConnextModalProps> = ({
       }
       setIsLoad(false);
 
-      await handleSwap();
+      handleSwap();
     } else {
       console.log(`Starting block listener`);
       // display QR
       setIsLoad(false);
-      await depositListenerAndTransfer();
+      depositListenerAndTransfer();
     }
   };
 
-  const handleSwap = async (): Promise<void> => {
+  const handleSwap = async (pTransferQuote?: TransferQuote): Promise<void> => {
     handleScreen({
       state: SCREEN_STATES.STATUS,
       title: "transferring",
       message: `Transferring ${senderChain?.assetName!}. This step can take some time if the chain is congested`,
     });
 
+    console.log(pTransferQuote);
+    const quote = pTransferQuote ?? transferQuote!;
     try {
-      await connextSdk!.transfer({});
+      await connextSdk!.transfer({ transferQuote: quote });
     } catch (e) {
       const message = "Error at Transfer";
       console.log(e, message);
@@ -332,9 +378,11 @@ const ConnextModal: FC<ConnextModalProps> = ({
     setWebProvider(undefined);
     setInputReadOnly(false);
     setIsLoad(false);
-    setTransferFeeUi("--");
+    setTransferFeeUi(undefined);
     setExistingChannelBalanceUi("");
     setReceivedAmountUi("");
+    setSwapRate(undefined);
+    setTransferQuote(undefined);
     setUserBalance(undefined);
     setUserAddress(undefined);
     setError(undefined);
@@ -659,6 +707,16 @@ const ConnextModal: FC<ConnextModalProps> = ({
   };
 
   const continueButton = async () => {
+    const quote = await handleSwapCheck("0", false);
+    console.log("continue", quote);
+    if (!quote) {
+      handleScreen({
+        state: ERROR_STATES.ERROR_TRANSFER,
+        error: new Error("Error at estimateFees"),
+        message: message,
+      });
+      return;
+    }
     try {
       await connextSdk!.preTransferCheck(existingChannelBalanceUi!);
     } catch (e) {
@@ -670,8 +728,7 @@ const ConnextModal: FC<ConnextModalProps> = ({
       });
       return;
     }
-    setExistingChannelBalanceUi("");
-    handleSwap();
+    handleSwap(quote);
   };
 
   const addMoreFunds = async () => {
@@ -775,6 +832,7 @@ const ConnextModal: FC<ConnextModalProps> = ({
             recipientAmount={receivedAmountUi}
             existingChannelBalance={existingChannelBalanceUi!}
             feeQuote={transferFeeUi}
+            swapRate={swapRate}
             options={handleOptions}
           />
         );
