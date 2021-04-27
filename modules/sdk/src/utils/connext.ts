@@ -56,24 +56,23 @@ export const connectNode = async (
   let signer: JsonRpcSigner | undefined;
   let signerAddress: string | undefined;
 
-  // if eth provider is detected, don't pass in a sig, and the iframe will get the user's sig
-  const provider = (await detectEthereumProvider()) as any;
-  if (provider) {
-    if (provider !== (window as any).ethereum) {
-      throw new Error("Detected multiple wallets");
-    }
-  }
-  // otherwise use unsafe dApp based signer
-  else {
-    if (!loginProvider) {
-      throw new Error("Ethereum provider not detected and login provider not provided");
-    }
+  // check for window provider
+  const windowProvider = (await detectEthereumProvider()) as any;
+
+  // if login provider exists, i.e. for magic link, use it to sign in the dapp
+  if (loginProvider) {
     console.warn("Using login provider to log in");
     signer = loginProvider.getSigner();
     signerAddress = await signer.getAddress();
     signature = await signer.signMessage(NonEIP712Message);
     console.log("signerAddress: ", signerAddress);
     console.log("signature: ", signature);
+  } else if (!windowProvider) {
+    throw new Error("Ethereum provider not detected and login provider not provided");
+  } else if (windowProvider !== (window as any).ethereum) {
+    throw new Error("Detected multiple wallets");
+  } else {
+    console.log("Using window provider to log in, signing in iframe");
   }
 
   try {
@@ -83,13 +82,19 @@ export const connectNode = async (
     });
   } catch (e) {
     // in some cases the iframe is not able to properly sign (i.e. MM mobile... for that case fall back to unsafe sig)
-    if ((e.message ?? "").toLowerCase().includes("no signature provided")) {
+    if (
+      (e.message ?? "").toLowerCase().includes("no signature provided") ||
+      (e.message ?? "").toLowerCase().includes("provider not available")
+    ) {
+      if (!windowProvider) {
+        throw new Error("Could not get signature");
+      }
+      const windowWeb3 = new Web3Provider(windowProvider);
       // first choice is detected provider
-      const _provider = provider || loginProvider;
       console.warn("Could not sign in iframe, signing in dapp");
-      const _signer = _provider.getSigner();
+      const _signer = windowWeb3.getSigner();
       signerAddress = await _signer.getAddress();
-      signature = await _signer.getSigner().signMessage(NonEIP712Message);
+      signature = await _signer.signMessage(NonEIP712Message);
       console.log("signerAddress: ", signerAddress);
       console.log("signature: ", signature);
       try {

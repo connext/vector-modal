@@ -112,12 +112,6 @@ export class ConnextSdk {
       throw e;
     }
 
-    if (!params.loginProvider) {
-      const message = "Error loginProvider is undefined";
-      console.log(message);
-      throw new Error(message);
-    }
-
     // setup browser node
     let _node: BrowserNode;
     try {
