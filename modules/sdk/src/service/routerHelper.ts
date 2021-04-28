@@ -63,33 +63,40 @@ export class routerHelper {
 
     console.log("browser node config: ", configRes[0]);
 
-    try {
-      supportedChains.map(async chainId => {
-        let channel: FullChannelState = await getChannelForChain(browserNode, routerPublicIdentifier, chainId);
-        console.log("Get channel: ", channel);
+    // try {
+    //   supportedChains.map(async chainId => {
+    //     let channel: FullChannelState = await getChannelForChain(browserNode, routerPublicIdentifier, chainId);
+    //     console.log("Get channel: ", channel);
 
-        this.chainChannels[chainId] = channel;
-      });
-    } catch (e) {
-      const message = "Could not get channel";
-      console.log(e, message);
-      throw e;
-    }
+    //     this.chainChannels[chainId] = channel;
+    //   });
+    // } catch (e) {
+    //   const message = "Could not get channel";
+    //   console.log(e, message);
+    //   throw e;
+    // }
 
-    console.log(this.chainChannels);
+    // console.log(this.chainChannels);
   }
 
   async getOffChainChannelBalance(
-    chainId: number,
+    channelAddress: string,
     assetId: string,
   ): Promise<{
     offChainAssetBalanceBn: BigNumber;
   }> {
-    const channel = this.chainChannels[chainId];
+    const channel = await this.browserNode!.getStateChannel({ channelAddress: channelAddress });
 
-    const offChainAssetBalance = BigNumber.from(getBalanceForAssetId(channel, assetId, "bob"));
+    if (channel.isError) {
+      console.log(channel.getError());
+      throw channel.getError();
+    }
+
+    const offChainAssetBalance = BigNumber.from(getBalanceForAssetId(channel.getValue(), assetId, "bob"));
     console.log(
-      `Offchain balance for ${channel.channelAddress} of asset ${assetId}: ${offChainAssetBalance.toString()}`,
+      `Offchain balance for ${
+        channel.getValue().channelAddress
+      } of asset ${assetId}: ${offChainAssetBalance.toString()}`,
     );
 
     return {
