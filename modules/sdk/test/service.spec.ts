@@ -8,7 +8,7 @@ import { createTestChannelState, mkPublicIdentifier, expect, mkBytes32, getRando
 
 import * as helpers from "../src/utils/helpers";
 import * as connextUtils from "../src/utils/connext";
-import { BrowserNode, ChainDetail, ConnextSdk, TransferQuote, TransferQuote } from "../src";
+import { BrowserNode, ChainDetail, ConnextSdk, TransferQuote } from "../src";
 
 const generateChainDetail = (overrides: Partial<ChainDetail> = {}): ChainDetail => {
   return {
