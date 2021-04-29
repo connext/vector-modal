@@ -19,7 +19,7 @@ import {
 } from "@connext/vector-types";
 import { calculateExchangeWad, createlockHash, getBalanceForAssetId, inverse } from "@connext/vector-utils";
 import { getAddress } from "@ethersproject/address";
-import { parseEther } from "@ethersproject/units";
+import { formatUnits, parseEther } from "@ethersproject/units";
 import { Contract } from "@ethersproject/contracts";
 import { BigNumber } from "@ethersproject/bignumber";
 import { HashZero, AddressZero } from "@ethersproject/constants";
@@ -675,7 +675,12 @@ export const verifyRouterCapacityForTransfer = async (
   console.log("routerBalanceFull: ", routerBalanceFull);
   console.log("routerBalanceFull.lt(swappedAmount): ", routerBalanceFull.lt(swappedAmount));
   if (routerBalanceFull.lt(swappedAmount)) {
-    throw new Error("Router has insufficient collateral, please try again later.");
+    throw new Error(
+      `Router has insufficient exit liquidity, please try again later. Available: ${formatUnits(
+        routerBalanceFull,
+        toAssetDecimals,
+      )}`,
+    );
   }
 };
 
