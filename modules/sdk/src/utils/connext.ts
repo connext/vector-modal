@@ -174,6 +174,16 @@ export const connectNode = async (
   return browserNode;
 };
 
+export const requestCollateral = async (node: BrowserNode, channelAddress: string, _assetId: string): Promise<void> => {
+  const res = await node.requestCollateral({
+    channelAddress: channelAddress,
+    assetId: getAddress(_assetId),
+  });
+  if (res.isError) {
+    throw res.getError();
+  }
+};
+
 export const getCrosschainFee = async (
   node: BrowserNode,
   routerIdentifier: string,
