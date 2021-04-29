@@ -56,6 +56,7 @@ let getChainMock: Sinon.SinonStub;
 let connectNodeMock: Sinon.SinonStub;
 let createEvtContainerMock: Sinon.SinonStub;
 let getChannelForChainMock: Sinon.SinonStub;
+let requestCollateralMock: Sinon.SinonStub;
 let getFeesDebouncedMock: Sinon.SinonStub;
 let browserNodeMock: Sinon.SinonStubbedInstance<BrowserNode>;
 let verifyAndGetRouterSupportsMock: Sinon.SinonStub;
@@ -72,6 +73,7 @@ describe("service", () => {
     getChannelForChainMock = Sinon.stub(connextUtils, "getChannelForChain");
     verifyAndGetRouterSupportsMock = Sinon.stub(connextUtils, "verifyAndGetRouterSupports");
     verifyRouterCapacityForTransferMock = Sinon.stub(connextUtils, "verifyRouterCapacityForTransfer");
+    requestCollateralMock = Sinon.stub(connextUtils, "requestCollateral");
     sendTransactionMock = Sinon.stub(connextUtils, "onchainTransfer");
     getFeesDebouncedMock = Sinon.stub(connextUtils, "getFeesDebounced");
 
@@ -95,6 +97,8 @@ describe("service", () => {
       createEvtContainerMock.resolves({});
       getChannelForChainMock.onFirstCall().resolves(senderChannel.channel);
       getChannelForChainMock.onSecondCall().resolves(receiverChannel.channel);
+      requestCollateralMock.onFirstCall().resolves({});
+      requestCollateralMock.onSecondCall().resolves({});
     });
 
     it("should throw an error if sender chain doesnt exist", async () => {
@@ -275,6 +279,80 @@ describe("service", () => {
       expect(connext.routerPublicIdentifier).to.be.deep.eq(routerPublicIdentifier);
       expect(connext.senderChain).to.be.deep.eq(senderChain);
       expect(connext.recipientChain).to.be.deep.eq(receiverChain);
+    });
+
+    it("should throw an error if request collateral errors for sender channel", async () => {
+      const errorMessage = "request collateral errors for sender channel";
+      requestCollateralMock.onFirstCall().rejects(new Error(errorMessage));
+
+      verifyAndGetRouterSupportsMock.resolves({
+        fromAssetId: senderChain.assetId,
+        fromChainId: senderChain.chainId,
+        hardcodedRate: "1",
+        priceType: "hardcoded",
+        toAssetId: receiverChain.assetId,
+        toChainId: receiverChain.chainId,
+      } as AllowedSwap);
+
+      try {
+        await connext.setup({
+          loginProvider: {},
+          senderAssetId: senderChain.assetId,
+          senderChainProvider: senderChain.chainProvider,
+          recipientAssetId: receiverChain.assetId,
+          recipientChainProvider: receiverChain.chainProvider,
+          routerPublicIdentifier,
+        });
+      } catch (e) {
+        expect(e.message).to.be.deep.eq(errorMessage);
+        expect(e).to.be.ok;
+      }
+
+      expect(connext.routerPublicIdentifier).to.be.deep.eq(routerPublicIdentifier);
+      expect(connext.senderChain).to.be.deep.eq(senderChain);
+      expect(connext.recipientChain).to.be.deep.eq(receiverChain);
+      expect(connext.browserNode).to.be.deep.eq(browserNodeMock);
+      expect(connext.senderChainChannelAddress).to.be.deep.eq(senderChannel.channel.latestUpdate.channelAddress);
+      expect(connext.recipientChainChannelAddress).to.be.deep.eq(receiverChannel.channel.latestUpdate.channelAddress);
+      expect(connext.senderChainChannel).to.be.deep.eq(senderChannel.channel);
+      expect(connext.recipientChainChannel).to.be.deep.eq(receiverChannel.channel);
+    });
+
+    it("should throw an error if request collateral errors for receiver channel", async () => {
+      const errorMessage = "request collateral errors for receiver channel";
+      requestCollateralMock.onSecondCall().rejects(new Error(errorMessage));
+
+      verifyAndGetRouterSupportsMock.resolves({
+        fromAssetId: senderChain.assetId,
+        fromChainId: senderChain.chainId,
+        hardcodedRate: "1",
+        priceType: "hardcoded",
+        toAssetId: receiverChain.assetId,
+        toChainId: receiverChain.chainId,
+      } as AllowedSwap);
+
+      try {
+        await connext.setup({
+          loginProvider: {},
+          senderAssetId: senderChain.assetId,
+          senderChainProvider: senderChain.chainProvider,
+          recipientAssetId: receiverChain.assetId,
+          recipientChainProvider: receiverChain.chainProvider,
+          routerPublicIdentifier,
+        });
+      } catch (e) {
+        expect(e.message).to.be.deep.eq(errorMessage);
+        expect(e).to.be.ok;
+      }
+
+      expect(connext.routerPublicIdentifier).to.be.deep.eq(routerPublicIdentifier);
+      expect(connext.senderChain).to.be.deep.eq(senderChain);
+      expect(connext.recipientChain).to.be.deep.eq(receiverChain);
+      expect(connext.browserNode).to.be.deep.eq(browserNodeMock);
+      expect(connext.senderChainChannelAddress).to.be.deep.eq(senderChannel.channel.latestUpdate.channelAddress);
+      expect(connext.recipientChainChannelAddress).to.be.deep.eq(receiverChannel.channel.latestUpdate.channelAddress);
+      expect(connext.senderChainChannel).to.be.deep.eq(senderChannel.channel);
+      expect(connext.recipientChainChannel).to.be.deep.eq(receiverChannel.channel);
     });
 
     // ToDo

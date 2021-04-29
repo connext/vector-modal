@@ -25,6 +25,7 @@ import {
   createEvtContainer,
   EvtContainer,
   getChannelForChain,
+  requestCollateral,
   verifyAndGetRouterSupports,
   reconcileDeposit,
   cancelHangingToTransfers,
@@ -190,6 +191,22 @@ export class ConnextSdk {
     const recipientChainChannelAddress = recipientChainChannel?.channelAddress!;
     this.recipientChainChannel = recipientChainChannel;
     this.recipientChainChannelAddress = recipientChainChannelAddress;
+
+    try {
+      await requestCollateral(_node, senderChainChannelAddress, senderChainInfo.assetId);
+    } catch (e) {
+      const message = "Could not request collateral for sender channel";
+      console.log(e, message);
+      throw e;
+    }
+
+    try {
+      await requestCollateral(_node, recipientChainChannelAddress, recipientChainInfo.assetId);
+    } catch (e) {
+      const message = "Could not request collateral for recipient channel";
+      console.log(e, message);
+      throw e;
+    }
 
     // Verify router supports...
     try {
