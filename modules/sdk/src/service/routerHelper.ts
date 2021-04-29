@@ -3,11 +3,11 @@ import { ChainProviders, FullChannelState } from "@connext/vector-types";
 import { getBalanceForAssetId } from "@connext/vector-utils";
 import { BigNumber } from "@ethersproject/bignumber";
 import { JsonRpcSigner } from "@ethersproject/providers";
-import { getChannelForChain } from "../utils";
+// import { getChannelForChain } from "../utils";
 
 import { iframeSrc } from "../constants";
 
-export class routerHelper {
+export class RouterHelper {
   public routerPublicIdentifier = "";
   public browserNode?: BrowserNode;
   public chainChannels?: { [chainId: number]: FullChannelState };
