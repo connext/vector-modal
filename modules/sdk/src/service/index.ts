@@ -863,6 +863,22 @@ export class ConnextSdk {
       }
     });
 
+    ////// Doesn't throw error
+    try {
+      await reconcileDeposit(this.browserNode!, this.recipientChainChannelAddress, this.recipientChain!.assetId);
+    } catch (e) {
+      const message = "Error in reconcileDeposit";
+      console.error(message, e);
+    }
+
+    try {
+      await requestCollateral(this.browserNode!, this.recipientChainChannelAddress, this.recipientChain!.assetId);
+    } catch (e) {
+      const message = "Could not request collateral for recipient channel";
+      console.log(e, message);
+    }
+    //////
+
     if (onRecover) {
       onRecover(result.withdrawalTx, successRecoverUi, BigNumber.from(result.withdrawalAmount));
     }
