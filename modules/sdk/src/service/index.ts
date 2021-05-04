@@ -79,7 +79,7 @@ export class ConnextSdk {
       console.log("SUCCESS INIT");
       return response;
     } catch (e) {
-      const message = "Failed at Pending Tranfer Check";
+      const message = "Failed at Pending Transfer Check";
       console.log(e, message);
       throw e;
     }

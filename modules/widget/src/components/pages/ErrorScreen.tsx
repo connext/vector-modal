@@ -61,7 +61,10 @@ const Error: FC<ErrorProps> = props => {
               <Stack column={true} spacing={2}>
                 <Stack>
                   <Text fontSize="0.875rem" flex="auto" noOfLines={3} color="crimson" lineHeight="24px">
-                    {(error as VectorError)?.context?.counterpartyError ?? error.message}
+                    {(error as VectorError)?.context?.counterpartyError?.context?.validationContext?.generateContext
+                      ?.reconcileError?.message ??
+                      (error as VectorError)?.context?.counterpartyError?.message ??
+                      error.message}
                   </Text>
                   <IconButton
                     aria-label="Clipboard"
@@ -80,7 +83,7 @@ const Error: FC<ErrorProps> = props => {
                   {state === ERROR_STATES.ERROR_TRANSFER && (
                     <Text fontSize="0.875rem" lineHeight="24px" textTransform="initial">
                       An error occurred during the transfer. Your funds are preserved in the state channel and the
-                      tranfer can be re-attempted.
+                      transfer can be re-attempted.
                     </Text>
                   )}
                   <Text fontSize="0.875rem" lineHeight="24px" textTransform="initial">
