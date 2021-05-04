@@ -54,8 +54,7 @@ const RecoverError: FC<ErrorProps> = props => {
               </Stack>
               <Box>
                 <Text fontSize="0.875rem" lineHeight="24px" textTransform="initial">
-                  An error occurred during the Recover. Your funds are preserved in the state channel and the tranfer
-                  can be re-attempted.
+                  An error occurred during the Recovery.
                 </Text>
 
                 <Text fontSize="0.875rem" lineHeight="24px" textTransform="initial">
