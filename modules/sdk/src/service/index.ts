@@ -45,7 +45,10 @@ export { BrowserNode, ERC20Abi, FullChannelState, getBalanceForAssetId, Transfer
 const LOGDNA_INGESTION_KEY = "86e2bf58c669c293e6525e49eab86a0c";
 // console.log(process.env.LOGDNA_API_KEY);
 // console.log(require("./package.json").version);
-logdna.init(LOGDNA_INGESTION_KEY);
+if (typeof window !== "undefined") {
+  // browser code
+  logdna.init(LOGDNA_INGESTION_KEY);
+}
 export class ConnextSdk {
   public routerPublicIdentifier = "";
   public senderChainChannelAddress = "";
