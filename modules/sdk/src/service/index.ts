@@ -4,6 +4,7 @@ import { getBalanceForAssetId, getRandomBytes32 } from "@connext/vector-utils";
 import { parseUnits, formatUnits } from "@ethersproject/units";
 import { BigNumber } from "@ethersproject/bignumber";
 import { HashZero } from "@ethersproject/constants";
+import logdna from "@logdna/browser";
 
 import {
   ChainDetail,
@@ -41,6 +42,10 @@ import {
 
 export { BrowserNode, ERC20Abi, FullChannelState, getBalanceForAssetId, TransferQuote, VectorError };
 
+const LOGDNA_INGESTION_KEY = "86e2bf58c669c293e6525e49eab86a0c";
+// console.log(process.env.LOGDNA_API_KEY);
+// console.log(require("./package.json").version);
+logdna.init(LOGDNA_INGESTION_KEY);
 export class ConnextSdk {
   public routerPublicIdentifier = "";
   public senderChainChannelAddress = "";
@@ -499,7 +504,7 @@ export class ConnextSdk {
         };
       }
 
-      totalFee = formatUnits(feeBn, this.senderChain?.assetDecimals!);
+      totalFee = formatUnits(feeBn.toString(), this.senderChain?.assetDecimals!);
       console.log("feeUi: ", totalFee);
 
       if (BigNumber.from(recipientAmountBn).lte(0)) {
@@ -514,10 +519,10 @@ export class ConnextSdk {
       }
 
       if (isRecipientAssetInput) {
-        senderAmountUi = formatUnits(senderAmountBn, this.senderChain?.assetDecimals!);
+        senderAmountUi = formatUnits(senderAmountBn.toString(), this.senderChain?.assetDecimals!);
         console.log("senderUi: ", senderAmountUi);
       } else {
-        recipientAmountUi = formatUnits(recipientAmountBn, this.recipientChain?.assetDecimals!);
+        recipientAmountUi = formatUnits(recipientAmountBn.toString(), this.recipientChain?.assetDecimals!);
         console.log("receivedUi: ", recipientAmountUi);
       }
 
