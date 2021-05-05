@@ -4,6 +4,7 @@ import { getBalanceForAssetId, getRandomBytes32 } from "@connext/vector-utils";
 import { parseUnits, formatUnits } from "@ethersproject/units";
 import { BigNumber } from "@ethersproject/bignumber";
 import { HashZero } from "@ethersproject/constants";
+import config from "../config";
 
 import {
   ChainDetail,
@@ -41,13 +42,10 @@ import {
 
 export { BrowserNode, ERC20Abi, FullChannelState, getBalanceForAssetId, TransferQuote, VectorError };
 
-const LOGDNA_INGESTION_KEY = "86e2bf58c669c293e6525e49eab86a0c";
-// console.log(process.env.LOGDNA_API_KEY);
-// console.log(require("./package.json").version);
 if (typeof window !== "undefined") {
   const logdna = require("@logdna/browser");
   // browser code
-  logdna.init(LOGDNA_INGESTION_KEY);
+  logdna.init(config.LOGDNA_INGESTION_KEY);
 }
 export class ConnextSdk {
   public routerPublicIdentifier = "";
