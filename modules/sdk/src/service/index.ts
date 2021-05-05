@@ -568,6 +568,8 @@ export class ConnextSdk {
       throw new Error(message);
     }
 
+    await reconcileDeposit(this.browserNode!, this.recipientChainChannelAddress, this.recipientChain?.assetId!);
+
     console.log("Verify Router Capacity");
     try {
       await verifyRouterCapacityForTransfer(
