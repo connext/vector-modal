@@ -1,7 +1,20 @@
 import React, { FC } from "react";
 import { ChainDetail, getExplorerLinkForTx, truncate } from "@connext/vector-sdk";
 
-import { ModalContent, ModalBody, Text, Stack, Box, Button } from "../common";
+import {
+  ModalContent,
+  ModalBody,
+  Text,
+  Stack,
+  Box,
+  Button,
+  InputGroup,
+  Input,
+  IconButton,
+  IconBox,
+  CheckCircleIcon,
+  CopyIcon,
+} from "../common";
 import { Header, Footer, NetworkBar } from "../static";
 
 export interface SuccessProps {
@@ -16,6 +29,7 @@ export interface SuccessProps {
 
 const Success: FC<SuccessProps> = props => {
   const { amount, transactionId, senderChainInfo, receiverChainInfo, receiverAddress, onClose, options } = props;
+  const [copiedAddress, setCopiedAddress] = useState<boolean>(false);
   return (
     <>
       <ModalContent id="modalContent">
@@ -43,9 +57,38 @@ const Success: FC<SuccessProps> = props => {
                     view tx
                   </Button>
                 </Stack>
-                <Box>
-                  <Text fontSize="1rem">{`Now available on ${receiverChainInfo.name}.`}</Text>
-                </Box>
+                <Stack column={true} spacing={1}>
+                  <Text fontSize="1rem">{`Add ${receiverChainInfo.assetName} on ${receiverChainInfo.name} in your wallet.`}</Text>
+                  <InputGroup borderRadius="15px">
+                    <Input
+                      body="lg"
+                      id="assetId"
+                      name="assetId"
+                      value={receiverChainInfo.assetId}
+                      inputMode="search"
+                      title="Receiver AssetId"
+                      // styling
+                      fontSize="14px"
+                      flex="auto"
+                      paddingLeft="12px"
+                      paddingRight="0px"
+                      // misc
+                      readOnly={true}
+                    />
+
+                    <IconButton
+                      aria-label="Clipboard"
+                      onClick={() => {
+                        console.log(`Copying: ${receiverChainInfo.assetId}`);
+                        navigator.clipboard.writeText(receiverChainInfo.assetId);
+                        setCopiedAddress(true);
+                        setTimeout(() => setCopiedAddress(false), 5000);
+                      }}
+                    >
+                      <IconBox width="1.5rem">{!copiedAddress ? <CopyIcon /> : <CheckCircleIcon />}</IconBox>
+                    </IconButton>
+                  </InputGroup>
+                </Stack>
               </Stack>
             </Box>
 
