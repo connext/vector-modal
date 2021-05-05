@@ -45,3 +45,14 @@ Important Safety Tip: When adding/altering modules in the playground, use `alias
 ### Running Cypress
 
 (In a third terminal) you can run Cypress and it will run your integration tests against the playground/example. If you want to keep integration tests and examples seperate you can copy the example folder to another folder called like `app` or whatever. Cypress will look for `localhost:1234` by default. If you change ports, also make sure to update [`.github/integration.yaml`](.github/integration.yml) as well.
+
+
+### Release Instructions (Team)
+
+just need to run, but make sure yarn.lock is up to date.
+
+```sh
+yarn run publishe
+```
+
+Select the version needs to be released and wait for couple of mins.
