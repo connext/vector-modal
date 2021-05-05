@@ -806,15 +806,7 @@ export class ConnextSdk {
     const { assetId, recipientAddress, onRecover } = params;
 
     try {
-      await Promise.all([
-        reconcileDeposit(this.browserNode!, this.senderChainChannelAddress, assetId),
-        () => {
-          if (this.recipientChain?.assetId) {
-            return reconcileDeposit(this.browserNode!, this.recipientChainChannelAddress, this.recipientChain?.assetId);
-          }
-          return;
-        },
-      ]);
+      await reconcileDeposit(this.browserNode!, this.senderChainChannelAddress, assetId);
     } catch (e) {
       const message = "Error in reconcileDeposit";
       console.error(message, e);
