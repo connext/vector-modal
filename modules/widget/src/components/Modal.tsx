@@ -888,6 +888,7 @@ const ConnextModal: FC<ConnextModalProps> = ({
         return (
           <Success
             amount={successWithdrawalAmount!}
+            rawWebProvider={_injectedProvider}
             transactionId={withdrawTx!}
             senderChainInfo={senderChain!}
             receiverChainInfo={receiverChain!}

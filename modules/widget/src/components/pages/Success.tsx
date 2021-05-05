@@ -1,6 +1,5 @@
-import React, { FC } from "react";
+import React, { FC, useState } from "react";
 import { ChainDetail, getExplorerLinkForTx, truncate } from "@connext/vector-sdk";
-
 import {
   ModalContent,
   ModalBody,
@@ -15,11 +14,14 @@ import {
   CheckCircleIcon,
   CopyIcon,
 } from "../common";
+import { Web3Provider } from "@ethersproject/providers";
+import { AddressZero } from "@ethersproject/constants";
 import { Header, Footer, NetworkBar } from "../static";
 
 export interface SuccessProps {
   amount: string;
   transactionId: string;
+  rawWebProvider: any;
   senderChainInfo?: ChainDetail;
   receiverChainInfo: ChainDetail;
   receiverAddress: string;
@@ -28,8 +30,50 @@ export interface SuccessProps {
 }
 
 const Success: FC<SuccessProps> = props => {
-  const { amount, transactionId, senderChainInfo, receiverChainInfo, receiverAddress, onClose, options } = props;
+  const {
+    rawWebProvider,
+    amount,
+    transactionId,
+    senderChainInfo,
+    receiverChainInfo,
+    receiverAddress,
+    onClose,
+    options,
+  } = props;
   const [copiedAddress, setCopiedAddress] = useState<boolean>(false);
+  const [errorMessage, setErrorMessage] = useState<string>();
+
+  const switchAndAddToken = async () => {
+    const injectedProvider: Web3Provider = new Web3Provider(rawWebProvider);
+    const network = await injectedProvider.getNetwork();
+    console.log(network);
+    if (receiverChainInfo.chainId !== network.chainId) {
+      const defaultMetmaskNetworks = [1, 3, 4, 5, 42];
+      let message = `Please connect your wallet to the ${receiverChainInfo.name} : ${receiverChainInfo.chainId} network`;
+
+      setErrorMessage(message);
+      if (!defaultMetmaskNetworks.includes(receiverChainInfo.chainId)) {
+        // @ts-ignore
+        await ethereum.request({
+          method: "wallet_addEthereumChain",
+          params: [receiverChainInfo?.chainParams!],
+        });
+      }
+    }
+    // @ts-ignore
+    await ethereum.request({
+      method: "wallet_watchAsset",
+      params: {
+        type: "ERC20",
+        options: {
+          address: receiverChainInfo.assetId,
+          symbol: receiverChainInfo.assetName,
+          decimals: receiverChainInfo.assetDecimals,
+        },
+      },
+    });
+  };
+
   return (
     <>
       <ModalContent id="modalContent">
@@ -59,35 +103,51 @@ const Success: FC<SuccessProps> = props => {
                 </Stack>
                 <Stack column={true} spacing={1}>
                   <Text fontSize="1rem">{`Add ${receiverChainInfo.assetName} on ${receiverChainInfo.name} in your wallet.`}</Text>
-                  <InputGroup borderRadius="15px">
-                    <Input
-                      body="lg"
-                      id="assetId"
-                      name="assetId"
-                      value={receiverChainInfo.assetId}
-                      inputMode="search"
-                      title="Receiver AssetId"
-                      // styling
-                      fontSize="14px"
-                      flex="auto"
-                      paddingLeft="12px"
-                      paddingRight="0px"
-                      // misc
-                      readOnly={true}
-                    />
+                  {errorMessage && (
+                    <Text flex="auto" fontSize="0.75rem" textAlign="center">
+                      {errorMessage}
+                    </Text>
+                  )}
+                  {!!rawWebProvider &&
+                  receiverChainInfo.assetId !== AddressZero &&
+                  // @ts-ignore
+                  ethereum &&
+                  // @ts-ignore
+                  ethereum.isMetaMask ? (
+                    <Button size="lg" onClick={switchAndAddToken}>
+                      Add {receiverChainInfo.assetName} to {receiverChainInfo.name}
+                    </Button>
+                  ) : (
+                    <InputGroup borderRadius="15px">
+                      <Input
+                        body="lg"
+                        id="assetId"
+                        name="assetId"
+                        value={receiverChainInfo.assetId}
+                        inputMode="search"
+                        title="Receiver AssetId"
+                        // styling
+                        fontSize="14px"
+                        flex="auto"
+                        paddingLeft="12px"
+                        paddingRight="0px"
+                        // misc
+                        readOnly={true}
+                      />
 
-                    <IconButton
-                      aria-label="Clipboard"
-                      onClick={() => {
-                        console.log(`Copying: ${receiverChainInfo.assetId}`);
-                        navigator.clipboard.writeText(receiverChainInfo.assetId);
-                        setCopiedAddress(true);
-                        setTimeout(() => setCopiedAddress(false), 5000);
-                      }}
-                    >
-                      <IconBox width="1.5rem">{!copiedAddress ? <CopyIcon /> : <CheckCircleIcon />}</IconBox>
-                    </IconButton>
-                  </InputGroup>
+                      <IconButton
+                        aria-label="Clipboard"
+                        onClick={() => {
+                          console.log(`Copying: ${receiverChainInfo.assetId}`);
+                          navigator.clipboard.writeText(receiverChainInfo.assetId);
+                          setCopiedAddress(true);
+                          setTimeout(() => setCopiedAddress(false), 5000);
+                        }}
+                      >
+                        <IconBox width="1.5rem">{!copiedAddress ? <CopyIcon /> : <CheckCircleIcon />}</IconBox>
+                      </IconButton>
+                    </InputGroup>
+                  )}
                 </Stack>
               </Stack>
             </Box>
