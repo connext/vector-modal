@@ -17,11 +17,14 @@ export const getExplorerLink = (chainId: number): string | undefined => {
     case 56: {
       return `https://bscscan.com`;
     }
+    case 97: {
+      return `https://testnet.bscscan.com`;
+    }
     case 128: {
-      return `https://scan.hecochain.com/`;
+      return `https://scan.hecochain.com`;
     }
     case 137: {
-      return `https://explorer-mainnet.maticvigil.com`;
+      return `https://polygon-explorer-mainnet.chainstacklabs.com/`;
     }
     case 80001: {
       return `https://explorer-mumbai.maticvigil.com`;
