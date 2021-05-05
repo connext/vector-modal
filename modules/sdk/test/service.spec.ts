@@ -493,6 +493,14 @@ describe("service", () => {
   });
 
   describe("preTransferCheck", () => {
+    let reconcileDepositMock: Sinon.SinonStub;
+
+    beforeEach(() => {
+      reconcileDepositMock = Sinon.stub(connextUtils, "reconcileDeposit");
+      reconcileDepositMock.resolves();
+    });
+
+    afterEach(() => Sinon.restore());
     it("should error 'Transfer Amount is undefined' if transferAmount is undefiend", async () => {
       try {
         await connext.preTransferCheck("");
@@ -505,6 +513,17 @@ describe("service", () => {
         await connext.preTransferCheck("0");
       } catch (e) {
         expect(e.message).to.be.eq("Transfer amount cannot be 0");
+      }
+    });
+
+    it("should throw an error if reconcileDeposit errors", async () => {
+      const errorMessage = "reconcileDeposit errors";
+      reconcileDepositMock.rejects(new Error(errorMessage));
+      try {
+        await connext.preTransferCheck("1");
+      } catch (e) {
+        expect(e).to.be.ok;
+        expect(e.message).to.be.eq(errorMessage);
       }
     });
 

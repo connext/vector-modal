@@ -1,6 +1,6 @@
 {
   "name": "@connext/vector-sdk",
-  "version": "0.0.2-beta.1",
+  "version": "0.0.2-beta.2",
   "description": "> TODO: description",
   "author": "sanchaymittal <sanchaymittal@gmail.com>",
   "homepage": "https://github.com/connext/vector-modal#readme",
@@ -41,8 +41,11 @@
     "@ethersproject/contracts": "5.1.0",
     "@ethersproject/providers": "5.1.0",
     "@ethersproject/units": "5.1.0",
+    "@logdna/browser": "^1.0.2",
     "@metamask/detect-provider": "^1.2.0",
     "awesome-debounce-promise": "^2.1.0",
+    "browserify": "^17.0.0",
+    "dotenv": "^8.2.0",
     "evt": "1.9.13",
     "lodash": "^4.17.21"
   },
