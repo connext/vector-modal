@@ -47,18 +47,19 @@ const Success: FC<SuccessProps> = props => {
   const switchAndAddToken = async () => {
     const injectedProvider: Web3Provider = new Web3Provider(rawWebProvider);
     const network = await injectedProvider.getNetwork();
-    console.log(network);
+    
     if (receiverChainInfo.chainId !== network.chainId) {
       const defaultMetmaskNetworks = [1, 3, 4, 5, 42];
-      const message = `Please connect your wallet to the ${receiverChainInfo.name} : ${receiverChainInfo.chainId} network`;
 
-      setErrorMessage(message);
       if (!defaultMetmaskNetworks.includes(receiverChainInfo.chainId)) {
         // @ts-ignore
         await ethereum.request({
           method: "wallet_addEthereumChain",
           params: [receiverChainInfo?.chainParams!],
         });
+      } else {
+        const message = `Please connect your wallet to the ${receiverChainInfo.name} : ${receiverChainInfo.chainId} network`;
+        setErrorMessage(message);
       }
     }
     // @ts-ignore
@@ -82,7 +83,7 @@ const Success: FC<SuccessProps> = props => {
         <ModalBody>
           <Stack column={true} spacing={7}>
             <Box>
-              <Stack column={true} spacing={2}>
+              <Stack column={true} spacing={5}>
                 <Stack>
                   <Text fontSize="1.5rem" fontFamily="Cooper Hewitt" fontWeight="700" lineHeight="30px" flex="auto">
                     {truncate(amount, 6)} {receiverChainInfo.assetName}
@@ -102,7 +103,7 @@ const Success: FC<SuccessProps> = props => {
                     view tx
                   </Button>
                 </Stack>
-                <Stack column={true} spacing={1}>
+                <Stack column={true} spacing={2}>
                   <Text fontSize="1rem">{`Add ${receiverChainInfo.assetName} on ${receiverChainInfo.name} in your wallet.`}</Text>
                   {errorMessage && (
                     <Text flex="auto" fontSize="0.75rem" textAlign="center">
