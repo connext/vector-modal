@@ -1,5 +1,8 @@
 import React, { FC, useState } from "react";
 import { ChainDetail, getExplorerLinkForTx, truncate } from "@connext/vector-sdk";
+import { Web3Provider } from "@ethersproject/providers";
+import { AddressZero } from "@ethersproject/constants";
+
 import {
   ModalContent,
   ModalBody,
@@ -14,8 +17,6 @@ import {
   CheckCircleIcon,
   CopyIcon,
 } from "../common";
-import { Web3Provider } from "@ethersproject/providers";
-import { AddressZero } from "@ethersproject/constants";
 import { Header, Footer, NetworkBar } from "../static";
 
 export interface SuccessProps {
@@ -49,7 +50,7 @@ const Success: FC<SuccessProps> = props => {
     console.log(network);
     if (receiverChainInfo.chainId !== network.chainId) {
       const defaultMetmaskNetworks = [1, 3, 4, 5, 42];
-      let message = `Please connect your wallet to the ${receiverChainInfo.name} : ${receiverChainInfo.chainId} network`;
+      const message = `Please connect your wallet to the ${receiverChainInfo.name} : ${receiverChainInfo.chainId} network`;
 
       setErrorMessage(message);
       if (!defaultMetmaskNetworks.includes(receiverChainInfo.chainId)) {
