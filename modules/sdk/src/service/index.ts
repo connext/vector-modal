@@ -562,6 +562,8 @@ export class ConnextSdk {
       throw new Error(message);
     }
 
+    await reconcileDeposit(this.browserNode!, this.recipientChainChannelAddress, this.recipientChain?.assetId!);
+
     console.log("Verify Router Capacity");
     try {
       await verifyRouterCapacityForTransfer(
@@ -804,7 +806,15 @@ export class ConnextSdk {
     const { assetId, recipientAddress, onRecover } = params;
 
     try {
-      await reconcileDeposit(this.browserNode!, this.senderChainChannelAddress, assetId);
+      await Promise.all([
+        reconcileDeposit(this.browserNode!, this.senderChainChannelAddress, assetId),
+        () => {
+          if (this.recipientChain?.assetId) {
+            return reconcileDeposit(this.browserNode!, this.recipientChainChannelAddress, this.recipientChain?.assetId);
+          }
+          return;
+        },
+      ]);
     } catch (e) {
       const message = "Error in reconcileDeposit";
       console.error(message, e);
