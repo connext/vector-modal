@@ -687,7 +687,7 @@ export const verifyRouterCapacityForTransfer = async (
   if (routerBalanceFull.lt(swappedAmount)) {
     throw new Error(
       `Router has insufficient exit liquidity, please try again later. Available: ${formatUnits(
-        routerBalanceFull,
+        routerBalanceFull.toString(),
         toAssetDecimals,
       )}`,
     );
@@ -748,7 +748,7 @@ export const onchainTransfer = async (
     assetId === AddressZero
       ? await signer.sendTransaction({
           to: depositAddress,
-          value: transferAmountBn,
+          value: transferAmountBn.toString(),
         })
       : await new Contract(assetId, ERC20Abi, signer).transfer(depositAddress, transferAmountBn);
 

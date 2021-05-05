@@ -220,7 +220,7 @@ const ConnextModal: FC<ConnextModalProps> = ({
       transferAmountBn = transferAmountBn.add(existingBalanceBn);
     }
 
-    const transferAmount = formatUnits(transferAmountBn, senderChain?.assetDecimals!);
+    const transferAmount = formatUnits(transferAmountBn.toString(), senderChain?.assetDecimals!);
 
     try {
       const res = await connextSdk!.estimateFees({
@@ -558,14 +558,14 @@ const ConnextModal: FC<ConnextModalProps> = ({
 
     console.log(response);
 
-    const offChainDepositAssetBalance = response.offChainSenderChainAssetBalanceBn;
-    const offChainWithdrawAssetBalance = response.offChainRecipientChainAssetBalanceBn;
+    const offChainDepositAssetBalance: BigNumber = response.offChainSenderChainAssetBalanceBn;
+    const offChainWithdrawAssetBalance: BigNumber = response.offChainRecipientChainAssetBalanceBn;
     if (offChainDepositAssetBalance.gt(0) && offChainWithdrawAssetBalance.gt(0)) {
       console.warn("Balance exists in both channels, transferring first, then withdrawing");
     }
     // if offChainDepositAssetBalance > 0
     if (offChainDepositAssetBalance.gt(0)) {
-      const existingBalance = formatUnits(offChainDepositAssetBalance, senderChainInfo?.assetDecimals!);
+      const existingBalance = formatUnits(offChainDepositAssetBalance.toString(), senderChainInfo?.assetDecimals!);
 
       setExistingChannelBalanceUi(existingBalance);
       handleScreen({

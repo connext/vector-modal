@@ -113,7 +113,7 @@ export const getUserBalance = async (
 
   const balance = await getOnchainBalance(injectedProvider, senderChainAssetId, userAddress);
 
-  const userBalance = formatUnits(balance, senderChainAssetDecimals);
+  const userBalance = formatUnits(balance.toString(), senderChainAssetDecimals);
 
   return userBalance;
 };

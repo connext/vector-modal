@@ -4,6 +4,7 @@ import { getBalanceForAssetId, getRandomBytes32 } from "@connext/vector-utils";
 import { parseUnits, formatUnits } from "@ethersproject/units";
 import { BigNumber } from "@ethersproject/bignumber";
 import { HashZero } from "@ethersproject/constants";
+import config from "../config";
 
 import {
   ChainDetail,
@@ -41,6 +42,11 @@ import {
 
 export { BrowserNode, ERC20Abi, FullChannelState, getBalanceForAssetId, TransferQuote, VectorError };
 
+if (typeof window !== "undefined") {
+  const logdna = require("@logdna/browser");
+  // browser code
+  logdna.init(config.LOGDNA_INGESTION_KEY);
+}
 export class ConnextSdk {
   public routerPublicIdentifier = "";
   public senderChainChannelAddress = "";
@@ -499,7 +505,7 @@ export class ConnextSdk {
         };
       }
 
-      totalFee = formatUnits(feeBn, this.senderChain?.assetDecimals!);
+      totalFee = formatUnits(feeBn.toString(), this.senderChain?.assetDecimals!);
       console.log("feeUi: ", totalFee);
 
       if (BigNumber.from(recipientAmountBn).lte(0)) {
@@ -514,10 +520,10 @@ export class ConnextSdk {
       }
 
       if (isRecipientAssetInput) {
-        senderAmountUi = formatUnits(senderAmountBn, this.senderChain?.assetDecimals!);
+        senderAmountUi = formatUnits(senderAmountBn.toString(), this.senderChain?.assetDecimals!);
         console.log("senderUi: ", senderAmountUi);
       } else {
-        recipientAmountUi = formatUnits(recipientAmountBn, this.recipientChain?.assetDecimals!);
+        recipientAmountUi = formatUnits(recipientAmountBn.toString(), this.recipientChain?.assetDecimals!);
         console.log("receivedUi: ", recipientAmountUi);
       }
 
@@ -561,6 +567,8 @@ export class ConnextSdk {
       console.log(message);
       throw new Error(message);
     }
+
+    await reconcileDeposit(this.browserNode!, this.recipientChainChannelAddress, this.recipientChain?.assetId!);
 
     console.log("Verify Router Capacity");
     try {
