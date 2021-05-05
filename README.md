@@ -52,7 +52,7 @@ Important Safety Tip: When adding/altering modules in the playground, use `alias
 just need to run, but make sure yarn.lock is up to date.
 
 ```sh
-yarn run publishe
+yarn run publish
 ```
 
 Select the version needs to be released and wait for couple of mins.
