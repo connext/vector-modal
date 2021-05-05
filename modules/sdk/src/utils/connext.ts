@@ -587,7 +587,7 @@ export const withdrawToAsset = async (
     node.withdraw(params),
     evt.waitFor(
       data => data.channelAddress === withdrawChannel.channelAddress && data.recipient === recipientAddr,
-      60_000,
+      300_000,
     ),
   ]);
   if (ret.isError) {
