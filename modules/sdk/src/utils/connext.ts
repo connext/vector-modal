@@ -748,7 +748,7 @@ export const onchainTransfer = async (
     assetId === AddressZero
       ? await signer.sendTransaction({
           to: depositAddress,
-          value: transferAmountBn.toString(),
+          value: transferAmountBn.toHexString(),
         })
       : await new Contract(assetId, ERC20Abi, signer).transfer(depositAddress, transferAmountBn);
 

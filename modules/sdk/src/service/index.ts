@@ -600,7 +600,7 @@ export class ConnextSdk {
     }
 
     const transferAmountBn = BigNumber.from(parseUnits(transferAmount, this.senderChain?.assetDecimals!));
-    console.log(transferAmountBn);
+    console.log("transferAmountBn: ", transferAmountBn.toString());
 
     try {
       const signer = webProvider.getSigner();
