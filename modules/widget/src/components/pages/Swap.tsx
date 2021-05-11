@@ -1,4 +1,4 @@
-import React, { FC, useEffect } from "react";
+import React, { FC, useEffect, useState } from "react";
 import { ChainDetail, TransferQuote, truncate } from "@connext/vector-sdk";
 
 import { ModalContent, ModalBody, Text, Stack, Button, InputGroup, Input } from "../common";
@@ -19,6 +19,7 @@ export interface TransferProps {
   swapRate: string | undefined;
   existingChannelBalance?: string;
   amountError?: string;
+  userAddress?: string;
   userBalance?: string;
 }
 
@@ -26,6 +27,7 @@ const Swap: FC<TransferProps> = props => {
   const {
     amountError,
     userBalance,
+    userAddress,
     senderChainInfo,
     receiverChainInfo,
     receiverAddress,
@@ -40,6 +42,8 @@ const Swap: FC<TransferProps> = props => {
     swapRequest,
     options,
   } = props;
+
+  const [check, setCheck] = useState<boolean>(receiverAddress !== userAddress ? false : true);
 
   function escapeRegExp(string: string): string {
     return string.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"); // $& means the whole matched string
@@ -273,10 +277,19 @@ const Swap: FC<TransferProps> = props => {
                 </Text>
               )}
 
+              {userAddress && receiverAddress !== userAddress && (
+                <Stack spacing={1}>
+                  <input type="checkbox" name="confirmation" checked={check} onChange={() => setCheck(!check)} />
+                  <Text flex="auto" fontSize="0.875rem">
+                    Please confirm the receiver address on {receiverChainInfo.name}
+                  </Text>
+                </Stack>
+              )}
+
               <Button
                 size="lg"
                 type="submit"
-                disabled={!!amountError || !senderAmount || isLoad ? true : false}
+                disabled={!!amountError || !senderAmount || isLoad || !check ? true : false}
                 onClick={handleSubmit}
               >
                 {isLoad ? "Waiting For Transaction" : "Swap"}
