@@ -6,6 +6,7 @@ import {
   getTotalDepositsBob,
   getChain,
   truncate,
+  isValidAddress,
   TransferQuote,
   getUserBalance,
   ConnextSdk,
@@ -84,7 +85,6 @@ const ConnextModal: FC<ConnextModalProps> = ({
   const depositAssetId = getAddress(_depositAssetId);
   const withdrawAssetId = getAddress(_withdrawAssetId);
 
-  // const [opacity, setOpacity] = useState(0);
   const [webProvider, setWebProvider] = useState<undefined | Web3Provider>();
 
   const loginProvider: undefined | Web3Provider = !!_loginProvider ? new Web3Provider(_loginProvider) : undefined;
@@ -396,6 +396,15 @@ const ConnextModal: FC<ConnextModalProps> = ({
       : undefined;
 
     setWebProvider(injectedProvider);
+
+    if (!isValidAddress(withdrawalAddress)) {
+      console.log("Invalid receiver address", withdrawalAddress);
+      handleScreen({
+        state: ERROR_STATES.ERROR_SETUP,
+        error: new Error("Invalid receiver address"),
+      });
+      return;
+    }
 
     // get chain info
     let senderChainInfo: ChainDetail;
