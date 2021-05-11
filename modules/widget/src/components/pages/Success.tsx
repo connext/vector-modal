@@ -47,7 +47,7 @@ const Success: FC<SuccessProps> = props => {
   const switchAndAddToken = async () => {
     const injectedProvider: Web3Provider = new Web3Provider(rawWebProvider);
     const network = await injectedProvider.getNetwork();
-    
+
     if (receiverChainInfo.chainId !== network.chainId) {
       const defaultMetmaskNetworks = [1, 3, 4, 5, 42];
 
