@@ -6,28 +6,48 @@ import { ScreenStates, SCREEN_STATES, ERROR_STATES } from "../../constants";
 interface OptionsProps {
   state: ScreenStates;
   onClose: () => void;
-  handleRecoveryButton: () => void;
+  handleSetState: (screenState: ScreenStates) => void;
 }
 
 const Options: FC<OptionsProps> = props => {
   const [isListOpen, setIsListOpen] = useState<boolean>(false);
-  const { state, onClose, handleRecoveryButton } = props;
+  const { state, onClose, handleSetState } = props;
   return (
     <>
       <div>
         <MenuButton onClick={() => setIsListOpen(!isListOpen)} isSelected={!!isListOpen} />
         <MenuList hidden={!isListOpen}>
           <MenuItem
-            // fontSize="20px"
-            // background="transparent"
-            onClick={handleRecoveryButton}
+            onClick={() => {
+              handleSetState(SCREEN_STATES.SWAP);
+            }}
             isDisabled={
               [SCREEN_STATES.LOADING, SCREEN_STATES.STATUS, ...Object.values(ERROR_STATES)].includes(state as any)
                 ? true
                 : false
             }
           >
-            {state === SCREEN_STATES.RECOVER ? "Home" : "Recovery"}
+            Home
+          </MenuItem>
+
+          <MenuItem
+            onClick={() => {
+              handleSetState(SCREEN_STATES.RECOVER);
+            }}
+            isDisabled={
+              [SCREEN_STATES.LOADING, SCREEN_STATES.STATUS, ...Object.values(ERROR_STATES)].includes(state as any)
+                ? true
+                : false
+            }
+          >
+            Recovery
+          </MenuItem>
+          <MenuItem
+            onClick={() => {
+              handleSetState(SCREEN_STATES.HISTORY);
+            }}
+          >
+            Transfer History
           </MenuItem>
           <MenuItem onClick={() => window.open("https://discord.gg/AGpyHSbYCe", "_blank")}>Support</MenuItem>
           <MenuItem
