@@ -8,6 +8,7 @@ import Recover from "./Recover";
 import ExistingBalance from "./ExistingBalance";
 import RecoverErrorScreen from "./RecoverErrorScreen";
 import RecoverSuccess from "./RecoverSuccess";
+import History from "./History";
 
 export {
   Loading,
@@ -18,6 +19,7 @@ export {
   ErrorScreen,
   Status,
   Recover,
+  History,
   RecoverErrorScreen,
   RecoverSuccess,
 };
