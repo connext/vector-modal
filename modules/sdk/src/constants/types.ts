@@ -3,6 +3,20 @@ import { Web3Provider, JsonRpcProvider } from "@ethersproject/providers";
 import { BrowserNode } from "@connext/vector-browser-node";
 import { TransferQuote } from "@connext/vector-types";
 
+export interface WithdrawalRecord {
+  alice: string;
+  bob: string;
+  nonce: string;
+  recipient: string;
+  transactionHash: string;
+  withdrawAssetId: string;
+  withdrawChainId: number;
+  withdrawChannelAddress: string;
+  amount: string;
+  fee: string;
+  transferDefination: string;
+  transferId: string;
+}
 export interface AddEthereumChainParameter {
   chainId: string; // A 0x-prefixed hexadecimal string
   chainName: string;
