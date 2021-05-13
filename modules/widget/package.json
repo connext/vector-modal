@@ -36,6 +36,7 @@
     "@ethersproject/solidity": "5.1.0",
     "@ethersproject/wallet": "5.1.0",
     "qrcode.react": "^1.0.1",
+    "react-lazyload": "^3.2.0",
     "rive-js": "0.7.1",
     "styled-components": "^5.2.1",
     "styled-react-modal": "^2.0.1"
@@ -44,6 +45,7 @@
     "@rollup/plugin-image": "^2.0.6",
     "@rollup/plugin-url": "^6.0.0",
     "@size-limit/preset-small-lib": "^4.10.1",
+    "@types/react-lazyload": "^3.1.0",
     "@types/react": "^17.0.4",
     "@types/react-dom": "^17.0.3",
     "@types/styled-components": "^5.1.7",
