@@ -108,7 +108,7 @@ const Error: FC<ErrorProps> = props => {
 
                 {state !== ERROR_STATES.ERROR_NETWORK && retry && (
                   <Button size="lg" onClick={retry}>
-                    Retry Transfer
+                    Retry
                   </Button>
                 )}
 
