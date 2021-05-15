@@ -545,6 +545,16 @@ const ConnextModal: FC<ConnextModalProps> = ({
           "An error occurred connecting to your wallet's RPC. This is a known bug with mobile wallets that will be fixed soon. Please switch to desktop. If you're already on desktop, please refresh.",
         );
       }
+      if (
+        e.message.includes("Authentication Timeout")
+      ) {
+        alert(
+          "An temporary issue occurred with your network connection. Please refresh and try again.",
+        );
+        _error = new Error(
+          "An temporary issues occurred with your network connection. Please refresh and try again.",
+        );
+      }
       const message = "Error initalizing";
       console.log(_error, message);
       handleScreen({
@@ -707,9 +717,20 @@ const ConnextModal: FC<ConnextModalProps> = ({
     } catch (e) {
       const message = e.message;
       console.log(e, message);
+      let _error;
+      if (
+        e.message.includes("No Balance Found To Recover")
+      ) {
+        alert(
+          "No balance found to recover. This usually means either your transaction or a recovery already went through. Please check your wallet on a block explorer on both chains to see if funds were received.",
+        );
+        _error = new Error(
+          "No balance found to recover. This usually means either your transaction or a recovery already went through. Please check your wallet on a blcok explorer on both chains to see if funds were received.",
+        );
+      }
       handleScreen({
         state: ERROR_STATES.ERROR_RECOVER,
-        error: e,
+        error: _error,
         message: message,
       });
       return;
