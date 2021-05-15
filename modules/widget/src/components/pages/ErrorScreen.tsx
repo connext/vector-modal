@@ -82,8 +82,8 @@ const Error: FC<ErrorProps> = props => {
                 <Box>
                   {state === ERROR_STATES.ERROR_TRANSFER && (
                     <Text fontSize="0.875rem" lineHeight="24px" textTransform="initial">
-                      An error occurred during the transfer. Your funds are preserved in the state channel and the
-                      transfer can be re-attempted.
+                      An error occurred during the transfer. Your funds are safe and the
+                      transfer can be retried.
                     </Text>
                   )}
                   <Text fontSize="0.875rem" lineHeight="24px" textTransform="initial">
