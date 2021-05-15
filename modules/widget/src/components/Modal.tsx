@@ -722,10 +722,10 @@ const ConnextModal: FC<ConnextModalProps> = ({
         e.message.includes("No Balance Found To Recover")
       ) {
         alert(
-          "No balance found to recover. This usually means either your transaction or a recovery already went through. Please check your wallet on a block explorer on both chains to see if funds were received.",
+          "No balance found to recover. This usually means either your tx or recovery already went through. Please check your wallet on a block explorer on both chains to see if funds were received.",
         );
         _error = new Error(
-          "No balance found to recover. This usually means either your transaction or a recovery already went through. Please check your wallet on a blcok explorer on both chains to see if funds were received.",
+          "No balance found to recover. This usually means either your tx or recovery already went through. Please check your wallet on a blcok explorer on both chains to see if funds were received.",
         );
       }
       handleScreen({
