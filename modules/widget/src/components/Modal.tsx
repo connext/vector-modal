@@ -534,6 +534,17 @@ const ConnextModal: FC<ConnextModalProps> = ({
           "Please disable shields or ad blockers or allow third party cookies in your browser and try again. Connext requires cross-site cookies to store your channel states.",
         );
       }
+      if (
+        e.message.includes("Ethereum is not defined") ||
+        e.message.includes("Internal JSON-RPC Error")
+      ) {
+        alert(
+          "An error occurred connecting to your wallet's RPC. This is a known bug with mobile wallets that will be fixed soon. Please switch to desktop. If you're already on desktop, please refresh.",
+        );
+        _error = new Error(
+          "An error occurred connecting to your wallet's RPC. This is a known bug with mobile wallets that will be fixed soon. Please switch to desktop. If you're already on desktop, please refresh.",
+        );
+      }
       const message = "Error initalizing";
       console.log(_error, message);
       handleScreen({
