@@ -87,18 +87,14 @@ const Error: FC<ErrorProps> = props => {
                     </Text>
                   )}
                   <Text fontSize="0.875rem" lineHeight="24px" textTransform="initial">
-                    Support help can be found in the{" "}
+                    Support help can be found on our {" "}
                     <Link
                       href="https://www.notion.so/connext/Vector-Cross-Chain-Widget-Debug-Steps-99f5879739984186a35ac2714a3b4671"
                       target="_blank"
                       color="green"
                     >
-                      FAQ
+                      Support Portal
                     </Link>{" "}
-                    Or{" "}
-                    <Link href="https://discord.gg/AGpyHSbYCe" target="_blank" color="green">
-                      community Discord
-                    </Link>
                     .
                   </Text>
                 </Box>
