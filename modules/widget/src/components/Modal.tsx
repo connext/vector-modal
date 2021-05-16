@@ -538,11 +538,8 @@ const ConnextModal: FC<ConnextModalProps> = ({
         e.message.includes("Ethereum is not defined") ||
         e.message.includes("Internal JSON-RPC Error")
       ) {
-        alert(
-          "An error occurred connecting to your wallet's RPC. This is a known bug with mobile wallets that will be fixed soon. Please switch to desktop. If you're already on desktop, please refresh.",
-        );
         _error = new Error(
-          "An error occurred connecting to your wallet's RPC. This is a known bug with mobile wallets that will be fixed soon. Please switch to desktop. If you're already on desktop, please refresh.",
+          "An error occurred connecting to your wallet's RPC. This is a known bug with mobile wallets. Please switch to desktop or refresh.",
         );
       }
       if (
@@ -719,11 +716,8 @@ const ConnextModal: FC<ConnextModalProps> = ({
       console.log(e, message);
       let _error = e;
       if (e.message.includes("No balance found to recover")) {
-        alert(
-          "No balance found to recover. This usually means either your tx or recovery already went through. Please check your wallet on a block explorer on both chains to see if funds were received.",
-        );
         _error = new Error(
-          "No balance found to recover. This usually means either your tx or recovery already went through. Please check your wallet on a blcok explorer on both chains to see if funds were received.",
+          "No balance found to recover. This usually means either your tx or recovery already completed successfully.",
         );
       }
       handleScreen({
