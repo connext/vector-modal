@@ -717,10 +717,8 @@ const ConnextModal: FC<ConnextModalProps> = ({
     } catch (e) {
       const message = e.message;
       console.log(e, message);
-      let _error;
-      if (
-        e.message.includes("No Balance Found To Recover")
-      ) {
+      let _error = e;
+      if (e.message.includes("No balance found to recover")) {
         alert(
           "No balance found to recover. This usually means either your tx or recovery already went through. Please check your wallet on a block explorer on both chains to see if funds were received.",
         );
