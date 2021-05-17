@@ -583,7 +583,6 @@ export const withdrawToAsset = async (
     recipient: recipientAddr,
     callTo: withdrawCallTo,
     callData,
-    initiatorSubmits: true,
   };
   console.log("withdraw params", params);
   const [ret, payload] = await Promise.all([
