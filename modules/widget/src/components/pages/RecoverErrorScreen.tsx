@@ -54,23 +54,18 @@ const RecoverError: FC<ErrorProps> = props => {
               </Stack>
               <Box>
                 <Text fontSize="0.875rem" lineHeight="24px" textTransform="initial">
-                  An error occurred during the Recovery.
+                  An error occurred during the Recovery. Do not worry, funds are safe.
                 </Text>
 
                 <Text fontSize="0.875rem" lineHeight="24px" textTransform="initial">
-                  Support help can be found in the{" "}
+                  Support help can be found on our{" "}
                   <Link
-                    href="https://www.notion.so/connext/Vector-Cross-Chain-Widget-Debug-Steps-99f5879739984186a35ac2714a3b4671"
+                    href="https://www.notion.so/connext/Connext-Support-Portal-99f5879739984186a35ac2714a3b4671"
                     target="_blank"
                     color="green"
                   >
-                    FAQ
+                    Support Portal
                   </Link>{" "}
-                  Or{" "}
-                  <Link href="https://discord.gg/AGpyHSbYCe" target="_blank" color="green">
-                    community Discord
-                  </Link>
-                  .
                 </Text>
               </Box>
             </Stack>

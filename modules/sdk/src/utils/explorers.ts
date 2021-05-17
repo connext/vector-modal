@@ -26,6 +26,9 @@ export const getExplorerLink = (chainId: number): string | undefined => {
     case 137: {
       return `https://polygon-explorer-mainnet.chainstacklabs.com/`;
     }
+    case 250: {
+      return `https://ftmscan.com`;
+    }
     case 80001: {
       return `https://explorer-mumbai.maticvigil.com`;
     }

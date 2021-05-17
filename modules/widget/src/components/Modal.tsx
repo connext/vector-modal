@@ -525,13 +525,32 @@ const ConnextModal: FC<ConnextModalProps> = ({
       if (
         e.message.includes("localStorage not available in this window") ||
         e.message.includes("Failed to read the 'localStorage'") ||
-        e.message.includes("The user denied permission to access the database")
+        e.message.includes("The user denied permission to access the database") ||
+        e.message.includes("mutation was performed")
       ) {
         alert(
           "Please disable shields or ad blockers or allow third party cookies in your browser and try again. Connext requires cross-site cookies to store your channel states.",
         );
         _error = new Error(
           "Please disable shields or ad blockers or allow third party cookies in your browser and try again. Connext requires cross-site cookies to store your channel states.",
+        );
+      }
+      if (
+        e.message.includes("Ethereum is not defined") ||
+        e.message.includes("Internal JSON-RPC Error")
+      ) {
+        _error = new Error(
+          "An error occurred connecting to your wallet's RPC. This is a known bug with mobile wallets. Please switch to desktop or refresh.",
+        );
+      }
+      if (
+        e.message.includes("Authentication Timeout")
+      ) {
+        alert(
+          "An temporary issue occurred with your network connection. Please refresh and try again.",
+        );
+        _error = new Error(
+          "An temporary issues occurred with your network connection. Please refresh and try again.",
         );
       }
       const message = "Error initalizing";
@@ -696,9 +715,15 @@ const ConnextModal: FC<ConnextModalProps> = ({
     } catch (e) {
       const message = e.message;
       console.log(e, message);
+      let _error = e;
+      if (e.message.includes("No balance found to recover")) {
+        _error = new Error(
+          "No balance found to recover. This usually means either your tx or recovery already completed successfully.",
+        );
+      }
       handleScreen({
         state: ERROR_STATES.ERROR_RECOVER,
-        error: e,
+        error: _error,
         message: message,
       });
       return;
