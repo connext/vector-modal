@@ -1,5 +1,5 @@
 import { BrowserNode, NonEIP712Message } from "@connext/vector-browser-node";
-import { ChannelMastercopy } from "@connext/vector-contracts";
+import { ChannelMastercopy, WithdrawCommitment } from "@connext/vector-contracts";
 import AwesomeDebouncePromise from "awesome-debounce-promise";
 import {
   ConditionalTransferCreatedPayload,
@@ -30,6 +30,8 @@ import detectEthereumProvider from "@metamask/detect-provider";
 import { iframeSrc } from "../constants";
 
 import { getOnchainBalance } from "./helpers";
+
+export { WithdrawCommitment };
 
 export const connectNode = async (
   routerPublicIdentifier: string,
@@ -581,6 +583,7 @@ export const withdrawToAsset = async (
     recipient: recipientAddr,
     callTo: withdrawCallTo,
     callData,
+    initiatorSubmits: true,
   };
   console.log("withdraw params", params);
   const [ret, payload] = await Promise.all([

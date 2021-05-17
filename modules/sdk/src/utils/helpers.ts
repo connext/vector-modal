@@ -10,6 +10,8 @@ import { getChainInfo, getChainId, getAssetDecimals, delay } from "@connext/vect
 
 import { ChainDetail, AddEthereumChainParameter } from "../constants";
 
+export { getChainInfo, ChainInfo };
+
 export const hydrateProviders = (
   depositChainId: number,
   depositProviderUrl: string,
