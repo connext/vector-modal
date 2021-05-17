@@ -1570,6 +1570,31 @@
     bech32 "1.1.4"
     ws "7.2.3"
 
+"@ethersproject/providers@5.1.1":
+  version "5.1.1"
+  resolved "https://registry.yarnpkg.com/@ethersproject/providers/-/providers-5.1.1.tgz#a72f446ee0ddd93eb8f7d86178629565c03b55b6"
+  integrity sha512-+xWqQh4eLnAePRR5CHSySCVke//NxGSuQEUzGTdDtt0yCbizwlKGm7CrsU0zF8JUcKDrDh36ezzTicOMd5sl9w==
+  dependencies:
+    "@ethersproject/abstract-provider" "^5.1.0"
+    "@ethersproject/abstract-signer" "^5.1.0"
+    "@ethersproject/address" "^5.1.0"
+    "@ethersproject/basex" "^5.1.0"
+    "@ethersproject/bignumber" "^5.1.0"
+    "@ethersproject/bytes" "^5.1.0"
+    "@ethersproject/constants" "^5.1.0"
+    "@ethersproject/hash" "^5.1.0"
+    "@ethersproject/logger" "^5.1.0"
+    "@ethersproject/networks" "^5.1.0"
+    "@ethersproject/properties" "^5.1.0"
+    "@ethersproject/random" "^5.1.0"
+    "@ethersproject/rlp" "^5.1.0"
+    "@ethersproject/sha2" "^5.1.0"
+    "@ethersproject/strings" "^5.1.0"
+    "@ethersproject/transactions" "^5.1.0"
+    "@ethersproject/web" "^5.1.0"
+    bech32 "1.1.4"
+    ws "7.2.3"
+
 "@ethersproject/providers@5.1.2", "@ethersproject/providers@^5.0.0", "@ethersproject/providers@^5.0.8":
   version "5.1.2"
   resolved "https://registry.yarnpkg.com/@ethersproject/providers/-/providers-5.1.2.tgz#4e4459698903f911402fe91aa7544eb07f3921ed"
@@ -2593,7 +2618,7 @@
     npmlog "^4.1.2"
     write-file-atomic "^3.0.3"
 
-"@logdna/browser@^1.0.2":
+"@logdna/browser@^1.1.0":
   version "1.1.0"
   resolved "https://registry.yarnpkg.com/@logdna/browser/-/browser-1.1.0.tgz#8298771257fa2ed2c9ceab92eb36da0f00d7e464"
   integrity sha512-70slgUlOKG/KtLvNBd2y4dFoqZWB0GHS8g3p7PHx7S1tbdwzESK48nRAnxQeb1OwZklgSk5uDrv4ki5XxcuqGw==
