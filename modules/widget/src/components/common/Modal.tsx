@@ -60,6 +60,7 @@ export const ModalContent = styled.section`
     margin-top: 3.75rem;
     margin-bottom: 3.75rem;
     z-index: 1400;
+    min-height: 20rem;
     max-height: calc(100vh - 7.5rem);
     box-shadow: rgb(0 0 0 / 10%) 0px 10px 15px -3px, rgb(0 0 0 / 5%) 0px 4px 6px -2px;
     max-width: 28rem;
