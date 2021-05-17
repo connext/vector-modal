@@ -855,6 +855,9 @@ const ConnextModal: FC<ConnextModalProps> = ({
             options={handleOptions}
             node={connextSdk?.browserNode!}
             bobIdentifier={connextSdk?.recipientChainChannel?.bobIdentifier!}
+            recipientChainChannelAddress={connextSdk?.recipientChainChannelAddress!}
+            rawWebProvider={_injectedProvider}
+            receiverChainInfo={receiverChain!}
           />
         );
       case SCREEN_STATES.RECOVER:

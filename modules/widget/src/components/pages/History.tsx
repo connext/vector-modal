@@ -1,88 +1,163 @@
 import React, { FC, useEffect, useState } from "react";
-// import LazyLoad from "react-lazyload";
-import { ModalContent, ModalBody, Button, Stack, Text } from "../common";
-import { BrowserNode, WithdrawalRecord } from "@connext/vector-sdk";
+import Select from "react-select";
+import { Web3Provider } from "@ethersproject/providers";
+import { ModalContent, ModalBody, Stack, Box, Text, Button } from "../common";
+import {
+  BrowserNode,
+  getChainInfo,
+  ChainInfo,
+  WithdrawCommitment,
+  truncate,
+  getExplorerLinkForTx,
+  ChainDetail,
+} from "@connext/vector-sdk";
 
 import { Header, Footer } from "../static";
 export interface HistoryProps {
   options: () => void;
   node: BrowserNode;
   bobIdentifier: string;
+  recipientChainChannelAddress: string;
+  rawWebProvider: any;
+  receiverChainInfo: ChainDetail;
 }
-
-export interface PostProps {
-  alice: string;
-  bob: string;
-  nonce: string;
-  recipient: string;
-  transactionHash: string;
-  withdrawAssetId: string;
+interface WithdrawalRecord {
+  isRetry: boolean;
+  commitment: WithdrawCommitment;
+  transactionHash: string | undefined;
   withdrawChainId: number;
-  withdrawChannelAddress: string;
+  withdrawAssetName: string;
   amount: string;
   fee: string;
-  transferDefination: string;
   transferId: string;
 }
 
+interface PostProps extends WithdrawalRecord {
+  retryWithdraw: (commitment: WithdrawCommitment) => void;
+}
 const Post: FC<PostProps> = props => {
+  const { isRetry, retryWithdraw } = props;
   return (
     <>
-      <Stack spacing={1}>
-        <Text>{props.withdrawChainId}</Text>
-        <Text>{props.withdrawAssetId}</Text>
-        <Text>{props.amount}</Text>
+      <Stack column={true} spacing={5}>
+        <Stack spacing={1}>
+          <Text fontSize="1rem" fontFamily="Cooper Hewitt" fontWeight="700" lineHeight="30px" flex="auto">
+            {truncate(props.amount, 6)} {props.withdrawAssetName}
+          </Text>
+          <Button
+            size="sm"
+            borderRadius="5px"
+            colorScheme="blue"
+            border="none"
+            borderStyle="none"
+            color="white"
+            casing="uppercase"
+            onClick={() =>
+              isRetry
+                ? window.open(getExplorerLinkForTx(props.withdrawChainId, props.transactionHash!), "_blank")
+                : retryWithdraw(props.commitment)
+            }
+          >
+            {isRetry ? "view tx" : "Retry"}
+          </Button>
+        </Stack>
       </Stack>
     </>
   );
 };
 
 const History: FC<HistoryProps> = props => {
-  const { options, node, bobIdentifier } = props;
-
+  const { options, node, bobIdentifier, recipientChainChannelAddress, rawWebProvider, receiverChainInfo } = props;
   const [record, setRecord] = useState<WithdrawalRecord[]>([]);
+  const [selectValue, setSelectValue] = useState();
+  const [errorMessage, setErrorMessage] = useState<string>();
 
-  const getRecord = async (startDate?: Date, endDate?: Date) => {
-    console.log("useState", record);
+  const retryWithdraw = async (commitment: WithdrawCommitment) => {
+    const injectedProvider: Web3Provider = new Web3Provider(rawWebProvider);
+    const network = await injectedProvider.getNetwork();
 
-    const defaultStartDate = new Date(-86400_000); // 1 Day = 86400_000 ms
+    if (receiverChainInfo.chainId !== network.chainId) {
+      const defaultMetmaskNetworks = [1, 3, 4, 5, 42];
+
+      if (!defaultMetmaskNetworks.includes(receiverChainInfo.chainId)) {
+        // @ts-ignore
+        await ethereum.request({
+          method: "wallet_addEthereumChain",
+          params: [receiverChainInfo?.chainParams!],
+        });
+      } else {
+        const message = `Please connect your wallet to the ${receiverChainInfo.name} : ${receiverChainInfo.chainId} network`;
+        setErrorMessage(message);
+        return;
+      }
+
+      const signer = injectedProvider.getSigner();
+      const tx = await signer.sendTransaction(commitment.getSignedTransaction());
+      console.log(tx);
+      getRecord();
+    }
+  };
+
+  const getRecord = async (_startDate?: number) => {
+    setRecord([]);
     const defaultEndDate = new Date();
+    console.log(defaultEndDate);
 
+    const startDate = new Date(defaultEndDate.getTime() - 86400_000 * (_startDate ?? 1)); // 1 Day = 86400_000 ms
+
+    console.log(startDate);
+    console.log(bobIdentifier, recipientChainChannelAddress);
     const res = await node.getTransfers({
       publicIdentifier: bobIdentifier,
-      // channelAddress: channelAddress,
-      startDate: startDate ?? defaultStartDate,
-      endDate: endDate ?? defaultEndDate,
+      active: false,
+      channelAddress: recipientChainChannelAddress,
+      startDate: startDate,
+      endDate: defaultEndDate,
     });
 
     if (res.isError) {
-      throw res.getError();
+      console.log(res.getError());
+      return;
     }
 
     const transfers = res.getValue();
 
-    transfers.forEach(async (s: any) => {
-      if (s.transferId) {
+    transfers.forEach(async (s: any, index: any) => {
+      if (s.transferId && s.channelAddress === recipientChainChannelAddress) {
         const ret = await node.getWithdrawalCommitment({ transferId: s.transferId });
         const state = ret.getValue();
 
-        if (state && state.transactionHash) {
-          console.log(state);
-          const commitement = {
-            alice: state.alice,
-            bob: state.bob,
-            nonce: state.nonce,
-            recipient: state.recipient,
-            transactionHash: state.transactionHash,
-            withdrawAssetId: state.assetId,
+        console.log(index, s, state);
+
+        if (state && state.recipient && state.alice !== state.recipient) {
+          // console.log("state:", state);
+          // console.log("transfer:", s);
+
+          const chain: ChainInfo = await getChainInfo(s.chainId);
+          const assetName = chain.assetId[state.assetId]?.symbol ?? "Token";
+
+          const commitment = await WithdrawCommitment.fromJson(state);
+
+          let isRetry: boolean = false;
+          if (!state.transactionHash) {
+            isRetry = true;
+          } else {
+            const receipt = await receiverChainInfo.rpcProvider.getTransactionReceipt(state.transactionHash);
+            if (!receipt || !receipt.status) {
+              isRetry = true;
+            }
+          }
+          const _record = {
+            isRetry: isRetry,
+            commitment: commitment,
+            transactionHash: state.transactionHash ?? undefined,
             withdrawChainId: s.chainId,
-            withdrawChannelAddress: state.channelAddress,
+            withdrawAssetName: assetName,
             amount: state.amount,
-            fee: "",
-            transferDefination: s.transferDefinition,
+            fee: s.transferState.fee,
             transferId: s.transferId,
           };
-          setRecord(rec => rec.concat(commitement));
+          setRecord(rec => rec.concat(_record));
         }
       }
     });
@@ -93,43 +168,58 @@ const History: FC<HistoryProps> = props => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  const handleChange = (event: any) => {
+    console.log(event);
+    setSelectValue(event);
+    getRecord(event.value);
+  };
+
+  const TimeOptions = [
+    { value: 1, label: "Last 24 Hours" },
+    { value: 3, label: "3 Days" },
+    { value: 15, label: "15 Days" },
+    { value: 30, label: "30 Days" },
+    { value: 60, label: "60 Days" },
+    { value: 365, label: "1 Year" },
+  ];
   return (
     <>
       <ModalContent id="modalContent">
         <Header title={"Transaction History"} options={options} />
         <ModalBody>
           <Stack column={true} spacing={2}>
-            <Stack spacing={2}>
-              <Button>1d</Button>
-              <Button>3d</Button>
-              <Button>15d</Button>
-              <Button
-                onClick={() => {
-                  getRecord();
-                }}
-              >
-                Refresh
-              </Button>
-            </Stack>
+            <Box>
+              <Select
+                value={selectValue}
+                options={TimeOptions}
+                onChange={handleChange}
+                placeholder="Select Time Period"
+                defaultValue={TimeOptions[0]}
+                fullWidth
+              />
+            </Box>
+
+            {errorMessage && (
+              <Text flex="auto" fontSize="0.75rem" textAlign="center">
+                {errorMessage}
+              </Text>
+            )}
 
             <Stack column={true} spacing={1}>
-              {record.map(entry => {
-                // <LazyLoad>
-                <Post
-                  alice={entry.alice}
-                  bob={entry.bob}
-                  nonce={entry.nonce}
-                  recipient={entry.recipient}
-                  transactionHash={entry.transactionHash}
-                  withdrawAssetId={entry.withdrawAssetId}
-                  withdrawChainId={entry.withdrawChainId}
-                  withdrawChannelAddress={entry.withdrawChannelAddress}
-                  amount={entry.amount}
-                  fee={entry.fee}
-                  transferDefination={entry.transferDefination}
-                  transferId={entry.transferId}
-                />;
-                // </LazyLoad>;
+              {record.map(c => {
+                return (
+                  <Post
+                    isRetry={c.isRetry}
+                    commitment={c.commitment}
+                    transactionHash={c.transactionHash}
+                    withdrawChainId={c.withdrawChainId}
+                    withdrawAssetName={c.withdrawAssetName}
+                    amount={c.amount}
+                    fee={c.fee}
+                    transferId={c.transferId}
+                    retryWithdraw={retryWithdraw}
+                  />
+                );
               })}
             </Stack>
           </Stack>
