@@ -1,5 +1,6 @@
 import React, { FC, useEffect, useState } from "react";
 import Select from "react-select";
+import { formatUnits } from "@ethersproject/units";
 import { Web3Provider } from "@ethersproject/providers";
 import { ModalContent, ModalBody, Stack, Box, Text, Button } from "../common";
 import {
@@ -33,34 +34,37 @@ interface WithdrawalRecord {
 }
 
 interface PostProps extends WithdrawalRecord {
+  receiverChainInfo: ChainDetail;
   retryWithdraw: (commitment: WithdrawCommitment) => void;
 }
 const Post: FC<PostProps> = props => {
-  const { isRetry, retryWithdraw } = props;
+  const pendingStatus = "pending transfer";
+  const { isRetry, retryWithdraw, receiverChainInfo } = props;
   return (
     <>
-      <Stack column={true} spacing={5}>
-        <Stack spacing={1}>
-          <Text fontSize="1rem" fontFamily="Cooper Hewitt" fontWeight="700" lineHeight="30px" flex="auto">
-            {truncate(props.amount, 6)} {props.withdrawAssetName}
-          </Text>
-          <Button
-            size="sm"
-            borderRadius="5px"
-            colorScheme="blue"
-            border="none"
-            borderStyle="none"
-            color="white"
-            casing="uppercase"
-            onClick={() =>
-              isRetry
-                ? window.open(getExplorerLinkForTx(props.withdrawChainId, props.transactionHash!), "_blank")
-                : retryWithdraw(props.commitment)
-            }
-          >
-            {isRetry ? "view tx" : "Retry"}
-          </Button>
-        </Stack>
+      <Stack spacing={1}>
+        <Text fontSize="1rem" fontFamily="Cooper Hewitt" fontWeight="700" lineHeight="30px" flex="auto">
+          {isRetry ? pendingStatus : props.transactionHash!.slice(0, pendingStatus.length - 2)}...
+        </Text>
+        <Text fontSize="1rem" fontFamily="Cooper Hewitt" fontWeight="700" lineHeight="30px" flex="auto">
+          {truncate(formatUnits(props.amount, receiverChainInfo.assetDecimals), 5)} {props.withdrawAssetName}
+        </Text>
+        <Button
+          size="sm"
+          borderRadius="5px"
+          colorScheme="blue"
+          border="none"
+          borderStyle="none"
+          color="white"
+          casing="uppercase"
+          onClick={() =>
+            isRetry
+              ? retryWithdraw(props.commitment)
+              : window.open(getExplorerLinkForTx(props.withdrawChainId, props.transactionHash!), "_blank")
+          }
+        >
+          {isRetry ? "Retry " : "View Tx"}
+        </Button>
       </Stack>
     </>
   );
@@ -73,9 +77,10 @@ const History: FC<HistoryProps> = props => {
   const [errorMessage, setErrorMessage] = useState<string>();
 
   const retryWithdraw = async (commitment: WithdrawCommitment) => {
+    setErrorMessage(undefined);
     const injectedProvider: Web3Provider = new Web3Provider(rawWebProvider);
     const network = await injectedProvider.getNetwork();
-
+    console.log("1");
     if (receiverChainInfo.chainId !== network.chainId) {
       const defaultMetmaskNetworks = [1, 3, 4, 5, 42];
 
@@ -90,13 +95,21 @@ const History: FC<HistoryProps> = props => {
         setErrorMessage(message);
         return;
       }
+    }
+    console.log("1");
 
-      const signer = injectedProvider.getSigner();
+    console.log(`Initiate withdrawal retry for ${bobIdentifier}`);
+    const signer = injectedProvider.getSigner();
+    try {
       // @ts-ignore
       const tx = await signer.sendTransaction(commitment.getSignedTransaction());
       console.log(tx);
-      getRecord();
+    } catch (e) {
+      console.log(e);
+      setErrorMessage(e.message);
+      return;
     }
+    getRecord();
   };
 
   const getRecord = async (_startDate?: number) => {
@@ -164,7 +177,11 @@ const History: FC<HistoryProps> = props => {
     });
   };
 
+  const resetState = () => {
+    setErrorMessage(undefined);
+  };
   useEffect(() => {
+    resetState();
     getRecord();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
@@ -206,22 +223,59 @@ const History: FC<HistoryProps> = props => {
               </Text>
             )}
 
-            <Stack column={true} spacing={1}>
-              {record.map(c => {
-                return (
-                  <Post
-                    isRetry={c.isRetry}
-                    commitment={c.commitment}
-                    transactionHash={c.transactionHash}
-                    withdrawChainId={c.withdrawChainId}
-                    withdrawAssetName={c.withdrawAssetName}
-                    amount={c.amount}
-                    fee={c.fee}
-                    transferId={c.transferId}
-                    retryWithdraw={retryWithdraw}
-                  />
-                );
-              })}
+            <Stack column={true} spacing={3}>
+              <Stack colorScheme="antiquewhite">
+                <Text
+                  padding="0 0 0 1rem"
+                  textAlign="start"
+                  fontSize="1rem"
+                  fontFamily="Cooper Hewitt"
+                  fontWeight="700"
+                  lineHeight="30px"
+                  flex="auto"
+                >
+                  Txn Status
+                </Text>
+                <Text
+                  textAlign="center"
+                  fontSize="1rem"
+                  fontFamily="Cooper Hewitt"
+                  fontWeight="700"
+                  lineHeight="30px"
+                  flex="auto"
+                >
+                  Value
+                </Text>
+                <Text
+                  padding="0 1rem 0 0"
+                  textAlign="end"
+                  fontSize="1rem"
+                  fontFamily="Cooper Hewitt"
+                  fontWeight="700"
+                  lineHeight="30px"
+                  flex="auto"
+                >
+                  Visit
+                </Text>
+              </Stack>
+              <Stack column={true} spacing={1}>
+                {record.map(c => {
+                  return (
+                    <Post
+                      isRetry={c.isRetry}
+                      receiverChainInfo={receiverChainInfo}
+                      commitment={c.commitment}
+                      transactionHash={c.transactionHash}
+                      withdrawChainId={c.withdrawChainId}
+                      withdrawAssetName={c.withdrawAssetName}
+                      amount={c.amount}
+                      fee={c.fee}
+                      transferId={c.transferId}
+                      retryWithdraw={retryWithdraw}
+                    />
+                  );
+                })}
+              </Stack>
             </Stack>
           </Stack>
         </ModalBody>
