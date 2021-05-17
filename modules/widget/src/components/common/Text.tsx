@@ -3,6 +3,7 @@ import styled from "styled-components";
 type TextProps = {
   color?: string;
   lineHeight?: string;
+  padding?: string;
   letterSpacing?: string;
   fontFamily?: string;
   fontStyle?: string;
@@ -29,6 +30,7 @@ function truncate(noOfLines: number) {
 export const Text = styled.p<TextProps>`
   &&& {
     color: ${props => props.color || "black"};
+    padding: ${props => props.padding};
     line-height: ${props => props.lineHeight};
     letter-spacing: ${props => props.letterSpacing};
     font-style: ${props => props.fontStyle || "normal"};

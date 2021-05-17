@@ -6,6 +6,7 @@ type StackProps = {
   column?: boolean;
   spacing?: number;
   margin?: string;
+  textAlign?: string;
   justifyContent?: string;
   alignItems?: string;
   colorScheme?: string;
@@ -31,6 +32,7 @@ export const Stack = styled(Box)<StackProps>`
   &&& {
     display: flex;
     margin: ${props => props.margin};
+    text-align: ${props => props.textAlign};
     justify-content: ${props => props.justifyContent};
     align-items: ${props => props.alignItems};
     margin-inline-start: ${props => props.marginInlineStart || "0px"};
