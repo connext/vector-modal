@@ -92,6 +92,7 @@ const History: FC<HistoryProps> = props => {
       }
 
       const signer = injectedProvider.getSigner();
+      // @ts-ignore
       const tx = await signer.sendTransaction(commitment.getSignedTransaction());
       console.log(tx);
       getRecord();
