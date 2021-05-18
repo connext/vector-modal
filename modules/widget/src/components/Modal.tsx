@@ -535,23 +535,14 @@ const ConnextModal: FC<ConnextModalProps> = ({
           "Please disable shields or ad blockers or allow third party cookies in your browser and try again. Connext requires cross-site cookies to store your channel states.",
         );
       }
-      if (
-        e.message.includes("Ethereum is not defined") ||
-        e.message.includes("Internal JSON-RPC Error")
-      ) {
+      if (e.message.includes("Ethereum is not defined") || e.message.includes("Internal JSON-RPC Error")) {
         _error = new Error(
           "An error occurred connecting to your wallet's RPC. This is a known bug with mobile wallets. Please switch to desktop or refresh.",
         );
       }
-      if (
-        e.message.includes("Authentication Timeout")
-      ) {
-        alert(
-          "An temporary issue occurred with your network connection. Please refresh and try again.",
-        );
-        _error = new Error(
-          "An temporary issues occurred with your network connection. Please refresh and try again.",
-        );
+      if (e.message.includes("Authentication Timeout")) {
+        alert("An temporary issue occurred with your network connection. Please refresh and try again.");
+        _error = new Error("An temporary issues occurred with your network connection. Please refresh and try again.");
       }
       const message = "Error initalizing";
       console.log(_error, message);
@@ -860,6 +851,7 @@ const ConnextModal: FC<ConnextModalProps> = ({
             swapRequest={handleSwapRequest}
             isLoad={isLoad}
             inputReadOnly={inputReadOnly}
+            userAddress={userAddress}
             userBalance={userBalance}
             amountError={amountError}
             senderChainInfo={senderChain!}
