@@ -857,6 +857,7 @@ const ConnextModal: FC<ConnextModalProps> = ({
             swapRequest={handleSwapRequest}
             isLoad={isLoad}
             inputReadOnly={inputReadOnly}
+            userAddress={userAddress}
             userBalance={userBalance}
             amountError={amountError}
             senderChainInfo={senderChain!}
