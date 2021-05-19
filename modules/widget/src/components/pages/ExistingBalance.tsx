@@ -5,6 +5,7 @@ import { ModalContent, ModalBody, Text, Stack, Button } from "../common";
 import { Header, Footer, NetworkBar } from "../static";
 
 export interface ExistingBalanceProps {
+  isLoad: boolean;
   existingChannelBalance: string;
   senderChainInfo: ChainDetail;
   receiverChainInfo: ChainDetail;
@@ -16,6 +17,7 @@ export interface ExistingBalanceProps {
 
 const ExistingBalance: FC<ExistingBalanceProps> = props => {
   const {
+    isLoad,
     existingChannelBalance,
     senderChainInfo,
     receiverChainInfo,
@@ -43,7 +45,7 @@ const ExistingBalance: FC<ExistingBalanceProps> = props => {
               </Stack>
 
               <Stack column={true} spacing={2}>
-                <Button size="lg" onClick={continueButton}>
+                <Button size="lg" onClick={continueButton} disabled={isLoad}>
                   continue...
                 </Button>
 

@@ -732,6 +732,7 @@ const ConnextModal: FC<ConnextModalProps> = ({
   };
 
   const continueButton = async () => {
+    setIsLoad(true);
     const quote = await handleSwapCheck("0", false);
     console.log("continue", quote);
     if (!quote) {
@@ -754,6 +755,7 @@ const ConnextModal: FC<ConnextModalProps> = ({
       return;
     }
     handleSwap(quote);
+    setIsLoad(false);
   };
 
   const addMoreFunds = async () => {
@@ -833,6 +835,7 @@ const ConnextModal: FC<ConnextModalProps> = ({
         return (
           <ExistingBalance
             addMoreFunds={addMoreFunds}
+            isLoad={isLoad}
             continueButton={continueButton}
             existingChannelBalance={existingChannelBalanceUi!}
             senderChainInfo={senderChain!}
