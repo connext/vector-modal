@@ -30,6 +30,7 @@ import {
   Success,
   ExistingBalance,
   Recover,
+  UserInfo,
   RecoverErrorScreen,
   RecoverSuccess,
 } from "./pages";
@@ -643,7 +644,14 @@ const ConnextModal: FC<ConnextModalProps> = ({
   }, [showModal]);
 
   const handleOptions = () => {
-    return <Options state={screenState} onClose={handleClose} handleRecoveryButton={handleRecoveryButton} />;
+    return (
+      <Options
+        state={screenState}
+        onClose={handleClose}
+        handleRecoveryButton={handleRecoveryButton}
+        handleUserInfoButton={handleUserInfoButton}
+      />
+    );
   };
 
   const handleBack = () => {
@@ -687,6 +695,11 @@ const ConnextModal: FC<ConnextModalProps> = ({
         handleScreen({ state: SCREEN_STATES.RECOVER });
         return;
     }
+  };
+
+  const handleUserInfoButton = () => {
+    handleScreen({ state: SCREEN_STATES.USER_INFO });
+    return;
   };
 
   const handleRecover = async (assetId: string, recipientAddress: string) => {
@@ -792,6 +805,9 @@ const ConnextModal: FC<ConnextModalProps> = ({
       case SCREEN_STATES.STATUS:
         setTitle(pTitle);
         setMessage(pMessage);
+        break;
+
+      case SCREEN_STATES.USER_INFO:
         break;
 
       case SCREEN_STATES.RECOVER_SUCCESS:
@@ -912,6 +928,9 @@ const ConnextModal: FC<ConnextModalProps> = ({
             handleBack={handleBack}
           />
         );
+
+      case SCREEN_STATES.USER_INFO:
+        return <UserInfo options={handleOptions} connextSdk={connextSdk!} />;
 
       case SCREEN_STATES.SUCCESS:
         return (
