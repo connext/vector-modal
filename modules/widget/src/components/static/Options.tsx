@@ -47,21 +47,13 @@ const Options: FC<OptionsProps> = props => {
             onClick={() => {
               handleSetState(SCREEN_STATES.HISTORY);
             }}
-            disabled={
-              [SCREEN_STATES.LOADING, SCREEN_STATES.STATUS, ...Object.values(ERROR_STATES)].includes(state as any)
-                ? true
-                : false
-            }
+            disabled={[SCREEN_STATES.LOADING, SCREEN_STATES.STATUS].includes(state as any) ? true : false}
           >
             Transfer History
           </MenuItem>
           <MenuItem onClick={() => window.open("https://discord.gg/AGpyHSbYCe", "_blank")}>Support</MenuItem>
           <MenuItem
-            disabled={
-              [SCREEN_STATES.LOADING, SCREEN_STATES.STATUS, ...Object.values(ERROR_STATES)].includes(state as any)
-                ? true
-                : false
-            }
+            disabled={[SCREEN_STATES.LOADING, SCREEN_STATES.STATUS].includes(state as any) ? true : false}
             onClick={handleUserInfoButton}
           >
             User Info
