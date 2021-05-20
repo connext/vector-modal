@@ -1,30 +1,16 @@
 import React, { FC, useEffect, useState } from "react";
 import Select from "react-select";
 import { formatUnits } from "@ethersproject/units";
-import { Web3Provider } from "@ethersproject/providers";
 import { ModalContent, ModalBody, Stack, Box, Text, Button } from "../common";
-import {
-  BrowserNode,
-  getChainInfo,
-  ChainInfo,
-  WithdrawCommitment,
-  truncate,
-  getExplorerLinkForTx,
-  ChainDetail,
-} from "@connext/vector-sdk";
+import { getChainInfo, ChainInfo, truncate, getExplorerLinkForTx, ChainDetail, ConnextSdk } from "@connext/vector-sdk";
 
 import { Header, Footer } from "../static";
 export interface HistoryProps {
   options: () => void;
-  node: BrowserNode;
-  bobIdentifier: string;
-  recipientChainChannelAddress: string;
-  rawWebProvider: any;
-  receiverChainInfo: ChainDetail;
+  connextSdk: ConnextSdk;
 }
 interface WithdrawalRecord {
   isRetry: boolean;
-  commitment: WithdrawCommitment;
   transactionHash: string | undefined;
   withdrawChainId: number;
   withdrawAssetName: string;
@@ -35,7 +21,7 @@ interface WithdrawalRecord {
 
 interface PostProps extends WithdrawalRecord {
   receiverChainInfo: ChainDetail;
-  retryWithdraw: (commitment: WithdrawCommitment) => void;
+  retryWithdraw: (transferId: string) => void;
 }
 const Post: FC<PostProps> = props => {
   const pendingStatus = "pending transfer";
@@ -59,7 +45,7 @@ const Post: FC<PostProps> = props => {
           casing="uppercase"
           onClick={() =>
             isRetry
-              ? retryWithdraw(props.commitment)
+              ? retryWithdraw(props.transferId)
               : window.open(getExplorerLinkForTx(props.withdrawChainId, props.transactionHash!), "_blank")
           }
         >
@@ -71,39 +57,20 @@ const Post: FC<PostProps> = props => {
 };
 
 const History: FC<HistoryProps> = props => {
-  const { options, node, bobIdentifier, recipientChainChannelAddress, rawWebProvider, receiverChainInfo } = props;
+  const { options, connextSdk } = props;
   const [record, setRecord] = useState<WithdrawalRecord[]>([]);
   const [selectValue, setSelectValue] = useState();
   const [errorMessage, setErrorMessage] = useState<string>();
 
-  const retryWithdraw = async (commitment: WithdrawCommitment) => {
+  const bobIdentifier = connextSdk?.recipientChainChannel?.bobIdentifier!;
+  const recipientChainChannelAddress = connextSdk?.recipientChainChannelAddress!;
+  const receiverChainInfo = connextSdk?.recipientChain!;
+
+  const retryWithdraw = async (transferId: string) => {
     setErrorMessage(undefined);
-    const injectedProvider: Web3Provider = new Web3Provider(rawWebProvider);
-    const network = await injectedProvider.getNetwork();
-    console.log("1");
-    if (receiverChainInfo.chainId !== network.chainId) {
-      const defaultMetmaskNetworks = [1, 3, 4, 5, 42];
-
-      if (!defaultMetmaskNetworks.includes(receiverChainInfo.chainId)) {
-        // @ts-ignore
-        await ethereum.request({
-          method: "wallet_addEthereumChain",
-          params: [receiverChainInfo?.chainParams!],
-        });
-      } else {
-        const message = `Please connect your wallet to the ${receiverChainInfo.name} : ${receiverChainInfo.chainId} network`;
-        setErrorMessage(message);
-        return;
-      }
-    }
-    console.log("1");
-
-    console.log(`Initiate withdrawal retry for ${bobIdentifier}`);
-    const signer = injectedProvider.getSigner();
     try {
-      // @ts-ignore
-      const tx = await signer.sendTransaction(commitment.getSignedTransaction());
-      console.log(tx);
+      const res = await connextSdk!.retryWithdraw(transferId);
+      console.log(res);
     } catch (e) {
       console.log(e);
       setErrorMessage(e.message);
@@ -121,7 +88,7 @@ const History: FC<HistoryProps> = props => {
 
     console.log(startDate);
     console.log(bobIdentifier, recipientChainChannelAddress);
-    const res = await node.getTransfers({
+    const res = await connextSdk?.browserNode!.getTransfers({
       publicIdentifier: bobIdentifier,
       active: false,
       channelAddress: recipientChainChannelAddress,
@@ -136,34 +103,24 @@ const History: FC<HistoryProps> = props => {
 
     const transfers = res.getValue();
 
-    transfers.forEach(async (s: any, index: any) => {
+    transfers.forEach(async (s: any) => {
       if (s.transferId && s.channelAddress === recipientChainChannelAddress) {
-        const ret = await node.getWithdrawalCommitment({ transferId: s.transferId });
+        const ret = await connextSdk?.browserNode!.getWithdrawalCommitment({ transferId: s.transferId });
         const state = ret.getValue();
 
-        console.log(index, s, state);
-
         if (state && state.recipient && state.alice !== state.recipient) {
-          // console.log("state:", state);
-          // console.log("transfer:", s);
+          console.log("state:", state);
+          console.log("transfer:", s);
 
           const chain: ChainInfo = await getChainInfo(s.chainId);
           const assetName = chain.assetId[state.assetId]?.symbol ?? "Token";
 
-          const commitment = await WithdrawCommitment.fromJson(state);
-
           let isRetry: boolean = false;
           if (!state.transactionHash) {
             isRetry = true;
-          } else {
-            const receipt = await receiverChainInfo.rpcProvider.getTransactionReceipt(state.transactionHash);
-            if (!receipt || !receipt.status) {
-              isRetry = true;
-            }
           }
           const _record = {
             isRetry: isRetry,
-            commitment: commitment,
             transactionHash: state.transactionHash ?? undefined,
             withdrawChainId: s.chainId,
             withdrawAssetName: assetName,
@@ -264,7 +221,6 @@ const History: FC<HistoryProps> = props => {
                     <Post
                       isRetry={c.isRetry}
                       receiverChainInfo={receiverChainInfo}
-                      commitment={c.commitment}
                       transactionHash={c.transactionHash}
                       withdrawChainId={c.withdrawChainId}
                       withdrawAssetName={c.withdrawAssetName}
