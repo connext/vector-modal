@@ -7,11 +7,13 @@ interface OptionsProps {
   state: ScreenStates;
   onClose: () => void;
   handleSetState: (screenState: ScreenStates) => void;
+  handleRecoveryButton: () => void;
+  handleUserInfoButton: () => void;
 }
 
 const Options: FC<OptionsProps> = props => {
   const [isListOpen, setIsListOpen] = useState<boolean>(false);
-  const { state, onClose, handleSetState } = props;
+  const { state, onClose, handleSetState, handleUserInfoButton } = props;
   return (
     <>
       <div>
@@ -50,6 +52,16 @@ const Options: FC<OptionsProps> = props => {
             Transfer History
           </MenuItem>
           <MenuItem onClick={() => window.open("https://discord.gg/AGpyHSbYCe", "_blank")}>Support</MenuItem>
+          <MenuItem
+            isDisabled={
+              [SCREEN_STATES.LOADING, SCREEN_STATES.STATUS, ...Object.values(ERROR_STATES)].includes(state as any)
+                ? true
+                : false
+            }
+            onClick={handleUserInfoButton}
+          >
+            User Info
+          </MenuItem>
           <MenuItem
             isDisabled={[SCREEN_STATES.LOADING, SCREEN_STATES.STATUS].includes(state as any) ? true : false}
             onClick={onClose}

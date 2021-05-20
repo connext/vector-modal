@@ -31,6 +31,7 @@ import {
   Success,
   ExistingBalance,
   Recover,
+  UserInfo,
   RecoverErrorScreen,
   RecoverSuccess,
 } from "./pages";
@@ -644,7 +645,14 @@ const ConnextModal: FC<ConnextModalProps> = ({
   }, [showModal]);
 
   const handleOptions = () => {
-    return <Options state={screenState} onClose={handleClose} handleSetState={handleSetState} />;
+    return (
+      <Options
+        state={screenState}
+        onClose={handleClose}
+        handleSetState={handleSetState}
+        handleUserInfoButton={handleUserInfoButton}
+      />
+    );
   };
 
   const handleBack = () => {
@@ -687,6 +695,11 @@ const ConnextModal: FC<ConnextModalProps> = ({
 
   const handleRecoveryButton = () => {
     handleScreen({ state: SCREEN_STATES.RECOVER });
+    return;
+  };
+
+  const handleUserInfoButton = () => {
+    handleScreen({ state: SCREEN_STATES.USER_INFO });
     return;
   };
 
@@ -733,6 +746,7 @@ const ConnextModal: FC<ConnextModalProps> = ({
   };
 
   const continueButton = async () => {
+    setIsLoad(true);
     const quote = await handleSwapCheck("0", false);
     console.log("continue", quote);
     if (!quote) {
@@ -755,6 +769,7 @@ const ConnextModal: FC<ConnextModalProps> = ({
       return;
     }
     handleSwap(quote);
+    setIsLoad(false);
   };
 
   const addMoreFunds = async () => {
@@ -795,6 +810,9 @@ const ConnextModal: FC<ConnextModalProps> = ({
 
       case SCREEN_STATES.HISTORY:
         break;
+      case SCREEN_STATES.USER_INFO:
+        break;
+
       case SCREEN_STATES.RECOVER_SUCCESS:
         break;
 
@@ -836,6 +854,7 @@ const ConnextModal: FC<ConnextModalProps> = ({
         return (
           <ExistingBalance
             addMoreFunds={addMoreFunds}
+            isLoad={isLoad}
             continueButton={continueButton}
             existingChannelBalance={existingChannelBalanceUi!}
             senderChainInfo={senderChain!}
@@ -923,6 +942,9 @@ const ConnextModal: FC<ConnextModalProps> = ({
             handleBack={handleBack}
           />
         );
+
+      case SCREEN_STATES.USER_INFO:
+        return <UserInfo options={handleOptions} connextSdk={connextSdk!} />;
 
       case SCREEN_STATES.SUCCESS:
         return (
