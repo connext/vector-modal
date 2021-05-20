@@ -8,6 +8,7 @@ import Recover from "./Recover";
 import ExistingBalance from "./ExistingBalance";
 import RecoverErrorScreen from "./RecoverErrorScreen";
 import RecoverSuccess from "./RecoverSuccess";
+import UserInfo from "./UserInfo";
 
 export {
   Loading,
@@ -17,6 +18,7 @@ export {
   SwapListener,
   ErrorScreen,
   Status,
+  UserInfo,
   Recover,
   RecoverErrorScreen,
   RecoverSuccess,
