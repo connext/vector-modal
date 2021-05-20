@@ -886,16 +886,7 @@ const ConnextModal: FC<ConnextModalProps> = ({
         );
 
       case SCREEN_STATES.HISTORY:
-        return (
-          <History
-            options={handleOptions}
-            node={connextSdk?.browserNode!}
-            bobIdentifier={connextSdk?.recipientChainChannel?.bobIdentifier!}
-            recipientChainChannelAddress={connextSdk?.recipientChainChannelAddress!}
-            rawWebProvider={_injectedProvider}
-            receiverChainInfo={receiverChain!}
-          />
-        );
+        return <History options={handleOptions} connextSdk={connextSdk!} />;
       case SCREEN_STATES.RECOVER:
         return (
           <Recover
