@@ -39,6 +39,7 @@ import {
   withdrawToAsset,
   cancelToAssetTransfer,
   onchainTransfer,
+  withdrawRetry,
 } from "../utils";
 
 export { BrowserNode, ERC20Abi, FullChannelState, getBalanceForAssetId, TransferQuote, VectorError };
@@ -895,5 +896,20 @@ export class ConnextSdk {
       onRecover(result.withdrawalTx, successRecoverUi, BigNumber.from(result.withdrawalAmount));
     }
     console.log("Successfully Recover");
+  }
+
+  async retryWithdraw(transferId: string): Promise<string> {
+    try {
+      const res = await withdrawRetry(
+        this.browserNode!,
+        transferId,
+        this.recipientChainChannelAddress,
+        this.recipientChainChannel?.bobIdentifier!,
+      );
+      return res;
+    } catch (e) {
+      console.log("Error at retry withdraw", e);
+      throw e;
+    }
   }
 }

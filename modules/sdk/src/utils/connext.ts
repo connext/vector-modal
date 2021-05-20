@@ -756,3 +756,26 @@ export const onchainTransfer = async (
 
   return tx;
 };
+
+export const withdrawRetry = async (
+  node: BrowserNode,
+  transferId: string,
+  channelAddress: string,
+  publicIdentifier?: string,
+): Promise<string> => {
+  const ret = await node.withdrawRetry({
+    transferId: transferId,
+    channelAddress: channelAddress,
+    publicIdentifier: publicIdentifier,
+  });
+
+  if (ret.isError) {
+    throw ret.getError();
+  }
+
+  if (!ret.getValue() || !ret.getValue().transactionHash) {
+    throw new Error("Transaction hash undefined");
+  }
+
+  return ret.getValue().transactionHash!;
+};
