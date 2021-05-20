@@ -7,7 +7,6 @@ interface OptionsProps {
   state: ScreenStates;
   onClose: () => void;
   handleSetState: (screenState: ScreenStates) => void;
-  handleRecoveryButton: () => void;
   handleUserInfoButton: () => void;
 }
 
