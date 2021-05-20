@@ -47,6 +47,11 @@ const Options: FC<OptionsProps> = props => {
             onClick={() => {
               handleSetState(SCREEN_STATES.HISTORY);
             }}
+            disabled={
+              [SCREEN_STATES.LOADING, SCREEN_STATES.STATUS, ...Object.values(ERROR_STATES)].includes(state as any)
+                ? true
+                : false
+            }
           >
             Transfer History
           </MenuItem>
