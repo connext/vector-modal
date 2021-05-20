@@ -66,10 +66,9 @@ export const MenuList = ({ children, hidden }: MenuListProps) => {
 type MenuItemProps = {
   children?: React.ReactNode | string;
   onClick: (e?: React.MouseEvent) => void;
-  isDisabled?: boolean;
 } & React.ButtonHTMLAttributes<HTMLButtonElement>;
 
-const MenuItemButton = styled.button<MenuItemProps>`
+export const MenuItem = styled.button<MenuItemProps>`
   -webkit-font-smoothing: antialiased;
   --removed-body-scroll-bar-size: 0px;
   visibility: visible;
@@ -92,17 +91,13 @@ const MenuItemButton = styled.button<MenuItemProps>`
   box-shadow: none !important;
   line-height: inherit;
   color: inherit;
-  cursor: ${props => (!props.isDisabled ? "pointer" : "not-allowed")};
-  opacity: ${props => (!props.isDisabled ? "1.0" : "0.4")};
+  cursor: "pointer";
+  opacity: "1.0";
+  :disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+  }
 `;
-
-export const MenuItem = ({ onClick, children, isDisabled }: MenuItemProps) => {
-  return (
-    <MenuItemButton onClick={onClick} isDisabled={isDisabled}>
-      {children}
-    </MenuItemButton>
-  );
-};
 
 // utils
 
