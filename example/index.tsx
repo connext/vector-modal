@@ -56,9 +56,9 @@ function App() {
           await setLoginProvider((event.target as any).value);
         }}
       >
-        <input type="radio" value="metamask" name="loginType" defaultChecked /> Metamask
+        <input type="radio" value="metamask" name="loginType" /> Metamask
         <input type="radio" value="magic" name="loginType" /> Magic
-        <input type="radio" value="none" name="loginType" /> None
+        <input type="radio" value="none" name="loginType" defaultChecked /> None
       </div>
       <input type="number" defaultChecked onChange={event => setTransferAmount(event.target.value)} /> Transfer Amount
       <br />
