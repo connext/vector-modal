@@ -4,8 +4,9 @@ import { getBalanceForAssetId, getRandomBytes32 } from "@connext/vector-utils";
 import { parseUnits, formatUnits } from "@ethersproject/units";
 import { BigNumber } from "@ethersproject/bignumber";
 import { HashZero } from "@ethersproject/constants";
-
+import logdna from "@logdna/browser";
 import config from "../config";
+
 import {
   ChainDetail,
   SetupParamsSchema,
@@ -42,11 +43,8 @@ import {
 
 export { BrowserNode, ERC20Abi, FullChannelState, getBalanceForAssetId, TransferQuote, VectorError };
 
-if (typeof window !== "undefined") {
-  const logdna = require("@logdna/browser");
-  // browser code
-  logdna.init(config.LOGDNA_INGESTION_KEY);
-}
+logdna.init(config.LOGDNA_INGESTION_KEY);
+
 export class ConnextSdk {
   public routerPublicIdentifier = "";
   public senderChainChannelAddress = "";
