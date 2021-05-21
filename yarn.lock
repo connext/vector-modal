@@ -2600,7 +2600,7 @@
     npmlog "^4.1.2"
     write-file-atomic "^3.0.3"
 
-"@logdna/browser@^1.1.0":
+"@logdna/browser@^1.1.1":
   version "1.1.1"
   resolved "https://registry.yarnpkg.com/@logdna/browser/-/browser-1.1.1.tgz#7cdddc31422b169fb72708f8d47fa45e997ee4da"
   integrity sha512-ilGALSe5VbSD55qVBdP+AfSBRRmf6i/LljWW/hAFCPtj3mf2uGK0yXFQYyJMXOsaD5/dyIigg1Z7qaiF1StGug==

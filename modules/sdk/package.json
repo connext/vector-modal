@@ -41,7 +41,7 @@
     "@ethersproject/contracts": "5.1.1",
     "@ethersproject/providers": "5.1.0",
     "@ethersproject/units": "5.1.0",
-    "@logdna/browser": "^1.1.0",
+    "@logdna/browser": "^1.1.1",
     "@metamask/detect-provider": "^1.2.0",
     "awesome-debounce-promise": "^2.1.0",
     "browserify": "^17.0.0",

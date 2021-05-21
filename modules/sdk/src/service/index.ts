@@ -4,8 +4,9 @@ import { getBalanceForAssetId, getRandomBytes32 } from "@connext/vector-utils";
 import { parseUnits, formatUnits } from "@ethersproject/units";
 import { BigNumber } from "@ethersproject/bignumber";
 import { HashZero } from "@ethersproject/constants";
+/* eslint-disable */
 import logdna from "@logdna/browser";
-
+/* eslint-enable */
 import config from "../config";
 import {
   ChainDetail,
