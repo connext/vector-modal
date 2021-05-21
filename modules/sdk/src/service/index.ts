@@ -4,10 +4,6 @@ import { getBalanceForAssetId, getRandomBytes32 } from "@connext/vector-utils";
 import { parseUnits, formatUnits } from "@ethersproject/units";
 import { BigNumber } from "@ethersproject/bignumber";
 import { HashZero } from "@ethersproject/constants";
-/* eslint-disable */
-import logdna from "@logdna/browser";
-/* eslint-enable */
-import config from "../config";
 import {
   ChainDetail,
   SetupParamsSchema,
@@ -44,8 +40,6 @@ import {
 } from "../utils";
 
 export { BrowserNode, ERC20Abi, FullChannelState, getBalanceForAssetId, TransferQuote, VectorError };
-
-logdna.init(config.LOGDNA_INGESTION_KEY);
 
 export class ConnextSdk {
   public routerPublicIdentifier = "";
