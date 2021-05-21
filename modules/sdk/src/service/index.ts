@@ -4,7 +4,9 @@ import { getBalanceForAssetId, getRandomBytes32 } from "@connext/vector-utils";
 import { parseUnits, formatUnits } from "@ethersproject/units";
 import { BigNumber } from "@ethersproject/bignumber";
 import { HashZero } from "@ethersproject/constants";
-
+/* eslint-disable */
+import logdna from "@logdna/browser";
+/* eslint-enable */
 import config from "../config";
 import {
   ChainDetail,
@@ -38,15 +40,13 @@ import {
   withdrawToAsset,
   cancelToAssetTransfer,
   onchainTransfer,
+  withdrawRetry,
 } from "../utils";
 
 export { BrowserNode, ERC20Abi, FullChannelState, getBalanceForAssetId, TransferQuote, VectorError };
 
-if (typeof window !== "undefined") {
-  const logdna = require("@logdna/browser");
-  // browser code
-  logdna.init(config.LOGDNA_INGESTION_KEY);
-}
+logdna.init(config.LOGDNA_INGESTION_KEY);
+
 export class ConnextSdk {
   public routerPublicIdentifier = "";
   public senderChainChannelAddress = "";
@@ -897,5 +897,20 @@ export class ConnextSdk {
       onRecover(result.withdrawalTx, successRecoverUi, BigNumber.from(result.withdrawalAmount));
     }
     console.log("Successfully Recover");
+  }
+
+  async retryWithdraw(transferId: string): Promise<string> {
+    try {
+      const res = await withdrawRetry(
+        this.browserNode!,
+        transferId,
+        this.recipientChainChannelAddress,
+        this.recipientChainChannel?.bobIdentifier!,
+      );
+      return res;
+    } catch (e) {
+      console.log("Error at retry withdraw", e);
+      throw e;
+    }
   }
 }

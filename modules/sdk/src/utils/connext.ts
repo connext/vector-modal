@@ -1,5 +1,5 @@
 import { BrowserNode, NonEIP712Message } from "@connext/vector-browser-node";
-import { ChannelMastercopy } from "@connext/vector-contracts";
+import { ChannelMastercopy, WithdrawCommitment } from "@connext/vector-contracts";
 import AwesomeDebouncePromise from "awesome-debounce-promise";
 import {
   ConditionalTransferCreatedPayload,
@@ -30,6 +30,8 @@ import detectEthereumProvider from "@metamask/detect-provider";
 import { iframeSrc } from "../constants";
 
 import { getOnchainBalance } from "./helpers";
+
+export { WithdrawCommitment };
 
 export const connectNode = async (
   routerPublicIdentifier: string,
@@ -753,4 +755,27 @@ export const onchainTransfer = async (
       : await new Contract(assetId, ERC20Abi, signer).transfer(depositAddress, transferAmountBn);
 
   return tx;
+};
+
+export const withdrawRetry = async (
+  node: BrowserNode,
+  transferId: string,
+  channelAddress: string,
+  publicIdentifier?: string,
+): Promise<string> => {
+  const ret = await node.withdrawRetry({
+    transferId: transferId,
+    channelAddress: channelAddress,
+    publicIdentifier: publicIdentifier,
+  });
+
+  if (ret.isError) {
+    throw ret.getError();
+  }
+
+  if (!ret.getValue() || !ret.getValue().transactionHash) {
+    throw new Error("Transaction hash undefined");
+  }
+
+  return ret.getValue().transactionHash!;
 };

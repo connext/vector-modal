@@ -25,6 +25,7 @@ import {
   Loading,
   Swap,
   SwapListener,
+  History,
   Status,
   ErrorScreen,
   Success,
@@ -648,7 +649,7 @@ const ConnextModal: FC<ConnextModalProps> = ({
       <Options
         state={screenState}
         onClose={handleClose}
-        handleRecoveryButton={handleRecoveryButton}
+        handleSetState={handleSetState}
         handleUserInfoButton={handleUserInfoButton}
       />
     );
@@ -685,16 +686,16 @@ const ConnextModal: FC<ConnextModalProps> = ({
     );
   };
 
-  const handleRecoveryButton = () => {
-    switch (screenState) {
-      case SCREEN_STATES.RECOVER:
-        handleScreen({ state: SCREEN_STATES.SWAP });
-        return;
+  const handleSetState = (screenState: ScreenStates) => {
+    handleScreen({
+      state: screenState,
+    });
+    return;
+  };
 
-      default:
-        handleScreen({ state: SCREEN_STATES.RECOVER });
-        return;
-    }
+  const handleRecoveryButton = () => {
+    handleScreen({ state: SCREEN_STATES.RECOVER });
+    return;
   };
 
   const handleUserInfoButton = () => {
@@ -807,6 +808,8 @@ const ConnextModal: FC<ConnextModalProps> = ({
         setMessage(pMessage);
         break;
 
+      case SCREEN_STATES.HISTORY:
+        break;
       case SCREEN_STATES.USER_INFO:
         break;
 
@@ -882,6 +885,8 @@ const ConnextModal: FC<ConnextModalProps> = ({
           />
         );
 
+      case SCREEN_STATES.HISTORY:
+        return <History options={handleOptions} connextSdk={connextSdk!} />;
       case SCREEN_STATES.RECOVER:
         return (
           <Recover
