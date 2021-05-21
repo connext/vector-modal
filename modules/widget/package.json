@@ -1,6 +1,6 @@
 {
   "name": "@connext/vector-modal",
-  "version": "1.0.5",
+  "version": "1.0.6-beta.0",
   "license": "MIT",
   "author": "connext",
   "description": "widget for cross-chain swap",
@@ -28,7 +28,7 @@
     "react-dom": ">=16"
   },
   "dependencies": {
-    "@connext/vector-sdk": "^0.0.2",
+    "@connext/vector-sdk": "^0.0.3-beta.0",
     "@ethersproject/address": "5.1.0",
     "@ethersproject/bignumber": "5.1.0",
     "@ethersproject/constants": "5.1.0",
