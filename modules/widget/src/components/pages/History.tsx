@@ -25,7 +25,7 @@ interface PostProps extends WithdrawalRecord {
 }
 const Post: FC<PostProps> = props => {
   const pendingStatus = "pending transfer";
-  const { isRetry, retryWithdraw, receiverChainInfo } = props;
+  const { isRetry, receiverChainInfo } = props;
   return (
     <>
       <Stack spacing={1}>
@@ -44,12 +44,10 @@ const Post: FC<PostProps> = props => {
           color="white"
           casing="uppercase"
           onClick={() =>
-            isRetry
-              ? retryWithdraw(props.transferId)
-              : window.open(getExplorerLinkForTx(props.withdrawChainId, props.transactionHash!), "_blank")
+            isRetry ? {} : window.open(getExplorerLinkForTx(props.withdrawChainId, props.transactionHash!), "_blank")
           }
         >
-          {isRetry ? "Retry " : "View Tx"}
+          {isRetry ? "NA " : "View Tx"}
         </Button>
       </Stack>
     </>
