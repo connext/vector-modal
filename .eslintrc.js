@@ -13,6 +13,7 @@ module.exports = {
     sourceType: "module",
   },
   rules: {
+    "import/no-unresolved": "off",
     "@typescript-eslint/no-var-requires": ["off"],
     "@typescript-eslint/no-empty-interface": ["off"],
     "@typescript-eslint/ban-ts-ignore": ["off"],

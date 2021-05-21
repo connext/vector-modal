@@ -1,9 +1,9 @@
 import React, { FC, useEffect, useState } from "react";
 import Select from "react-select";
 import { formatUnits } from "@ethersproject/units";
-import { ModalContent, ModalBody, Stack, Box, Text, Button } from "../common";
 import { getChainInfo, ChainInfo, truncate, getExplorerLinkForTx, ChainDetail, ConnextSdk } from "@connext/vector-sdk";
 
+import { ModalContent, ModalBody, Stack, Box, Text, Button } from "../common";
 import { Header, Footer } from "../static";
 export interface HistoryProps {
   options: () => void;
@@ -113,7 +113,7 @@ const History: FC<HistoryProps> = props => {
           const chain: ChainInfo = await getChainInfo(s.chainId);
           const assetName = chain.assetId[state.assetId]?.symbol ?? "Token";
 
-          let isRetry: boolean = false;
+          let isRetry = false;
           if (!state.transactionHash) {
             isRetry = true;
           }

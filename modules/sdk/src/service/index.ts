@@ -5,8 +5,8 @@ import { parseUnits, formatUnits } from "@ethersproject/units";
 import { BigNumber } from "@ethersproject/bignumber";
 import { HashZero } from "@ethersproject/constants";
 import logdna from "@logdna/browser";
-import config from "../config";
 
+import config from "../config";
 import {
   ChainDetail,
   SetupParamsSchema,
