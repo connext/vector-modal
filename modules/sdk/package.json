@@ -1,6 +1,6 @@
 {
   "name": "@connext/vector-sdk",
-  "version": "0.0.3-beta.0",
+  "version": "0.0.3-beta.1",
   "description": "> TODO: description",
   "author": "sanchaymittal <sanchaymittal@gmail.com>",
   "homepage": "https://github.com/connext/vector-modal#readme",
@@ -50,7 +50,6 @@
   },
   "devDependencies": {
     "@size-limit/preset-small-lib": "^4.11.0",
-    "size-limit": "^4.11.0",
     "@types/chai": "^4.2.17",
     "@types/chai-as-promised": "7.1.4",
     "@types/chai-subset": "1.3.3",
@@ -62,6 +61,7 @@
     "mocha": "8.3.2",
     "nyc": "15.1.0",
     "sinon": "^10.0.0",
+    "size-limit": "^4.11.0",
     "ts-mocha": "8.0.0",
     "tsdx": "^0.14.1",
     "tslib": "^2.2.0",
