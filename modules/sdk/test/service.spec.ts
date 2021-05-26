@@ -473,23 +473,6 @@ describe("service", () => {
       expect(res.totalFee).to.be.be.eq("0.5");
       expect(res.transferQuote).to.be.eq(ResTransferQuote);
     });
-
-    it("should return helper text 'Transfer amount exceeds user balance' if transferAmount is lower than fees userBalance", async () => {
-      getFeesDebouncedMock.resolves({
-        transferQuote: ResTransferQuote,
-        totalFee: BigNumber.from("500000000000000000"),
-        senderAmount: BigNumber.from("1000000000000000000"),
-        recipientAmount: BigNumber.from("500000000000000000"),
-      });
-      const res = await connext.estimateFees({ transferAmount: "1", userBalance: "0.5" });
-
-      console.log(res);
-      expect(res.error).to.be.eq("Transfer amount exceeds user balance");
-      expect(res.senderAmount).to.be.deep.eq("1");
-      expect(res.recipientAmount).to.be.eq("0.5");
-      expect(res.totalFee).to.be.be.eq("0.5");
-      expect(res.transferQuote).to.be.eq(ResTransferQuote);
-    });
   });
 
   describe("preTransferCheck", () => {
