@@ -424,7 +424,7 @@ export class ConnextSdk {
   }
 
   async estimateFees(params: EstimateFeeParamsSchema): Promise<EstimateFeeResponseSchema> {
-    const { transferAmount: _transferAmount, isRecipientAssetInput, userBalance } = params;
+    const { transferAmount: _transferAmount, isRecipientAssetInput } = params;
 
     const transferAmount = _transferAmount ? _transferAmount.trim() : undefined;
     let err: string | undefined = undefined;
@@ -519,21 +519,6 @@ export class ConnextSdk {
       } else {
         recipientAmountUi = formatUnits(recipientAmountBn.toString(), this.recipientChain?.assetDecimals!);
         console.log("receivedUi: ", recipientAmountUi);
-      }
-
-      if (userBalance) {
-        const userBalanceBn = BigNumber.from(parseUnits(userBalance, this.senderChain?.assetDecimals!));
-        console.log(senderAmountBn.toString(), userBalance, userBalanceBn.toString());
-        if (senderAmountBn.gt(userBalanceBn)) {
-          err = "Transfer amount exceeds user balance";
-          return {
-            error: err,
-            senderAmount: senderAmountUi,
-            recipientAmount: recipientAmountUi,
-            totalFee: totalFee,
-            transferQuote: transferQuote,
-          };
-        }
       }
     } catch (e) {
       err = "Invalid amount";
