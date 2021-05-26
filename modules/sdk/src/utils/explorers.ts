@@ -20,6 +20,9 @@ export const getExplorerLink = (chainId: number): string | undefined => {
     case 97: {
       return `https://testnet.bscscan.com`;
     }
+    case 100: {
+      return `https://blockscout.com/poa/xdai/`;
+    }
     case 128: {
       return `https://scan.hecochain.com`;
     }
