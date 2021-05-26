@@ -240,7 +240,7 @@ const ConnextModal: FC<ConnextModalProps> = ({
       if (res.totalFee) setTransferFeeUi(res.totalFee);
 
       if (res.recipientAmount) {
-        const tA = parseFloat(transferAmount);
+        const tA = parseFloat(transferAmount) - parseFloat(res.totalFee ?? "0");
         const rA = parseFloat(res.recipientAmount);
 
         const _swapRate = tA / rA;
