@@ -43,7 +43,7 @@ const Swap: FC<TransferProps> = props => {
     options,
   } = props;
 
-  const [check, setCheck] = useState<boolean>(receiverAddress !== userAddress ? false : true);
+  const [check, setCheck] = useState<boolean>(userAddress ? (receiverAddress !== userAddress ? false : true) : true);
 
   function escapeRegExp(string: string): string {
     return string.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"); // $& means the whole matched string
