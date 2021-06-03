@@ -24,8 +24,11 @@
     "build": "lerna run build",
     "prepublish": "lerna run prepublish",
     "publish": "lerna publish",
-    "start:app": "yarn run build && yarn --cwd example && yarn --cwd example start",
-    "cypress": "cypress run",
-    "cypress:open": "cypress open"
+    "start:app": "yarn clean:app && yarn run build && yarn --cwd example && yarn --cwd example start",
+    "cypress": "start-server-and-test start:app http://localhost:1234 'cypress run'",
+    "cypress:open": "start-server-and-test start:app http://localhost:1234 'cypress open'"
+  },
+  "dependencies": {
+    "start-server-and-test": "^1.12.3"
   }
 }
