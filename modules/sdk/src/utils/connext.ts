@@ -543,7 +543,6 @@ export const cancelHangingToTransfers = async (
 
 export const withdrawToAsset = async (
   node: BrowserNode,
-  evt: Evt<WithdrawalResolvedPayload>,
   toChainId: number,
   _toAssetId: string,
   recipientAddr: string,
@@ -585,13 +584,7 @@ export const withdrawToAsset = async (
     callData,
   };
   console.log("withdraw params", params);
-  const [ret, payload] = await Promise.all([
-    node.withdraw(params),
-    evt.waitFor(
-      data => data.channelAddress === withdrawChannel.channelAddress && data.recipient === recipientAddr,
-      300_000,
-    ),
-  ]);
+  const ret = await node.withdraw(params);
   if (ret.isError) {
     throw ret.getError();
   }
@@ -604,7 +597,7 @@ export const withdrawToAsset = async (
 
   const result = {
     withdrawalTx: transactionHash,
-    withdrawalAmount: payload?.amount ?? toWithdraw,
+    withdrawalAmount: toWithdraw,
   };
   return result;
 };
