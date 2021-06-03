@@ -59,11 +59,7 @@ const RecoverError: FC<ErrorProps> = props => {
 
                 <Text fontSize="0.875rem" lineHeight="24px" textTransform="initial">
                   Support help can be found on our{" "}
-                  <Link
-                    href="https://support.connext.network"
-                    target="_blank"
-                    color="green"
-                  >
+                  <Link href="https://support.connext.network" target="_blank" color="green">
                     Support Portal
                   </Link>{" "}
                 </Text>
