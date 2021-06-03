@@ -719,7 +719,6 @@ export class ConnextSdk {
     try {
       result = await withdrawToAsset(
         this.browserNode!,
-        this.evts![EngineEvents.WITHDRAWAL_RESOLVED],
         this.recipientChain?.chainId!,
         this.recipientChain?.assetId!,
         recipientAddress,
@@ -823,7 +822,6 @@ export class ConnextSdk {
     try {
       result = await withdrawToAsset(
         this.browserNode!,
-        this.evts![EngineEvents.WITHDRAWAL_RESOLVED],
         this.senderChain?.chainId!,
         this.senderChain?.assetId!,
         recipientAddress,
