@@ -215,7 +215,7 @@ const ConnextModal: FC<ConnextModalProps> = ({
       return;
     }
 
-    let inputBn = BigNumber.from(parseUnits(input, senderChain?.assetDecimals!));
+    const inputBn = BigNumber.from(parseUnits(input, senderChain?.assetDecimals!));
     let transferAmountBn = inputBn;
 
     if (existingChannelBalanceUi) {
