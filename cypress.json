@@ -1,1 +1,1 @@
-{ "$schema": "https://on.cypress.io/cypress.schema.json", "video": false }
+{ "video": false }
