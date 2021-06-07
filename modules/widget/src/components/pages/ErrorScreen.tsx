@@ -27,7 +27,7 @@ export interface ErrorProps {
   handleRecoveryButton?: () => void;
   options: () => void;
   handleBack: () => void;
-  senderChainInfo?: ChainDetail;
+  senderChainInfo: ChainDetail;
   receiverChainInfo: ChainDetail;
   receiverAddress: string;
   state: ErrorStates;
@@ -69,7 +69,11 @@ const Error: FC<ErrorProps> = props => {
                   <IconButton
                     aria-label="Clipboard"
                     onClick={() => {
-                      const message = `senderChannelAddress: ${senderChannelAddress}, recipientChannelAddress: ${recipientChannelAddress}, error: ${error.message}`;
+                      const message = `senderChain: ${
+                        senderChainInfo?.chainId
+                      }, senderChannelAddress: ${senderChannelAddress}, recipientChain: ${
+                        receiverChainInfo?.chainId
+                      }, recipientChannelAddress: ${recipientChannelAddress}, error: ${JSON.stringify(error ?? "")}`;
                       console.log(`Copying: ${message}`);
                       navigator.clipboard.writeText(message);
                       setCopiedMessage(true);
