@@ -1,14 +1,14 @@
 *.log
-.DS_Store
-node_modules
-dist
-
-node_modules
+*.DS_Store*
+dist*
+node_modules*
 package-lock.json
 yarn.lock
 !/yarn.lock
 
 .env
+.cache*
+.parcel-cache*
 .nyc_output
 .yalc
 yalc.lock
