@@ -1,7 +1,7 @@
 import { BigNumber } from "@ethersproject/bignumber";
 import { Web3Provider, JsonRpcProvider } from "@ethersproject/providers";
-import { BrowserNode } from "@connext/vector-browser-node";
 import { TransferQuote } from "@connext/vector-types";
+import { IBrowserNode } from "../utils";
 
 export interface AddEthereumChainParameter {
   chainId: string; // A 0x-prefixed hexadecimal string
@@ -79,7 +79,7 @@ export type WithdrawParamsSchema = {
   onFinished?: (txHash: string, amountUi?: string, amountBn?: BigNumber) => void;
   withdrawalCallTo?: string;
   withdrawalCallData?: string;
-  generateCallData?: (toWithdraw: string, toAssetId: string, node: BrowserNode) => Promise<{ callData?: string }>;
+  generateCallData?: (toWithdraw: string, toAssetId: string, node: IBrowserNode) => Promise<{ callData?: string }>;
 };
 
 export type CrossChainSwapParamsSchema = WithdrawParamsSchema & TransferParamsSchema;

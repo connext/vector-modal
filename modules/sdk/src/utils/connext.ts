@@ -1,4 +1,3 @@
-import { BrowserNode, NonEIP712Message } from "@connext/vector-browser-node";
 import { ChannelMastercopy, WithdrawCommitment } from "@connext/vector-contracts";
 import AwesomeDebouncePromise from "awesome-debounce-promise";
 import {
@@ -30,6 +29,7 @@ import detectEthereumProvider from "@metamask/detect-provider";
 import { iframeSrc } from "../constants";
 
 import { getOnchainBalance } from "./helpers";
+import { getVectorBrowserNode, IBrowserNode } from "./packages";
 
 export { WithdrawCommitment };
 
@@ -41,8 +41,9 @@ export const connectNode = async (
   withdrawChainProvider: string,
   loginProvider?: Web3Provider,
   iframeSrcOverride?: string,
-): Promise<BrowserNode> => {
+): Promise<IBrowserNode> => {
   console.log("Connect Node");
+  const { BrowserNode, NonEIP712Message } = await getVectorBrowserNode();
   const browserNode = new BrowserNode({
     routerPublicIdentifier,
     iframeSrc: iframeSrcOverride ?? iframeSrc,
@@ -176,7 +177,11 @@ export const connectNode = async (
   return browserNode;
 };
 
-export const requestCollateral = async (node: BrowserNode, channelAddress: string, _assetId: string): Promise<void> => {
+export const requestCollateral = async (
+  node: IBrowserNode,
+  channelAddress: string,
+  _assetId: string,
+): Promise<void> => {
   const res = await node.requestCollateral({
     channelAddress: channelAddress,
     assetId: getAddress(_assetId),
@@ -187,7 +192,7 @@ export const requestCollateral = async (node: BrowserNode, channelAddress: strin
 };
 
 export const getCrosschainFee = async (
-  node: BrowserNode,
+  node: IBrowserNode,
   routerIdentifier: string,
   _transferAmount: BigNumber,
   senderChainId: number,
@@ -292,7 +297,7 @@ export const getTotalDepositsBob = async (
 };
 
 // throws results to be used in retryWithDelay fn
-export const reconcileDeposit = async (node: BrowserNode, channelAddress: string, _assetId: string): Promise<void> => {
+export const reconcileDeposit = async (node: IBrowserNode, channelAddress: string, _assetId: string): Promise<void> => {
   const ret = await node.reconcileDeposit({
     channelAddress,
     assetId: getAddress(_assetId),
@@ -303,7 +308,7 @@ export const reconcileDeposit = async (node: BrowserNode, channelAddress: string
 };
 
 export const getChannelForChain = async (
-  node: BrowserNode,
+  node: IBrowserNode,
   routerIdentifier: string,
   chainId: number,
 ): Promise<FullChannelState> => {
@@ -322,7 +327,7 @@ export const getChannelForChain = async (
 };
 
 export const createFromAssetTransfer = async (
-  node: BrowserNode,
+  node: IBrowserNode,
   fromChainId: number,
   _fromAssetId: string,
   toChainId: number,
@@ -372,7 +377,7 @@ export const createFromAssetTransfer = async (
 };
 
 export const resolveToAssetTransfer = async (
-  node: BrowserNode,
+  node: IBrowserNode,
   toChainId: number,
   preImage: string,
   crossChainTransferId: string,
@@ -406,7 +411,7 @@ export const resolveToAssetTransfer = async (
 };
 
 export const waitForSenderCancels = async (
-  node: BrowserNode,
+  node: IBrowserNode,
   evt: Evt<ConditionalTransferResolvedPayload>,
   depositChannelAddress: string,
 ): Promise<void> => {
@@ -450,7 +455,7 @@ export const waitForSenderCancels = async (
 };
 
 export const cancelToAssetTransfer = async (
-  node: BrowserNode,
+  node: IBrowserNode,
   withdrawChannelAddess: string,
   transferId: string,
   cancellationReason: string,
@@ -471,7 +476,7 @@ export const cancelToAssetTransfer = async (
 };
 
 export const cancelHangingToTransfers = async (
-  node: BrowserNode,
+  node: IBrowserNode,
   evt: Evt<ConditionalTransferResolvedPayload>,
   fromChainId: number,
   toChainId: number,
@@ -542,14 +547,14 @@ export const cancelHangingToTransfers = async (
 };
 
 export const withdrawToAsset = async (
-  node: BrowserNode,
+  node: IBrowserNode,
   toChainId: number,
   _toAssetId: string,
   recipientAddr: string,
   routerPublicIdentifier: string,
   withdrawCallTo?: string,
   withdrawCallData?: string,
-  generateCallData?: (toWithdraw: string, toAssetId: string, node: BrowserNode) => Promise<{ callData?: string }>,
+  generateCallData?: (toWithdraw: string, toAssetId: string, node: IBrowserNode) => Promise<{ callData?: string }>,
 ): Promise<{ withdrawalTx: string; withdrawalAmount: string }> => {
   console.log("Starting withdrawal: ", {
     toChainId,
@@ -604,7 +609,7 @@ export const withdrawToAsset = async (
 
 // return strings, does not need to be retried
 export const verifyAndGetRouterSupports = async (
-  node: BrowserNode,
+  node: IBrowserNode,
   fromChainId: number,
   _fromAssetId: string,
   toChainId: number,
@@ -697,7 +702,7 @@ export type EvtContainer = {
   [EngineEvents.WITHDRAWAL_RESOLVED]: Evt<WithdrawalResolvedPayload>;
 };
 
-export const createEvtContainer = (node: BrowserNode): EvtContainer => {
+export const createEvtContainer = (node: IBrowserNode): EvtContainer => {
   const createdTransfer = Evt.create<ConditionalTransferCreatedPayload>();
   const resolvedTransfer = Evt.create<ConditionalTransferResolvedPayload>();
   const deposit = Evt.create<DepositReconciledPayload>();
@@ -751,7 +756,7 @@ export const onchainTransfer = async (
 };
 
 export const withdrawRetry = async (
-  node: BrowserNode,
+  node: IBrowserNode,
   transferId: string,
   channelAddress: string,
   publicIdentifier?: string,

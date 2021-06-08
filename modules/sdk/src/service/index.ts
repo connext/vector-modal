@@ -6,7 +6,6 @@ import {
   VectorError,
   getConfirmationsForChain,
 } from "@connext/vector-types";
-import { BrowserNode } from "@connext/vector-browser-node";
 import { getBalanceForAssetId, getRandomBytes32 } from "@connext/vector-utils";
 import { parseUnits, formatUnits } from "@ethersproject/units";
 import { BigNumber } from "@ethersproject/bignumber";
@@ -45,9 +44,10 @@ import {
   cancelToAssetTransfer,
   onchainTransfer,
   withdrawRetry,
+  IBrowserNode,
 } from "../utils";
 
-export { BrowserNode, ERC20Abi, FullChannelState, getBalanceForAssetId, TransferQuote, VectorError };
+export { IBrowserNode, ERC20Abi, FullChannelState, getBalanceForAssetId, TransferQuote, VectorError };
 
 export class ConnextSdk {
   public routerPublicIdentifier = "";
@@ -58,7 +58,7 @@ export class ConnextSdk {
   public recipientChainChannel?: FullChannelState;
   public senderChain?: ChainDetail;
   public recipientChain?: ChainDetail;
-  public browserNode?: BrowserNode;
+  public browserNode?: IBrowserNode;
 
   private evts?: EvtContainer;
   private swapDefinition?: any;
@@ -122,7 +122,7 @@ export class ConnextSdk {
     }
 
     // setup browser node
-    let _node: BrowserNode;
+    let _node: IBrowserNode;
     try {
       // call isAlive if node set already (i.e. retry)
       if (this.browserNode && this.senderChainChannelAddress && this.recipientChainChannelAddress) {
