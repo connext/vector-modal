@@ -6,9 +6,9 @@ import { BaseProvider, JsonRpcProvider, Web3Provider } from "@ethersproject/prov
 import { Contract } from "@ethersproject/contracts";
 import { AddressZero } from "@ethersproject/constants";
 import { ERC20Abi, ChainInfo } from "@connext/vector-types";
-import { getChainInfo, getChainId, getAssetDecimals, delay } from "@connext/vector-utils";
 
 import { ChainDetail, AddEthereumChainParameter } from "../constants";
+import { delay, getAssetDecimals, getChainId, getChainInfo } from "./packages";
 
 export { getChainInfo, ChainInfo };
 
@@ -76,7 +76,7 @@ export const getChain = async (
   // get decimals for deposit asset
   const assetDecimals = await getAssetDecimals(assetId, rpcProvider);
 
-  const chain: ChainInfo = await getChainInfo(chainId);
+  const chain: ChainInfo = await getChainInfo(chainId!);
   const chainName = chain.name;
   const assetName = chain.assetId[assetId]?.symbol ?? "Token";
 
@@ -93,7 +93,7 @@ export const getChain = async (
 
   const chainInfo: ChainDetail = {
     name: chainName,
-    chainId: chainId,
+    chainId: chainId!,
     chainProvider: chainProvider,
     rpcProvider: rpcProvider,
     assetName: assetName,

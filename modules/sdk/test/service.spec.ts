@@ -3,12 +3,19 @@ import { hexValue } from "@ethersproject/bytes";
 import { JsonRpcProvider, Web3Provider, JsonRpcSigner } from "@ethersproject/providers";
 import { AddressZero } from "@ethersproject/constants";
 import Sinon, { createStubInstance } from "sinon";
-import { AllowedSwap, Result } from "@connext/vector-types";
-import { createTestChannelState, mkPublicIdentifier, expect, mkBytes32, getRandomBytes32 } from "@connext/vector-utils";
+import { AllowedSwap, FullChannelState, Result } from "@connext/vector-types";
 
 import * as helpers from "../src/utils/helpers";
 import * as connextUtils from "../src/utils/connext";
-import { BrowserNode, ChainDetail, ConnextSdk, TransferQuote } from "../src";
+import {
+  IBrowserNode,
+  ChainDetail,
+  ConnextSdk,
+  TransferQuote,
+  getVectorBrowserNode,
+  getVectorUtils,
+  getRandomBytes32,
+} from "../src";
 
 const generateChainDetail = (overrides: Partial<ChainDetail> = {}): ChainDetail => {
   return {
@@ -32,25 +39,14 @@ const generateChainDetail = (overrides: Partial<ChainDetail> = {}): ChainDetail 
   };
 };
 
-const routerPublicIdentifier = mkPublicIdentifier("vectorRRR");
 const senderChain = generateChainDetail();
 const receiverChain = generateChainDetail({ chainId: 12 });
-// const senderChannel = createTestChannelState("create");
-const receiverChannel = createTestChannelState("create");
-const transferQuote = {
-  routerIdentifier: routerPublicIdentifier,
-  amount: "1000000000000000000",
-  assetId: senderChain.assetId,
-  chainId: senderChain.chainId,
-  recipient: receiverChannel.channel.bobIdentifier,
-  recipientChainId: receiverChain.chainId,
-  recipientAssetId: receiverChain.assetId,
-  fee: "500000000000000000",
-  expiry: "1618308505485",
-  signature:
-    "0xa36cfa752b57e4f35d9af5c8aab4a78dfc336edfb635850e1df2c99c558604b46d0e8686de9590db6f18a500e36014d00acb31b0f738dab2574180805db64fdc1b",
-};
 
+let vectorUtils: any;
+
+let routerPublicIdentifier: string;
+let receiverChannel: { channel: FullChannelState };
+let transferQuote: TransferQuote;
 let connext: ConnextSdk;
 let getChainMock: Sinon.SinonStub;
 let connectNodeMock: Sinon.SinonStub;
@@ -58,16 +54,39 @@ let createEvtContainerMock: Sinon.SinonStub;
 let getChannelForChainMock: Sinon.SinonStub;
 let requestCollateralMock: Sinon.SinonStub;
 let getFeesDebouncedMock: Sinon.SinonStub;
-let browserNodeMock: Sinon.SinonStubbedInstance<BrowserNode>;
+let browserNodeMock: Sinon.SinonStubbedInstance<IBrowserNode>;
 let verifyAndGetRouterSupportsMock: Sinon.SinonStub;
 let verifyRouterCapacityForTransferMock: Sinon.SinonStub;
 let sendTransactionMock: Sinon.SinonStub;
 
 describe("service", () => {
-  beforeEach(() => {
+  const expect = vectorUtils.expect;
+
+  beforeEach(async () => {
+    const browser = await getVectorBrowserNode();
+    vectorUtils = await getVectorUtils();
+
+    // extract utils functions
+
+    routerPublicIdentifier = vectorUtils.mkPublicIdentifier("vectorRRR");
+    receiverChannel = vectorUtils.createTestChannelState("create");
+    transferQuote = {
+      routerIdentifier: routerPublicIdentifier,
+      amount: "1000000000000000000",
+      assetId: senderChain.assetId,
+      chainId: senderChain.chainId,
+      recipient: receiverChannel.channel.bobIdentifier,
+      recipientChainId: receiverChain.chainId,
+      recipientAssetId: receiverChain.assetId,
+      fee: "500000000000000000",
+      expiry: "1618308505485",
+      signature:
+        "0xa36cfa752b57e4f35d9af5c8aab4a78dfc336edfb635850e1df2c99c558604b46d0e8686de9590db6f18a500e36014d00acb31b0f738dab2574180805db64fdc1b",
+    };
+
     connext = new ConnextSdk();
     getChainMock = Sinon.stub(helpers, "getChain");
-    browserNodeMock = Sinon.createStubInstance(BrowserNode);
+    browserNodeMock = Sinon.createStubInstance(browser.BrowserNode);
     connectNodeMock = Sinon.stub(connextUtils, "connectNode");
     createEvtContainerMock = Sinon.stub(connextUtils, "createEvtContainer");
     getChannelForChainMock = Sinon.stub(connextUtils, "getChannelForChain");
@@ -86,8 +105,8 @@ describe("service", () => {
   describe("setup", () => {
     const senderChain = generateChainDetail();
     const receiverChain = generateChainDetail({ chainId: 12 });
-    const senderChannel = createTestChannelState("create");
-    const receiverChannel = createTestChannelState("create");
+    const senderChannel = vectorUtils.createTestChannelState("create");
+    const receiverChannel = vectorUtils.createTestChannelState("create");
 
     beforeEach(async () => {
       getChainMock.onFirstCall().resolves(senderChain);
@@ -541,7 +560,7 @@ describe("service", () => {
       const signerMock = new JsonRpcSigner({}, providerMock);
 
       webProviderMock.getSigner.resolves(signerMock);
-      const hash = mkBytes32("0xa");
+      const hash = vectorUtils.mkBytes32("0xa");
 
       sendTransactionMock.resolves({
         hash,

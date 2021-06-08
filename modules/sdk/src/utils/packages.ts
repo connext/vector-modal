@@ -1,4 +1,6 @@
 import {
+  DecString,
+  FullChannelState,
   INodeService,
   NodeParams,
   NodeResponses,
@@ -6,6 +8,10 @@ import {
   Result,
   VectorError,
 } from "@connext/vector-types";
+import { BigNumber } from "@ethersproject/bignumber";
+import { JsonRpcProvider } from "@ethersproject/providers";
+import { hexlify } from "@ethersproject/bytes";
+import { randomBytes } from "@ethersproject/random";
 
 // declare packages
 let vectorBrowserNode: any | undefined = undefined;
@@ -51,3 +57,55 @@ export interface IBrowserNode extends INodeService {
     params: OptionalPublicIdentifier<NodeParams.AddTransactionToCommitment>,
   ): Promise<Result<void, VectorError>>;
 }
+
+// very dumb wrapper around common utils functions
+export const getChainInfo = async (chainId: number) => {
+  const utils = await getVectorUtils();
+  return utils.getChainInfo(chainId);
+};
+
+export const delay = async (ms: number) => {
+  const utils = await getVectorUtils();
+  return utils.delay(ms);
+};
+
+export const getChainId = async (chainProvider: string) => {
+  const utils = await getVectorUtils();
+  return utils.getChainId(chainProvider);
+};
+
+export const getAssetDecimals = async (assetId: string, rpcProvider: JsonRpcProvider) => {
+  const utils = await getVectorUtils();
+  return utils.getAssetDecimals(assetId, rpcProvider);
+};
+
+export const calculateExchangeWad = async (
+  inputWad: BigNumber,
+  inputDecimals: number,
+  swapRate: DecString,
+  outputDecimals: number,
+) => {
+  const utils = await getVectorUtils();
+  return utils.calculateExchangeWad(inputWad, inputDecimals, swapRate, outputDecimals);
+};
+
+export const inverse = async (value: string, precision = 18) => {
+  const utils = await getVectorUtils();
+  return utils.inverse(value, precision);
+};
+
+export const getBalanceForAssetId = async (
+  channel: FullChannelState,
+  assetId: string,
+  participant: "alice" | "bob",
+) => {
+  const utils = await getVectorUtils();
+  return utils.getBalanceForAssetId(channel, assetId, participant);
+};
+
+export const createlockHash = async (preImage: string) => {
+  const utils = await getVectorUtils();
+  return utils.createlockHash(preImage);
+};
+
+export const getRandomBytes32 = (): string => hexlify(randomBytes(32));

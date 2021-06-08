@@ -1,9 +1,7 @@
 import { BrowserNode, NonEIP712Message } from "@connext/vector-browser-node";
 import { ChainProviders, FullChannelState } from "@connext/vector-types";
-import { getBalanceForAssetId } from "@connext/vector-utils";
 import { BigNumber } from "@ethersproject/bignumber";
 import { JsonRpcSigner } from "@ethersproject/providers";
-// import { getChannelForChain } from "../utils";
 
 import { iframeSrc } from "../constants";
 

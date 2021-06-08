@@ -6,7 +6,6 @@ import {
   VectorError,
   getConfirmationsForChain,
 } from "@connext/vector-types";
-import { getBalanceForAssetId, getRandomBytes32 } from "@connext/vector-utils";
 import { parseUnits, formatUnits } from "@ethersproject/units";
 import { BigNumber } from "@ethersproject/bignumber";
 import { HashZero } from "@ethersproject/constants";
@@ -45,6 +44,8 @@ import {
   onchainTransfer,
   withdrawRetry,
   IBrowserNode,
+  getBalanceForAssetId,
+  getRandomBytes32,
 } from "../utils";
 
 export { IBrowserNode, ERC20Abi, FullChannelState, getBalanceForAssetId, TransferQuote, VectorError };

@@ -16,7 +16,6 @@ import {
   WithdrawalResolvedPayload,
   ERC20Abi,
 } from "@connext/vector-types";
-import { calculateExchangeWad, createlockHash, getBalanceForAssetId, inverse } from "@connext/vector-utils";
 import { getAddress } from "@ethersproject/address";
 import { formatUnits, parseEther } from "@ethersproject/units";
 import { Contract } from "@ethersproject/contracts";
@@ -29,7 +28,14 @@ import detectEthereumProvider from "@metamask/detect-provider";
 import { iframeSrc } from "../constants";
 
 import { getOnchainBalance } from "./helpers";
-import { getVectorBrowserNode, IBrowserNode } from "./packages";
+import {
+  calculateExchangeWad,
+  createlockHash,
+  getBalanceForAssetId,
+  getVectorBrowserNode,
+  IBrowserNode,
+  inverse,
+} from "./packages";
 
 export { WithdrawCommitment };
 
@@ -222,7 +228,12 @@ export const getCrosschainFee = async (
     // if input at recipient field
     // convert the input amount to senderAmount
     transferAmount = BigNumber.from(
-      calculateExchangeWad(_transferAmount, receiverAssetDecimals, inverse(swap.hardcodedRate), senderAssetDecimals),
+      await calculateExchangeWad(
+        _transferAmount,
+        receiverAssetDecimals,
+        await inverse(swap.hardcodedRate),
+        senderAssetDecimals,
+      ),
     );
   }
 
@@ -250,14 +261,14 @@ export const getCrosschainFee = async (
 
   const senderAmount: BigNumber = depositAssetTransferAmount;
   if (receiveExactAmount) {
-    recipientAmount = calculateExchangeWad(
+    recipientAmount = await calculateExchangeWad(
       depositAssetTransferAmount,
       senderAssetDecimals,
       swap.hardcodedRate,
       receiverAssetDecimals,
     );
   } else {
-    recipientAmount = calculateExchangeWad(
+    recipientAmount = await calculateExchangeWad(
       depositAssetTransferAmount.sub(totalFee),
       senderAssetDecimals,
       swap.hardcodedRate,
@@ -340,7 +351,7 @@ export const createFromAssetTransfer = async (
   const depositChannel = await getChannelForChain(node, routerPublicIdentifier, fromChainId);
   const fromAssetId = getAddress(_fromAssetId);
   const toAssetId = getAddress(_toAssetId);
-  const toTransfer = getBalanceForAssetId(depositChannel, fromAssetId, "bob");
+  const toTransfer = await getBalanceForAssetId(depositChannel, fromAssetId, "bob");
   if (toTransfer === "0") {
     throw new Error(
       `Asset (${fromAssetId}) not in channel, please deposit. Assets: ${depositChannel.assetIds.join(",")}`,
@@ -360,7 +371,7 @@ export const createFromAssetTransfer = async (
       fromAssetId,
       toAssetId,
     },
-    details: { expiry: "0", lockHash: createlockHash(preImage) },
+    details: { expiry: "0", lockHash: await createlockHash(preImage) },
     publicIdentifier: depositChannel.bobIdentifier,
     quote,
   };
@@ -567,7 +578,7 @@ export const withdrawToAsset = async (
   const withdrawChannel = await getChannelForChain(node, routerPublicIdentifier, toChainId);
 
   const toAssetId = getAddress(_toAssetId);
-  const toWithdraw = getBalanceForAssetId(withdrawChannel, toAssetId, "bob");
+  const toWithdraw = await getBalanceForAssetId(withdrawChannel, toAssetId, "bob");
   if (toWithdraw === "0") {
     throw new Error("Asset not in receiver channel");
   }
@@ -672,7 +683,12 @@ export const verifyRouterCapacityForTransfer = async (
   console.log(`verifyRouterCapacityForTransfer for ${transferAmount}`);
   const routerOnchain = await getOnchainBalance(ethProvider, toAssetId, withdrawChannel.alice);
   const routerOffchain = BigNumber.from(getBalanceForAssetId(withdrawChannel, toAssetId, "alice"));
-  const swappedAmount = calculateExchangeWad(transferAmount, fromAssetDecimals, swap.hardcodedRate, toAssetDecimals);
+  const swappedAmount = await calculateExchangeWad(
+    transferAmount,
+    fromAssetDecimals,
+    swap.hardcodedRate,
+    toAssetDecimals,
+  );
   console.log("transferAmount: ", transferAmount.toString());
   console.log("swappedAmount: ", swappedAmount.toString());
   console.log("routerOnchain: ", routerOnchain.toString());
