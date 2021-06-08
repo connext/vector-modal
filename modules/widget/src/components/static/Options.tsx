@@ -51,7 +51,7 @@ const Options: FC<OptionsProps> = props => {
           >
             Transfer History
           </MenuItem>
-          <MenuItem onClick={() => window.open("https://discord.gg/AGpyHSbYCe", "_blank")}>Support</MenuItem>
+          <MenuItem onClick={() => window.open("https://support.connext.network", "_blank")}>Support</MenuItem>
           <MenuItem
             disabled={[SCREEN_STATES.LOADING, SCREEN_STATES.STATUS].includes(state as any) ? true : false}
             onClick={handleUserInfoButton}
