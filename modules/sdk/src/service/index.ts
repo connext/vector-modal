@@ -1,4 +1,11 @@
-import { EngineEvents, FullChannelState, ERC20Abi, TransferQuote, VectorError } from "@connext/vector-types";
+import {
+  EngineEvents,
+  FullChannelState,
+  ERC20Abi,
+  TransferQuote,
+  VectorError,
+  getConfirmationsForChain,
+} from "@connext/vector-types";
 import { BrowserNode } from "@connext/vector-browser-node";
 import { getBalanceForAssetId, getRandomBytes32 } from "@connext/vector-utils";
 import { parseUnits, formatUnits } from "@ethersproject/units";
@@ -592,12 +599,13 @@ export class ConnextSdk {
         signer,
       );
 
-      console.log("deposit mined:", depositTx.hash);
+      console.log("deposit submitted:", depositTx.hash);
 
-      const receipt = await depositTx.wait(2);
+      const confirmations = getConfirmationsForChain(this.senderChain!.chainId);
+      const receipt = await depositTx.wait(confirmations);
       console.log("deposit mined:", receipt.transactionHash);
 
-      signer.provider.waitForTransaction(depositTx.hash, 2).then(receipt => {
+      signer.provider.waitForTransaction(depositTx.hash, confirmations).then(receipt => {
         if (receipt.status === 0) {
           // tx reverted
           const message = "Transaction reverted onchain";
