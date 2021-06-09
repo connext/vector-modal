@@ -1,4 +1,3 @@
-import { ChannelMastercopy, WithdrawCommitment } from "@connext/vector-contracts";
 import AwesomeDebouncePromise from "awesome-debounce-promise";
 import {
   ConditionalTransferCreatedPayload,
@@ -33,11 +32,12 @@ import {
   createlockHash,
   getBalanceForAssetId,
   getVectorBrowserNode,
+  getVectorContracts,
   IBrowserNode,
   inverse,
 } from "./packages";
 
-export { WithdrawCommitment };
+// export { WithdrawCommitment };
 
 export const connectNode = async (
   routerPublicIdentifier: string,
@@ -304,6 +304,7 @@ export const getTotalDepositsBob = async (
     return getOnchainBalance(provider, assetId, channelAddress);
   }
   // get from chain
+  const { ChannelMastercopy } = await getVectorContracts();
   return new Contract(channelAddress, ChannelMastercopy.abi, provider).getTotalDepositsBob(assetId);
 };
 

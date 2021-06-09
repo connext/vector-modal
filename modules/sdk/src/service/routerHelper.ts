@@ -1,13 +1,14 @@
-import { BrowserNode, NonEIP712Message } from "@connext/vector-browser-node";
 import { ChainProviders, FullChannelState } from "@connext/vector-types";
 import { BigNumber } from "@ethersproject/bignumber";
 import { JsonRpcSigner } from "@ethersproject/providers";
+import { getVectorBrowserNode } from "modules/sdk/dist";
 
 import { iframeSrc } from "../constants";
+import { IBrowserNode } from "../utils";
 
 export class RouterHelper {
   public routerPublicIdentifier = "";
-  public browserNode?: BrowserNode;
+  public browserNode?: IBrowserNode;
   public chainChannels?: { [chainId: number]: FullChannelState };
 
   // initiate node for all the chains
@@ -21,6 +22,8 @@ export class RouterHelper {
 
     const supportedChains = Object.keys(chainProviders).map(s => Number(s));
     console.log(supportedChains);
+
+    const { BrowserNode, NonEIP712Message } = await getVectorBrowserNode();
 
     const browserNode = new BrowserNode({
       routerPublicIdentifier,

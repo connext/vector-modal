@@ -1,9 +1,19 @@
 import * as React from "react";
-
-import { ConnextSdk, TransferQuote } from "@connext/vector-sdk";
+import { TransferQuote } from "@connext/vector-types";
 
 const Sdk: React.FC = () => {
-  const connextSdk = new ConnextSdk();
+  // const connextSdk = new ConnextSdk();
+
+  const [connextSdk, setConnextSdk] = React.useState<any>();
+
+  const loadSdk = async () => {
+    const sdk = await import("@connext/vector-sdk");
+    setConnextSdk(sdk.ConnextSdk);
+  };
+
+  React.useEffect(() => {
+    loadSdk();
+  }, []);
 
   const init = async () => {
     try {
@@ -34,21 +44,21 @@ const Sdk: React.FC = () => {
     }
   };
 
-//   const deposit = async (transferAmount: string) => {
-//     // const address = await webProvider.getSigner().getAddress();
-//     // console.log(address);
-//     try {
-//       await connextSdk.deposit({
-//         transferAmount,
-//         webProvider,
-//         onDeposited: function(params) {
-//           console.log("On deposit ==>", params);
-//         }, // onFinished callback function
-//       });
-//     } catch (e) {
-//       console.log("Error during deposit", e);
-//     }
-//   };
+  //   const deposit = async (transferAmount: string) => {
+  //     // const address = await webProvider.getSigner().getAddress();
+  //     // console.log(address);
+  //     try {
+  //       await connextSdk.deposit({
+  //         transferAmount,
+  //         webProvider,
+  //         onDeposited: function(params) {
+  //           console.log("On deposit ==>", params);
+  //         }, // onFinished callback function
+  //       });
+  //     } catch (e) {
+  //       console.log("Error during deposit", e);
+  //     }
+  //   };
 
   const crossChainSwap = async withdrawalAddress => {
     try {
