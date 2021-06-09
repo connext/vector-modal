@@ -1,5 +1,5 @@
 import React, { FC, useState } from "react";
-import { ChainDetail, VectorError } from "@connext/vector-sdk";
+import { ChainDetail, VectorError, ConnextSdk, safeJsonStringify } from "@connext/vector-sdk";
 
 import {
   ModalContent,
@@ -20,8 +20,7 @@ import { Header, Footer, NetworkBar } from "../static";
 export interface ErrorProps {
   error: Error;
   title: string;
-  senderChannelAddress?: string;
-  recipientChannelAddress?: string;
+  connextSdk: ConnextSdk;
   switchNetwork?: () => void;
   retry?: () => void;
   handleRecoveryButton?: () => void;
@@ -37,19 +36,29 @@ const Error: FC<ErrorProps> = props => {
   const {
     error,
     title,
+    connextSdk,
     retry,
     switchNetwork,
     options,
     handleBack,
     handleRecoveryButton,
-    senderChannelAddress,
-    recipientChannelAddress,
     state,
     senderChainInfo,
     receiverChainInfo,
     receiverAddress,
   } = props;
   const [copiedMessage, setCopiedMessage] = useState<boolean>(false);
+
+  const info = {
+    alice: connextSdk?.senderChainChannel?.aliceIdentifier ?? "",
+    bob: connextSdk?.senderChainChannel?.bobIdentifier ?? "",
+    senderChain: connextSdk?.senderChain?.name ?? "",
+    senderChainChannelAddress: connextSdk?.senderChainChannelAddress ?? "",
+    recipientChain: connextSdk?.recipientChain?.name ?? "",
+    recipientChainChannelAddress: connextSdk?.recipientChainChannelAddress ?? "",
+    senderChannelState: "",
+    recipientChannelState: "",
+  };
   return (
     <>
       <ModalContent id="modalContent">
@@ -68,12 +77,18 @@ const Error: FC<ErrorProps> = props => {
                   </Text>
                   <IconButton
                     aria-label="Clipboard"
-                    onClick={() => {
-                      const message = `senderChain: ${
-                        senderChainInfo?.chainId
-                      }, senderChannelAddress: ${senderChannelAddress}, recipientChain: ${
-                        receiverChainInfo?.chainId
-                      }, recipientChannelAddress: ${recipientChannelAddress}, error: ${JSON.stringify(error ?? "")}`;
+                    onClick={async () => {
+                      const senderChannel = await connextSdk?.browserNode!.getStateChannel({
+                        channelAddress: info.senderChainChannelAddress,
+                      });
+
+                      const recipientChannel = await connextSdk?.browserNode!.getStateChannel({
+                        channelAddress: info.recipientChainChannelAddress,
+                      });
+                      info.senderChannelState = safeJsonStringify(senderChannel?.getValue()) ?? "";
+                      info.recipientChannelState = safeJsonStringify(recipientChannel?.getValue()) ?? "";
+
+                      const message = safeJsonStringify(info);
                       console.log(`Copying: ${message}`);
                       navigator.clipboard.writeText(message);
                       setCopiedMessage(true);
