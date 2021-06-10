@@ -7,7 +7,7 @@ import {
   getConfirmationsForChain,
 } from "@connext/vector-types";
 import { BrowserNode } from "@connext/vector-browser-node";
-import { getBalanceForAssetId, getRandomBytes32 } from "@connext/vector-utils";
+import { getBalanceForAssetId, getRandomBytes32, safeJsonStringify } from "@connext/vector-utils";
 import { parseUnits, formatUnits } from "@ethersproject/units";
 import { BigNumber } from "@ethersproject/bignumber";
 import { HashZero } from "@ethersproject/constants";
@@ -47,7 +47,7 @@ import {
   withdrawRetry,
 } from "../utils";
 
-export { BrowserNode, ERC20Abi, FullChannelState, getBalanceForAssetId, TransferQuote, VectorError };
+export { BrowserNode, ERC20Abi, FullChannelState, getBalanceForAssetId, TransferQuote, VectorError, safeJsonStringify };
 
 export class ConnextSdk {
   public routerPublicIdentifier = "";

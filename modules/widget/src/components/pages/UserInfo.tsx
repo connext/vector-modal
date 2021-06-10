@@ -1,5 +1,5 @@
 import React, { FC, useState } from "react";
-import { ConnextSdk } from "@connext/vector-sdk";
+import { ConnextSdk, safeJsonStringify } from "@connext/vector-sdk";
 
 import {
   ModalContent,
@@ -24,12 +24,12 @@ const UserInfo: FC<UserInfoProps> = props => {
   const [copiedMessage, setCopiedMessage] = useState<boolean>(false);
 
   const info = {
-    alice: connextSdk?.senderChainChannel?.aliceIdentifier!,
-    bob: connextSdk?.senderChainChannel?.bobIdentifier!,
-    senderChain: connextSdk?.senderChain?.name!,
-    senderChainChannelAddress: connextSdk.senderChainChannelAddress,
-    recipientChain: connextSdk?.recipientChain?.name!,
-    recipientChainChannelAddress: connextSdk?.recipientChainChannelAddress,
+    alice: connextSdk?.senderChainChannel?.aliceIdentifier ?? "",
+    bob: connextSdk?.senderChainChannel?.bobIdentifier ?? "",
+    senderChain: connextSdk?.senderChain?.name ?? "",
+    senderChainChannelAddress: connextSdk.senderChainChannelAddress ?? "",
+    recipientChain: connextSdk?.recipientChain?.name ?? "",
+    recipientChainChannelAddress: connextSdk?.recipientChainChannelAddress ?? "",
     senderChannelState: "",
     recipientChannelState: "",
   };
@@ -53,10 +53,10 @@ const UserInfo: FC<UserInfoProps> = props => {
                   const recipientChannel = await connextSdk?.browserNode!.getStateChannel({
                     channelAddress: info.recipientChainChannelAddress,
                   });
-                  info.senderChannelState = JSON.stringify(senderChannel?.getValue()) ?? "";
-                  info.recipientChannelState = JSON.stringify(recipientChannel?.getValue()) ?? "";
+                  info.senderChannelState = safeJsonStringify(senderChannel?.getValue()) ?? "";
+                  info.recipientChannelState = safeJsonStringify(recipientChannel?.getValue()) ?? "";
 
-                  const message = JSON.stringify(info);
+                  const message = safeJsonStringify(info);
                   console.log(`Copying: ${message}`);
                   navigator.clipboard.writeText(message);
                   setCopiedMessage(true);
