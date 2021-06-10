@@ -27,7 +27,7 @@ export const getExplorerLink = (chainId: number): string | undefined => {
       return `https://scan.hecochain.com`;
     }
     case 137: {
-      return `https://polygon-explorer-mainnet.chainstacklabs.com/`;
+      return `https://polygonscan.com/`;
     }
     case 250: {
       return `https://ftmscan.com`;
