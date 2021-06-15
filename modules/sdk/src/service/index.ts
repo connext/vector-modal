@@ -724,6 +724,32 @@ export class ConnextSdk {
   async withdraw(params: WithdrawParamsSchema): Promise<void> {
     const { recipientAddress, onFinished, withdrawalCallTo, withdrawalCallData, generateCallData } = params;
     // now go to withdrawal screen
+
+    console.log(`Calling reconcileDeposit with ${this.senderChainChannelAddress!} and ${this.senderChain?.assetId!}`);
+    await reconcileDeposit(this.browserNode!, this.senderChainChannelAddress!, this.senderChain?.assetId!);
+
+    const routerOffchain = BigNumber.from(
+      getBalanceForAssetId(this.senderChainChannel!, this.senderChain?.assetId!, "alice"),
+    );
+
+    if (routerOffchain.gt(0)) {
+      console.log("Waiting for withdrawal resolve event for router at sender side");
+      const routerWithdrawResolve = this.evts![EngineEvents.WITHDRAWAL_RESOLVED].pipe(data => {
+        return (
+          data.transfer.responderIdentifier === this.routerPublicIdentifier &&
+          data.channelAddress === this.senderChainChannelAddress &&
+          data.assetId === this.senderChain?.assetId
+        );
+      }).waitFor(45_000);
+
+      try {
+        await routerWithdrawResolve;
+      } catch (e) {
+        console.warn("Couldn't find withdraw resolve event for router at sender side, cancelling withdrawal", e);
+        throw e;
+      }
+    }
+
     let result;
     try {
       result = await withdrawToAsset(
