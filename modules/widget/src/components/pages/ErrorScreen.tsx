@@ -50,6 +50,7 @@ const Error: FC<ErrorProps> = props => {
   const [copiedMessage, setCopiedMessage] = useState<boolean>(false);
 
   const info = {
+    error: "",
     alice: connextSdk?.senderChainChannel?.aliceIdentifier ?? "",
     bob: connextSdk?.senderChainChannel?.bobIdentifier ?? "",
     senderChain: connextSdk?.senderChain?.name ?? "",
@@ -85,6 +86,8 @@ const Error: FC<ErrorProps> = props => {
                       const recipientChannel = await connextSdk?.browserNode!.getStateChannel({
                         channelAddress: info.recipientChainChannelAddress,
                       });
+
+                      info.error = safeJsonStringify(error);
                       info.senderChannelState = safeJsonStringify(senderChannel?.getValue()) ?? "";
                       info.recipientChannelState = safeJsonStringify(recipientChannel?.getValue()) ?? "";
 
